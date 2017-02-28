@@ -31,7 +31,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'chetcorcos.com',
+      title: 'TypeScript Boilerplate',
     }),
   ],
 }

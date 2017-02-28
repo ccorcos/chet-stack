@@ -1,7 +1,7 @@
 {
-  "name": "chetcorcos.com",
+  "name": "typescript-boilerplate",
   "version": "1.0.0",
-  "description": "",
+  "description": "boilerplate for web applications using typescript and webpack",
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --content-base dist",
@@ -9,18 +9,25 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "glamor": "^2.20.24",
     "immutable": "^3.8.1",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-redux": "^5.0.3",
-    "redux": "^3.6.0"
+    "redux": "^3.6.0",
+    "redux-immutable": "^3.1.0",
+    "redux-thunk": "^2.2.0"
   },
   "devDependencies": {
+    "@types/immutable": "^3.8.7",
     "@types/react": "^15.0.13",
     "@types/react-dom": "^0.14.23",
+    "@types/react-redux": "^4.4.36",
+    "@types/redux": "^3.6.0",
+    "@types/redux-immutable": "^3.0.33",
+    "@types/redux-thunk": "^2.1.0",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.3.2",
