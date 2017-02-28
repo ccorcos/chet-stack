@@ -5,7 +5,7 @@ This is a simple setup for getting started building a web application using Type
 ## Getting Started
 
 ```sh
-git clone TODO project
+git clone git@github.com:ccorcos/typescript-boilerplate.git project
 cd project
 git remote remove origin
 npm install
