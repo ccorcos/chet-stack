@@ -1,17 +1,9 @@
 import { Record } from 'immutable'
 
-export const enum ActionTypes {
-  increment,
-  decrement,
-}
+export const enum ActionTypes { increment, decrement }
 
-type Increment = {
-  type: ActionTypes.increment,
-}
-
-type Decrement = {
-  type: ActionTypes.decrement,
-}
+type Increment = { type: ActionTypes.increment }
+type Decrement = { type: ActionTypes.decrement }
 
 export type Action = Increment | Decrement
 
@@ -20,13 +12,13 @@ export const actions = {
   decrement: () : Decrement => ({ type: ActionTypes.decrement }),
 }
 
-const State = Record({
-  count: 0,
-})
+export type ActionCreators = typeof actions
 
-export const initialState = new State()
+const StateRecord = Record({ count: 0 })
+export const init = new StateRecord()
+export type Model = typeof init
 
-export const reducer = (state=initialState, action: Action) => {
+export const update = (state: Model, action: Action) => {
   switch(action.type) {
     case ActionTypes.increment: {
       return state.update('count', n => n + 1)
@@ -34,6 +26,8 @@ export const reducer = (state=initialState, action: Action) => {
     case ActionTypes.decrement: {
       return state.update('count', n => n - 1)
     }
+    // redux init action hits this path even though the type system doesnt
+    // catch it. unsound type systems are bonkers
     default: {
       return state
     }

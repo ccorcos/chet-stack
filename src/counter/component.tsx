@@ -1,15 +1,9 @@
 import React from 'react'
-import { connect, bindActionCreators } from 'react-redux'
-import { actions, initialState, Action } from './ducks'
+import { ActionCreators, Model } from './ducks'
 
-type Dispatch = (a: Action) => void
-const mapDispatchToProps = (dispatch: Dispatch) => bindActionCreators(actions, dispatch)
+type Props = {state: Model} & ActionCreators
 
-const mapStateToProps = state => state.get('counter')
-
-type Props = { state: typeof initialState } & typeof actions
-
-class Counter extends React.PureComponent<Props, {}> {
+export default class Counter extends React.PureComponent<Props, {}> {
   render() {
     return (
       <div>
@@ -20,4 +14,3 @@ class Counter extends React.PureComponent<Props, {}> {
     )
   }
 }
-

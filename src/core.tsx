@@ -1,22 +1,14 @@
-import { applyMiddleware, createStore, compose } from 'redux'
-import thunk from 'redux-thunk'
+import React from 'react'
+import { createStore } from 'redux'
 import { Provider } from 'react-redux'
-import { combineReducers } from 'redux-immutable'
-import reducer from './reducer'
+import { update, init, Model } from './ducks'
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-const store = createStore(reducer, composeEnhancers(applyMiddleware(thunk)), initialState)
+// const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+// const store = createStore(reducer, composeEnhancers(applyMiddleware(thunk)), initialState)
 
+export const store = createStore<Model>(update, init)
 
-// import app from './app/reducer'
-// import cube from './cube/reducer'
-//
-// export const rootRedcer = combineReducers({
-//   app,
-//   cube,
-// })
-
-// export const Root = props =>
-//   <Provider store={store}>
-//     {props.children}
-//   </Provider>
+export const Root = (props: React.HTMLProps<HTMLDivElement>) =>
+  <Provider store={store}>
+    {props.children}
+  </Provider>
