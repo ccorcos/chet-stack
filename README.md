@@ -11,3 +11,7 @@ git remote remove origin
 npm install
 npm start
 ```
+
+## To Do
+
+Figure out how to use Redux with sound type checking.
