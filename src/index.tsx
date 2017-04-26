@@ -1,14 +1,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Counter from './counter/container'
-import { Root } from './core'
+import { css } from 'glamor'
 
-class Index extends React.PureComponent<{}, {}> {
+const style = css({
+  color: 'blue'
+})
+
+class Index extends React.PureComponent<{},{}> {
   render() {
     return (
-      <div>
-        Hello Chet Corcos
-        <Counter/>
+      <div className={`${style}`}>
+        Hello World!
       </div>
     )
   }
@@ -17,8 +19,4 @@ class Index extends React.PureComponent<{}, {}> {
 const root = document.createElement('div')
 document.body.appendChild(root)
 
-ReactDOM.render((
-  <Root>
-    <Index/>
-  </Root>
-), root)
+ReactDOM.render(<Index/>, root)

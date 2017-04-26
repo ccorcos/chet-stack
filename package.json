@@ -5,29 +5,21 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --content-base dist",
-    "build": "rm -rf dist && webpack"
+    "build": "rm -rf dist && webpack -p",
+    "deploy": "git add -f dist && git commit -m 'deploy' && git push origin `git subtree split --prefix dist master`:gh-pages --force && git rm -r dist && git commit -m 'cleanup deploy'",
+    "release": "npm run build && npm run deploy"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "glamor": "^2.20.24",
-    "immutable": "^3.8.1",
     "react": "^15.4.2",
-    "react-dom": "^15.4.2",
-    "react-redux": "^5.0.3",
-    "redux": "^3.6.0",
-    "redux-immutable": "^3.1.0",
-    "redux-thunk": "^2.2.0"
+    "react-dom": "^15.4.2"
   },
   "devDependencies": {
-    "@types/immutable": "^3.8.7",
     "@types/react": "^15.0.13",
     "@types/react-dom": "^0.14.23",
-    "@types/react-redux": "^4.4.36",
-    "@types/redux": "^3.6.0",
-    "@types/redux-immutable": "^3.0.33",
-    "@types/redux-thunk": "^2.1.0",
     "babel": "^6.23.0",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.3.2",
