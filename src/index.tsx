@@ -1,22 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { css } from 'glamor'
+import * as React from "react"
+import * as ReactDOM from "react-dom"
+import { css } from "glamor"
+import Router from "./components/Router"
 
-const style = css({
-  color: 'blue'
+css.global("a", {
+	color: "inherit",
+	textDecoration: "none",
 })
 
-class Index extends React.PureComponent<{},{}> {
-  render() {
-    return (
-      <div className={`${style}`}>
-        Hello World!
-      </div>
-    )
-  }
-}
-
-const root = document.createElement('div')
+const root = document.createElement("div")
 document.body.appendChild(root)
 
-ReactDOM.render(<Index/>, root)
+ReactDOM.render(<Router />, root)

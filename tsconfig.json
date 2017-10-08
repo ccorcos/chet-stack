@@ -1,18 +1,22 @@
 {
-  "compileOnSave": false,
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "target": "es2016",
-    "module": "es2015",
-    "jsx": "preserve",
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "removeComments": true,
-    "strictNullChecks": false,
-    "preserveConstEnums": true,
-    "sourceMap": true,
-    "lib": ["es2015", "es2016", "dom"]
-  }
+	"compileOnSave": false,
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"target": "es5",
+		"module": "commonjs",
+		"jsx": "preserve",
+		"moduleResolution": "node",
+		"noImplicitAny": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": false,
+		"removeComments": true,
+		"strictNullChecks": true,
+		"preserveConstEnums": true,
+		"sourceMap": true,
+		"lib": [
+			"es2015",
+			"es2016",
+			"dom"
+		]
+	}
 }
