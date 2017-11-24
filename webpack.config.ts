@@ -27,7 +27,6 @@ const config: Configuration = {
 	devtool: "source-map",
 	output: {
 		path: path.join(__dirname, "dist"),
-		publicPath: "/",
 		filename: "[name]-[chunkhash].js",
 		chunkFilename: "[name]-[chunkhash].js",
 	},
