@@ -14,10 +14,7 @@ const config: Configuration = {
 				exclude: /node_modules/,
 				use: [
 					{
-						loader: "babel-loader",
-					},
-					{
-						loader: "ts-loader",
+						loader: "awesome-typescript-loader",
 					},
 				],
 			},
