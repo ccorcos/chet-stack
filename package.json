@@ -15,9 +15,8 @@
 	"dependencies": {
 		"glamor": "^2.20.40",
 		"lodash": "^4.17.11",
-		"react": "^16.6.3",
-		"react-dom": "^16.6.3",
-		"reactive-magic": "^2.1.5"
+		"react": "^16.7.0-alpha.0",
+		"react-dom": "^16.7.0-alpha.0"
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.118",
