@@ -32,10 +32,14 @@ const config: Configuration = {
 			template: path.join(__dirname, "src/index.html"),
 		}),
 	],
+}
+
+// Dev server configs aren't typed properly.
+Object.assign(config, {
 	devServer: {
 		publicPath: "/",
 		historyApiFallback: true,
 	},
-}
+})
 
 export default config
