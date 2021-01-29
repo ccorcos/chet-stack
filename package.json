@@ -4,7 +4,7 @@
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
 	"scripts": {
-		"start": "webpack-dev-server --content-base dist",
+		"start": "webpack serve --content-base dist",
 		"build": "rm -rf dist && webpack -p",
 		"deploy": "git add -f dist && git commit -m 'deploy' && git push origin `git subtree split --prefix dist master`:gh-pages --force && git rm -r dist && git commit -m 'cleanup deploy'",
 		"release": "npm run build && npm run deploy"
@@ -14,22 +14,22 @@
 	"license": "MIT",
 	"dependencies": {
 		"glamor": "^2.20.40",
-		"lodash": "^4.17.15",
-		"react": "^16.13.1",
-		"react-dom": "^16.13.1"
+		"lodash": "^4.17.20",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@types/lodash": "^4.14.149",
-		"@types/react": "^16.9.27",
-		"@types/react-dom": "^16.9.5",
-		"@types/webpack": "^4.41.8",
-		"awesome-typescript-loader": "^5.2.1",
-		"file-loader": "^6.0.0",
-		"html-webpack-plugin": "^4.0.3",
-		"ts-node": "^8.8.1",
-		"typescript": "^3.8.3",
-		"webpack": "^4.42.1",
-		"webpack-cli": "^3.3.11",
-		"webpack-dev-server": "^3.10.3"
+		"@types/lodash": "^4.14.168",
+		"@types/react": "^17.0.0",
+		"@types/react-dom": "^17.0.0",
+		"@types/webpack": "^4.41.26",
+		"file-loader": "^6.2.0",
+		"html-webpack-plugin": "^4.5.1",
+		"ts-loader": "^8.0.14",
+		"ts-node": "^9.1.1",
+		"typescript": "^4.1.3",
+		"webpack": "^5.18.0",
+		"webpack-cli": "^4.4.0",
+		"webpack-dev-server": "^3.11.2"
 	}
 }
