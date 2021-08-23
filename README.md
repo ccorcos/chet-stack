@@ -24,3 +24,10 @@ git checkout -b gh-pages
 git push origin gh-pages
 git checkout master
 ```
+
+## Architecture
+
+- No side-effects at the top level except for index.tsx.
+- External effects interface through services defined on the Environment.
+- The Environment is plumbed around everywhere.
+- StateMachine is a Redux-style state management abstraction with less boilerplate.
