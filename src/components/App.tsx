@@ -27,39 +27,81 @@ function Player(props: { player: Player; index: number }) {
 	const environment = useEnvironment()
 	const { app } = environment
 
-	const spacer = <div style={{ width: "2em" }}></div>
 	return (
-		<div
-			style={{ display: "flex", flexDirection: "column", paddingBottom: "2em" }}
-		>
-			<div style={{ display: "flex" }}>
-				<button style={{ opacity: 0 }}>Delete</button>
-				{spacer}
+		<div style={{ display: "flex", paddingBottom: 8 }}>
+			<div
+				style={{
+					marginRight: 8,
+					position: "relative",
+					flex: 1,
+					display: "flex",
+				}}
+			>
 				<input
-					style={{ textAlign: "center", flex: 1 }}
+					style={{
+						flex: 1,
+						paddingTop: 6,
+						paddingBottom: 6,
+						textAlign: "left",
+						paddingRight: "3em",
+						width: "1em",
+					}}
 					placeholder={`Player ${index + 1}`}
 					value={player.name}
 					onChange={(event) =>
 						app.dispatch.editName(index, event.target!.value)
 					}
 				/>
-				{spacer}
-				<button onClick={() => deletePlayer(environment, index)}>Delete</button>
+				<div
+					style={{
+						position: "absolute",
+						right: 0,
+						height: "100%",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<button
+						style={{
+							fontSize: 12,
+							border: "none",
+							background: "transparent",
+							color: "red",
+						}}
+						onClick={() => deletePlayer(environment, index)}
+					>
+						Delete
+					</button>
+				</div>
 			</div>
-			<div style={{ display: "flex", marginTop: 4 }}>
-				<button
-					style={{ flex: 1 }}
-					onClick={() => app.dispatch.incrementScore(index, -1)}
+			<div style={{ display: "flex" }}>
+				<div>
+					<button
+						style={{ flex: 1, padding: "6px 16px" }}
+						onClick={() => app.dispatch.incrementScore(index, -1)}
+					>
+						-1
+					</button>
+				</div>
+				<div
+					style={{
+						padding: "1px 0px",
+						minWidth: "2em",
+						textAlign: "center",
+						lineHeight: "36px",
+					}}
 				>
-					-1
-				</button>
-				<div style={{ padding: "1em" }}>{player.score}</div>
-				<button
-					style={{ flex: 1 }}
-					onClick={() => app.dispatch.incrementScore(index, +1)}
-				>
-					+1
-				</button>
+					{player.score}
+				</div>
+				<div>
+					<button
+						style={{ flex: 1, padding: "6px 16px" }}
+						onClick={() => app.dispatch.incrementScore(index, +1)}
+					>
+						+1
+					</button>
+				</div>
 			</div>
 		</div>
 	)

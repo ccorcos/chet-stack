@@ -11,3 +11,11 @@ input,
 button {
 	font-size: 18px;
 }
+
+button {
+	padding: 6px 16px;
+}
+
+input {
+	padding: 6px 6px;
+}
