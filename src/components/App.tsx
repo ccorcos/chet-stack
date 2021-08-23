@@ -1,10 +1,12 @@
 import React from "react"
 import { deletePlayer } from "../actions/deletePlayer"
+import { resetGame } from "../actions/resetGame"
 import { Player, useAppState } from "../AppState"
 import { useEnvironment } from "../Environment"
 
 export function App() {
-	const { app } = useEnvironment()
+	const environment = useEnvironment()
+	const { app } = environment
 	const players = useAppState((game) => game.players)
 	return (
 		<div
@@ -18,7 +20,10 @@ export function App() {
 			{players.map((player, index) => (
 				<Player player={player} index={index} key={index} />
 			))}
-			<button onClick={() => app.dispatch.addPlayer()}>Add Player</button>
+			<div style={{ display: "flex", gap: 8 }}>
+				<button onClick={() => app.dispatch.addPlayer()}>Add Player</button>
+				<button onClick={() => resetGame(environment)}>Reset Game</button>
+			</div>
 		</div>
 	)
 }

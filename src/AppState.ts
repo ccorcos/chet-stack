@@ -8,11 +8,11 @@ export type Player = { name: string; score: number }
 
 export type Game = { players: Player[] }
 
-function newPlayer(): Player {
+export function newPlayer(): Player {
 	return { name: "", score: 0 }
 }
 
-function newGame(): Game {
+export function newGame(): Game {
 	return { players: [newPlayer()] }
 }
 
@@ -41,11 +41,14 @@ const reducers = {
 		})
 		return { players }
 	},
+	resetGame(game: Game) {
+		return newGame()
+	},
 }
 
 export class AppState extends StateMachine<Game, typeof reducers> {
-	constructor() {
-		super(newGame(), reducers)
+	constructor(initialGame: Game) {
+		super(initialGame, reducers)
 	}
 }
 
