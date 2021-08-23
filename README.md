@@ -1,4 +1,15 @@
-# TypeScript Boilerplate
+# TODO
+
+- Mobile friendly
+- Save to local storage
+- Delete player
+- Reset
+
+- Readme explanation
+- Architecture explanation
+
+
+
 
 This is a simple setup for getting started building a web application using TypeScript, React, Redux, ImmutableJS, and Glamor.
 

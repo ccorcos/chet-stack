@@ -21,6 +21,12 @@ const reducers = {
 		const { players } = game
 		return { players: [...players, newPlayer()] }
 	},
+	deletePlayer(game: Game, index: number) {
+		const { players } = game
+		const newPlayers = [...players]
+		newPlayers.splice(index, 1)
+		return { players: newPlayers }
+	},
 	editName(game: Game, index: number, newName: string) {
 		const players = game.players.map((player, i) => {
 			if (i !== index) return player
