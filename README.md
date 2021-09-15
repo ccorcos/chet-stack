@@ -1,5 +1,12 @@
 # TypeScript Boilerplate
 
+## Plan
+
+- use estrella
+- basic local dev server
+- mess around with fun typescript things
+
+
 **Features**
 - React
 - Webpack
