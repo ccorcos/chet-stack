@@ -16,7 +16,7 @@ export function App() {
 				margin: "0 auto",
 			}}
 		>
-			<h2>Score Counter</h2>
+			<h2>Score Counter2</h2>
 			{players.map((player, index) => (
 				<Player player={player} index={index} key={index} />
 			))}

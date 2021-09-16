@@ -2,6 +2,10 @@
 
 ## Plan
 
+npm start
+npm run release
+
+
 - live-reload
 
 - dev server.

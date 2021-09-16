@@ -1,24 +1,19 @@
-// # Deploy to Github Pages
-// # https://guides.github.com/features/pages/
-// #
-// # For this script to work, first you must create a remote branch called gh-pages:
-// #
-// # git checkout -b gh-pages
-// # git push origin gh-pages
-// #
-
-// rm -rf website
-// cp -r build/static website
-// git subtree push --prefix build/static origin gh-pages
+// Deploy to Github Pages
+// https://guides.github.com/features/pages/
 
 import { execSync } from "child_process"
 import { path } from "./path"
 
-execSync(`rm -rf ${path("website")}`)
-execSync(`cp -r ${path("build/static")} ${path("website")}`)
+const sh = (cmd: string) => execSync(cmd, { cwd: path() })
 
-execSync(`git add .`, { cwd: path() })
-// execSync(`git commit -m ""`)
+const rm = (p: string) => sh(`rm -rf ${p}`)
+const cp = (a: string, b: string) => sh(`cp -r ${a} ${b}`)
 
-// git add website
-// execSync(`git subtree push --prefix ${path("website")} origin gh-pages`)
+rm("website")
+cp("build/static", "website")
+sh(`git add .`)
+
+// This will increment the package.json version and commit it all together.
+sh(`npm version patch --force`)
+
+sh(`git subtree push --prefix website origin gh-pages`)
