@@ -1,30 +1,15 @@
-# TypeScript Boilerplate
+# TypeScript Boilerplate [Live Demo](https://ccorcos.github.io/typescript-boilerplate/s)
 
-## Plan
-
-
-npm start
-npm run release
-
-
-- live-reload
-
-- dev server.
-- deploy should work
-- log the link to the repo on release
-
-
-- mess around with fun typescript things
-
+A minimal boilerplate for building and deploying websites to Github Pages.
 
 **Features**
 - React
-- Webpack
-- TypeScript
+- [Estrella](https://github.com/rsms/estrella) (combines ESBuild with TypeScript)
+- Livereload (development server)
 - Deploy to Github Pages
-- Environment and StateMachine architecture
+- Environment and StateMachine architecture (if you want)
 
-## Getting Started
+## Development
 
 ```sh
 git clone git@github.com:ccorcos/typescript-boilerplate.git project
@@ -34,12 +19,11 @@ npm install
 npm start
 ```
 
-An in order to be able to deploy this using Github pages, you'll need to create an push an initial branch to Github:
+## Deploy
 
 ```sh
-git checkout -b gh-pages
-git push origin gh-pages
-git checkout master
+# Note: this will build and commit changes to your local branch.
+npm run release
 ```
 
 ## Architecture
