@@ -11,7 +11,8 @@ build({
 	entry: path("src/app/index.tsx"),
 	outfile: path("build/static/index.js"),
 	bundle: true,
-	sourcemap: "inline",
+	sourcemap: watch ? "inline" : false,
 	watch: watch,
+	clear: false,
 	// pass any options to esbuild here...
 })

@@ -15,6 +15,7 @@
 		"removeComments": true,
 		"sourceMap": true,
 		"allowJs": true,
+		"skipLibCheck": true,
 		"lib": ["DOM", "ES2018"]
 	},
 	"include": ["src/**/*"],

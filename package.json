@@ -4,10 +4,13 @@
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
 	"scripts": {
-		"start": "ts-node -r build server",
-		"build": "rm -rf dist && NODE_ENV='production' webpack",
-		"deploy": "git add -f dist && git commit -m 'deploy' && git push origin `git subtree split --prefix dist master`:gh-pages --force && git rm -r dist && git commit -m 'cleanup deploy'",
-		"release": "npm run build && npm run deploy"
+		"watch": "ts-node -T src/tools/build.ts --watch",
+		"server": "ts-node -T src/tools/server.ts",
+		"start": "run-p watch server",
+		"clean": "rm -rf build",
+		"build": "ts-node -T src/tools/build.ts",
+		"deploy": "ts-node -T src/tools/deploy.ts",
+		"release": "run-s clean build deploy"
 	},
 	"keywords": [],
 	"author": "",
@@ -18,11 +21,15 @@
 		"react-dom": "^17.0.2"
 	},
 	"devDependencies": {
+		"@types/express": "^4.17.13",
 		"@types/lodash": "^4.14.172",
+		"@types/node": "^16.9.1",
 		"@types/react": "^17.0.21",
 		"@types/react-dom": "^17.0.9",
 		"cpx": "^1.5.0",
 		"estrella": "^1.4.1",
+		"express": "^4.17.1",
+		"npm-run-all": "^4.1.5",
 		"ts-node": "^10.2.1",
 		"typescript": "^4.4.3"
 	}

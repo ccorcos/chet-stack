@@ -2,8 +2,13 @@
 
 ## Plan
 
-- use estrella
-- basic local dev server
+- live-reload
+
+- dev server.
+- deploy should work
+- log the link to the repo on release
+
+
 - mess around with fun typescript things
 
 
