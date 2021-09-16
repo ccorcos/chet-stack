@@ -1,6 +1,6 @@
 {
 	"name": "typescript-boilerplate",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
 	"scripts": {

@@ -18,9 +18,7 @@ execSync(`rm -rf ${path("website")}`)
 execSync(`cp -r ${path("build/static")} ${path("website")}`)
 
 execSync(`git add .`, { cwd: path() })
-execSync(`git commit -m ""`)
-
-execSync(`cp -r ${path("build/static")} ${path("website")}`)
+// execSync(`git commit -m ""`)
 
 // git add website
-execSync(`git subtree push --prefix ${path("website")} origin gh-pages`)
+// execSync(`git subtree push --prefix ${path("website")} origin gh-pages`)
