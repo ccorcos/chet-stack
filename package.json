@@ -4,12 +4,12 @@
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
 	"scripts": {
-		"watch": "ts-node -T src/tools/build.ts --watch",
-		"server": "ts-node -T src/tools/server.ts",
+		"watch": "tsx src/tools/build.ts --watch",
+		"server": "tsx src/tools/server.ts",
 		"start": "run-p watch server",
 		"clean": "rm -rf build",
-		"build": "ts-node -T src/tools/build.ts",
-		"deploy": "ts-node -T src/tools/deploy.ts",
+		"build": "tsx src/tools/build.ts",
+		"deploy": "tsx src/tools/deploy.ts",
 		"release": "run-s clean build deploy"
 	},
 	"keywords": [],
@@ -33,7 +33,7 @@
 		"express": "^4.18.1",
 		"livereload": "^0.9.3",
 		"npm-run-all": "^4.1.5",
-		"ts-node": "^10.9.1",
+		"tsx": "^3.11.0",
 		"typescript": "^4.7.4"
 	}
 }
