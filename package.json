@@ -9,7 +9,7 @@
 		"start": "run-p watch server",
 		"clean": "rm -rf build",
 		"build": "tsx src/tools/build.ts",
-		"deploy": "gh-pages -d dist",
+		"deploy": "gh-pages -d build",
 		"release": "run-s clean build deploy"
 	},
 	"keywords": [],
