@@ -12,10 +12,10 @@ const app = express()
 // Injects into the html file so the browser reloads when files change.
 app.use(injectLiveReload())
 // Watch for changed to send a message over websocket.
-livereload.createServer().watch(path("build/static"))
+livereload.createServer().watch(path("build"))
 
 // Fallback to HTML for client-side routing to work.
-app.use(express.static(path("build/static")))
-app.use("*", express.static(path("build/static/index.html")))
+app.use(express.static(path("build")))
+app.use("*", express.static(path("build/index.html")))
 
 app.listen(8080, () => console.log("Listening: http://localhost:8080"))

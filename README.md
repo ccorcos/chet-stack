@@ -1,4 +1,4 @@
-# TypeScript Boilerplate [Live Demo](https://ccorcos.github.io/typescript-boilerplate/s)
+# TypeScript Boilerplate [Live Demo](https://ccorcos.github.io/typescript-boilerplate/)
 
 A minimal boilerplate for building and deploying websites to Github Pages.
 
