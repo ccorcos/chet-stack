@@ -1,15 +1,6 @@
 import React, { createContext, useContext } from "react"
-import { AppState } from "./AppState"
 
-const services = { app: AppState }
-
-// ============================================================================
-// Boilerplate
-// ============================================================================
-
-export type Environment = {
-	[K in keyof typeof services]: InstanceType<typeof services[K]>
-}
+export type Environment = {}
 
 const EnvironmentContext = createContext<Environment | undefined>(undefined)
 
