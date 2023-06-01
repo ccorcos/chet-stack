@@ -1,4 +1,7 @@
 
+- client api requests
+- client pubsub
+- cookies and auth basics
 
 - tools -> server
 - app -> client

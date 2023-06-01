@@ -4,11 +4,11 @@ import { path } from "./path"
 
 const watch = process.argv.includes("--watch")
 const cmd = watch ? "watch" : "copy"
-cpx[cmd](path("src/app/index.html"), path("build"))
-cpx[cmd](path("src/app/index.css"), path("build"))
+cpx[cmd](path("src/client/index.html"), path("build"))
+cpx[cmd](path("src/client/index.css"), path("build"))
 
 build({
-	entry: path("src/app/index.tsx"),
+	entry: path("src/client/index.tsx"),
 	outfile: path("build/index.js"),
 	bundle: true,
 	sourcemap: watch ? "inline" : false,

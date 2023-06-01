@@ -18,7 +18,7 @@ export class WebsocketPubsub {
 
 		// TODO: don't generate this file every time?
 		if (true) {
-			fs.writeFileSync(path("src/app/primus.js"), this.primus.library())
+			fs.writeFileSync(path("src/client/primus.js"), this.primus.library())
 		}
 
 		this.primus.on("connection", (connection) => {
