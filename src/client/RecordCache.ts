@@ -7,13 +7,19 @@ A local cache of records along with listeners for changes to those records.
 import {
 	deleteRecordMap,
 	getRecordMap,
+	iterateRecordMap,
 	setRecordMap,
 } from "../shared/recordMapHelpers"
-import { RecordMap, RecordPointer } from "../shared/schema"
+import { RecordMap, RecordPointer, RecordValue } from "../shared/schema"
 
 type RecordListener = () => void
 
-export class RecordCache {
+export type RecordCacheApi = {
+	addListener(pointer: RecordPointer, fn: RecordListener): () => void
+	updateRecordMap(recordMap: RecordMap): void
+}
+
+export class RecordCache implements RecordCacheApi {
 	recordMap: RecordMap
 
 	listeners: { [table: string]: { [id: string]: Set<RecordListener> } } = {}
@@ -25,6 +31,27 @@ export class RecordCache {
 		return () => {
 			listenerSet.delete(fn)
 			if (listenerSet.size === 0) deleteRecordMap(this.listeners, pointer)
+		}
+	}
+
+	updateRecordMap(recordMap: RecordMap) {
+		// Update only if they're new versions.
+		const updates: RecordPointer[] = []
+		for (const { table, id, record } of iterateRecordMap(recordMap)) {
+			const existing = getRecordMap(this.recordMap, { table, id }) as
+				| RecordValue
+				| undefined
+			if (!existing || existing.version < record.version) {
+				setRecordMap(this.recordMap, { table, id }, record)
+				updates.push({ table, id })
+			}
+		}
+
+		// Fire listeners.
+		for (const pointer of updates) {
+			const listeners = getRecordMap(this.listeners, pointer)
+			if (!listeners) continue
+			for (const listener of listeners) listener()
 		}
 	}
 }

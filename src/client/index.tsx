@@ -1,7 +1,12 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { UserRecord } from "../shared/schema"
-import { Environment, EnvironmentProvider } from "./Environment"
+import { createClientApi } from "./api"
+import {
+	ClientEnvironment,
+	ClientEnvironmentProvider,
+} from "./ClientEnvironment"
+import { RecordCache } from "./RecordCache"
 
 type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
@@ -17,16 +22,18 @@ type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 // 	localStorage.setItem("state", JSON.stringify(app.state))
 // })
 
-const environment: Environment = {}
+const cache = new RecordCache()
+const api = createClientApi({ cache })
+const environment: ClientEnvironment = { cache, api }
 
 // Render the app.
 const root = document.createElement("div")
 document.body.appendChild(root)
 
 ReactDOM.render(
-	<EnvironmentProvider value={environment}>
+	<ClientEnvironmentProvider value={environment}>
 		<div>Hello world</div>
-	</EnvironmentProvider>,
+	</ClientEnvironmentProvider>,
 	root
 )
 
