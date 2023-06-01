@@ -15,9 +15,15 @@ import { path } from "./path"
 
 export class JsonDatabase implements DatabaseApi {
 	data: RecordMap
+	dbPath: string
 
 	constructor() {
-		this.data = fs.readJSONSync(path("db/data.json")) || {}
+		this.dbPath = path("db/data.json")
+		if (fs.existsSync(this.dbPath)) {
+			this.data = fs.readJSONSync(this.dbPath)
+		} else {
+			this.data = {}
+		}
 	}
 
 	async getUser(userId: string) {
@@ -62,5 +68,8 @@ export class JsonDatabase implements DatabaseApi {
 			const pointer = { table, id } as RecordPointer
 			setRecordMap(this.data, pointer, record)
 		}
+
+		// Write the file.
+		fs.writeJSONSync(this.dbPath, this.data)
 	}
 }

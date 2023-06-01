@@ -17,7 +17,7 @@ export class WebsocketPubsub {
 		this.primus = new Primus(server)
 
 		// TODO: don't generate this file every time?
-		if (true) {
+		if (false) {
 			fs.writeFileSync(path("src/client/primus.js"), this.primus.library())
 		}
 
