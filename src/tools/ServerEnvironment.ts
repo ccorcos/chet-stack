@@ -1,4 +1,6 @@
+import { DatabaseApi } from "./database"
+
 export type ServerEnvironment = {
-	// db: Database
+	db: DatabaseApi
 	// pubsub: PubSub
 }
