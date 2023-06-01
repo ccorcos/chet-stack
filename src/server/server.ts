@@ -36,7 +36,7 @@ app.use(express.json())
 for (const [name, { validate, action }] of Object.entries(api)) {
 	app.post(`/api/${name}`, async (req, res) => {
 		const error = validate(req.body)
-		if (error) return res.status(400).send(error)
+		if (error) return res.status(400).json({ message: error })
 		const result = await action(environment, req.body)
 		res.status(200).json(result)
 	})

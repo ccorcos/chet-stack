@@ -1,6 +1,9 @@
 import React from "react"
 import ReactDOM from "react-dom"
+import { UserRecord } from "../shared/schema"
 import { Environment, EnvironmentProvider } from "./Environment"
+
+type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
 // // Build the environment.
 // let initialGame = newGame()
