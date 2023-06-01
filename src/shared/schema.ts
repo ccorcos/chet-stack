@@ -39,12 +39,6 @@ export type TableToRecord = {
 	message: MessageRecord
 }
 
-export type RecordMap = {
-	[T in keyof TableToRecord]?: {
-		[id: string]: TableToRecord[T] | undefined
-	}
-}
-
 export type RecordWithTable = {
 	[T in keyof TableToRecord]: { table: T; record: TableToRecord[T] }
 }[keyof TableToRecord]
@@ -52,3 +46,9 @@ export type RecordWithTable = {
 export type RecordPointer = {
 	[T in keyof TableToRecord]: { table: T; id: string }
 }[keyof TableToRecord]
+
+export type RecordMap = {
+	[T in keyof TableToRecord]?: {
+		[id: string]: TableToRecord[T] | undefined
+	}
+}
