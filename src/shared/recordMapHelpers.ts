@@ -7,6 +7,7 @@ export function getRecordMap<
 	return recordMap[table][id]
 }
 
+// NOTE: this function mutates the recordMap!
 export function setRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
 	T extends keyof R
@@ -19,6 +20,7 @@ export function setRecordMap<
 	recordMap[table][id] = value
 }
 
+// NOTE: this function mutates the recordMap!
 export function deleteRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
 	T extends keyof R

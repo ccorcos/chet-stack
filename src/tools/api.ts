@@ -1,5 +1,6 @@
 import { getMessagesApi } from "./apis/getMessages"
 import { getThreadsApi } from "./apis/getThreads"
+import { writeApi } from "./apis/write"
 import { ServerEnvironment } from "./ServerEnvironment"
 
 export type ApiEndpoint = {
@@ -11,4 +12,5 @@ export type ApiEndpoint = {
 export const api = {
 	getMessages: getMessagesApi,
 	getThreads: getThreadsApi,
+	write: writeApi,
 }

@@ -3,8 +3,10 @@
 
 import type { getMessagesApiType } from "../tools/apis/getMessages"
 import type { getThreadsApiType } from "../tools/apis/getThreads"
+import type { writeApiType } from "../tools/apis/write"
 
 export type ApiTypes = {
 	getMessages: getMessagesApiType
 	getThreads: getThreadsApiType
+	write: writeApiType
 }

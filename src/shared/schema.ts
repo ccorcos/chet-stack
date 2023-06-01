@@ -8,6 +8,7 @@
 export type UserRecord = {
 	id: string
 	version: number
+	last_version: number
 	name: string
 	created_at: string
 	updated_at: string
@@ -16,6 +17,7 @@ export type UserRecord = {
 export type ThreadRecord = {
 	id: string
 	version: number
+	last_version: number
 	member_ids: string[]
 	created_at: string
 	updated_at: string
@@ -26,6 +28,7 @@ export type ThreadRecord = {
 export type MessageRecord = {
 	id: string
 	version: number
+	last_version: number
 	author_id: string
 	thread_id: string
 	created_at: string
@@ -39,8 +42,10 @@ export type TableToRecord = {
 	message: MessageRecord
 }
 
+export type RecordValue = TableToRecord[keyof TableToRecord]
+
 export type RecordWithTable = {
-	[T in keyof TableToRecord]: { table: T; record: TableToRecord[T] }
+	[T in keyof TableToRecord]: { table: T; id: string; record: TableToRecord[T] }
 }[keyof TableToRecord]
 
 export type RecordPointer = {
