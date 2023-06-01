@@ -14,4 +14,11 @@
 - client offline
 - client undo/redo
 
+- recordMapHelpers types.
+
+
+
+Sometime much later...
+- rate limiting
+- file uploading
 

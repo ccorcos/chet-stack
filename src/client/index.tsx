@@ -10,6 +10,15 @@ import { RecordCache } from "./RecordCache"
 
 type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
+// TODO: router.
+// - login, just give a name? should we use cookies though?
+// - list threads, create a new thread, write messages.
+// - notifications for others.
+// - realtime updates.
+// - offline tolerance
+// 	 - transaction queue, offline cache
+//   - service worker for caching the assets.
+
 // // Build the environment.
 // let initialGame = newGame()
 // try {
