@@ -1,6 +1,6 @@
 import cpx from "cpx"
 import { build } from "estrella"
-import { path } from "./path"
+import { path } from "../server/path"
 
 const watch = process.argv.includes("--watch")
 const cmd = watch ? "watch" : "copy"

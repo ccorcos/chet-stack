@@ -4,7 +4,6 @@
 - cookies and auth basics
 
 - tools -> server
-- app -> client
 - import assertions, no importing server from app, etc.
 
 - morgan logging and helmet

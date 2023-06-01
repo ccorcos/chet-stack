@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"watch": "tsx src/tools/build.ts --watch",
-		"server": "tsx src/tools/server.ts",
+		"server": "tsx src/server/server.ts",
 		"start": "run-p watch server",
 		"clean": "rm -rf build",
 		"build": "tsx src/tools/build.ts",
