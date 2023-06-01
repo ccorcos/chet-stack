@@ -1,21 +1,27 @@
 import injectLiveReload from "connect-livereload"
 import express from "express"
+import http from "http"
 import livereload from "livereload"
 import { api } from "./api"
 import { JsonDatabase } from "./JsonDatabase"
 import { path } from "./path"
 import { ServerEnvironment } from "./ServerEnvironment"
+import { WebsocketPubsub } from "./WebsocketPubsub"
 
 // Turn on request logging.
 // https://expressjs.com/en/guide/debugging.html
 process.env.DEBUG = "express:*"
 
-// Setup the server environment. This thing gets passed around everywhere.
+const app = express()
+const server = http.createServer(app)
+
+// Setup the server environment. This thing gets passed around everywhere and defines
+// the interface between differnet services so we can swap out things like the
+// database or the pubsub service with minimal plumbing.
 const environment: ServerEnvironment = {
 	db: new JsonDatabase(),
+	pubsub: new WebsocketPubsub(server),
 }
-
-const app = express()
 
 // Injects into the html file so the browser reloads when files change.
 app.use(injectLiveReload())
@@ -38,4 +44,8 @@ for (const [name, { validate, action }] of Object.entries(api)) {
 
 // Fallback to HTML for client-side routing to work.
 app.use("*", express.static(path("build/index.html")))
-app.listen(8080, () => console.log("Listening: http://localhost:8080"))
+
+// TODO: configure port, also https?
+// https.createServer(options, app).listen(443)
+
+server.listen(8080, () => console.log("Listening: http://localhost:8080"))

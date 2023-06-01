@@ -64,6 +64,18 @@ export async function write(
 
 	await environment.db.write(records)
 
+	// It is possible to return before successfully publishing version updates.
+	// setImmediate(async () => {
+	// This is also not bulletproof in terms of concurrency, but that's fine because
+	// an out-of-order version publication will be ignored since it will be lower.
+	await environment.pubsub.publish(
+		records.map(({ table, id, record: { version } }) => ({
+			key: [table, id].join(":"),
+			value: version,
+		}))
+	)
+	// })
+
 	// Return records because they might contain data from another user.
 	return { recordMap }
 }
