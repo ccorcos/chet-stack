@@ -2,10 +2,8 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { UserRecord } from "../shared/schema"
 import { createClientApi } from "./api"
-import {
-	ClientEnvironment,
-	ClientEnvironmentProvider,
-} from "./ClientEnvironment"
+import { App } from "./App"
+import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
 import { RecordCache } from "./RecordCache"
 
 type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
@@ -41,7 +39,7 @@ document.body.appendChild(root)
 
 ReactDOM.render(
 	<ClientEnvironmentProvider value={environment}>
-		<div>Hello world</div>
+		<App />
 	</ClientEnvironmentProvider>,
 	root
 )

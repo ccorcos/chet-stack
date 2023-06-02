@@ -4,8 +4,8 @@
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
 	"scripts": {
-		"watch": "tsx src/tools/build.ts --watch",
-		"server": "tsx src/server/server.ts",
+		"watch": "tsx watch src/tools/build.ts",
+		"server": "tsx watch src/server/server.ts",
 		"start": "run-p watch server",
 		"clean": "rm -rf build",
 		"build": "tsx src/tools/build.ts",

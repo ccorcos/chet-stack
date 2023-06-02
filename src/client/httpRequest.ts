@@ -1,12 +1,7 @@
-export type HttpResponse<Body = any> =
-	| { status: 200; body: Body }
-	| { status: number; body?: any }
+export type HttpResponse<Body = any> = { status: 200; body: Body } | { status: number; body?: any }
 
 // Only POST requests for now because this is only used for the API.
-export async function httpRequest(
-	url: string,
-	args: any
-): Promise<HttpResponse> {
+export async function httpRequest(url: string, args: any): Promise<HttpResponse> {
 	let response: Response
 	try {
 		response = await fetch(url, {
@@ -27,7 +22,7 @@ export async function httpRequest(
 
 	let body: any
 	try {
-		body = response.json()
+		body = await response.json()
 	} catch (error) {
 		console.warn("Could not parse body of error response.")
 	}

@@ -8,10 +8,7 @@ import type { ServerEnvironment } from "../ServerEnvironment"
 export const input = t.obj({ threadId: t.string })
 
 // The actual api method.
-export async function getMessages(
-	environment: ServerEnvironment,
-	args: typeof input.value
-) {
+export async function getMessages(environment: ServerEnvironment, args: typeof input.value) {
 	const { db } = environment
 	const { threadId } = args
 

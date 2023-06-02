@@ -26,8 +26,19 @@ export class JsonDatabase implements DatabaseApi {
 		}
 	}
 
-	async getUser(userId: string) {
+	async getUserById(userId: string) {
 		return this.data.user?.[userId]
+	}
+
+	async getUserByUsername(username: string) {
+		for (const user of Object.values(this.data.user || {})) {
+			if (!user) continue
+			if (user.username === username) return user
+		}
+	}
+
+	async getPassword(userId: string) {
+		return this.data.password?.[userId]
 	}
 
 	async getThreads(): Promise<ThreadRecord[]> {
@@ -55,12 +66,9 @@ export class JsonDatabase implements DatabaseApi {
 		// First, lets assert that the previous version lines up transactionally.
 		for (const { table, id, record } of records) {
 			const pointer = { table, id } as RecordPointer
-			const current = getRecordMap(this.data, pointer) as
-				| RecordValue
-				| undefined
+			const current = getRecordMap(this.data, pointer) as RecordValue | undefined
 
-			if (current && current.version !== record.last_version)
-				throw new TransactionConflictError()
+			if (current && current.version !== record.last_version) throw new TransactionConflictError()
 		}
 
 		// No transaction conflict so lets update.
@@ -70,6 +78,7 @@ export class JsonDatabase implements DatabaseApi {
 		}
 
 		// Write the file.
+		fs.mkdirpSync(path.dirname(this.dbPath))
 		fs.writeJSONSync(this.dbPath, this.data)
 	}
 }
