@@ -1,17 +1,57 @@
 import { groupBy, mapValues } from "lodash"
-import React, { useState } from "react"
+import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
+import { RecordPointer, RecordTable } from "../shared/schema"
 import { useClientEnvironment } from "./ClientEnvironment"
 
 export function App() {
-	return <Login />
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<LoadApp />
+		</Suspense>
+	)
+}
+
+function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
+	const { cache, loader } = useClientEnvironment()
+	const promise = loader.loadRecord(pointer)
+	if (!promise.loaded) throw promise
+
+	const subscribe = useCallback(
+		(update: () => void) => {
+			return cache.addListener(pointer, update)
+		},
+		[pointer.table, pointer.id]
+	)
+
+	const getSnapshot = useCallback(() => {
+		return cache.getRecord(pointer)
+	}, [pointer.table, pointer.id])
+
+	const record = useSyncExternalStore(subscribe, getSnapshot)
+
+	return record
 }
 
 function parseCookies(cookie: string) {
-	console.log(1, cookie)
 	const entries = cookie.split(";").map((line) => line.split("="))
 	const grouped = groupBy(entries, (entry) => entry[0])
 	const cookies = mapValues(grouped, (entries) => entries.map((entry) => entry[1]))
 	return cookies
+}
+
+function LoadApp() {
+	// Parse cookies.
+	const cookies = parseCookies(document.cookie)
+	const userId = cookies.userId?.[0]
+	if (!userId) return <Login />
+	else return <LoadUser userId={userId} />
+}
+
+function LoadUser(props: { userId: string }) {
+	// TODO: not sure why typescript is being annoying.
+	const user = useRecord<"user">({ table: "user", id: props.userId })
+	if (!user) throw new Error("Could not load user.")
+	return <div>Hello {user.username}</div>
 }
 
 function Login() {
@@ -20,11 +60,6 @@ function Login() {
 	const [error, setError] = useState("")
 
 	const { api } = useClientEnvironment()
-
-	// Parse cookies.
-	const cookies = parseCookies(document.cookie)
-	const userId = cookies.userId?.[0]
-	console.log("HERE", cookies, userId)
 
 	return (
 		<form

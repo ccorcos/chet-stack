@@ -5,6 +5,7 @@ import { createClientApi } from "./api"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
 import { RecordCache } from "./RecordCache"
+import { RecordLoader } from "./RecordLoader"
 
 type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
@@ -31,7 +32,8 @@ type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
 const cache = new RecordCache()
 const api = createClientApi({ cache })
-const environment: ClientEnvironment = { cache, api }
+const loader = new RecordLoader({ api })
+const environment: ClientEnvironment = { cache, api, loader }
 
 // Render the app.
 const root = document.createElement("div")

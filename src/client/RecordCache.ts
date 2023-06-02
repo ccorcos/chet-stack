@@ -10,17 +10,23 @@ import {
 	iterateRecordMap,
 	setRecordMap,
 } from "../shared/recordMapHelpers"
-import { RecordMap, RecordPointer, RecordValue } from "../shared/schema"
+import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
 
 type RecordListener = () => void
 
 export type RecordCacheApi = {
+	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined
 	addListener(pointer: RecordPointer, fn: RecordListener): () => void
 	updateRecordMap(recordMap: RecordMap): void
 }
 
 export class RecordCache implements RecordCacheApi {
 	recordMap: RecordMap = {}
+
+	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
+		// @ts-ignore
+		return getRecordMap(this.recordMap, pointer)
+	}
 
 	listeners: { [table: string]: { [id: string]: Set<RecordListener> } } = {}
 	addListener(pointer: RecordPointer, fn: RecordListener): () => void {

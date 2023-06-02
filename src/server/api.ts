@@ -1,5 +1,6 @@
 import type { Request, Response } from "express"
 import { getMessagesApi } from "./apis/getMessages"
+import { getRecordsApi } from "./apis/getRecords"
 import { getThreadsApi } from "./apis/getThreads"
 import { loginApi } from "./apis/login"
 import { writeApi } from "./apis/write"
@@ -16,4 +17,5 @@ export const api = {
 	getThreads: getThreadsApi,
 	write: writeApi,
 	login: loginApi,
+	getRecords: getRecordsApi,
 }
