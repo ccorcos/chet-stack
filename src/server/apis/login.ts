@@ -77,7 +77,7 @@ export async function login(
 		secure: config.production,
 		httpOnly: true, // Not visible on the client so not accessible via JS.
 		expires: expiration,
-		domain: config.domain,
+		domain: config.production ? config.domain : undefined,
 	})
 
 	// Set the current logged in userId so the client knows.
@@ -85,7 +85,7 @@ export async function login(
 		secure: config.production,
 		httpOnly: false, // Visible on the client
 		expires: expiration,
-		domain: config.domain,
+		domain: config.production ? config.domain : undefined,
 	})
 
 	await write(environment, { authorId: config.adminUserId, operations })

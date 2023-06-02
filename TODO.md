@@ -1,4 +1,7 @@
 
+- server and client watch
+- source maps
+
 - client api requests
 - client pubsub
 - cookies and auth basics

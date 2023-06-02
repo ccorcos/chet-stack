@@ -1,8 +1,17 @@
+import { groupBy, mapValues } from "lodash"
 import React, { useState } from "react"
 import { useClientEnvironment } from "./ClientEnvironment"
 
 export function App() {
 	return <Login />
+}
+
+function parseCookies(cookie: string) {
+	console.log(1, cookie)
+	const entries = cookie.split(";").map((line) => line.split("="))
+	const grouped = groupBy(entries, (entry) => entry[0])
+	const cookies = mapValues(grouped, (entries) => entries.map((entry) => entry[1]))
+	return cookies
 }
 
 function Login() {
@@ -11,6 +20,11 @@ function Login() {
 	const [error, setError] = useState("")
 
 	const { api } = useClientEnvironment()
+
+	// Parse cookies.
+	const cookies = parseCookies(document.cookie)
+	const userId = cookies.userId?.[0]
+	console.log("HERE", cookies, userId)
 
 	return (
 		<form
