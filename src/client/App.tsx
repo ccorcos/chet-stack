@@ -194,6 +194,7 @@ function NewMessageInput(props: { userId: string; threadId: string }) {
 	return (
 		<input
 			type="text"
+			placeholder="New message..."
 			value={text}
 			onChange={(e) => setText(e.target.value)}
 			onKeyDown={(e) => {

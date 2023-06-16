@@ -1,39 +1,30 @@
 
-- subscribe record.
-- pubsub
-- client garbage collection
+- threads with multiple members.
+- subscribe to record updates.
 
-- threads and messages with no joins yet.
+- client garbage collection.
+- actual offline caching.
+	- record cache and transaction queue
 
+- proper joins for querying threads and messages
+- permissions checking
 
+- undo/redo
+- better typescript types.
 
-
-- list threads
-- new thread
-- send a message
-
-
-
+---
 
 - server and client watch
 - source maps
 
-- client api requests
-- cookies and auth basics
-
-- tools -> server
 - import assertions, no importing server from app, etc.
-
 - morgan logging and helmet
 
-- permissions
-- client optimistic updates
 - client offline
-- client undo/redo
 
 - recordMapHelpers types.
 
-
+---
 
 Sometime much later...
 - rate limiting
