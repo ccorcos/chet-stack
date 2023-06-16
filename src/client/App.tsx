@@ -107,7 +107,7 @@ function LoadUser(props: { userId: string }) {
 			<div style={{ width: 200, display: "flex", flexDirection: "column" }}>
 				<button onClick={onNewThread}>New Thread</button>
 				{threadIds.map((id) => (
-					<ThreadItem threadId={id} selected={id === thread} />
+					<ThreadItem threadId={id} selected={id === thread} onClick={() => setThread(id)} />
 				))}
 			</div>
 			<div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -146,18 +146,76 @@ function ThreadSubjectInput(props: { userId: string; threadId: string }) {
 	)
 }
 
-function ThreadItem(props: { threadId: string; selected: boolean }) {
+function NewMessageInput(props: { userId: string; threadId: string }) {
+	const { transactionQueue } = useClientEnvironment()
+
+	const [text, setText] = useState("")
+
+	const onSubmit = () => {
+		const messageId = window.crypto.randomUUID()
+		transactionQueue.enqueue({
+			authorId: props.userId,
+			operations: [
+				{
+					type: "set",
+					table: "message",
+					id: messageId,
+					key: [],
+					value: {
+						id: messageId,
+						version: 0,
+						author_id: props.userId,
+						thread_id: props.threadId,
+						created_at: new Date().toISOString(),
+						updated_at: new Date().toISOString(),
+						text: text,
+					},
+				},
+				{
+					type: "insert",
+					table: "thread",
+					id: props.threadId,
+					key: ["message_ids"],
+					value: messageId,
+					where: "append",
+				},
+				{
+					type: "set",
+					table: "thread",
+					id: props.threadId,
+					key: ["replied_at"],
+					value: new Date().toISOString(),
+				},
+			],
+		})
+		setText("")
+	}
+
+	return (
+		<input
+			type="text"
+			value={text}
+			onChange={(e) => setText(e.target.value)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" && text !== "") onSubmit()
+			}}
+		/>
+	)
+}
+
+function ThreadItem(props: { threadId: string; selected: boolean; onClick: () => void }) {
 	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	return (
 		<div
+			onClick={props.onClick}
 			style={{
 				border: props.selected ? "2px solid blue" : "2px solid transparent",
 				boxSizing: "border-box",
 			}}
 		>
-			Thread: {thread.subject}
+			{thread.subject}
 		</div>
 	)
 }
@@ -173,6 +231,7 @@ function ThreadMessages(props: { userId: string; threadId: string }) {
 			{messages.map((id) => (
 				<Message messageId={id} />
 			))}
+			<NewMessageInput threadId={thread.id} userId={props.userId} />
 		</>
 	)
 }
