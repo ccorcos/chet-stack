@@ -6,6 +6,7 @@ import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
 import { RecordCache } from "./RecordCache"
 import { RecordLoader } from "./RecordLoader"
+import { TransactionQueue } from "./TransactionQueue"
 
 type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 
@@ -33,7 +34,8 @@ type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 const cache = new RecordCache()
 const api = createClientApi({ cache })
 const loader = new RecordLoader({ api })
-const environment: ClientEnvironment = { cache, api, loader }
+const transactionQueue = new TransactionQueue({ cache, api })
+const environment: ClientEnvironment = { cache, api, loader, transactionQueue }
 
 // Render the app.
 const root = document.createElement("div")

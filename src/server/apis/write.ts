@@ -1,10 +1,9 @@
 import * as t from "data-type-ts"
-import { cloneDeep, isEqual, set, uniqWith, update } from "lodash"
-import { getRecordMap, setRecordMap } from "../../shared/recordMapHelpers"
-import type { RecordMap, RecordPointer, RecordWithTable } from "../../shared/schema"
-import { InsertOperation, Operation, SetOperation, Transaction } from "../../shared/transaction"
+import { cloneDeep, isEqual, uniqWith } from "lodash"
+import { getRecordMap } from "../../shared/recordMapHelpers"
+import type { RecordPointer, RecordWithTable } from "../../shared/schema"
+import { applyOperation, Transaction } from "../../shared/transaction"
 import type { ApiEndpoint } from "../api"
-import { ValidationError } from "../errors"
 import type { ServerEnvironment } from "../ServerEnvironment"
 
 export const input = t.obj<Transaction>({
@@ -79,91 +78,3 @@ export const writeApi: ApiEndpoint = {
 	},
 	action: write,
 }
-
-function applyOperation(recordMap: RecordMap, operation: Operation) {
-	if (operation.type === "set") return applySetOperation(recordMap, operation)
-	if (operation.type === "insert") return applyInsertOperation(recordMap, operation)
-	// if (operation.type === "remove") return applyRemoveOperation(recordMap, operation)
-	throw new ValidationError("Unknown operation type.")
-}
-
-function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
-	const { table, id } = operation
-	const pointer = { table, id } as RecordPointer
-
-	const record: any = getRecordMap(recordMap, pointer)
-
-	if (!record) {
-		if (operation.key.length !== 0) throw new ValidationError("Record does not exist.")
-
-		const record = { ...operation.value, version: 1 }
-		setRecordMap(recordMap, pointer, record)
-		return
-	}
-
-	const newRecord = cloneDeep(record)
-	set(newRecord, operation.key, operation.value)
-	newRecord.version += 1
-}
-
-function applyInsertOperation(recordMap: RecordMap, operation: InsertOperation) {
-	const { table, id, value, where } = operation
-	const pointer = { table, id } as RecordPointer
-
-	const record: any = getRecordMap(recordMap, pointer)
-	if (!record) throw new ValidationError("Record does not exist.")
-
-	const newRecord = cloneDeep(record)
-	update(newRecord, operation.key, (list) => {
-		if (list === null || list === undefined) {
-			return [value]
-		}
-		if (Array.isArray(list)) {
-			if (where === "prepend") {
-				return [value, ...list]
-			}
-			if (where === "append") {
-				return [...list, value]
-			}
-			if ("before" in where) {
-				const i = indexOf(list, where.before)
-				if (i === -1) return [value, ...list]
-				return [...list.slice(0, i), value, ...list.slice(i)]
-			}
-			if ("after" in where) {
-				const i = indexOf(list, where.after)
-				if (i === -1) return [...list, value]
-				return [...list.slice(0, i + 1), value, ...list.slice(i + 1)]
-			}
-		}
-		throw new ValidationError("Cannot insert on a non-list.")
-	})
-	newRecord.version += 1
-}
-
-function indexOf<T>(list: T[], value: T) {
-	for (let i = 0; i < list.length; i++) {
-		if (isEqual(list[i], value)) return i
-	}
-	return -1
-}
-
-// function applyRemoveOperation(recordMap: RecordMap, operation: RemoveOperation) {
-// 	const { table, id } = operation
-// 	const pointer = { table, id } as RecordPointer
-
-// 	const record: any = getRecordMap(recordMap, pointer)
-// 	if (!record) throw new ValidationError("Record does not exist.")
-
-// 	const newRecord = cloneDeep(record)
-// 	update(newRecord, operation.key, (list) => {
-// 		if (list === null || list === undefined) {
-// 			return list
-// 		}
-// 		if (Array.isArray(list)) {
-// 			return list.filter((item) => !isEqual(item, value))
-// 		}
-// 		throw new ValidationError("Cannot remove on a non-list.")
-// 	})
-// 	newRecord.version += 1
-// }

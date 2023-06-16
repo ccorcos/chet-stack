@@ -1,6 +1,7 @@
 import { groupBy, mapValues } from "lodash"
 import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
 import { RecordPointer, RecordTable } from "../shared/schema"
+import { op, Transaction } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
 
 export function App() {
@@ -54,6 +55,8 @@ function LoadApp() {
 }
 
 function LoadUser(props: { userId: string }) {
+	const environment = useClientEnvironment()
+
 	// TODO: not sure why typescript is being annoying.
 	const user = useRecord<"user">({ table: "user", id: props.userId })
 	if (!user) throw new Error("Could not load user.")
@@ -65,9 +68,44 @@ function LoadUser(props: { userId: string }) {
 
 	const threadIds = userSettings.thread_ids || []
 
+	const onNewThread = () => {
+		const id = window.crypto.randomUUID()
+
+		const transction: Transaction = {
+			authorId: user.id,
+			operations: [
+				// Operation to create the thread
+				op.create("thread", {
+					id,
+					version: 0,
+					member_ids: [],
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+					replied_at: new Date().toISOString(),
+					subject: "New Thread",
+				}),
+				// Operation to add the threadId to the user's list
+				{
+					type: "insert",
+					table: "user_settings",
+					id: user.id,
+					key: ["thread_ids"],
+					value: id,
+					where: "append",
+				},
+			],
+		}
+		// Write to the transaction queue.
+		environment.transactionQueue.enqueue(transction).catch(console.error)
+
+		// Set this as the current thread.
+		setThread(id)
+	}
+
 	return (
 		<div style={{ display: "flex" }}>
 			<div style={{ width: 200, display: "flex", flexDirection: "column" }}>
+				<button onClick={onNewThread}>New Thread</button>
 				{threadIds.map((id) => (
 					<ThreadItem threadId={id} selected={id === thread} />
 				))}
@@ -90,7 +128,7 @@ function ThreadItem(props: { threadId: string; selected: boolean }) {
 				boxSizing: "border-box",
 			}}
 		>
-			{thread.subject}
+			Thread: {thread.subject}
 		</div>
 	)
 }
@@ -102,6 +140,7 @@ function ThreadMessages(props: { threadId: string }) {
 	const messages = thread.message_ids || []
 	return (
 		<>
+			<div>Thread: {thread.subject}</div>
 			{messages.map((id) => (
 				<Message messageId={id} />
 			))}

@@ -1,4 +1,5 @@
 import * as fs from "fs-extra"
+import { TransactionConflictError } from "../shared/errors"
 import { getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
 import {
 	RecordMap,
@@ -9,7 +10,6 @@ import {
 	TableToRecord,
 } from "../shared/schema"
 import { DatabaseApi } from "./database"
-import { TransactionConflictError } from "./errors"
 import { path } from "./path"
 
 export class JsonDatabase implements DatabaseApi {

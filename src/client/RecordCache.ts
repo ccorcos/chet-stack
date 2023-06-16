@@ -40,12 +40,12 @@ export class RecordCache implements RecordCacheApi {
 		}
 	}
 
-	updateRecordMap(recordMap: RecordMap) {
+	updateRecordMap(recordMap: RecordMap, force = false) {
 		// Update only if they're new versions.
 		const updates: RecordPointer[] = []
 		for (const { table, id, record } of iterateRecordMap(recordMap)) {
 			const existing = getRecordMap(this.recordMap, { table, id }) as RecordValue | undefined
-			if (!existing || existing.version < record.version) {
+			if (force || !existing || existing.version < record.version) {
 				setRecordMap(this.recordMap, { table, id }, record)
 				updates.push({ table, id })
 			}

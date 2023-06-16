@@ -50,12 +50,20 @@ app.get("/logout", async (req, res) => {
 	const authTokenId = req.cookies.authToken
 	if (!authTokenId) return res.redirect("/")
 
-	await write(environment, {
-		authorId: environment.config.adminUserId,
-		operations: [
-			op.update<"auth_token", "deleted">({ table: "auth_token", id: authTokenId }, "deleted", true),
-		],
-	})
+	try {
+		await write(environment, {
+			authorId: environment.config.adminUserId,
+			operations: [
+				op.update<"auth_token", "deleted">(
+					{ table: "auth_token", id: authTokenId },
+					"deleted",
+					true
+				),
+			],
+		})
+	} catch (error) {
+		console.error("Invalid auth token?")
+	}
 
 	res.clearCookie("authToken")
 	res.clearCookie("userId")
