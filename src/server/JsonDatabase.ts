@@ -1,13 +1,12 @@
 import * as fs from "fs-extra"
-import { compact, sortBy } from "lodash"
 import { getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
 import {
-	MessageRecord,
 	RecordMap,
 	RecordPointer,
+	RecordTable,
 	RecordValue,
 	RecordWithTable,
-	ThreadRecord,
+	TableToRecord,
 } from "../shared/schema"
 import { DatabaseApi } from "./database"
 import { TransactionConflictError } from "./errors"
@@ -26,6 +25,23 @@ export class JsonDatabase implements DatabaseApi {
 		}
 	}
 
+	async getRecord<T extends RecordTable>(
+		pointer: RecordPointer<T>
+	): Promise<TableToRecord[T] | undefined> {
+		const record = getRecordMap(this.data, pointer)
+		// @ts-ignore
+		return record
+	}
+
+	async getRecords(pointers: RecordPointer[]): Promise<RecordMap> {
+		const recordMap: RecordMap = {}
+		for (const pointer of pointers) {
+			const record = getRecordMap(this.data, pointer)
+			if (record) setRecordMap(recordMap, pointer, record)
+		}
+		return recordMap
+	}
+
 	async getUserById(userId: string) {
 		return this.data.user?.[userId]
 	}
@@ -41,26 +57,17 @@ export class JsonDatabase implements DatabaseApi {
 		return this.data.password?.[userId]
 	}
 
-	async getThreads(): Promise<ThreadRecord[]> {
-		const threads = compact(Object.values(this.data.thread || {}))
-		return sortBy(threads, (thread) => thread.replied_at)
-	}
+	// async getThreads(): Promise<ThreadRecord[]> {
+	// 	const threads = compact(Object.values(this.data.thread || {}))
+	// 	return sortBy(threads, (thread) => thread.replied_at)
+	// }
 
-	async getMessages(threadId: string): Promise<MessageRecord[]> {
-		const messages = compact(Object.values(this.data.message || {})).filter(
-			(message) => message.thread_id === threadId
-		)
-		return sortBy(messages, (message) => message.created_at)
-	}
-
-	async getRecords(pointers: RecordPointer[]): Promise<RecordMap> {
-		const recordMap: RecordMap = {}
-		for (const pointer of pointers) {
-			const record = getRecordMap(this.data, pointer)
-			if (record) setRecordMap(recordMap, pointer, record)
-		}
-		return recordMap
-	}
+	// async getMessages(threadId: string): Promise<MessageRecord[]> {
+	// 	const messages = compact(Object.values(this.data.message || {})).filter(
+	// 		(message) => message.thread_id === threadId
+	// 	)
+	// 	return sortBy(messages, (message) => message.created_at)
+	// }
 
 	async write(records: RecordWithTable[]): Promise<void> {
 		// First, lets assert that the previous version lines up transactionally.

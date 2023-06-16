@@ -39,11 +39,17 @@ function parseCookies(cookie: string) {
 	return cookies
 }
 
+function useRerender() {
+	const [state, setState] = useState(0)
+	return () => setState((s) => s + 1)
+}
+
 function LoadApp() {
+	const rerender = useRerender()
 	// Parse cookies.
 	const cookies = parseCookies(document.cookie)
 	const userId = cookies.userId?.[0]
-	if (!userId) return <Login />
+	if (!userId) return <Login onLogin={rerender} />
 	else return <LoadUser userId={userId} />
 }
 
@@ -51,10 +57,80 @@ function LoadUser(props: { userId: string }) {
 	// TODO: not sure why typescript is being annoying.
 	const user = useRecord<"user">({ table: "user", id: props.userId })
 	if (!user) throw new Error("Could not load user.")
-	return <div>Hello {user.username}</div>
+
+	const userSettings = useRecord<"user_settings">({ table: "user_settings", id: props.userId })
+	if (!userSettings) throw new Error("Could not load user settings.")
+
+	const [thread, setThread] = useState<string | undefined>(userSettings.thread_ids?.[0])
+
+	const threadIds = userSettings.thread_ids || []
+
+	return (
+		<div style={{ display: "flex" }}>
+			<div style={{ width: 200, display: "flex", flexDirection: "column" }}>
+				{threadIds.map((id) => (
+					<ThreadItem threadId={id} selected={id === thread} />
+				))}
+			</div>
+			<div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+				{thread ? <ThreadMessages threadId={thread} /> : "Select a thread"}
+			</div>
+		</div>
+	)
 }
 
-function Login() {
+function ThreadItem(props: { threadId: string; selected: boolean }) {
+	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	if (!thread) throw new Error("Could not find thread.")
+
+	return (
+		<div
+			style={{
+				border: props.selected ? "2px solid blue" : "2px solid transparent",
+				boxSizing: "border-box",
+			}}
+		>
+			{thread.subject}
+		</div>
+	)
+}
+
+function ThreadMessages(props: { threadId: string }) {
+	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	if (!thread) throw new Error("Could not find thread.")
+
+	const messages = thread.message_ids || []
+	return (
+		<>
+			{messages.map((id) => (
+				<Message messageId={id} />
+			))}
+		</>
+	)
+}
+
+function Message(props: { messageId: string }) {
+	const message = useRecord<"message">({ table: "message", id: props.messageId })
+	if (!message) throw new Error("Could not find message.")
+
+	message.author_id
+	return (
+		<div>
+			<strong>
+				<Username userId={message.author_id} />:
+			</strong>
+			<span>{message.text}</span>
+		</div>
+	)
+}
+
+function Username(props: { userId: string }) {
+	const user = useRecord<"user">({ table: "user", id: props.userId })
+	if (!user) throw new Error("Could not find user.")
+	return <span>{user.username}</span>
+}
+
+function Login(props: { onLogin: () => void }) {
 	const [username, setUsername] = useState("")
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
@@ -69,7 +145,7 @@ function Login() {
 				const response = await api.login({ username, password })
 				console.log("HERE", response)
 				if (response.status !== 200) setError(response.body.message)
-				else setError("Worked!")
+				else props.onLogin()
 			}}
 		>
 			<input

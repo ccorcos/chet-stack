@@ -1,8 +1,11 @@
 import injectLiveReload from "connect-livereload"
+import cookieParser from "cookie-parser"
 import express from "express"
 import http from "http"
 import livereload from "livereload"
+import { op } from "../shared/transaction"
 import { api } from "./api"
+import { write } from "./apis/write"
 import { ConfigApi } from "./config"
 import { JsonDatabase } from "./JsonDatabase"
 import { path } from "./path"
@@ -41,6 +44,23 @@ livereload.createServer().watch(path("build"))
 
 // Server statis assets.
 app.use(express.static(path("build")))
+
+app.use(cookieParser())
+app.get("/logout", async (req, res) => {
+	const authTokenId = req.cookies.authToken
+	if (!authTokenId) return res.redirect("/")
+
+	await write(environment, {
+		authorId: environment.config.adminUserId,
+		operations: [
+			op.update<"auth_token", "deleted">({ table: "auth_token", id: authTokenId }, "deleted", true),
+		],
+	})
+
+	res.clearCookie("authToken")
+	res.clearCookie("userId")
+	return res.redirect("/")
+})
 
 // Register API endpoints.
 app.use(express.json())

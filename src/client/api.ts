@@ -2,7 +2,7 @@ import type { ApiTypes } from "../shared/ApiTypes"
 import { httpRequest } from "./httpRequest"
 import type { RecordCacheApi } from "./RecordCache"
 
-type ApiResponse<Body> = { status: 200; body: Body } | { status: number; body?: any }
+type ApiResponse<Body> = { status: 200; body: Body } | { status: Exclude<number, 200>; body?: any }
 
 export async function apiRequest<T extends keyof ApiTypes>(
 	environment: { cache: RecordCacheApi },

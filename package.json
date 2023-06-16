@@ -16,6 +16,7 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
+		"cookie-parser": "^1.4.6",
 		"data-type-ts": "^0.0.8",
 		"fs-extra": "^11.1.1",
 		"lodash": "^4.17.21",

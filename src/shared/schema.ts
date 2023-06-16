@@ -14,6 +14,17 @@ export type UserRecord = {
 	updated_at: string
 }
 
+export type UserSettingsRecord = {
+	id: string
+	version: number
+	last_version?: number
+	created_at: string
+	updated_at: string
+
+	// TODO: later, we'll use a join.
+	thread_ids?: string[]
+}
+
 export type PasswordRecord = {
 	id: string // same as userId
 	version: number
@@ -30,6 +41,7 @@ export type AuthTokenRecord = {
 	created_at: string
 	updated_at: string
 	expires_at: string
+	deleted?: boolean
 }
 
 export type ThreadRecord = {
@@ -41,6 +53,9 @@ export type ThreadRecord = {
 	updated_at: string
 	replied_at: string
 	subject: string
+
+	// TODO: later we'll use a join.
+	message_ids?: string[]
 }
 
 export type MessageRecord = {
@@ -56,6 +71,7 @@ export type MessageRecord = {
 
 export type TableToRecord = {
 	user: UserRecord
+	user_settings: UserSettingsRecord
 	thread: ThreadRecord
 	message: MessageRecord
 	password: PasswordRecord

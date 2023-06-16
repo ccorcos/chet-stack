@@ -1,9 +1,24 @@
 
+- subscribe record.
+- pubsub
+- client garbage collection
+
+- threads and messages with no joins yet.
+
+
+
+
+- list threads
+- new thread
+- send a message
+
+
+
+
 - server and client watch
 - source maps
 
 - client api requests
-- client pubsub
 - cookies and auth basics
 
 - tools -> server
@@ -13,7 +28,6 @@
 
 - permissions
 - client optimistic updates
-- client cache garbage collection
 - client offline
 - client undo/redo
 

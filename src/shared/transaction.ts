@@ -21,11 +21,10 @@ export type RemoveOperation = {
 	type: "remove"
 	table: string
 	id: string
-	key: string[]
-	value: any
 }
 
-export type Operation = SetOperation | InsertOperation | RemoveOperation
+export type Operation = SetOperation | InsertOperation
+// | RemoveOperation
 
 export type Transaction = { authorId: string; operations: Operation[] }
 
@@ -54,7 +53,17 @@ function updateOp<T extends RecordTable, K extends keyof Omit<TableToRecord[T], 
 	} as SetOperation
 }
 
+function removeOp<T extends RecordTable>(pointer: RecordPointer<T>) {
+	return {
+		type: "remove",
+		...pointer,
+	} as RemoveOperation
+}
+
 export const op = {
 	create: createOp,
 	update: updateOp,
+
+	// Deleting a record poses an issue with transactionality...
+	// remove: removeOp,
 }

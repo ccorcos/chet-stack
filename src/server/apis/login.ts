@@ -49,6 +49,16 @@ export async function login(
 		}
 		operations.push(op.create("user", user))
 
+		operations.push(
+			op.create("user_settings", {
+				id: user.id,
+				version: 0,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+				thread_ids: [],
+			})
+		)
+
 		// Create the password.
 		operations.push(
 			op.create("password", {
