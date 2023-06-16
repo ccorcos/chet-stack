@@ -91,7 +91,7 @@ function LoadUser(props: { userId: string }) {
 					id: user.id,
 					key: ["thread_ids"],
 					value: id,
-					where: "append",
+					where: "prepend",
 				},
 			],
 		}
@@ -111,9 +111,38 @@ function LoadUser(props: { userId: string }) {
 				))}
 			</div>
 			<div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-				{thread ? <ThreadMessages threadId={thread} /> : "Select a thread"}
+				{thread ? <ThreadMessages userId={user.id} threadId={thread} /> : "Select a thread"}
 			</div>
 		</div>
+	)
+}
+
+function ThreadSubjectInput(props: { userId: string; threadId: string }) {
+	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	if (!thread) throw new Error("Could not find thread.")
+
+	const { transactionQueue } = useClientEnvironment()
+
+	return (
+		<input
+			type="text"
+			value={thread.subject}
+			onChange={(e) => {
+				const newSubject = e.target.value
+				transactionQueue.enqueue({
+					authorId: props.userId,
+					operations: [
+						{
+							type: "set",
+							table: "thread",
+							id: props.threadId,
+							key: ["subject"],
+							value: newSubject,
+						},
+					],
+				})
+			}}
+		/>
 	)
 }
 
@@ -133,14 +162,14 @@ function ThreadItem(props: { threadId: string; selected: boolean }) {
 	)
 }
 
-function ThreadMessages(props: { threadId: string }) {
+function ThreadMessages(props: { userId: string; threadId: string }) {
 	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	const messages = thread.message_ids || []
 	return (
 		<>
-			<div>Thread: {thread.subject}</div>
+			<ThreadSubjectInput threadId={thread.id} userId={props.userId} />
 			{messages.map((id) => (
 				<Message messageId={id} />
 			))}
