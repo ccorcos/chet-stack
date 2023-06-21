@@ -21,7 +21,7 @@ export type UserSettingsRecord = {
 	created_at: string
 	updated_at: string
 
-	// TODO: later, we'll use a join.
+	// TODO: later we'll query threads based on member_ids.
 	thread_ids?: string[]
 }
 
@@ -54,7 +54,7 @@ export type ThreadRecord = {
 	replied_at: string
 	subject: string
 
-	// TODO: later we'll use a join.
+	// TODO: later we'll query messages based on thread_id.
 	message_ids?: string[]
 }
 

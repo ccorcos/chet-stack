@@ -6,11 +6,13 @@
 - actual offline caching.
 	- record cache and transaction queue
 
-- proper joins for querying threads and messages
+- proper where query for threads and messages
 - permissions checking
 
 - undo/redo
 - better typescript types.
+
+- queue tasks
 
 ---
 

@@ -8,6 +8,7 @@ import {
 	RecordValue,
 	RecordWithTable,
 	TableToRecord,
+	UserRecord,
 } from "../shared/schema"
 import { DatabaseApi } from "./database"
 import { path } from "./path"
@@ -55,6 +56,15 @@ export class JsonDatabase implements DatabaseApi {
 
 	async getPassword(userId: string) {
 		return this.data.password?.[userId]
+	}
+
+	async searchUsers(query: string): Promise<UserRecord[]> {
+		const users: UserRecord[] = []
+		for (const user of Object.values(this.data.user || {})) {
+			if (!user) continue
+			if (user.username.toLowerCase().indexOf(query.toLowerCase()) !== -1) users.push(user)
+		}
+		return users
 	}
 
 	// async getThreads(): Promise<ThreadRecord[]> {

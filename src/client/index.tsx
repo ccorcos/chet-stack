@@ -19,22 +19,11 @@ type AppState = { type: "logged-out" } | { type: "logged-in"; user: UserRecord }
 // 	 - transaction queue, offline cache
 //   - service worker for caching the assets.
 
-// // Build the environment.
-// let initialGame = newGame()
-// try {
-// 	const game = JSON.parse(localStorage.getItem("state")!)
-// 	if (game) initialGame = game
-// } catch (error) {}
-
-// const app = new AppState(initialGame)
-// app.addListener(() => {
-// 	localStorage.setItem("state", JSON.stringify(app.state))
-// })
-
 const cache = new RecordCache()
 const api = createClientApi({ cache })
 const loader = new RecordLoader({ api })
 const transactionQueue = new TransactionQueue({ cache, api })
+
 const environment: ClientEnvironment = { cache, api, loader, transactionQueue }
 
 // Render the app.

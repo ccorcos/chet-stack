@@ -3,6 +3,7 @@ import type { Request, Response } from "express"
 import { getRecordsApi } from "./apis/getRecords"
 // import { getThreadsApi } from "./apis/getThreads"
 import { loginApi } from "./apis/login"
+import { searchUsersApi } from "./apis/searchUsers"
 import { writeApi } from "./apis/write"
 import { ServerEnvironment } from "./ServerEnvironment"
 
@@ -18,4 +19,5 @@ export const api = {
 	write: writeApi,
 	login: loginApi,
 	getRecords: getRecordsApi,
+	searchUsers: searchUsersApi,
 }

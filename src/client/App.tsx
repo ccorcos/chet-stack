@@ -3,6 +3,7 @@ import React, { Suspense, useCallback, useState, useSyncExternalStore } from "re
 import { RecordPointer, RecordTable } from "../shared/schema"
 import { op, Transaction } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
+import { useAsync } from "./hooks/useAsync"
 
 export function App() {
 	return (
@@ -86,7 +87,7 @@ function LoadUser(props: { userId: string }) {
 				}),
 				// Operation to add the threadId to the user's list
 				{
-					type: "insert",
+					type: "listInsert",
 					table: "user_settings",
 					id: user.id,
 					key: ["thread_ids"],
@@ -113,6 +114,104 @@ function LoadUser(props: { userId: string }) {
 			<div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
 				{thread ? <ThreadMessages userId={user.id} threadId={thread} /> : "Select a thread"}
 			</div>
+		</div>
+	)
+}
+
+function UserLookup(props: { onSelect: (userId: string) => void }) {
+	const { api } = useClientEnvironment()
+
+	const [text, setText] = useState("")
+
+	const result = useAsync(api.searchUsers, [{ query: text }])
+
+	let error: string | undefined
+	let userIds: string[] = []
+	if (result) {
+		if (result.status !== 200) {
+			error = result.body.message
+		} else {
+			userIds = result.body.userIds
+		}
+	}
+
+	return (
+		<span>
+			<input
+				placeholder="Search user"
+				type="text"
+				value={text}
+				onChange={(e) => setText(e.target.value)}
+			/>
+			{error && <span style={{ color: "red" }}>{error}</span>}
+			{userIds.map((userId) => {
+				return (
+					<span
+						style={{ cursor: "pointer" }}
+						onClick={() => {
+							props.onSelect(userId)
+							setText("")
+						}}
+					>
+						<Username userId={userId} key={userId} />
+					</span>
+				)
+			})}
+		</span>
+	)
+}
+
+function ThreadMembersInput(props: { userId: string; threadId: string }) {
+	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	if (!thread) throw new Error("Could not find thread.")
+
+	const { transactionQueue } = useClientEnvironment()
+
+	return (
+		<div>
+			Members:
+			{thread.member_ids.map((userId) => {
+				return (
+					<span>
+						<Username userId={userId} key={userId} />
+						<button
+							onClick={() => {
+								transactionQueue.enqueue({
+									authorId: props.userId,
+									operations: [
+										{
+											type: "listRemove",
+											table: "thread",
+											id: props.threadId,
+											key: ["member_ids"],
+											value: userId,
+										},
+									],
+								})
+							}}
+						>
+							x
+						</button>
+					</span>
+				)
+			})}
+			<UserLookup
+				onSelect={(userId) => {
+					transactionQueue.enqueue({
+						authorId: props.userId,
+						operations: [
+							{
+								type: "listInsert",
+								table: "thread",
+								id: props.threadId,
+								key: ["member_ids"],
+								value: userId,
+								where: "append",
+							},
+						],
+					})
+				}}
+			/>
 		</div>
 	)
 }
@@ -172,7 +271,7 @@ function NewMessageInput(props: { userId: string; threadId: string }) {
 					},
 				},
 				{
-					type: "insert",
+					type: "listInsert",
 					table: "thread",
 					id: props.threadId,
 					key: ["message_ids"],
@@ -228,6 +327,7 @@ function ThreadMessages(props: { userId: string; threadId: string }) {
 	const messages = thread.message_ids || []
 	return (
 		<>
+			<ThreadMembersInput threadId={thread.id} userId={props.userId} />
 			<ThreadSubjectInput threadId={thread.id} userId={props.userId} />
 			{messages.map((id) => (
 				<Message messageId={id} />

@@ -16,6 +16,8 @@ export type DatabaseApi = {
 	getUserByUsername(username: string): Promise<UserRecord | undefined>
 	getPassword(userId: string): Promise<PasswordRecord | undefined>
 
+	searchUsers(query: string): Promise<UserRecord[]>
+
 	/** This should only get called by the write api. */
 	write(records: RecordWithTable[]): Promise<void>
 }

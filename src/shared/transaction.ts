@@ -11,23 +11,25 @@ export type SetOperation = {
 	value: any
 }
 
-export type InsertOperation = {
-	type: "insert"
+export type ListInsertOperation = {
+	type: "listInsert"
 	table: string
 	id: string
 	key: string[]
 	value: any
-	where: "prepend" | "append" | { before: any } | { after: any }
+	// Defaults to append
+	where?: "prepend" | "append" | { before: any } | { after: any }
 }
 
-export type RemoveOperation = {
-	type: "remove"
+export type ListRemoveOperation = {
+	type: "listRemove"
 	table: string
 	id: string
+	key: string[]
+	value: any
 }
 
-export type Operation = SetOperation | InsertOperation
-// | RemoveOperation
+export type Operation = SetOperation | ListInsertOperation | ListRemoveOperation
 
 export type Transaction = { authorId: string; operations: Operation[] }
 
@@ -56,25 +58,19 @@ function updateOp<T extends RecordTable, K extends keyof Omit<TableToRecord[T], 
 	} as SetOperation
 }
 
-function removeOp<T extends RecordTable>(pointer: RecordPointer<T>) {
-	return {
-		type: "remove",
-		...pointer,
-	} as RemoveOperation
-}
-
+// Helper functions to enforce better types.
+// TODO: doesnt work great.
 export const op = {
 	create: createOp,
 	update: updateOp,
-
-	// Deleting a record poses an issue with transactionality...
+	// insert: insertOp,
 	// remove: removeOp,
 }
 
 export function applyOperation(recordMap: RecordMap, operation: Operation) {
 	if (operation.type === "set") return applySetOperation(recordMap, operation)
-	if (operation.type === "insert") return applyInsertOperation(recordMap, operation)
-	// if (operation.type === "remove") return applyRemoveOperation(recordMap, operation)
+	if (operation.type === "listInsert") return applyListInsertOperation(recordMap, operation)
+	if (operation.type === "listRemove") return applyListRemoveOperation(recordMap, operation)
 	throw new ValidationError("Unknown operation type.")
 }
 
@@ -98,7 +94,7 @@ function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
 	setRecordMap(recordMap, pointer, newRecord)
 }
 
-function applyInsertOperation(recordMap: RecordMap, operation: InsertOperation) {
+function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOperation) {
 	const { table, id, value, where } = operation
 	const pointer = { table, id } as RecordPointer
 
@@ -111,11 +107,11 @@ function applyInsertOperation(recordMap: RecordMap, operation: InsertOperation) 
 			return [value]
 		}
 		if (Array.isArray(list)) {
+			if (where === undefined || where === "append") {
+				return [...list, value]
+			}
 			if (where === "prepend") {
 				return [value, ...list]
-			}
-			if (where === "append") {
-				return [...list, value]
 			}
 			if ("before" in where) {
 				const i = indexOf(list, where.before)
@@ -141,22 +137,23 @@ function indexOf<T>(list: T[], value: T) {
 	return -1
 }
 
-// function applyRemoveOperation(recordMap: RecordMap, operation: RemoveOperation) {
-// 	const { table, id } = operation
-// 	const pointer = { table, id } as RecordPointer
+function applyListRemoveOperation(recordMap: RecordMap, operation: ListRemoveOperation) {
+	const { table, id, value } = operation
+	const pointer = { table, id } as RecordPointer
 
-// 	const record: any = getRecordMap(recordMap, pointer)
-// 	if (!record) throw new ValidationError("Record does not exist.")
+	const record: any = getRecordMap(recordMap, pointer)
+	if (!record) throw new ValidationError("Record does not exist.")
 
-// 	const newRecord = cloneDeep(record)
-// 	update(newRecord, operation.key, (list) => {
-// 		if (list === null || list === undefined) {
-// 			return list
-// 		}
-// 		if (Array.isArray(list)) {
-// 			return list.filter((item) => !isEqual(item, value))
-// 		}
-// 		throw new ValidationError("Cannot remove on a non-list.")
-// 	})
-// 	newRecord.version += 1
-// }
+	const newRecord = cloneDeep(record)
+	update(newRecord, operation.key, (list) => {
+		if (list === null || list === undefined) {
+			return list
+		}
+		if (Array.isArray(list)) {
+			return list.filter((item) => item !== value)
+		}
+		throw new ValidationError("Cannot remove from a non-list.")
+	})
+	newRecord.version += 1
+	setRecordMap(recordMap, pointer, newRecord)
+}

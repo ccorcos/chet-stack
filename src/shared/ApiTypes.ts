@@ -2,9 +2,10 @@
 // interface for interacting with the API from the app.
 
 // import type { getMessagesApiType } from "../server/apis/getMessages"
-import { getRecordsApiType } from "../server/apis/getRecords"
+import type { getRecordsApiType } from "../server/apis/getRecords"
 // import type { getThreadsApiType } from "../server/apis/getThreads"
 import type { loginApiType } from "../server/apis/login"
+import type { searchUsersApiType } from "../server/apis/searchUsers"
 import type { writeApiType } from "../server/apis/write"
 
 export type ApiTypes = {
@@ -13,4 +14,5 @@ export type ApiTypes = {
 	write: writeApiType
 	login: loginApiType
 	getRecords: getRecordsApiType
+	searchUsers: searchUsersApiType
 }
