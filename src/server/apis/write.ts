@@ -1,8 +1,8 @@
 import * as t from "data-type-ts"
-import { cloneDeep, isEqual, uniqWith } from "lodash"
+import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
 import { getRecordMap } from "../../shared/recordMapHelpers"
-import type { RecordPointer, RecordWithTable } from "../../shared/schema"
-import { applyOperation, Transaction } from "../../shared/transaction"
+import type { RecordPointer, RecordWithTable, ThreadRecord } from "../../shared/schema"
+import { applyOperation, Operation, Transaction } from "../../shared/transaction"
 import type { ApiEndpoint } from "../api"
 import type { ServerEnvironment } from "../ServerEnvironment"
 
@@ -50,17 +50,59 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 	await environment.db.write(records)
 
+	// TODO: ideally everything after this comment should be transactional but we can
+	// settle with eventually consistent.
+
 	// It is possible to return before successfully publishing version updates.
-	// setImmediate(async () => {
-	// This is also not bulletproof in terms of concurrency, but that's fine because
-	// an out-of-order version publication will be ignored since it will be lower.
-	await environment.pubsub.publish(
-		records.map(({ table, id, record: { version } }) => ({
-			key: [table, id].join(":"),
-			value: version,
-		}))
-	)
-	// })
+	setImmediate(() => {
+		// This is also not bulletproof in terms of concurrency, but that's fine because
+		// an out-of-order version publication will be ignored since it will be lower.
+		environment.pubsub.publish(
+			records.map(({ table, id, record: { version } }) => ({
+				key: [table, id].join(":"),
+				value: version,
+			}))
+		)
+	})
+
+	// Denormalization.
+	setImmediate(async () => {
+		const operations: Operation[] = []
+
+		for (const pointer of pointers) {
+			if (pointer.table !== "thread") continue
+			const prev = getRecordMap(originalRecordMap, pointer) as ThreadRecord | undefined
+			const next = getRecordMap(recordMap, pointer) as ThreadRecord | undefined
+
+			const prevMembers = prev ? prev.member_ids || [] : []
+			const nextMembers = next ? next.member_ids || [] : []
+
+			const addMembers = difference(nextMembers, prevMembers)
+			const removeMembers = difference(prevMembers, nextMembers)
+
+			for (const userId of addMembers) {
+				operations.push({
+					type: "listInsert",
+					table: "user_settings",
+					id: userId,
+					key: ["thread_ids"],
+					value: pointer.id,
+				})
+			}
+			for (const userId of removeMembers) {
+				operations.push({
+					type: "listRemove",
+					table: "user_settings",
+					id: userId,
+					key: ["thread_ids"],
+					value: pointer.id,
+				})
+			}
+		}
+
+		// TODO: retry on transaction conflict!
+		await write(environment, { authorId: environment.config.adminUserId, operations })
+	})
 
 	// Return records because they might contain data from another user.
 	return { recordMap }

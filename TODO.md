@@ -1,5 +1,5 @@
 
-- threads with multiple members.
+- queue task to add thead to user record
 - subscribe to record updates.
 
 - client garbage collection.
