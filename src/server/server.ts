@@ -53,7 +53,7 @@ app.get("/logout", async (req, res) => {
 			],
 		})
 	} catch (error) {
-		console.error("Invalid auth token?")
+		console.error("Invalid auth token.")
 	}
 
 	res.clearCookie("authToken")

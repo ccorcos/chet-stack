@@ -14,11 +14,9 @@ export function useAsync<T, Args extends any[]>(fn: (...args: Args) => Promise<T
 	if (!same) changeCount.current += 1
 
 	useEffect(() => {
-		console.log("call effect", JSON.stringify(args))
 		const currentCount = changeCount.current
 		currentFn.current(...args).then((result) => {
 			if (changeCount.current === currentCount) {
-				console.log("HERE")
 				setState(result)
 			}
 		})

@@ -6,14 +6,14 @@ import { ClientConfig } from "./ClientConfig"
 const debug = (...args: any[]) => console.log("WEBSOCKET:", ...args)
 
 export class WebsocketPubsubClient {
-	ws: WebSocket
-	ready = new DeferredPromise<void>()
+	private ws: WebSocket
+	private ready = new DeferredPromise<void>()
 
-	constructor(
-		environment: { config: ClientConfig },
+	constructor(args: {
+		config: ClientConfig
 		onChange: (pointer: RecordPointer, version: number) => void
-	) {
-		this.ws = new WebSocket(`ws://${environment.config.host}`)
+	}) {
+		this.ws = new WebSocket(`ws://${args.config.host}`)
 
 		this.ws.onopen = () => this.ready.resolve()
 
@@ -25,7 +25,7 @@ export class WebsocketPubsubClient {
 			const [table, id] = message.key.split(":")
 			const version = message.value
 			const pointer = { table, id } as RecordPointer
-			onChange(pointer, version)
+			args.onChange(pointer, version)
 		}
 
 		// TODO: reconnect, etc.

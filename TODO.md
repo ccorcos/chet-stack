@@ -1,12 +1,12 @@
 
-- subscribe to record updates.
-
 - client garbage collection.
 - actual offline caching.
 	- record cache and transaction queue
 
 - proper where query for threads and messages
 - permissions checking
+
+- react suspense flashing.
 
 - undo/redo
 - better typescript types.

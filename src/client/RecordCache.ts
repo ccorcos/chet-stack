@@ -11,7 +11,6 @@ import {
 	setRecordMap,
 } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
-import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
 type RecordListener = () => void
 
@@ -22,7 +21,12 @@ export type RecordCacheApi = {
 }
 
 export class RecordCache implements RecordCacheApi {
-	constructor(private environment: { subscriber: WebsocketPubsubClient }) {}
+	constructor(
+		private args: {
+			onSubscribe(pointer: RecordPointer): void
+			onUnsubscribe(pointer: RecordPointer): void
+		}
+	) {}
 
 	recordMap: RecordMap = {}
 
@@ -35,7 +39,7 @@ export class RecordCache implements RecordCacheApi {
 	addListener(pointer: RecordPointer, fn: RecordListener): () => void {
 		const listenerSet = getRecordMap(this.listeners, pointer) || new Set()
 		if (listenerSet.size === 0) {
-			this.environment.subscriber.subscribe(pointer)
+			this.args.onSubscribe(pointer)
 		}
 		listenerSet.add(fn)
 		setRecordMap(this.listeners, pointer, listenerSet)
@@ -44,7 +48,7 @@ export class RecordCache implements RecordCacheApi {
 			listenerSet.delete(fn)
 			if (listenerSet.size === 0) {
 				deleteRecordMap(this.listeners, pointer)
-				this.environment.subscriber.unsubscribe(pointer)
+				this.args.onUnsubscribe(pointer)
 			}
 		}
 	}

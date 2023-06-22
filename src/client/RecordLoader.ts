@@ -1,6 +1,5 @@
-import { getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
+import { deleteRecordMap, getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
 import { RecordPointer, RecordTable } from "../shared/schema"
-import { ClientApi } from "./api"
 
 class Loader<T> extends Promise<T> {
 	public loaded = false
@@ -31,19 +30,19 @@ export type RecordLoaderApi = {
 }
 
 export class RecordLoader {
-	constructor(private environment: { api: ClientApi }) {}
+	constructor(private args: { onFetchRecord: (pointer: RecordPointer) => Promise<void> }) {}
 
-	loaderMap: { [table: string]: { [id: string]: Loader<void> } } = {}
+	private loaderMap: { [table: string]: { [id: string]: Loader<void> } } = {}
+
+	unloadRecord(pointer: RecordPointer) {
+		deleteRecordMap(this.loaderMap, pointer)
+	}
 
 	loadRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 		const loader = getRecordMap(this.loaderMap, pointer)
 		if (loader && !loader.error) return loader
 
-		const newLoader = Loader.wrap(
-			this.environment.api.getRecords({ pointers: [pointer] }).then((response) => {
-				if (response.status !== 200) throw new Error("API error: " + response.status)
-			})
-		)
+		const newLoader = Loader.wrap(this.args.onFetchRecord(pointer))
 		setRecordMap(this.loaderMap, pointer, newLoader)
 		return newLoader
 	}

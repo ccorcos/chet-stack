@@ -107,6 +107,9 @@ function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOpe
 			return [value]
 		}
 		if (Array.isArray(list)) {
+			// Disallow duplicate items in a list.
+			list = list.filter((item) => item !== value)
+
 			if (where === undefined || where === "append") {
 				return [...list, value]
 			}
