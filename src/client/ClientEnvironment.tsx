@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from "react"
 import type { ClientApi } from "./api"
+import { ClientConfig } from "./ClientConfig"
 import type { RecordCacheApi } from "./RecordCache"
 import type { RecordLoaderApi } from "./RecordLoader"
 import type { TransactionQueue } from "./TransactionQueue"
@@ -9,6 +10,7 @@ export type ClientEnvironment = {
 	loader: RecordLoaderApi
 	api: ClientApi
 	transactionQueue: TransactionQueue
+	config: ClientConfig
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

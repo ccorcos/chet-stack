@@ -888,7 +888,7 @@ function encode(input) {
  * @api public
  */
 function querystring(query) {
-  var parser = /([^=?#&]+)=?([^&]*)/g
+  var parser = /([^=?&]+)=?([^&]*)/g
     , result = {}
     , part;
 
@@ -943,8 +943,8 @@ function querystringify(obj, prefix) {
         value = '';
       }
 
-      key = encode(key);
-      value = encode(value);
+      key = encodeURIComponent(key);
+      value = encodeURIComponent(value);
 
       //
       // If we failed to encode the strings, we should bail out as we don't
@@ -1491,7 +1491,7 @@ module.exports = function required(port, protocol) {
 };
 
 },{}],12:[function(_dereq_,module,exports){
-(function (setImmediate,clearImmediate){(function (){
+(function (setImmediate,clearImmediate){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -1768,9 +1768,9 @@ Tick.prototype.end = Tick.prototype.destroy = function end() {
 Tick.Timer = Timer;
 module.exports = Tick;
 
-}).call(this)}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
+}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
 },{"millisecond":5,"timers":13}],13:[function(_dereq_,module,exports){
-(function (setImmediate,clearImmediate){(function (){
+(function (setImmediate,clearImmediate){
 var nextTick = _dereq_('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -1847,30 +1847,26 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this)}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
+}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
 },{"process/browser.js":7,"timers":13}],14:[function(_dereq_,module,exports){
-(function (global){(function (){
+(function (global){
 'use strict';
 
 var required = _dereq_('requires-port')
   , qs = _dereq_('querystringify')
-  , controlOrWhitespace = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/
-  , CRHTLF = /[\n\r\t]/g
   , slashes = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//
-  , port = /:\d+$/
-  , protocolre = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i
-  , windowsDriveLetter = /^[a-zA-Z]:/;
+  , protocolre = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\S\s]*)/i
+  , whitespace = '[\\x09\\x0A\\x0B\\x0C\\x0D\\x20\\xA0\\u1680\\u180E\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200A\\u202F\\u205F\\u3000\\u2028\\u2029\\uFEFF]'
+  , left = new RegExp('^'+ whitespace +'+');
 
 /**
- * Remove control characters and whitespace from the beginning of a string.
+ * Trim a given string.
  *
- * @param {Object|String} str String to trim.
- * @returns {String} A new string representing `str` stripped of control
- *     characters and whitespace from its beginning.
+ * @param {String} str String to trim.
  * @public
  */
 function trimLeft(str) {
-  return (str ? str : '').toString().replace(controlOrWhitespace, '');
+  return (str ? str : '').toString().replace(left, '');
 }
 
 /**
@@ -1888,13 +1884,13 @@ function trimLeft(str) {
 var rules = [
   ['#', 'hash'],                        // Extract from the back.
   ['?', 'query'],                       // Extract from the back.
-  function sanitize(address, url) {     // Sanitize what is left of the address
-    return isSpecial(url.protocol) ? address.replace(/\\/g, '/') : address;
+  function sanitize(address) {          // Sanitize what is left of the address
+    return address.replace('\\', '/');
   },
   ['/', 'pathname'],                    // Extract from the back.
   ['@', 'auth', 1],                     // Extract from the front.
   [NaN, 'host', undefined, 1, 1],       // Set left over value.
-  [/:(\d*)$/, 'port', undefined, 1],    // RegExp the back.
+  [/:(\d+)$/, 'port', undefined, 1],    // RegExp the back.
   [NaN, 'hostname', undefined, 1, 1]    // Set left over.
 ];
 
@@ -1955,24 +1951,6 @@ function lolcation(loc) {
 }
 
 /**
- * Check whether a protocol scheme is special.
- *
- * @param {String} The protocol scheme of the URL
- * @return {Boolean} `true` if the protocol scheme is special, else `false`
- * @private
- */
-function isSpecial(scheme) {
-  return (
-    scheme === 'file:' ||
-    scheme === 'ftp:' ||
-    scheme === 'http:' ||
-    scheme === 'https:' ||
-    scheme === 'ws:' ||
-    scheme === 'wss:'
-  );
-}
-
-/**
  * @typedef ProtocolExtract
  * @type Object
  * @property {String} protocol Protocol matched in the URL, in lowercase.
@@ -1984,58 +1962,17 @@ function isSpecial(scheme) {
  * Extract protocol information from a URL with/without double slash ("//").
  *
  * @param {String} address URL we want to extract from.
- * @param {Object} location
  * @return {ProtocolExtract} Extracted information.
  * @private
  */
-function extractProtocol(address, location) {
+function extractProtocol(address) {
   address = trimLeft(address);
-  address = address.replace(CRHTLF, '');
-  location = location || {};
-
   var match = protocolre.exec(address);
-  var protocol = match[1] ? match[1].toLowerCase() : '';
-  var forwardSlashes = !!match[2];
-  var otherSlashes = !!match[3];
-  var slashesCount = 0;
-  var rest;
-
-  if (forwardSlashes) {
-    if (otherSlashes) {
-      rest = match[2] + match[3] + match[4];
-      slashesCount = match[2].length + match[3].length;
-    } else {
-      rest = match[2] + match[4];
-      slashesCount = match[2].length;
-    }
-  } else {
-    if (otherSlashes) {
-      rest = match[3] + match[4];
-      slashesCount = match[3].length;
-    } else {
-      rest = match[4]
-    }
-  }
-
-  if (protocol === 'file:') {
-    if (slashesCount >= 2) {
-      rest = rest.slice(2);
-    }
-  } else if (isSpecial(protocol)) {
-    rest = match[4];
-  } else if (protocol) {
-    if (forwardSlashes) {
-      rest = rest.slice(2);
-    }
-  } else if (slashesCount >= 2 && isSpecial(location.protocol)) {
-    rest = match[4];
-  }
 
   return {
-    protocol: protocol,
-    slashes: forwardSlashes || isSpecial(protocol),
-    slashesCount: slashesCount,
-    rest: rest
+    protocol: match[1] ? match[1].toLowerCase() : '',
+    slashes: !!match[2],
+    rest: match[3]
   };
 }
 
@@ -2091,7 +2028,6 @@ function resolve(relative, base) {
  */
 function Url(address, location, parser) {
   address = trimLeft(address);
-  address = address.replace(CRHTLF, '');
 
   if (!(this instanceof Url)) {
     return new Url(address, location, parser);
@@ -2126,7 +2062,7 @@ function Url(address, location, parser) {
   //
   // Extract protocol information before running the instructions.
   //
-  extracted = extractProtocol(address || '', location);
+  extracted = extractProtocol(address || '');
   relative = !extracted.protocol && !extracted.slashes;
   url.slashes = extracted.slashes || relative && location.slashes;
   url.protocol = extracted.protocol || location.protocol || '';
@@ -2136,22 +2072,13 @@ function Url(address, location, parser) {
   // When the authority component is absent the URL starts with a path
   // component.
   //
-  if (
-    extracted.protocol === 'file:' && (
-      extracted.slashesCount !== 2 || windowsDriveLetter.test(address)) ||
-    (!extracted.slashes &&
-      (extracted.protocol ||
-        extracted.slashesCount < 2 ||
-        !isSpecial(url.protocol)))
-  ) {
-    instructions[3] = [/(.*)/, 'pathname'];
-  }
+  if (!extracted.slashes) instructions[3] = [/(.*)/, 'pathname'];
 
   for (; i < instructions.length; i++) {
     instruction = instructions[i];
 
     if (typeof instruction === 'function') {
-      address = instruction(address, url);
+      address = instruction(address);
       continue;
     }
 
@@ -2161,11 +2088,7 @@ function Url(address, location, parser) {
     if (parse !== parse) {
       url[key] = address;
     } else if ('string' === typeof parse) {
-      index = parse === '@'
-        ? address.lastIndexOf(parse)
-        : address.indexOf(parse);
-
-      if (~index) {
+      if (~(index = address.indexOf(parse))) {
         if ('number' === typeof instruction[2]) {
           url[key] = address.slice(0, index);
           address = address.slice(index + instruction[2]);
@@ -2210,14 +2133,6 @@ function Url(address, location, parser) {
   }
 
   //
-  // Default to a / for pathname if none exists. This normalizes the URL
-  // to always have a /
-  //
-  if (url.pathname.charAt(0) !== '/' && isSpecial(url.protocol)) {
-    url.pathname = '/' + url.pathname;
-  }
-
-  //
   // We should not add port numbers if they are already the default port number
   // for a given protocol. As the host also contains the port number we're going
   // override it with the hostname which contains no port number.
@@ -2231,24 +2146,13 @@ function Url(address, location, parser) {
   // Parse down the `auth` for the username and password.
   //
   url.username = url.password = '';
-
   if (url.auth) {
-    index = url.auth.indexOf(':');
-
-    if (~index) {
-      url.username = url.auth.slice(0, index);
-      url.username = encodeURIComponent(decodeURIComponent(url.username));
-
-      url.password = url.auth.slice(index + 1);
-      url.password = encodeURIComponent(decodeURIComponent(url.password))
-    } else {
-      url.username = encodeURIComponent(decodeURIComponent(url.auth));
-    }
-
-    url.auth = url.password ? url.username +':'+ url.password : url.username;
+    instruction = url.auth.split(':');
+    url.username = instruction[0] || '';
+    url.password = instruction[1] || '';
   }
 
-  url.origin = url.protocol !== 'file:' && isSpecial(url.protocol) && url.host
+  url.origin = url.protocol && url.host && url.protocol !== 'file:'
     ? url.protocol +'//'+ url.host
     : 'null';
 
@@ -2305,7 +2209,7 @@ function set(part, value, fn) {
     case 'host':
       url[part] = value;
 
-      if (port.test(value)) {
+      if (/:\d+$/.test(value)) {
         value = value.split(':');
         url.port = value.pop();
         url.hostname = value.join(':');
@@ -2331,23 +2235,8 @@ function set(part, value, fn) {
       }
       break;
 
-    case 'username':
-    case 'password':
-      url[part] = encodeURIComponent(value);
-      break;
-
-    case 'auth':
-      var index = value.indexOf(':');
-
-      if (~index) {
-        url.username = value.slice(0, index);
-        url.username = encodeURIComponent(decodeURIComponent(url.username));
-
-        url.password = value.slice(index + 1);
-        url.password = encodeURIComponent(decodeURIComponent(url.password));
-      } else {
-        url.username = encodeURIComponent(decodeURIComponent(value));
-      }
+    default:
+      url[part] = value;
   }
 
   for (var i = 0; i < rules.length; i++) {
@@ -2356,9 +2245,7 @@ function set(part, value, fn) {
     if (ins[4]) url[ins[1]] = url[ins[1]].toLowerCase();
   }
 
-  url.auth = url.password ? url.username +':'+ url.password : url.username;
-
-  url.origin = url.protocol !== 'file:' && isSpecial(url.protocol) && url.host
+  url.origin = url.protocol && url.host && url.protocol !== 'file:'
     ? url.protocol +'//'+ url.host
     : 'null';
 
@@ -2379,45 +2266,19 @@ function toString(stringify) {
 
   var query
     , url = this
-    , host = url.host
     , protocol = url.protocol;
 
   if (protocol && protocol.charAt(protocol.length - 1) !== ':') protocol += ':';
 
-  var result =
-    protocol +
-    ((url.protocol && url.slashes) || isSpecial(url.protocol) ? '//' : '');
+  var result = protocol + (url.slashes ? '//' : '');
 
   if (url.username) {
     result += url.username;
     if (url.password) result += ':'+ url.password;
     result += '@';
-  } else if (url.password) {
-    result += ':'+ url.password;
-    result += '@';
-  } else if (
-    url.protocol !== 'file:' &&
-    isSpecial(url.protocol) &&
-    !host &&
-    url.pathname !== '/'
-  ) {
-    //
-    // Add back the empty userinfo, otherwise the original invalid URL
-    // might be transformed into a valid one with `url.pathname` as host.
-    //
-    result += '@';
   }
 
-  //
-  // Trailing colon is removed from `url.host` when it is parsed. If it still
-  // ends with a colon, then add back the trailing colon that was removed. This
-  // prevents an invalid URL from being transformed into a valid one.
-  //
-  if (host[host.length - 1] === ':' || (port.test(url.hostname) && !url.port)) {
-    host += ':';
-  }
-
-  result += host + url.pathname;
+  result += url.host + url.pathname;
 
   query = 'object' === typeof url.query ? stringify(url.query) : url.query;
   if (query) result += '?' !== query.charAt(0) ? '?'+ query : query;
@@ -2440,7 +2301,7 @@ Url.qs = qs;
 
 module.exports = Url;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"querystringify":8,"requires-port":11}],15:[function(_dereq_,module,exports){
 'use strict';
 
@@ -3659,12 +3520,12 @@ Primus.EventEmitter = EventEmitter;
 // These libraries are automatically inserted at the server-side using the
 // Primus#library method.
 //
-Primus.prototype.client = function client(){var primus=this,socket;var Factory=__name(function factory(){if("undefined"!==typeof WebSocket)return WebSocket;if("undefined"!==typeof MozWebSocket)return MozWebSocket;try{return Primus.requires("ws")}catch(e){}return void 0},"factory")();if(!Factory)return primus.critical(new Error("Missing required `ws` module. Please run `npm install --save ws`"));primus.on("outgoing::open",__name(function opening(){primus.emit("outgoing::end");try{var options={protocol:primus.url.protocol==="ws+unix:"?"ws+unix:":"ws:",query:true};if(Factory.length===3){if("ws+unix:"===options.protocol){options.pathname="/"+primus.url.hostname+primus.url.pathname+":"+primus.pathname}primus.socket=socket=new Factory(primus.uri(options),[],primus.transport)}else{primus.socket=socket=new Factory(primus.uri(options));socket.binaryType="arraybuffer"}}catch(e){return primus.emit("error",e)}socket.onopen=primus.emits("incoming::open");socket.onerror=primus.emits("incoming::error");socket.onclose=primus.emits("incoming::end");socket.onmessage=primus.emits("incoming::data",__name(function parse(next,evt){next(void 0,evt.data)},"parse"))},"opening"));primus.on("outgoing::data",__name(function write(message){if(!socket||socket.readyState!==Factory.OPEN)return;try{socket.send(message)}catch(e){primus.emit("incoming::error",e)}},"write"));primus.on("outgoing::reconnect",__name(function reconnect(){primus.emit("outgoing::open")},"reconnect"));primus.on("outgoing::end",__name(function close(){if(!socket)return;socket.onerror=socket.onopen=socket.onclose=socket.onmessage=function(){};socket.close();socket=null},"close"))};
+Primus.prototype.client = function client(){var primus=this,socket;var Factory=__name(function factory(){if("undefined"!==typeof WebSocket)return WebSocket;if("undefined"!==typeof MozWebSocket)return MozWebSocket;try{return Primus.requires("ws")}catch(e){}return void 0},"factory")();if(!Factory)return primus.critical(new Error("Missing required `ws` module. Please run `npm install --save ws`"));primus.on("outgoing::open",__name(function opening(){primus.emit("outgoing::end");try{var options={protocol:primus.url.protocol==="ws+unix:"?"ws+unix:":"ws:",query:true};if(Factory.length===3){if("ws+unix:"===options.protocol){options.pathname=primus.url.pathname+":"+primus.pathname}primus.socket=socket=new Factory(primus.uri(options),[],primus.transport)}else{primus.socket=socket=new Factory(primus.uri(options));socket.binaryType="arraybuffer"}}catch(e){return primus.emit("error",e)}socket.onopen=primus.emits("incoming::open");socket.onerror=primus.emits("incoming::error");socket.onclose=primus.emits("incoming::end");socket.onmessage=primus.emits("incoming::data",__name(function parse(next,evt){next(void 0,evt.data)},"parse"))},"opening"));primus.on("outgoing::data",__name(function write(message){if(!socket||socket.readyState!==Factory.OPEN)return;try{socket.send(message)}catch(e){primus.emit("incoming::error",e)}},"write"));primus.on("outgoing::reconnect",__name(function reconnect(){primus.emit("outgoing::open")},"reconnect"));primus.on("outgoing::end",__name(function close(){if(!socket)return;socket.onerror=socket.onopen=socket.onclose=socket.onmessage=function(){};socket.close();socket=null},"close"))};
 Primus.prototype.authorization = false;
 Primus.prototype.pathname = "/primus";
 Primus.prototype.encoder = function encoder(data,fn){var err;try{data=JSON.stringify(data)}catch(e){err=e}fn(err,data)};
 Primus.prototype.decoder = function decoder(data,fn){var err;if("string"!==typeof data)return fn(err,data);try{data=JSON.parse(data)}catch(e){err=e}fn(err,data)};
-Primus.prototype.version = "8.0.7";
+Primus.prototype.version = "7.3.5";
 
 if (
      'undefined' !== typeof document

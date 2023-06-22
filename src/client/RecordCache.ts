@@ -11,6 +11,7 @@ import {
 	setRecordMap,
 } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
+import { Subscriber } from "./Subscriber"
 
 type RecordListener = () => void
 
@@ -21,6 +22,8 @@ export type RecordCacheApi = {
 }
 
 export class RecordCache implements RecordCacheApi {
+	constructor(private environment: { subscriber: Subscriber }) {}
+
 	recordMap: RecordMap = {}
 
 	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
@@ -31,12 +34,18 @@ export class RecordCache implements RecordCacheApi {
 	listeners: { [table: string]: { [id: string]: Set<RecordListener> } } = {}
 	addListener(pointer: RecordPointer, fn: RecordListener): () => void {
 		const listenerSet = getRecordMap(this.listeners, pointer) || new Set()
+		if (listenerSet.size === 0) {
+			this.environment.subscriber.subscribe(pointer)
+		}
 		listenerSet.add(fn)
 		setRecordMap(this.listeners, pointer, listenerSet)
 
 		return () => {
 			listenerSet.delete(fn)
-			if (listenerSet.size === 0) deleteRecordMap(this.listeners, pointer)
+			if (listenerSet.size === 0) {
+				deleteRecordMap(this.listeners, pointer)
+				this.environment.subscriber.unsubscribe(pointer)
+			}
 		}
 	}
 

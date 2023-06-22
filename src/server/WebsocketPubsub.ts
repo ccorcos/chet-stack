@@ -1,13 +1,8 @@
 import * as fs from "fs-extra"
 import type { Server } from "http"
 import Primus from "primus"
+import { ClientPubsubMessage, ServerPubsubMessage } from "../shared/PubSubTypes"
 import { path } from "./path"
-
-type ClientPubsubMessage =
-	| { type: "subscribe"; key: string }
-	| { type: "unsubscribe"; key: string }
-
-type ServerPubsubMessage = { type: "update"; key: string; value: any }
 
 export class WebsocketPubsub {
 	private primus: Primus
@@ -18,7 +13,7 @@ export class WebsocketPubsub {
 
 		// TODO: don't generate this file every time?
 		if (false) {
-			fs.writeFileSync(path("src/client/primus.js"), this.primus.library())
+			fs.writeFileSync(path("src/client/primuslib.js"), this.primus.library())
 		}
 
 		this.primus.on("connection", (connection) => {
