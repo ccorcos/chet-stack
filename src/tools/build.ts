@@ -2,6 +2,8 @@ import cpx from "cpx"
 import { build } from "estrella"
 import { path } from "../server/path"
 
+// Builds the client bundle.
+
 const watch = process.argv.includes("--watch")
 const cmd = watch ? "watch" : "copy"
 cpx[cmd](path("src/client/index.html"), path("build"))

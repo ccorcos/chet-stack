@@ -1,3 +1,3 @@
 import { ClientConfig } from "./ClientConfig"
 
-export const config: ClientConfig = { url: "http://localhost:8080" }
+export const config: ClientConfig = { host: "localhost:8080" }

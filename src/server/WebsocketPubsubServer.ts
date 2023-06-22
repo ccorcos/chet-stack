@@ -1,30 +1,24 @@
-import * as fs from "fs-extra"
 import type { Server } from "http"
-import Primus from "primus"
+import WebSocket from "ws"
 import { ClientPubsubMessage, ServerPubsubMessage } from "../shared/PubSubTypes"
-import { path } from "./path"
 
-export class WebsocketPubsub {
-	private primus: Primus
-	private connections = new Map<Primus.Spark, Set<string>>()
+export class WebsocketPubsubServer {
+	private wss: WebSocket.Server
+	private connections = new Map<WebSocket, Set<string>>()
 
 	constructor(server: Server) {
-		this.primus = new Primus(server)
+		this.wss = new WebSocket.Server({ server })
 
-		// TODO: don't generate this file every time?
-		if (false) {
-			fs.writeFileSync(path("src/client/primuslib.js"), this.primus.library())
-		}
-
-		this.primus.on("connection", (connection) => {
+		this.wss.on("connection", (connection) => {
 			const subscriptions = new Set<string>()
 			this.connections.set(connection, subscriptions)
 
-			connection.on("end", () => {
+			connection.on("close", () => {
 				this.connections.delete(connection)
 			})
 
-			connection.on("data", (message: ClientPubsubMessage) => {
+			connection.on("message", (data: string) => {
+				const message = JSON.parse(data) as ClientPubsubMessage
 				// TODO: validate incoming data.
 				if (message.type === "subscribe") {
 					return subscriptions.add(message.key)
@@ -41,7 +35,8 @@ export class WebsocketPubsub {
 			for (const { key, value } of items) {
 				if (subscriptions.has(key)) {
 					const message: ServerPubsubMessage = { type: "update", key, value }
-					connection.write(message)
+					const data = JSON.stringify(message)
+					connection.send(data)
 				}
 			}
 		}

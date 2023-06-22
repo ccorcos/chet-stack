@@ -1,3 +1,3 @@
 export type ClientConfig = {
-	url: string
+	host: string
 }

@@ -6,11 +6,11 @@ import livereload from "livereload"
 import { op } from "../shared/transaction"
 import { api } from "./api"
 import { write } from "./apis/write"
-import { ConfigApi } from "./config"
+import { config } from "./config"
 import { JsonDatabase } from "./JsonDatabase"
 import { path } from "./path"
 import { ServerEnvironment } from "./ServerEnvironment"
-import { WebsocketPubsub } from "./WebsocketPubsub"
+import { WebsocketPubsubServer } from "./WebsocketPubsubServer"
 
 // Turn on request logging.
 // https://expressjs.com/en/guide/debugging.html
@@ -19,22 +19,13 @@ process.env.DEBUG = "express:*"
 const app = express()
 const server = http.createServer(app)
 
-const config: ConfigApi = {
-	production: false,
-	port: 8080,
-	domain: "localhost:8080",
-	// node -e 'console.log(require("crypto").randomBytes(32).toString("base64"))'
-	salt: Buffer.from("8hrqUP5KLtWI8BmSOe9dSHti2Iz2QA2cCo0Pe3YFGhE=", "base64"),
-	adminUserId: "00000000-0000-0000-0000-000000000000",
-}
-
 // Setup the server environment. This thing gets passed around everywhere and defines
 // the interface between differnet services so we can swap out things like the
 // database or the pubsub service with minimal plumbing.
 const environment: ServerEnvironment = {
 	config: config,
 	db: new JsonDatabase(),
-	pubsub: new WebsocketPubsub(server),
+	pubsub: new WebsocketPubsubServer(server),
 }
 
 // Injects into the html file so the browser reloads when files change.

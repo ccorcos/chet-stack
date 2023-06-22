@@ -11,7 +11,7 @@ import {
 	setRecordMap,
 } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
-import { Subscriber } from "./Subscriber"
+import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
 type RecordListener = () => void
 
@@ -22,7 +22,7 @@ export type RecordCacheApi = {
 }
 
 export class RecordCache implements RecordCacheApi {
-	constructor(private environment: { subscriber: Subscriber }) {}
+	constructor(private environment: { subscriber: WebsocketPubsubClient }) {}
 
 	recordMap: RecordMap = {}
 
