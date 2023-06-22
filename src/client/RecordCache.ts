@@ -4,6 +4,7 @@ A local cache of records along with listeners for changes to those records.
 
 */
 
+import { SecondMs } from "../shared/dateHelpers"
 import {
 	deleteRecordMap,
 	getRecordMap,
@@ -11,6 +12,7 @@ import {
 	setRecordMap,
 } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
+import { sleep } from "../shared/sleep"
 
 type RecordListener = () => void
 
@@ -28,30 +30,46 @@ export class RecordCache implements RecordCacheApi {
 		}
 	) {}
 
-	recordMap: RecordMap = {}
+	private recordMap: RecordMap = {}
 
 	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
 		// @ts-ignore
 		return getRecordMap(this.recordMap, pointer)
 	}
 
-	listeners: { [table: string]: { [id: string]: Set<RecordListener> } } = {}
+	private unsubscribeMap: { [table: string]: { [id: string]: Promise<void> } } = {}
+	private listeners: { [table: string]: { [id: string]: Set<RecordListener> } } = {}
+
 	addListener(pointer: RecordPointer, fn: RecordListener): () => void {
 		const listenerSet = getRecordMap(this.listeners, pointer) || new Set()
-		if (listenerSet.size === 0) {
+		const waitingUnsubscribe = getRecordMap(this.unsubscribeMap, pointer)
+
+		if (waitingUnsubscribe) {
+			deleteRecordMap(this.unsubscribeMap, pointer)
+		} else if (listenerSet.size === 0) {
 			this.args.onSubscribe(pointer)
 		}
+
 		listenerSet.add(fn)
 		setRecordMap(this.listeners, pointer, listenerSet)
 
 		return () => {
 			listenerSet.delete(fn)
 			if (listenerSet.size === 0) {
-				deleteRecordMap(this.listeners, pointer)
-				this.args.onUnsubscribe(pointer)
+				let unsubscribe
+				unsubscribe = (async () => {
+					await sleep(10 * SecondMs)
+					// If the promise was deleted from the unsubscribeMap, then don't unsubscribe.
+					if (getRecordMap(this.unsubscribeMap, pointer) !== unsubscribe) return
+					deleteRecordMap(this.listeners, pointer)
+					this.args.onUnsubscribe(pointer)
+				})()
+				setRecordMap(this.unsubscribeMap, pointer, unsubscribe)
 			}
 		}
 	}
+
+	private enqueueUnsubscribe(pointer: RecordPointer) {}
 
 	updateRecordMap(recordMap: RecordMap, force = false) {
 		// Update only if they're new versions.
