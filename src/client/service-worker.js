@@ -1,11 +1,28 @@
-const CACHE_NAME = "app-assets-v1"
-const urlsToCache = ["/", "/index.css", "/index.js"]
+const ASSETS_CACHE = "app-assets-v1"
+const IMAGES_CACHE = "static-simages-v1" // TODO
+const cacheWhitelist = [ASSETS_CACHE, IMAGES_CACHE]
 
 // Perform install steps
 self.addEventListener("install", function (event) {
 	event.waitUntil(
-		caches.open(CACHE_NAME).then(function (cache) {
-			return cache.addAll(urlsToCache)
+		caches.open(ASSETS_CACHE).then(function (cache) {
+			// Fetch and cache these assets on the first install.
+			return cache.addAll(["/", "/index.css", "/index.js"])
+		})
+	)
+})
+
+// Delete any old caches.
+self.addEventListener("activate", function (event) {
+	event.waitUntil(
+		caches.keys().then(function (cacheNames) {
+			return Promise.all(
+				cacheNames.map(function (cacheName) {
+					if (cacheWhitelist.indexOf(cacheName) === -1) {
+						return caches.delete(cacheName)
+					}
+				})
+			)
 		})
 	)
 })
@@ -13,52 +30,42 @@ self.addEventListener("install", function (event) {
 // Always fetch when online, only use the cache as an offline fallback.
 self.addEventListener("fetch", function (event) {
 	event.respondWith(
-		// Check if this response should be cached at all.
-		caches.match(event.request).then((cachedResponse) => {
-			// Fetch from the network regardless.
-			return fetch(event.request)
-				.then((response) => {
-					// If we received a bad response, then return without caching.
-					if (!response || response.status !== 200 || response.type !== "basic") {
-						return response
-					}
+		// Fetch from the network in case we're online.
+		fetch(event.request)
+			.then((response) => {
+				// Don't cache bad responses.
+				if (!response) return response
+				if (response.status !== 200) return response
+				if (response.type !== "basic") return response
 
-					// Only cache GET requests.
-					if (event.request.method !== "GET") {
-						return response
-					}
+				// Only cache GET requests.
+				if (event.request.method !== "GET") return response
 
-					// IMPORTANT: Clone the response. A response is a stream
-					// and because we want the browser to consume the response
-					// as well as the cache consuming the response, we need
-					// to clone it so we have two streams.
-					var responseToCache = response.clone()
+				// // Only cache responses from the origin.
+				// if (!event.request.url.startsWith(self.origin)) return response
 
-					// // Check the MIME type of the response
-					// const contentType = response.headers.get("Content-Type")
+				// // Only cache the basic website assets.
+				// // TODO: favicon? fonts?
+				// const validMimeTypes = ["text/html", "application/javascript", "text/css"]
+				// const contentType = response.headers.get("Content-Type")
+				// if (!contentType) return response
+				// if (!validMimeTypes.some((mimeType) => contentType.includes(mimeType))) return response
 
-					// if (event.request.url.startsWith(self.origin)) {
-					//
-					// // Cache the response only if it is HTML, JS, or CSS
-					// if (
-					// 	contentType &&
-					// 	(contentType.includes("text/html") ||
-					// 		contentType.includes("application/javascript") ||
-					// 		contentType.includes("text/css"))
-					// ) {
-					// 	caches.open("your-cache-name").then((cache) => {
-					// 		cache.put(event.request, clonedResponse)
-					// 	})
-					// }
+				// IMPORTANT: Clone the response. A response is a stream
+				// and because we want the browser to consume the response
+				// as well as the cache consuming the response, we need
+				// to clone it so we have two streams.
+				var responseToCache = response.clone()
 
-					// Cache the response for offline.
-					caches.open(CACHE_NAME).then(function (cache) {
-						cache.put(event.request, responseToCache)
-					})
-					return response
+				// Cache the response for offline.
+				caches.open(ASSETS_CACHE).then(function (cache) {
+					cache.put(event.request, responseToCache)
 				})
-				.catch(function (error) {
-					// If we're offline return the cached response.
+				return response
+			})
+			.catch(function (error) {
+				// If we're offline return the cached response.
+				return caches.match(event.request).then((cachedResponse) => {
 					if (cachedResponse) return cachedResponse
 
 					// Check if request is for an HTML document (or navigation request)
@@ -73,24 +80,6 @@ self.addEventListener("fetch", function (event) {
 
 					return Promise.reject(error)
 				})
-		})
-	)
-})
-
-// Update a service worker and delete the old caches.
-self.addEventListener("activate", function (event) {
-	// TODO: at some point we'll have a cache for immutable static files like images
-	// which we'll want to preserve when we update the service worker.
-	const cacheWhitelist = ["static-images-v1"]
-	event.waitUntil(
-		caches.keys().then(function (cacheNames) {
-			return Promise.all(
-				cacheNames.map(function (cacheName) {
-					if (cacheWhitelist.indexOf(cacheName) === -1) {
-						return caches.delete(cacheName)
-					}
-				})
-			)
-		})
+			})
 	)
 })
