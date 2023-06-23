@@ -7,12 +7,15 @@ import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
 import { applyOperation, Transaction } from "../shared/transaction"
 import { ClientApi } from "./api"
+import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
 
 type Thunk = { deferred: DeferredPromise<void>; transaction: Transaction }
 
 export class TransactionQueue {
-	constructor(private environment: { cache: RecordCache; api: ClientApi }) {}
+	constructor(
+		private environment: { cache: RecordCache; api: ClientApi; storage: OfflineStorage }
+	) {}
 
 	private thunks: Thunk[] = []
 
@@ -36,6 +39,7 @@ export class TransactionQueue {
 
 		// Optimistically update the local cache.
 		this.environment.cache.updateRecordMap(recordMap)
+		this.environment.storage.updateRecordMap(recordMap)
 
 		// This promise will get resolved once it is submitted.
 		const deferred = new DeferredPromise<void>()
@@ -100,5 +104,6 @@ export class TransactionQueue {
 		// Force update the cache.
 		const recordMap: RecordMap = response.body.recordMap
 		this.environment.cache.updateRecordMap(recordMap, true)
+		this.environment.storage.updateRecordMap(recordMap, true)
 	}
 }

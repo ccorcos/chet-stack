@@ -69,8 +69,6 @@ export class RecordCache implements RecordCacheApi {
 		}
 	}
 
-	private enqueueUnsubscribe(pointer: RecordPointer) {}
-
 	updateRecordMap(recordMap: RecordMap, force = false) {
 		// Update only if they're new versions.
 		const updates: RecordPointer[] = []

@@ -1,9 +1,13 @@
 import React from "react"
 import ReactDOM from "react-dom"
+import { DeferredPromise } from "../shared/DeferredPromise"
+import { setRecordMap } from "../shared/recordMapHelpers"
+import { RecordMap } from "../shared/schema"
 import { createClientApi } from "./api"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
 import { config } from "./config"
+import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
 import { RecordLoader } from "./RecordLoader"
 import { TransactionQueue } from "./TransactionQueue"
@@ -34,21 +38,53 @@ const cache = new RecordCache({
 const api = createClientApi({
 	onUpdateRecordMap(recordMap) {
 		cache.updateRecordMap(recordMap)
+		storage.updateRecordMap(recordMap)
 	},
 })
+
+const storage = new OfflineStorage()
 
 const loader = new RecordLoader({
 	async onFetchRecord(pointer) {
-		// NOTE: this fetches the record and the response contains a recordMap which gets merged
-		// into the RecordCache.
-		const response = await api.getRecords({ pointers: [pointer] })
-		if (response.status !== 200) throw new Error("Could not fetch record update")
+		// Not using Promise.race because we don't want to resolve early when offline
+		// storage doesn't have the record.
+		const deferred = new DeferredPromise<void>()
+
+		// If this contains a newer record (from offline edits) or an older record,
+		// the highest version will remain in the cache.
+		storage.getRecord(pointer).then((record) => {
+			if (!record) return
+			const recordMap: RecordMap = {}
+			setRecordMap(recordMap, pointer, record)
+			cache.updateRecordMap(recordMap)
+			deferred.resolve()
+		})
+
+		// This fetches the record and the response contains a recordMap
+		// which gets merge into the RecordCache.
+		api
+			.getRecords({ pointers: [pointer] })
+			.then((response) => {
+				if (response.status !== 200) throw new Error("Could not fetch record update")
+			})
+			.then(deferred.resolve)
+			.catch(deferred.reject)
+
+		return deferred.promise
 	},
 })
 
-const transactionQueue = new TransactionQueue({ cache, api })
+const transactionQueue = new TransactionQueue({ cache, api, storage })
 
-const environment: ClientEnvironment = { cache, api, loader, transactionQueue, config }
+const environment: ClientEnvironment = {
+	cache,
+	api,
+	loader,
+	transactionQueue,
+	config,
+	subscriber,
+	storage,
+}
 
 // Render the app.
 const root = document.createElement("div")

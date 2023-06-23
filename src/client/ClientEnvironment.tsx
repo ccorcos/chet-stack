@@ -1,9 +1,11 @@
 import React, { createContext, useContext } from "react"
 import type { ClientApi } from "./api"
 import { ClientConfig } from "./ClientConfig"
+import { OfflineStorage } from "./OfflineStorage"
 import type { RecordCacheApi } from "./RecordCache"
 import type { RecordLoaderApi } from "./RecordLoader"
 import type { TransactionQueue } from "./TransactionQueue"
+import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
 export type ClientEnvironment = {
 	cache: RecordCacheApi
@@ -11,6 +13,8 @@ export type ClientEnvironment = {
 	api: ClientApi
 	transactionQueue: TransactionQueue
 	config: ClientConfig
+	subscriber: WebsocketPubsubClient
+	storage: OfflineStorage
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

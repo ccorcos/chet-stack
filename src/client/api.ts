@@ -11,6 +11,8 @@ export async function apiRequest<T extends keyof ApiTypes>(
 ): Promise<ApiResponse<Awaited<ApiTypes[T]["output"]>>> {
 	const result = await httpRequest("/api/" + name, args)
 
+	// await sleep(5000)
+
 	// Update the local cache with any records returned from the server.
 	// By convention, any API request can return a recordMap.
 	if (result.status === 200) {
