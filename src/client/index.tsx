@@ -23,13 +23,15 @@ const subscriber = new WebsocketPubsubClient({
 	},
 })
 
+const debugCache = (...args: any[]) => console.log("CACHE:", ...args)
+
 const cache = new RecordCache({
 	onSubscribe: (pointer) => {
 		subscriber.subscribe(pointer)
-		console.log("Subscribe", pointer)
+		debugCache("Subscribe", JSON.stringify(pointer))
 	},
 	onUnsubscribe: (pointer) => {
-		console.log("Unsubscribe", pointer)
+		debugCache("Unsubscribe", JSON.stringify(pointer))
 		subscriber.unsubscribe(pointer)
 		loader.unloadRecord(pointer)
 	},
@@ -52,23 +54,31 @@ const loader = new RecordLoader({
 
 		// If this contains a newer record (from offline edits) or an older record,
 		// the highest version will remain in the cache.
-		storage.getRecord(pointer).then((record) => {
+		const cached = storage.getRecord(pointer).then((record) => {
 			if (!record) return
 			const recordMap: RecordMap = {}
 			setRecordMap(recordMap, pointer, record)
 			cache.updateRecordMap(recordMap)
 			deferred.resolve()
+			return record
 		})
 
 		// This fetches the record and the response contains a recordMap
 		// which gets merge into the RecordCache.
-		api
-			.getRecords({ pointers: [pointer] })
-			.then((response) => {
-				if (response.status !== 200) throw new Error("Could not fetch record update")
-			})
-			.then(deferred.resolve)
-			.catch(deferred.reject)
+		api.getRecords({ pointers: [pointer] }).then((response) => {
+			if (response.status === 200) return deferred.resolve()
+
+			// If we're offline, then we want to wait to see if its cached.
+			if (response.status === 0) {
+				return cached
+					.then((record) => {
+						if (!record) deferred.reject(new Error("Offline cache miss."))
+					})
+					.catch(deferred.reject)
+			}
+
+			return deferred.reject(new Error("Network error: " + response.status))
+		})
 
 		return deferred.promise
 	},

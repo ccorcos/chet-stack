@@ -2,17 +2,22 @@ import { openDB } from "idb"
 import { iterateRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
 
+const debug = (...args: any[]) => console.log("STORAGE:", ...args)
+
 export class OfflineStorage {
 	private db = new IndexedDbKeyValueStore("app", "records")
 
 	async getRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 		const key = [pointer.table, pointer.id].join(":")
 		const result = await this.db.get(key)
+		if (result) debug("hit", key)
+		else debug("miss", key)
 		return result as RecordValue<T> | undefined
 	}
 
 	async setRecord<T extends RecordTable>(pointer: RecordPointer<T>, value: RecordValue<T>) {
 		const key = [pointer.table, pointer.id].join(":")
+		debug("set", key)
 		await this.db.set(key, value)
 	}
 

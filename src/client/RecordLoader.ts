@@ -40,7 +40,8 @@ export class RecordLoader {
 
 	loadRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 		const loader = getRecordMap(this.loaderMap, pointer)
-		if (loader && !loader.error) return loader
+		if (loader) return loader
+		// if (loader && !loader.error) return loader
 
 		const newLoader = Loader.wrap(this.args.onFetchRecord(pointer))
 		setRecordMap(this.loaderMap, pointer, newLoader)

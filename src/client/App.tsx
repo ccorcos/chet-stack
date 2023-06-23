@@ -129,7 +129,7 @@ function UserLookup(props: { onSelect: (userId: string) => void }) {
 	let userIds: string[] = []
 	if (result) {
 		if (result.status !== 200) {
-			error = result.body.message
+			error = result.body?.message || result.body
 		} else {
 			userIds = result.body.userIds
 		}
