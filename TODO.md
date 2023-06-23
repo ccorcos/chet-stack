@@ -1,6 +1,6 @@
 
-- offline transaction queue
 - service worker for offline html, js, and css assets.
+- offline transaction queue
 
 - permissions checking on reads and writes.
 - proper where query for threads and messages.

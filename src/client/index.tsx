@@ -100,3 +100,17 @@ ReactDOM.render(
 // For debugging from the Console.
 ;(window as any)["environment"] = environment
 Object.assign(window as any, environment)
+
+// Register service worker for offline caching.
+window.addEventListener("load", function () {
+	if ("serviceWorker" in navigator) {
+		navigator.serviceWorker
+			.register("/service-worker.js")
+			.then(function (registration) {
+				console.log("Service Worker registered with scope:", registration.scope)
+			})
+			.catch(function (err) {
+				console.log("Service Worker registration failed:", err)
+			})
+	}
+})

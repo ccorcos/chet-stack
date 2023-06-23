@@ -8,6 +8,7 @@ const watch = process.argv.includes("--watch")
 const cmd = watch ? "watch" : "copy"
 cpx[cmd](path("src/client/index.html"), path("build"))
 cpx[cmd](path("src/client/index.css"), path("build"))
+cpx[cmd](path("src/client/service-worker.js"), path("build"))
 
 build({
 	entry: path("src/client/index.tsx"),
