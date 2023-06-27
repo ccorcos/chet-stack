@@ -1,12 +1,13 @@
 
+- permissions checking on reads and writes.
+
+- proper where query for threads and messages.
+	- paging and custom reactivity hook
+
 - offline transaction queue
 	- "offline mode" state detection
 
 - QA document
-
-- permissions checking on reads and writes.
-- proper where query for threads and messages.
-	- paging and custom reactivity hook
 
 - queue tasks
 	- what's a rock solid solution for denormalization stuff write()?
