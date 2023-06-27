@@ -1,54 +1,34 @@
 
-- service worker for offline html, js, and css assets.
 - offline transaction queue
+	- "offline mode" state detection
+
+- QA document
 
 - permissions checking on reads and writes.
 - proper where query for threads and messages.
+	- paging and custom reactivity hook
 
 - queue tasks
 	- what's a rock solid solution for denormalization stuff write()?
 
+- morgan logging and helmet, reject large request, rate limiting
 - react suspense flashing.
 
 - undo/redo
-- better typescript types.
-
----
-
-Dev improvements...
-
-- server and client watch
-- source maps
-
-- import assertions, no importing server from app, etc.
-- morgan logging and helmet
-
-- recordMapHelpers types.
-
----
-
-Sometime much later...
-- rate limiting
 - file uploading
 
 
 ---
 
-```ts
+Dev improvements...
 
-await postgres.insert(data)
-await elasticsearch.index(data)
-await redis.publish(data)
+- source maps
+- better typescript types.
+- recordMapHelpers types.
 
-// Uses a queue.
+- server and client watch
 
-await storage.write(txId, {before, after})
-await Promise.all([
-	queue.enqueue({txId, type: "elasticsearch.index"}),
-	queue.enqueue({txId, type: "redis.publish"}),
-])
-```
-
+- import assertions, no importing server from app, etc.
 
 
 ---
