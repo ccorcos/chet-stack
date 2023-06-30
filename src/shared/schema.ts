@@ -35,7 +35,8 @@ export type PasswordRecord = {
 }
 
 export type AuthTokenRecord = {
-	id: string // the is is the token
+	/** This is the token */
+	id: string
 	version: number
 	last_version?: number
 	created_at: string
@@ -88,9 +89,7 @@ export type RecordWithTable<Table extends RecordTable = RecordTable> = {
 	[T in RecordTable]: { table: T; id: string; record: TableToRecord[T] }
 }[Table]
 
-export type RecordPointer<Table extends RecordTable = RecordTable> = {
-	[T in RecordTable]: { table: T; id: string }
-}[Table]
+export type RecordPointer<Table extends RecordTable = RecordTable> = { table: Table; id: string }
 
 export type RecordMap = {
 	[T in RecordTable]?: {

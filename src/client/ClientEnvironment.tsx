@@ -3,7 +3,7 @@ import type { ClientApi } from "./api"
 import { ClientConfig } from "./ClientConfig"
 import { OfflineStorage } from "./OfflineStorage"
 import type { RecordCacheApi } from "./RecordCache"
-import type { RecordLoaderApi } from "./RecordLoader"
+import type { RecordLoaderApi } from "../shared/RecordLoader"
 import type { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 

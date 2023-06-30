@@ -1,5 +1,5 @@
-import { deleteRecordMap, getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
-import { RecordPointer, RecordTable } from "../shared/schema"
+import { deleteRecordMap, getRecordMap, setRecordMap } from "./recordMapHelpers"
+import { RecordPointer, RecordTable } from "./schema"
 
 class Loader<T> extends Promise<T> {
 	public loaded = false

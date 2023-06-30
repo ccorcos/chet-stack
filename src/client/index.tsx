@@ -9,7 +9,7 @@ import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironmen
 import { config } from "./config"
 import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
-import { RecordLoader } from "./RecordLoader"
+import { RecordLoader } from "../shared/RecordLoader"
 import { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
@@ -64,7 +64,7 @@ const loader = new RecordLoader({
 		})
 
 		// This fetches the record and the response contains a recordMap
-		// which gets merge into the RecordCache.
+		// which gets merged into the RecordCache.
 		api.getRecords({ pointers: [pointer] }).then((response) => {
 			if (response.status === 200) return deferred.resolve()
 

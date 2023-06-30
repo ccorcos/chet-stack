@@ -1,11 +1,11 @@
 import { cloneDeep, isEqual, set, update } from "lodash"
 import { ValidationError } from "./errors"
-import { getRecordMap, setRecordMap } from "./recordMapHelpers"
+import { getRecordMap, getRecordPointer, setRecordMap } from "./recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, TableToRecord } from "./schema"
 
 export type SetOperation = {
 	type: "set"
-	table: string
+	table: RecordTable
 	id: string
 	key: string[]
 	value: any
@@ -13,7 +13,7 @@ export type SetOperation = {
 
 export type ListInsertOperation = {
 	type: "listInsert"
-	table: string
+	table: RecordTable
 	id: string
 	key: string[]
 	value: any
@@ -23,7 +23,7 @@ export type ListInsertOperation = {
 
 export type ListRemoveOperation = {
 	type: "listRemove"
-	table: string
+	table: RecordTable
 	id: string
 	key: string[]
 	value: any
@@ -75,8 +75,7 @@ export function applyOperation(recordMap: RecordMap, operation: Operation) {
 }
 
 function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
-	const { table, id } = operation
-	const pointer = { table, id } as RecordPointer
+	const pointer = getRecordPointer(operation)
 
 	const record: any = getRecordMap(recordMap, pointer)
 
@@ -95,8 +94,8 @@ function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
 }
 
 function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOperation) {
-	const { table, id, value, where } = operation
-	const pointer = { table, id } as RecordPointer
+	const { value, where } = operation
+	const pointer = getRecordPointer(operation)
 
 	const record: any = getRecordMap(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")
@@ -141,8 +140,8 @@ function indexOf<T>(list: T[], value: T) {
 }
 
 function applyListRemoveOperation(recordMap: RecordMap, operation: ListRemoveOperation) {
-	const { table, id, value } = operation
-	const pointer = { table, id } as RecordPointer
+	const { value } = operation
+	const pointer = getRecordPointer(operation)
 
 	const record: any = getRecordMap(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")

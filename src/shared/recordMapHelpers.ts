@@ -1,30 +1,24 @@
-import { RecordWithTable } from "./schema"
+import { set } from "lodash"
+import { RecordPointer, RecordWithTable } from "./schema"
 
-// TODO: these types aren't perfect.
 export function getRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
-	T extends keyof R
->(recordMap: R, pointer: { table: T; id: string }): R[T][string] | undefined {
+	Table extends keyof R
+>(recordMap: R, pointer: { table: Table; id: string }): NonNullable<R[Table]>[string] | undefined {
 	const { table, id } = pointer
-	if (!recordMap[table]) return
-	return recordMap[table][id]
+	return recordMap[table]?.[id]
 }
 
-// TODO: these types aren't perfect.
-// NOTE: this function mutates the recordMap!
+/** NOTE: this function mutates the recordMap! */
 export function setRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
-	T extends keyof R
->(recordMap: R, pointer: { table: T; id: string }, value: R[T][string]) {
+	Table extends keyof R
+>(recordMap: R, pointer: { table: Table; id: string }, value: NonNullable<R[Table]>[string]) {
 	const { table, id } = pointer
-
-	// @ts-ignore
-	if (!recordMap[table]) recordMap[table] = {}
-	// @ts-ignore
-	recordMap[table][id] = value
+	set(recordMap, [table, id], value)
 }
 
-// NOTE: this function mutates the recordMap!
+/** NOTE: this function mutates the recordMap! */
 export function deleteRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
 	T extends keyof R
@@ -39,12 +33,16 @@ export function deleteRecordMap<
 	}
 }
 
-export function* iterateRecordMap<
-	R extends { [table: string]: { [id: string]: any } }
->(recordMap: R): Generator<RecordWithTable> {
+export function* iterateRecordMap<R extends { [table: string]: { [id: string]: any } }>(
+	recordMap: R
+): Generator<RecordWithTable> {
 	for (const [table, idMap] of Object.entries(recordMap)) {
 		for (const [id, record] of Object.entries(idMap)) {
 			yield { table, id, record } as RecordWithTable
 		}
 	}
+}
+
+export function getRecordPointer({ table, id }: RecordPointer): RecordPointer {
+	return { table, id }
 }
