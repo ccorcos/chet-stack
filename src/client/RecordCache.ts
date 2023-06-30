@@ -33,8 +33,49 @@ export class RecordCache implements RecordCacheApi {
 	private recordMap: RecordMap = {}
 
 	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
-		// @ts-ignore
 		return getRecordMap(this.recordMap, pointer)
+	}
+
+	watchRecord<T extends RecordTable>(
+		pointer: RecordPointer<T>
+	): Observable<RecordValue<T> | undefined> {
+		return {
+			// TODO:
+			// Currently, subscribing to a record doesn't fetch that record from the server.
+			// We should consider integrating the loader into the cache so that the cache handles
+			// fetching a record from the server as well as the cache. We'd also want to add network
+			// strategies in that case to just fetch from the cache, just the server, etc, so this
+			// would add some complexity.
+			subscribe: (observer: ObservableObserver<RecordValue<T> | undefined>) => {
+				if (!(observer instanceof Object) || observer == null) {
+					throw new TypeError("Expected the observer to be an object.")
+				}
+
+				const handler =
+					typeof observer === "function"
+						? observer
+						: observer.next &&
+						  (observer.next.bind(observer) as (value: RecordValue<T> | undefined) => void)
+
+				if (!handler) {
+					return { unsubscribe() {} }
+				}
+
+				// immediately return the current value to the subscriber
+				handler(getRecordMap(this.recordMap, pointer))
+
+				// respond to record updates by emitting the updated value to the subscriber
+				const unsubscribe = this.addListener(pointer, () => {
+					const record = getRecordMap(this.recordMap, pointer)
+					handler(record)
+				})
+
+				return { unsubscribe }
+			},
+			[Symbol.observable || "@@observable"]() {
+				return this
+			},
+		}
 	}
 
 	private unsubscribeMap: { [table: string]: { [id: string]: Promise<void> } } = {}
@@ -88,3 +129,28 @@ export class RecordCache implements RecordCacheApi {
 		}
 	}
 }
+
+// Note: This will add Symbol.observable globally for all TypeScript users,
+// however, we are not polyfilling Symbol.observable. Ensuring the type for
+// this global symbol is present is necessary for `observable()` to be
+// properly typed for 3rd party library's like RXJS.
+declare global {
+	interface SymbolConstructor {
+		readonly observable: symbol
+	}
+}
+
+export interface Observable<T> {
+	subscribe(observer: ObservableObserver<T>): {
+		unsubscribe(): void
+	}
+	[Symbol.observable](): Observable<T>
+}
+
+export type ObservableObserver<T> =
+	| ((v: T) => void)
+	| {
+			next?: (v: T) => void
+			error?: (v: any) => void
+			complete?: (v: boolean) => void
+	  }

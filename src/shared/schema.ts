@@ -88,9 +88,7 @@ export type RecordWithTable<Table extends RecordTable = RecordTable> = {
 	[T in RecordTable]: { table: T; id: string; record: TableToRecord[T] }
 }[Table]
 
-export type RecordPointer<Table extends RecordTable = RecordTable> = {
-	[T in RecordTable]: { table: T; id: string }
-}[Table]
+export type RecordPointer<Table extends RecordTable = RecordTable> = { table: Table; id: string }
 
 export type RecordMap = {
 	[T in RecordTable]?: {

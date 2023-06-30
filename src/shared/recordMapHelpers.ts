@@ -4,7 +4,7 @@ import { RecordWithTable } from "./schema"
 export function getRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
 	T extends keyof R
->(recordMap: R, pointer: { table: T; id: string }): R[T][string] | undefined {
+>(recordMap: R, pointer: { table: T; id: string }): NonNullable<R[T]>[string] | undefined {
 	const { table, id } = pointer
 	if (!recordMap[table]) return
 	return recordMap[table][id]
@@ -39,9 +39,9 @@ export function deleteRecordMap<
 	}
 }
 
-export function* iterateRecordMap<
-	R extends { [table: string]: { [id: string]: any } }
->(recordMap: R): Generator<RecordWithTable> {
+export function* iterateRecordMap<R extends { [table: string]: { [id: string]: any } }>(
+	recordMap: R
+): Generator<RecordWithTable> {
 	for (const [table, idMap] of Object.entries(recordMap)) {
 		for (const [id, record] of Object.entries(idMap)) {
 			yield { table, id, record } as RecordWithTable
