@@ -27,7 +27,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 	// Keep track of the previous version so we can assert on write.
 	for (const pointer of pointers) {
-		const record: any = getRecordMap(recordMap, pointer)
+		const record = getRecordMap(recordMap, pointer)
 		if (record) record.last_version = record.version
 	}
 
@@ -71,8 +71,8 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 		for (const pointer of pointers) {
 			if (pointer.table !== "thread") continue
-			const prev = getRecordMap(originalRecordMap, pointer) as ThreadRecord | undefined
-			const next = getRecordMap(recordMap, pointer) as ThreadRecord | undefined
+			const prev = getRecordMap(originalRecordMap, pointer)
+			const next = getRecordMap(recordMap, pointer)
 
 			const prevMembers = prev ? prev.member_ids || [] : []
 			const nextMembers = next ? next.member_ids || [] : []
