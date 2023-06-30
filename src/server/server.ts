@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser"
 import express from "express"
 import http from "http"
 import livereload from "livereload"
+import { isObject } from "lodash"
+import { ServerError } from "../shared/errors"
 import { op } from "../shared/transaction"
 import { api } from "./api"
 import { write } from "./apis/write"
@@ -72,12 +74,20 @@ for (const [name, { validate, action }] of Object.entries(api)) {
 			res.status(200).json(result)
 		} catch (error) {
 			console.error(error)
-			if (error.statusCode) {
-				// Custom errors have a status and do not leak sensitive information in the message.
+			if (error instanceof ServerError) {
+				// Server errors have a status and do not leak sensitive information in the message.
 				res.status(error.statusCode).json({ message: error.message })
 			} else {
 				// Be careful not to leak sensitive information.
-				res.status(500).json({ message: config.production ? "Unknown error." : error.message })
+				res
+					.status(500)
+					.json({
+						message: config.production
+							? "Unknown error."
+							: isObject(error)
+							? (error as any).message
+							: String(error),
+					})
 			}
 		}
 	})
