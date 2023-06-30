@@ -1,6 +1,6 @@
 import { cloneDeep, isEqual, set, update } from "lodash"
 import { ValidationError } from "./errors"
-import { getRecordMap, setRecordMap } from "./recordMapHelpers"
+import { RecordMapHelpers } from "./recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable, TableToRecord } from "./schema"
 
 export type SetOperation = {
@@ -78,27 +78,27 @@ function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
 	const { table, id } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record: any = RecordMapHelpers.getRecord(recordMap, pointer)
 
 	if (!record) {
 		if (operation.key.length !== 0) throw new ValidationError("Record does not exist.")
 
 		const record = { ...operation.value, version: 1 }
-		setRecordMap(recordMap, pointer, record)
+		RecordMapHelpers.setRecord(recordMap, pointer, record)
 		return
 	}
 
 	const newRecord = cloneDeep(record)
 	set(newRecord, operation.key, operation.value)
 	newRecord.version += 1
-	setRecordMap(recordMap, pointer, newRecord)
+	RecordMapHelpers.setRecord(recordMap, pointer, newRecord)
 }
 
 function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOperation) {
 	const { table, id, value, where } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record = RecordMapHelpers.getRecord(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")
 
 	const newRecord = cloneDeep(record)
@@ -130,7 +130,7 @@ function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOpe
 		throw new ValidationError("Cannot insert on a non-list.")
 	})
 	newRecord.version += 1
-	setRecordMap(recordMap, pointer, newRecord)
+	RecordMapHelpers.setRecord(recordMap, pointer, newRecord)
 }
 
 function indexOf<T>(list: T[], value: T) {
@@ -144,7 +144,7 @@ function applyListRemoveOperation(recordMap: RecordMap, operation: ListRemoveOpe
 	const { table, id, value } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record = RecordMapHelpers.getRecord(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")
 
 	const newRecord = cloneDeep(record)
@@ -158,5 +158,5 @@ function applyListRemoveOperation(recordMap: RecordMap, operation: ListRemoveOpe
 		throw new ValidationError("Cannot remove from a non-list.")
 	})
 	newRecord.version += 1
-	setRecordMap(recordMap, pointer, newRecord)
+	RecordMapHelpers.setRecord(recordMap, pointer, newRecord)
 }

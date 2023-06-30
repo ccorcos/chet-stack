@@ -1,5 +1,5 @@
 import * as t from "data-type-ts"
-import { setRecordMap } from "../../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../../shared/recordMapHelpers"
 import type { RecordMap } from "../../shared/schema"
 import type { ApiEndpoint } from "../api"
 import type { ServerEnvironment } from "../ServerEnvironment"
@@ -16,7 +16,7 @@ export async function searchUsers(environment: ServerEnvironment, args: typeof i
 
 	const recordMap: RecordMap = {}
 	for (const user of users) {
-		setRecordMap(recordMap, { table: "user", id: user.id }, user)
+		RecordMapHelpers.setRecord(recordMap, { table: "user", id: user.id }, user)
 	}
 	const userIds = users.map((user) => user.id)
 

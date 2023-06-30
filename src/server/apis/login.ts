@@ -3,7 +3,7 @@ import * as t from "data-type-ts"
 import type { Request, Response } from "express"
 import { DayMs } from "../../shared/dateHelpers"
 import { BrokenError, ValidationError } from "../../shared/errors"
-import { setRecordMap } from "../../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../../shared/recordMapHelpers"
 import { AuthTokenRecord, RecordMap } from "../../shared/schema"
 import { op, Operation } from "../../shared/transaction"
 import type { ApiEndpoint } from "../api"
@@ -101,7 +101,7 @@ export async function login(
 	await write(environment, { authorId: config.adminUserId, operations })
 
 	const recordMap: RecordMap = {}
-	setRecordMap(recordMap, { table: "user", id: user.id }, user)
+	RecordMapHelpers.setRecord(recordMap, { table: "user", id: user.id }, user)
 	return { recordMap }
 }
 

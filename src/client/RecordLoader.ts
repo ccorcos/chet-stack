@@ -1,4 +1,4 @@
-import { deleteRecordMap, getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../shared/recordMapHelpers"
 import { RecordPointer, RecordTable } from "../shared/schema"
 
 class Loader<T> extends Promise<T> {
@@ -35,16 +35,16 @@ export class RecordLoader {
 	private loaderMap: { [table: string]: { [id: string]: Loader<void> } } = {}
 
 	unloadRecord(pointer: RecordPointer) {
-		deleteRecordMap(this.loaderMap, pointer)
+		RecordMapHelpers.deleteRecord(this.loaderMap, pointer)
 	}
 
 	loadRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
-		const loader = getRecordMap(this.loaderMap, pointer)
+		const loader = RecordMapHelpers.getRecord(this.loaderMap, pointer)
 		if (loader) return loader
 		// if (loader && !loader.error) return loader
 
 		const newLoader = Loader.wrap(this.args.onFetchRecord(pointer))
-		setRecordMap(this.loaderMap, pointer, newLoader)
+		RecordMapHelpers.setRecord(this.loaderMap, pointer, newLoader)
 		return newLoader
 	}
 }

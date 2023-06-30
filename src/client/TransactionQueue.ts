@@ -2,7 +2,7 @@ import { isEqual, uniqWith } from "lodash"
 import { SecondMs } from "../shared/dateHelpers"
 import { DeferredPromise } from "../shared/DeferredPromise"
 import { BrokenError, TransactionConflictError, ValidationError } from "../shared/errors"
-import { setRecordMap } from "../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
 import { applyOperation, Transaction } from "../shared/transaction"
@@ -29,7 +29,7 @@ export class TransactionQueue {
 		const recordMap: RecordMap = {}
 		for (const pointer of pointers) {
 			const record = this.environment.cache.getRecord(pointer)
-			setRecordMap(recordMap, pointer, record)
+			RecordMapHelpers.setRecord(recordMap, pointer, record)
 		}
 
 		// Apply the mutations.

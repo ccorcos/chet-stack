@@ -1,7 +1,7 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { DeferredPromise } from "../shared/DeferredPromise"
-import { setRecordMap } from "../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../shared/recordMapHelpers"
 import { RecordMap } from "../shared/schema"
 import { createClientApi } from "./api"
 import { App } from "./App"
@@ -57,7 +57,7 @@ const loader = new RecordLoader({
 		const cached = storage.getRecord(pointer).then((record) => {
 			if (!record) return
 			const recordMap: RecordMap = {}
-			setRecordMap(recordMap, pointer, record)
+			RecordMapHelpers.setRecord(recordMap, pointer, record)
 			cache.updateRecordMap(recordMap)
 			deferred.resolve()
 			return record

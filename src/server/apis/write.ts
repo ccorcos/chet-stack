@@ -1,6 +1,6 @@
 import * as t from "data-type-ts"
 import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
-import { getRecordMap } from "../../shared/recordMapHelpers"
+import { RecordMapHelpers } from "../../shared/recordMapHelpers"
 import type { RecordPointer, RecordWithTable, ThreadRecord } from "../../shared/schema"
 import { applyOperation, Operation, Transaction } from "../../shared/transaction"
 import type { ApiEndpoint } from "../api"
@@ -27,7 +27,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 	// Keep track of the previous version so we can assert on write.
 	for (const pointer of pointers) {
-		const record: any = getRecordMap(recordMap, pointer)
+		const record = RecordMapHelpers.getRecord(recordMap, pointer)
 		if (record) record.last_version = record.version
 	}
 
@@ -43,7 +43,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 	const records = pointers.map((pointer) => {
 		const record: RecordWithTable = {
 			...pointer,
-			record: getRecordMap(recordMap, pointer) as any,
+			record: RecordMapHelpers.getRecord(recordMap, pointer) as any,
 		}
 		return record
 	})
@@ -71,8 +71,8 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 		for (const pointer of pointers) {
 			if (pointer.table !== "thread") continue
-			const prev = getRecordMap(originalRecordMap, pointer) as ThreadRecord | undefined
-			const next = getRecordMap(recordMap, pointer) as ThreadRecord | undefined
+			const prev = RecordMapHelpers.getRecord(originalRecordMap, pointer)
+			const next = RecordMapHelpers.getRecord(recordMap, pointer)
 
 			const prevMembers = prev ? prev.member_ids || [] : []
 			const nextMembers = next ? next.member_ids || [] : []
