@@ -8,7 +8,8 @@
 		"watch-client": "tsx src/tools/build.ts --watch",
 		"server": "tsx watch --clear-screen=false src/server/server.ts ",
 		"start": "run-p watch-client server",
-		"clean": "rm -rf build db"
+		"clean": "rm -rf build db",
+		"typecheck": "tsc --noEmit"
 	},
 	"keywords": [],
 	"author": "",
