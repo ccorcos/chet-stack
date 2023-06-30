@@ -16,7 +16,8 @@
 		"sourceMap": true,
 		"allowJs": true,
 		"skipLibCheck": true,
-		"lib": ["DOM", "ES2018"]
+		"lib": ["DOM", "ES2018"],
+		"outDir": "tmp/ts"
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
