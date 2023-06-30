@@ -100,8 +100,10 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 			}
 		}
 
-		// TODO: retry on transaction conflict!
-		await write(environment, { authorId: environment.config.adminUserId, operations })
+		if (operations.length !== 0) {
+			// TODO: retry on transaction conflict!
+			await write(environment, { authorId: environment.config.adminUserId, operations })
+		}
 	})
 
 	// Return records because they might contain data from another user.
