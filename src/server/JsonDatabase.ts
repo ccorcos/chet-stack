@@ -30,7 +30,6 @@ export class JsonDatabase implements DatabaseApi {
 		pointer: RecordPointer<T>
 	): Promise<TableToRecord[T] | undefined> {
 		const record = getRecordMap(this.data, pointer)
-		// @ts-ignore
 		return record
 	}
 
@@ -83,7 +82,7 @@ export class JsonDatabase implements DatabaseApi {
 		// First, lets assert that the previous version lines up transactionally.
 		for (const { table, id, record } of records) {
 			const pointer = { table, id } as RecordPointer
-			const current = getRecordMap(this.data, pointer) as RecordValue | undefined
+			const current = getRecordMap(this.data, pointer)
 
 			if (current && current.version !== record.last_version) throw new TransactionConflictError()
 		}

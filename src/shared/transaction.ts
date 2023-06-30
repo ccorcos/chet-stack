@@ -78,7 +78,7 @@ function applySetOperation(recordMap: RecordMap, operation: SetOperation) {
 	const { table, id } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record = getRecordMap(recordMap, pointer)
 
 	if (!record) {
 		if (operation.key.length !== 0) throw new ValidationError("Record does not exist.")
@@ -98,7 +98,7 @@ function applyListInsertOperation(recordMap: RecordMap, operation: ListInsertOpe
 	const { table, id, value, where } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record = getRecordMap(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")
 
 	const newRecord = cloneDeep(record)
@@ -144,7 +144,7 @@ function applyListRemoveOperation(recordMap: RecordMap, operation: ListRemoveOpe
 	const { table, id, value } = operation
 	const pointer = { table, id } as RecordPointer
 
-	const record: any = getRecordMap(recordMap, pointer)
+	const record = getRecordMap(recordMap, pointer)
 	if (!record) throw new ValidationError("Record does not exist.")
 
 	const newRecord = cloneDeep(record)

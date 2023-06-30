@@ -33,7 +33,6 @@ export class RecordCache implements RecordCacheApi {
 	private recordMap: RecordMap = {}
 
 	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
-		// @ts-ignore
 		return getRecordMap(this.recordMap, pointer)
 	}
 
@@ -73,7 +72,7 @@ export class RecordCache implements RecordCacheApi {
 		// Update only if they're new versions.
 		const updates: RecordPointer[] = []
 		for (const { table, id, record } of iterateRecordMap(recordMap)) {
-			const existing = getRecordMap(this.recordMap, { table, id }) as RecordValue | undefined
+			const existing = getRecordMap(this.recordMap, { table, id })
 			if (force || !existing || existing.version < record.version) {
 				setRecordMap(this.recordMap, { table, id }, record)
 				updates.push({ table, id })
