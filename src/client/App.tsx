@@ -35,7 +35,7 @@ function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 }
 
 function parseCookies(cookie: string) {
-	const entries = cookie.split(";").map((line) => line.split("="))
+	const entries = cookie.split(";").map((line) => line.split("=").map((p) => p.trim()))
 	const grouped = groupBy(entries, (entry) => entry[0])
 	const cookies = mapValues(grouped, (entries) => entries.map((entry) => entry[1]))
 	return cookies
