@@ -5,6 +5,7 @@ import {
 	RecordTable,
 	RecordWithTable,
 	TableToRecord,
+	ThreadRecord,
 	UserRecord,
 } from "../shared/schema"
 
@@ -17,6 +18,8 @@ export type DatabaseApi = {
 	getPassword(userId: string): Promise<PasswordRecord | undefined>
 
 	searchUsers(query: string): Promise<UserRecord[]>
+
+	getMessageThread(messageId: string): Promise<ThreadRecord | undefined>
 
 	/** This should only get called by the write api. */
 	write(records: RecordWithTable[]): Promise<void>

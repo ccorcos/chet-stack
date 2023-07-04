@@ -13,3 +13,8 @@ export class BrokenError extends Error {
 	static statusCode = 409
 	statusCode = 409
 }
+
+export class PermissionError extends Error {
+	static statusCode = 403
+	statusCode = 403
+}
