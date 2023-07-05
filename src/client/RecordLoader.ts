@@ -43,6 +43,7 @@ export class RecordLoader {
 		if (loader) return loader
 		// if (loader && !loader.error) return loader
 
+		// @ts-ignore
 		const newLoader = Loader.wrap(this.args.onFetchRecord(pointer))
 		setRecordMap(this.loaderMap, pointer, newLoader)
 		return newLoader

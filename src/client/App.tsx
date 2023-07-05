@@ -1,7 +1,7 @@
 import { groupBy, mapValues } from "lodash"
 import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
 import { RecordPointer, RecordTable } from "../shared/schema"
-import { op, Transaction } from "../shared/transaction"
+import { Transaction, op } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
 import { useAsync } from "./hooks/useAsync"
 
@@ -20,6 +20,7 @@ function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 
 	const subscribe = useCallback(
 		(update: () => void) => {
+			// @ts-ignore
 			return cache.addListener(pointer, update)
 		},
 		[pointer.table, pointer.id]
@@ -59,10 +60,10 @@ function LoadUser(props: { userId: string }) {
 	const environment = useClientEnvironment()
 
 	// TODO: not sure why typescript is being annoying.
-	const user = useRecord<"user">({ table: "user", id: props.userId })
+	const user = useRecord({ table: "user", id: props.userId })
 	if (!user) throw new Error("Could not load user.")
 
-	const userSettings = useRecord<"user_settings">({ table: "user_settings", id: props.userId })
+	const userSettings = useRecord({ table: "user_settings", id: props.userId })
 	if (!userSettings) throw new Error("Could not load user settings.")
 
 	const [thread, setThread] = useState<string | undefined>(userSettings.thread_ids?.[0])
@@ -162,7 +163,7 @@ function UserLookup(props: { onSelect: (userId: string) => void }) {
 }
 
 function ThreadMembersInput(props: { userId: string; threadId: string }) {
-	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	const thread = useRecord({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	const { transactionQueue } = useClientEnvironment()
@@ -217,7 +218,7 @@ function ThreadMembersInput(props: { userId: string; threadId: string }) {
 }
 
 function ThreadSubjectInput(props: { userId: string; threadId: string }) {
-	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	const thread = useRecord({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	const { transactionQueue } = useClientEnvironment()
@@ -304,7 +305,7 @@ function NewMessageInput(props: { userId: string; threadId: string }) {
 }
 
 function ThreadItem(props: { threadId: string; selected: boolean; onClick: () => void }) {
-	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	const thread = useRecord({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	return (
@@ -321,7 +322,7 @@ function ThreadItem(props: { threadId: string; selected: boolean; onClick: () =>
 }
 
 function ThreadMessages(props: { userId: string; threadId: string }) {
-	const thread = useRecord<"thread">({ table: "thread", id: props.threadId })
+	const thread = useRecord({ table: "thread", id: props.threadId })
 	if (!thread) throw new Error("Could not find thread.")
 
 	const messages = thread.message_ids || []
@@ -338,7 +339,7 @@ function ThreadMessages(props: { userId: string; threadId: string }) {
 }
 
 function Message(props: { messageId: string }) {
-	const message = useRecord<"message">({ table: "message", id: props.messageId })
+	const message = useRecord({ table: "message", id: props.messageId })
 	if (!message) throw new Error("Could not find message.")
 
 	message.author_id
@@ -353,7 +354,7 @@ function Message(props: { messageId: string }) {
 }
 
 function Username(props: { userId: string }) {
-	const user = useRecord<"user">({ table: "user", id: props.userId })
+	const user = useRecord({ table: "user", id: props.userId })
 	if (!user) throw new Error("Could not find user.")
 	return <span>{user.username}</span>
 }

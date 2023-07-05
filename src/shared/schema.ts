@@ -78,19 +78,19 @@ export type TableToRecord = {
 	auth_token: AuthTokenRecord
 }
 
-type DistributiveProp<T, K extends keyof T> = T extends unknown ? T[K] : never
+// type DistributiveProp<T, K extends keyof T> = T extends unknown ? T[K] : never
 
 export type RecordTable = keyof TableToRecord
 
 export type RecordValue<T extends RecordTable = RecordTable> = TableToRecord[T]
 
-export type RecordWithTable<Table extends RecordTable = RecordTable> = {
-	[T in RecordTable]: { table: T; id: string; record: TableToRecord[T] }
-}[Table]
+export type RecordWithTable<T extends RecordTable = RecordTable> = {
+	[K in T]: { table: K; id: string; record: TableToRecord[K] }
+}[T]
 
-export type RecordPointer<Table extends RecordTable = RecordTable> = {
-	[T in RecordTable]: { table: T; id: string }
-}[Table]
+export type RecordPointer<T extends RecordTable = RecordTable> = {
+	[K in T]: { table: K; id: string }
+}[T]
 
 export type RecordMap = {
 	[T in RecordTable]?: {

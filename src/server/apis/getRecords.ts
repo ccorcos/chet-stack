@@ -1,7 +1,7 @@
 import * as t from "data-type-ts"
 import type { RecordPointer, RecordTable } from "../../shared/schema"
-import type { ApiEndpoint } from "../api"
 import type { ServerEnvironment } from "../ServerEnvironment"
+import type { ApiEndpoint } from "../api"
 
 export const input = t.obj({ pointers: t.array(t.obj({ table: t.string, id: t.string })) })
 
@@ -10,6 +10,7 @@ export async function getRecords<T extends RecordTable>(
 	args: { pointers: RecordPointer<T>[] }
 ) {
 	const { db } = environment
+	// @ts-ignore
 	const recordMap = await db.getRecords(args.pointers)
 	// TODO: permissions
 	return { recordMap }
