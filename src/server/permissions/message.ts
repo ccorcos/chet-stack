@@ -1,36 +1,7 @@
-import { getRecordMap, setRecordMap } from "../../shared/recordMapHelpers"
-import { RecordMap } from "../../shared/schema"
-import {
-	and,
-	FetchPointerAndPermissionRecordsFn,
-	PermissionArgs,
-	PermissionResult,
-	RecordPermissions,
-} from "./shared"
+import { getRecordMap } from "../../shared/recordMapHelpers"
+import { PermissionArgs, PermissionResult, RecordPermissions, and } from "./shared"
 
 const permissionsFn = and([authorWasNotChanged, userIsAuthor, userHasPermissionToAccessThread])
-
-const fetchPointerAndPermissionRecords: FetchPointerAndPermissionRecordsFn<"message"> = async ({
-	pointer,
-	environment,
-}) => {
-	const recordMap = {} as RecordMap
-
-	const [message, thread] = await Promise.all([
-		environment.db.getRecord<"message">(pointer),
-		environment.db.getMessageThread(pointer.id),
-	])
-
-	if (message) {
-		setRecordMap(recordMap, { table: "message", id: message.id }, message)
-	}
-
-	if (thread) {
-		setRecordMap(recordMap, { table: "thread", id: thread.id }, thread)
-	}
-
-	return recordMap
-}
 
 export const messagePermissions: RecordPermissions<"message"> = {
 	fetchPointerAndPermissionRecords,

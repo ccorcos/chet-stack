@@ -3,10 +3,11 @@ import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
 import { PermissionError } from "../../shared/errors"
 import { getRecordMap } from "../../shared/recordMapHelpers"
 import type { RecordPointer, RecordWithTable } from "../../shared/schema"
-import { applyOperation, Operation, Transaction } from "../../shared/transaction"
-import type { ApiEndpoint } from "../api"
-import { fetchPointerAndPermissionRecords, getPermissionsErrors } from "../permissions/permissions"
+import { Operation, Transaction, applyOperation } from "../../shared/transaction"
 import type { ServerEnvironment } from "../ServerEnvironment"
+import type { ApiEndpoint } from "../api"
+import { loadRecordsWithAncestors } from "../loadRecordsWithAncestors"
+import { getPermissionsErrors } from "../permissions/permissions"
 
 export const input = t.obj<Transaction>({
 	authorId: t.string,
@@ -14,6 +15,7 @@ export const input = t.obj<Transaction>({
 })
 
 export async function write(environment: ServerEnvironment, args: typeof input.value) {
+	const { db } = environment
 	const { authorId, operations } = args
 
 	const pointers = uniqWith(
@@ -21,31 +23,27 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 		isEqual
 	)
 
-	const recordMapBeforeChanges = await fetchPointerAndPermissionRecords({
-		pointers,
-		userId: authorId,
-		environment,
-	})
+	const beforeRecordMap = await loadRecordsWithAncestors(environment, pointers)
 
-	const recordMapAfterChanges = cloneDeep(recordMapBeforeChanges)
+	const afterRecordMap = cloneDeep(beforeRecordMap)
 
 	// Keep track of the previous version so we can assert on write.
 	for (const pointer of pointers) {
-		const record = getRecordMap(recordMapAfterChanges, pointer)
+		const record = getRecordMap(afterRecordMap, pointer)
 		if (record) record.last_version = record.version
 	}
 
 	// Apply the mutations.
 	for (const operation of operations) {
-		applyOperation(recordMapAfterChanges, operation)
+		applyOperation(afterRecordMap, operation)
 	}
 
 	// TODO: validate all the record schemas.
 
 	const permissionErrors = getPermissionsErrors({
 		pointers,
-		recordMapBeforeChanges,
-		recordMapAfterChanges,
+		beforeRecordMap,
+		afterRecordMap,
 		userId: authorId,
 	})
 
@@ -57,7 +55,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 	const records = pointers.map((pointer) => {
 		const record: RecordWithTable = {
 			...pointer,
-			record: getRecordMap(recordMapAfterChanges, pointer) as any,
+			record: getRecordMap(afterRecordMap, pointer) as any,
 		}
 		return record
 	})
@@ -85,8 +83,8 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 		for (const pointer of pointers) {
 			if (pointer.table !== "thread") continue
-			const prev = getRecordMap(recordMapBeforeChanges, pointer)
-			const next = getRecordMap(recordMapAfterChanges, pointer)
+			const prev = getRecordMap(beforeRecordMap, pointer)
+			const next = getRecordMap(afterRecordMap, pointer)
 
 			const prevMembers = prev ? prev.member_ids || [] : []
 			const nextMembers = next ? next.member_ids || [] : []
@@ -122,7 +120,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 	// Return records because they might contain data from another user.
 	// TODO: filter record map to ensure client has permission to view all records
-	return { recordMap: recordMapAfterChanges }
+	return { recordMap: afterRecordMap }
 }
 
 export type writeApiType = {
