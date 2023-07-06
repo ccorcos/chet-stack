@@ -48,6 +48,7 @@ export type ThreadRecord = {
 	id: string
 	version: number
 	last_version?: number
+	created_by: string
 	member_ids: string[]
 	created_at: string
 	updated_at: string

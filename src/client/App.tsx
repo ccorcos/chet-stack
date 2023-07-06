@@ -80,7 +80,8 @@ function LoadUser(props: { userId: string }) {
 				op.create("thread", {
 					id,
 					version: 0,
-					member_ids: [],
+					created_by: user.id,
+					member_ids: [user.id],
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString(),
 					replied_at: new Date().toISOString(),
