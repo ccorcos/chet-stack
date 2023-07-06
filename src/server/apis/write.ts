@@ -15,7 +15,6 @@ export const input = t.obj<Transaction>({
 })
 
 export async function write(environment: ServerEnvironment, args: typeof input.value) {
-	const { db } = environment
 	const { authorId, operations } = args
 
 	const pointers = uniqWith(
