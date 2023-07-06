@@ -7,7 +7,7 @@ import { Operation, Transaction, applyOperation } from "../../shared/transaction
 import type { ServerEnvironment } from "../ServerEnvironment"
 import type { ApiEndpoint } from "../api"
 import { loadRecordsWithAncestors } from "../loadRecordsWithAncestors"
-import { validateWrite } from "../permissions"
+import { validateWrite as validateWritePermission } from "../permissions"
 
 export const input = t.obj<Transaction>({
 	authorId: t.string,
@@ -39,15 +39,17 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 	// TODO: validate all the record schemas.
 
-	const errors = validateWrite({
-		pointers,
-		beforeRecordMap,
-		afterRecordMap,
-		userId: authorId,
-	})
+	if (authorId !== environment.config.adminUserId) {
+		const errors = validateWritePermission({
+			pointers,
+			beforeRecordMap,
+			afterRecordMap,
+			userId: authorId,
+		})
 
-	if (errors.length > 0) {
-		throw new PermissionError(errors.join("\n"))
+		if (errors.length > 0) {
+			throw new PermissionError(errors.join("\n"))
+		}
 	}
 
 	// Write to the database.

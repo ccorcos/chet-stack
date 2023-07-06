@@ -31,8 +31,8 @@ const validateWriteMap: {
 	user_settings: () => undefined,
 	thread: () => undefined,
 	message: validateWriteMessage,
-	password: () => undefined,
-	auth_token: () => undefined,
+	password: () => "Users cannot write to this table.",
+	auth_token: () => "Users cannot write to this table.",
 }
 
 const allowEditMessageProperties: (keyof MessageRecord)[] = ["version", "updated_at", "text"]
