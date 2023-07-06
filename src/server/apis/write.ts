@@ -7,7 +7,7 @@ import { Operation, Transaction, applyOperation } from "../../shared/transaction
 import type { ServerEnvironment } from "../ServerEnvironment"
 import type { ApiEndpoint } from "../api"
 import { loadRecordsWithAncestors } from "../loadRecordsWithAncestors"
-import { validateWrite as validateWritePermission } from "../permissions"
+import { validateWrite as validateWritePermission } from "../validateWrite"
 
 export const input = t.obj<Transaction>({
 	authorId: t.string,
