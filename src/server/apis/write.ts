@@ -118,7 +118,6 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 	})
 
 	// Return records because they might contain data from another user.
-	// TODO: filter record map to ensure client has permission to view all records
 	return { recordMap: afterRecordMap }
 }
 
