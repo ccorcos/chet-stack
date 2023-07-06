@@ -1,7 +1,12 @@
 import { isEqual, uniqWith } from "lodash"
 import { SecondMs } from "../shared/dateHelpers"
 import { DeferredPromise } from "../shared/DeferredPromise"
-import { BrokenError, TransactionConflictError, ValidationError } from "../shared/errors"
+import {
+	BrokenError,
+	PermissionError,
+	TransactionConflictError,
+	ValidationError,
+} from "../shared/errors"
 import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
@@ -73,6 +78,11 @@ export class TransactionQueue {
 			if (response.status === ValidationError.statusCode) {
 				await this.rollback(transaction)
 				return deferred.reject(new ValidationError(response.body))
+			}
+
+			if (response.status === PermissionError.statusCode) {
+				await this.rollback(transaction)
+				return deferred.reject(new PermissionError(response.body))
 			}
 
 			if (response.status === TransactionConflictError.statusCode) {

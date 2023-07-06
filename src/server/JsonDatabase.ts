@@ -66,6 +66,12 @@ export class JsonDatabase implements DatabaseApi {
 		return users
 	}
 
+	async getMessageThread(messageId: string) {
+		const message = this.data.message?.[messageId]
+		if (!message) return
+		return this.data.thread?.[message.thread_id]
+	}
+
 	// async getThreads(): Promise<ThreadRecord[]> {
 	// 	const threads = compact(Object.values(this.data.thread || {}))
 	// 	return sortBy(threads, (thread) => thread.replied_at)

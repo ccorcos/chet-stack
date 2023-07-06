@@ -1,4 +1,4 @@
-import { RecordWithTable } from "./schema"
+import { RecordMap, RecordWithTable } from "./schema"
 
 export function getRecordMap<
 	R extends { [table: string]: { [id: string]: any } },
@@ -37,12 +37,16 @@ export function deleteRecordMap<
 	}
 }
 
-export function* iterateRecordMap<R extends { [table: string]: { [id: string]: any } }>(
-	recordMap: R
-): Generator<RecordWithTable> {
+export function* iterateRecordMap(recordMap: RecordMap): Generator<RecordWithTable> {
 	for (const [table, idMap] of Object.entries(recordMap)) {
 		for (const [id, record] of Object.entries(idMap)) {
 			yield { table, id, record } as RecordWithTable
 		}
+	}
+}
+
+export function assignRecordMap(mutatedRecordMap: RecordMap, otherRecordMap: RecordMap) {
+	for (const { table, id, record } of iterateRecordMap(otherRecordMap)) {
+		setRecordMap(mutatedRecordMap, { table, id }, record)
 	}
 }
