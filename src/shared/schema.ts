@@ -38,6 +38,7 @@ export type AuthTokenRecord = {
 	id: string // the is is the token
 	version: number
 	last_version?: number
+	user_id: string
 	created_at: string
 	updated_at: string
 	expires_at: string

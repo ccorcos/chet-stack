@@ -5,9 +5,9 @@ import { DayMs } from "../../shared/dateHelpers"
 import { BrokenError, ValidationError } from "../../shared/errors"
 import { setRecordMap } from "../../shared/recordMapHelpers"
 import { AuthTokenRecord, RecordMap } from "../../shared/schema"
-import { op, Operation } from "../../shared/transaction"
-import type { ApiEndpoint } from "../api"
+import { Operation, op } from "../../shared/transaction"
 import type { ServerEnvironment } from "../ServerEnvironment"
+import type { ApiEndpoint } from "../api"
 import { write } from "./write"
 
 export const input = t.obj({ username: t.string, password: t.string })
@@ -76,6 +76,7 @@ export async function login(
 	const authToken: AuthTokenRecord = {
 		id: randomUUID(),
 		version: 0,
+		user_id: user.id,
 		created_at: new Date().toISOString(),
 		updated_at: new Date().toISOString(),
 		expires_at: expiration.toISOString(),

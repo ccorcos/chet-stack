@@ -3,14 +3,14 @@ import {
 	RecordMap,
 	RecordPointer,
 	RecordTable,
+	RecordValue,
 	RecordWithTable,
-	TableToRecord,
 	ThreadRecord,
 	UserRecord,
 } from "../shared/schema"
 
 export type DatabaseApi = {
-	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): Promise<TableToRecord[T] | undefined>
+	getRecord<T extends RecordTable>(pointer: RecordPointer<T>): Promise<RecordValue<T> | undefined>
 	getRecords(pointers: RecordPointer[]): Promise<RecordMap>
 
 	getUserById(userId: string): Promise<UserRecord | undefined>

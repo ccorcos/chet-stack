@@ -1,10 +1,10 @@
-import { getRecordMap } from "../shared/recordMapHelpers"
+import { deleteRecordMap, getRecordMap, iterateRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer, RecordTable } from "../shared/schema"
 
 export function validateRead(args: {
 	pointer: RecordPointer
 	recordMap: RecordMap
-	userId: string
+	userId: string | undefined
 }) {
 	const { pointer, recordMap, userId } = args
 	const validateRecordRead = validateReadMap[pointer.table]
@@ -12,8 +12,17 @@ export function validateRead(args: {
 	return validateRecordRead({ pointer, recordMap, userId })
 }
 
-export function canRead(args: { pointer: RecordPointer; recordMap: RecordMap; userId: string }) {
-	const error = validateRead(args)
+export function filterRecordMapForPermission(recordMap: RecordMap, userId: string | undefined) {
+	for (const { table, id, record } of iterateRecordMap(recordMap)) {
+		if (!canRead({ table, id }, recordMap, userId)) {
+			// @ts-ignore
+			deleteRecordMap({ table, id }, recordMap)
+		}
+	}
+}
+
+export function canRead(pointer: RecordPointer, recordMap: RecordMap, userId: string | undefined) {
+	const error = validateRead({ pointer, recordMap, userId })
 	return !error
 }
 
@@ -21,7 +30,7 @@ const validateReadMap: {
 	[T in RecordTable]: (args: {
 		pointer: RecordPointer<T>
 		recordMap: RecordMap
-		userId: string
+		userId: string | undefined
 	}) => string | undefined
 } = {
 	user: validateReadUser,
