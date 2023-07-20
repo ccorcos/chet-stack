@@ -1,21 +1,12 @@
 
 - getMessages
-	- we want to be able to index thread messages
-
-	- how do I know if a write has been submitted. render in the ui
-	- how do I know if the result is from cache or waiting on network. render in the ui.
-
-	- optimistic rendering
 	- should work offline
 	- display status of being sent or not
-	- subscribe and push updates
+	- display status of loaded from cache or most recent from network
+	- delayed unsubscribe for getMessages
+	- pagination
 
-
-- list query...
-	- RecordCache -> InMemoryCache more generic
-	- OfflineStorage -> PersistentCache more generic
-	- RecordLoader -> Loader more generic
-
+- getThreads
 
 - proper where query for threads and messages.
 	- paging and custom reactivity hook
