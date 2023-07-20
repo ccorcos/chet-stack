@@ -115,7 +115,10 @@ function validateWriteThread(args: {
 
 	if (before && after) {
 		// Updated.
-		if (after.created_by !== userId) return "You cannot edit a thread you did not create."
+		// if (after.created_by !== userId) return "You cannot edit a thread you did not create."
+		if (!userId) return "You must be logged in to edit a thread."
+		if (!before.member_ids.includes(userId))
+			return "You must be a member of this thread to post a message."
 
 		const error = validateEditableProperties({
 			table: "thread",

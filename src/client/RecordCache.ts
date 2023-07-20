@@ -21,7 +21,7 @@ type RecordListener<T extends RecordTable> = (value: RecordValue<T>) => void
 export type RecordCacheApi = {
 	get<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined
 	subscribe<T extends RecordTable>(pointer: RecordPointer<T>, fn: RecordListener<T>): () => void
-	updateRecordMap(recordMap: RecordMap): void
+	updateRecordMap(recordMap: RecordMap): RecordWithTable[]
 	iterateRecords(callback: (value: RecordWithTable) => boolean | void): void
 }
 
@@ -72,6 +72,8 @@ export class RecordCache implements RecordCacheApi {
 		}))
 
 		this.cache.write(writes)
+
+		return recordWrites
 	}
 
 	iterateRecords(callback: (value: RecordWithTable) => boolean | void): void {
@@ -84,7 +86,13 @@ export class RecordCache implements RecordCacheApi {
 }
 
 export class GetMessagesCache {
-	constructor(private cache: RecordCache) {}
+	constructor(
+		private args: {
+			environment: { recordCache: RecordCache }
+			onSubscribe(threadId: string): void
+			onUnsubscribe(threadId: string): void
+		}
+	) {}
 
 	private listeners = new Map<string, Set<() => void>>()
 
@@ -92,8 +100,10 @@ export class GetMessagesCache {
 		const listenerSet = this.listeners.get(threadId) || new Set()
 		listenerSet.add(fn)
 		this.listeners.set(threadId, listenerSet)
+		this.args.onSubscribe(threadId)
 		return () => {
 			listenerSet.delete(fn)
+			this.args.onUnsubscribe(threadId)
 		}
 	}
 
@@ -103,7 +113,7 @@ export class GetMessagesCache {
 		for (const listener of listenerSet) listener()
 	}
 
-	afterWrite(writes: RecordWithTable[]) {
+	handleWrites(writes: RecordWithTable[]) {
 		const threadIds = new Set<string>()
 
 		for (const { table, id, record } of writes) {
@@ -120,7 +130,7 @@ export class GetMessagesCache {
 	get(threadId: string) {
 		const messages: MessageRecord[] = []
 
-		this.cache.iterateRecords(({ table, id, record }) => {
+		this.args.environment.recordCache.iterateRecords(({ table, id, record }) => {
 			if (table !== "message") return
 			const message = record
 			if (message.thread_id !== threadId) return

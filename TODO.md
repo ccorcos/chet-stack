@@ -2,6 +2,9 @@
 - getMessages
 	- we want to be able to index thread messages
 
+	- how do I know if a write has been submitted. render in the ui
+	- how do I know if the result is from cache or waiting on network. render in the ui.
+
 	- optimistic rendering
 	- should work offline
 	- display status of being sent or not

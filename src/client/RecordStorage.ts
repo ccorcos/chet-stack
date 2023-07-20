@@ -2,7 +2,9 @@ import { openDB } from "idb"
 import { iterateRecordMap } from "../shared/recordMapHelpers"
 import { MessageRecord, RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
 
-const debug = (...args: any[]) => console.log("STORAGE:", ...args)
+const debug = (...args: any[]) => {
+	// console.log("recordStorage:", ...args)
+}
 
 export class RecordStorage {
 	private db = new IndexedDbKeyValueStore("app", "records")

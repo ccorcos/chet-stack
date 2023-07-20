@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from "react"
 import { ClientConfig } from "./ClientConfig"
-import type { RecordCacheApi } from "./RecordCache"
-import type { RecordLoaderApi } from "./RecordLoader"
+import type { GetMessagesCache, RecordCacheApi } from "./RecordCache"
+import type { GetMessagesLoader, RecordLoaderApi } from "./RecordLoader"
 import { RecordStorage } from "./RecordStorage"
 import type { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
@@ -11,6 +11,9 @@ export type ClientEnvironment = {
 	recordCache: RecordCacheApi
 	recordStorage: RecordStorage
 	recordLoader: RecordLoaderApi
+
+	getMessagesCache: GetMessagesCache
+	getMessagesLoader: GetMessagesLoader
 
 	api: ClientApi
 	transactionQueue: TransactionQueue

@@ -2,7 +2,7 @@ import { DeferredPromise } from "../shared/DeferredPromise"
 import { ClientPubsubMessage, ServerPubsubMessage } from "../shared/PubSubTypes"
 import { ClientConfig } from "./ClientConfig"
 
-const debug = (...args: any[]) => console.log("WEBSOCKET:", ...args)
+const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
 export class WebsocketPubsubClient {
 	private ws: WebSocket
@@ -14,8 +14,8 @@ export class WebsocketPubsubClient {
 		this.ws.onopen = () => this.ready.resolve()
 
 		this.ws.onmessage = (event) => {
-			debug(event.data)
 			const message = JSON.parse(event.data) as ServerPubsubMessage
+			debug("<", message.type, message.key, message.value)
 			args.onChange(message.key, message.value)
 		}
 
@@ -26,6 +26,7 @@ export class WebsocketPubsubClient {
 
 	private async send(message: ClientPubsubMessage) {
 		await this.ready.promise
+		debug(">", message.type, message.key)
 		this.ws.send(JSON.stringify(message))
 	}
 

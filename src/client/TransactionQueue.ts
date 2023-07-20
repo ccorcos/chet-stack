@@ -12,14 +12,16 @@ import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
 import { Transaction, applyOperation } from "../shared/transaction"
 import { RecordCache } from "./RecordCache"
-import { RecordStorage } from "./RecordStorage"
 import { ClientApi } from "./api"
 
 type Thunk = { deferred: DeferredPromise<void>; transaction: Transaction }
 
 export class TransactionQueue {
 	constructor(
-		private environment: { recordCache: RecordCache; api: ClientApi; recordStorage: RecordStorage }
+		private args: {
+			environment: { recordCache: RecordCache; api: ClientApi }
+			onUpdateRecordMap: (recordMap: RecordMap, force?: boolean) => void
+		}
 	) {}
 
 	private thunks: Thunk[] = []
@@ -33,7 +35,7 @@ export class TransactionQueue {
 
 		const recordMap: RecordMap = {}
 		for (const pointer of pointers) {
-			const record = this.environment.recordCache.get(pointer)
+			const record = this.args.environment.recordCache.get(pointer)
 			setRecordMap(recordMap, pointer, record)
 		}
 
@@ -43,8 +45,7 @@ export class TransactionQueue {
 		}
 
 		// Optimistically update the local cache.
-		this.environment.recordCache.updateRecordMap(recordMap)
-		this.environment.recordStorage.updateRecordMap(recordMap)
+		this.args.onUpdateRecordMap(recordMap)
 
 		// This promise will get resolved once it is submitted.
 		const deferred = new DeferredPromise<void>()
@@ -70,7 +71,7 @@ export class TransactionQueue {
 		const { deferred, transaction } = thunk
 		// Submit and retry.
 		while (true) {
-			const response = await this.environment.api.write(transaction)
+			const response = await this.args.environment.api.write(transaction)
 			if (response.status === 200) {
 				return deferred.resolve()
 			}
@@ -108,12 +109,11 @@ export class TransactionQueue {
 			isEqual
 		)
 
-		const response = await this.environment.api.getRecords({ pointers })
+		const response = await this.args.environment.api.getRecords({ pointers })
 		if (response.status !== 200) throw new Error("Fix me.")
 
 		// Force update the cache.
 		const recordMap: RecordMap = response.body.recordMap
-		this.environment.recordCache.updateRecordMap(recordMap, true)
-		this.environment.recordStorage.updateRecordMap(recordMap, true)
+		this.args.onUpdateRecordMap(recordMap, true)
 	}
 }

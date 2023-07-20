@@ -5,7 +5,7 @@ import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap } from "../shared/schema"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
-import { GetMessagesCache, RecordCache, keyToPointer } from "./RecordCache"
+import { GetMessagesCache, RecordCache, keyToPointer, pointerToKey } from "./RecordCache"
 import { GetMessagesLoader, RecordLoader } from "./RecordLoader"
 import { RecordStorage } from "./RecordStorage"
 import { TransactionQueue } from "./TransactionQueue"
@@ -13,16 +13,12 @@ import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 import { createClientApi } from "./api"
 import { config } from "./config"
 
-const debugCache = (...args: any[]) => console.log("CACHE:", ...args)
-
 const recordCache = new RecordCache({
 	onSubscribe: (pointer) => {
-		subscriber.subscribe(pointer)
-		debugCache("Subscribe", JSON.stringify(pointer))
+		subscriber.subscribe(pointerToKey(pointer))
 	},
 	onUnsubscribe: (pointer) => {
-		debugCache("Unsubscribe", JSON.stringify(pointer))
-		subscriber.unsubscribe(pointer)
+		subscriber.unsubscribe(pointerToKey(pointer))
 		recordLoader.unloadRecord(pointer)
 	},
 })
@@ -41,7 +37,7 @@ const recordLoader = new RecordLoader({
 			if (!record) return
 			const recordMap: RecordMap = {}
 			setRecordMap(recordMap, pointer, record)
-			recordCache.updateRecordMap(recordMap)
+			updateCaches(recordMap)
 			deferred.resolve()
 			return record
 		})
@@ -67,7 +63,16 @@ const recordLoader = new RecordLoader({
 	},
 })
 
-const getMessagesCache = new GetMessagesCache(recordCache)
+const getMessagesCache = new GetMessagesCache({
+	environment: { recordCache },
+	onSubscribe(threadId) {
+		subscriber.subscribe(["getMessages", threadId].join(":"))
+	},
+	onUnsubscribe(threadId) {
+		subscriber.unsubscribe(["getMessages", threadId].join(":"))
+		getMessagesLoader.unloadThread(threadId)
+	},
+})
 
 const getMessagesLoader = new GetMessagesLoader({
 	onGetMessages: async (threadId) => {
@@ -123,23 +128,33 @@ const subscriber = new WebsocketPubsubClient({
 	},
 })
 
+function updateCaches(recordMap: RecordMap) {
+	const writes = recordCache.updateRecordMap(recordMap)
+	getMessagesCache.handleWrites(writes)
+}
+
 const api = createClientApi({
 	onUpdateRecordMap(recordMap) {
-		recordCache.updateRecordMap(recordMap)
+		updateCaches(recordMap)
 		recordStorage.updateRecordMap(recordMap)
 	},
 })
 
 const transactionQueue = new TransactionQueue({
-	recordCache: recordCache,
-	api,
-	recordStorage: recordStorage,
+	environment: { recordCache, api },
+	onUpdateRecordMap(recordMap) {
+		updateCaches(recordMap)
+		recordStorage.updateRecordMap(recordMap)
+	},
 })
 
 const environment: ClientEnvironment = {
 	recordCache,
 	recordStorage,
 	recordLoader,
+
+	getMessagesCache,
+	getMessagesLoader,
 
 	api,
 	transactionQueue,

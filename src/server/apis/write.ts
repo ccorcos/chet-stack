@@ -1,7 +1,7 @@
 import * as t from "data-type-ts"
 import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
 import { PermissionError } from "../../shared/errors"
-import { getRecordMap, iterateRecordMap } from "../../shared/recordMapHelpers"
+import { getRecordMap } from "../../shared/recordMapHelpers"
 import type { RecordPointer, RecordWithTable } from "../../shared/schema"
 import { Operation, Transaction, applyOperation } from "../../shared/transaction"
 import type { ServerEnvironment } from "../ServerEnvironment"
@@ -82,11 +82,13 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 	setImmediate(() => {
 		const threadIds = new Set<string>()
 
-		for (const { table, id, record: after } of iterateRecordMap(afterRecordMap)) {
-			if (table !== "message") return
-			const before = getRecordMap(beforeRecordMap, { table, id })
+		for (const pointer of pointers) {
+			if (pointer.table !== "message") continue
+			const after = getRecordMap(afterRecordMap, pointer)
+			const before = getRecordMap(beforeRecordMap, pointer)
 			const created = after && !before
-			if (!created) return
+			console.log(created, after, before)
+			if (!created) continue
 			threadIds.add(after.thread_id)
 		}
 

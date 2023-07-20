@@ -55,11 +55,11 @@ export class GetMessagesLoader {
 
 	private loaderMap: { [threadId: string]: Loader<void> } = {}
 
-	unloadRecord(threadId: string) {
+	unloadThread(threadId: string) {
 		delete this.loaderMap[threadId]
 	}
 
-	loadRecord(threadId: string) {
+	loadThread(threadId: string) {
 		const loader = this.loaderMap[threadId]
 		if (loader) return loader
 		// if (loader && !loader.error) return loader

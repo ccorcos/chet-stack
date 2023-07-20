@@ -1,5 +1,5 @@
 import { groupBy, mapValues } from "lodash"
-import React, { Suspense, useCallback, useEffect, useState, useSyncExternalStore } from "react"
+import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
 import { RecordPointer, RecordTable } from "../shared/schema"
 import { Transaction, op } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
@@ -314,59 +314,35 @@ function ThreadItem(props: { threadId: string; selected: boolean; onClick: () =>
 	)
 }
 
-type MessagesResult = {
-	storage: string[] | undefined
-	api: string[] | undefined
-}
+function useGetMessages(threadId: string) {
+	const { getMessagesCache, getMessagesLoader } = useClientEnvironment()
+	const promise = getMessagesLoader.loadThread(threadId)
+	if (!promise.loaded) throw promise
 
-function useMessages(threadId: string) {
-	const { api, recordCache, recordLoader, recordStorage } = useClientEnvironment()
+	const subscribe = useCallback(
+		(update: () => void) => {
+			return getMessagesCache.subscribe(threadId, update)
+		},
+		[threadId]
+	)
 
-	const [state, setState] = useState<MessagesResult>({ storage: undefined, api: undefined })
-
-	useEffect(() => {
-		// Read from storage
-		// Subscribe to changes
-
-		function update() {
-			// Always fetch from RecordCache so we get optimistic updates.
-			const messageIds = recordCache.getMessagesIndex.get(threadId)
-			setState((state) => ({ ...state, api: messageIds }))
-		}
-
-		api.getMessages({ threadId }).then((response) => {
-			if (response.status !== 200) {
-				console.error("Failed request: getMessages", response.status)
-				return
-			}
-			update()
-		})
-
-		const unsubscribeCache = recordCache.getMessagesIndex.subscribe(threadId, () => {
-			update()
-		})
-
-		return () => {
-			unsubscribeCache()
-		}
+	const getSnapshot = useCallback(() => {
+		return getMessagesCache.get(threadId)
 	}, [threadId])
 
-	return state
+	const record = useSyncExternalStore(subscribe, getSnapshot)
+
+	return record
 }
 
 function ThreadMessages(props: { userId: string; threadId: string }) {
 	const { threadId, userId } = props
-
-	const result = useMessages(threadId)
-	const messages = result.api || result.storage
-
-	const loading = result.api === undefined
+	const messages = useGetMessages(threadId)
 
 	return (
 		<>
 			<ThreadMembersInput threadId={threadId} userId={userId} />
 			<ThreadSubjectInput threadId={threadId} userId={userId} />
-			{loading && "Loading..."}
 			{messages && messages.map((id) => <Message messageId={id} />)}
 			<NewMessageInput threadId={threadId} userId={userId} />
 		</>

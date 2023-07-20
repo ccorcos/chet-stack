@@ -66,6 +66,8 @@ export class InMemoryCache implements InMemoryCacheApi {
 			this.data.delete(key)
 			this.args?.onUnsubscribe?.(key)
 		})()
+
+		this.delayedUnsubscribe.set(key, unsubscribe)
 	}
 
 	private emit(key: string, value: any) {

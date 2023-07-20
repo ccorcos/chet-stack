@@ -2,6 +2,8 @@ import type { Server } from "http"
 import WebSocket from "ws"
 import { ClientPubsubMessage, ServerPubsubMessage } from "../shared/PubSubTypes"
 
+const debug = (...args: any[]) => console.log("pubsub:", ...args)
+
 export class WebsocketPubsubServer {
 	private wss: WebSocket.Server
 	private connections = new Map<WebSocket, Set<string>>()
@@ -19,6 +21,9 @@ export class WebsocketPubsubServer {
 
 			connection.on("message", (data: string) => {
 				const message = JSON.parse(data) as ClientPubsubMessage
+
+				debug("<", message.type, message.key)
+
 				// TODO: validate incoming data.
 				if (message.type === "subscribe") {
 					return subscriptions.add(message.key)
@@ -31,11 +36,13 @@ export class WebsocketPubsubServer {
 	}
 
 	async publish(items: { key: string; value: any }[]) {
-		for (const [connection, subscriptions] of this.connections.entries()) {
-			for (const { key, value } of items) {
+		for (const { key, value } of items) {
+			const message: ServerPubsubMessage = { type: "update", key, value }
+			debug(">", message.type, message.key, message.value)
+			const data = JSON.stringify(message)
+
+			for (const [connection, subscriptions] of this.connections.entries()) {
 				if (subscriptions.has(key)) {
-					const message: ServerPubsubMessage = { type: "update", key, value }
-					const data = JSON.stringify(message)
 					connection.send(data)
 				}
 			}
