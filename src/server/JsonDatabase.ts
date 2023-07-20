@@ -1,11 +1,11 @@
 import * as fs from "fs-extra"
+import { compact, sortBy } from "lodash"
 import { TransactionConflictError } from "../shared/errors"
 import { getRecordMap, setRecordMap } from "../shared/recordMapHelpers"
 import {
 	RecordMap,
 	RecordPointer,
 	RecordTable,
-	RecordValue,
 	RecordWithTable,
 	TableToRecord,
 	UserRecord,
@@ -77,12 +77,12 @@ export class JsonDatabase implements DatabaseApi {
 	// 	return sortBy(threads, (thread) => thread.replied_at)
 	// }
 
-	// async getMessages(threadId: string): Promise<MessageRecord[]> {
-	// 	const messages = compact(Object.values(this.data.message || {})).filter(
-	// 		(message) => message.thread_id === threadId
-	// 	)
-	// 	return sortBy(messages, (message) => message.created_at)
-	// }
+	async getMessageIds(threadId: string): Promise<string[]> {
+		const messages = compact(Object.values(this.data.message || {})).filter(
+			(message) => message.thread_id === threadId
+		)
+		return sortBy(messages, (message) => message.created_at).map((message) => message.id)
+	}
 
 	async write(records: RecordWithTable[]): Promise<void> {
 		// First, lets assert that the previous version lines up transactionally.

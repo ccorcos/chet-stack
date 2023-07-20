@@ -1,5 +1,5 @@
 import type { Request, Response } from "express"
-// import { getMessagesApi } from "./apis/getMessages"
+import { getMessagesApi } from "./apis/getMessages"
 import { getRecordsApi } from "./apis/getRecords"
 // import { getThreadsApi } from "./apis/getThreads"
 import { loginApi } from "./apis/login"
@@ -14,7 +14,7 @@ export type ApiEndpoint = {
 }
 
 export const api = {
-	// getMessages: getMessagesApi,
+	getMessages: getMessagesApi,
 	// getThreads: getThreadsApi,
 	write: writeApi,
 	login: loginApi,

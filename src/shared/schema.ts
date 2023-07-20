@@ -55,9 +55,6 @@ export type ThreadRecord = {
 	updated_at: string
 	replied_at: string
 	subject: string
-
-	// TODO: later we'll query messages based on thread_id.
-	message_ids?: string[]
 }
 
 export type MessageRecord = {

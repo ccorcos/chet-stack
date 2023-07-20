@@ -1,5 +1,5 @@
 import { groupBy, mapValues } from "lodash"
-import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
+import React, { Suspense, useCallback, useEffect, useState, useSyncExternalStore } from "react"
 import { RecordPointer, RecordTable } from "../shared/schema"
 import { Transaction, op } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
@@ -33,6 +33,17 @@ function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 	const record = useSyncExternalStore(subscribe, getSnapshot)
 
 	return record
+}
+
+function useMessages(threadId: string) {
+	const { api, cache, loader } = useClientEnvironment()
+
+	useEffect(() => {
+		// Read from storage
+		// Fetch in parallel
+		// Subscribe to changes
+		api.getMessages({ threadId })
+	}, [threadId])
 }
 
 function parseCookies(cookie: string) {
@@ -271,14 +282,6 @@ function NewMessageInput(props: { userId: string; threadId: string }) {
 						updated_at: new Date().toISOString(),
 						text: text,
 					},
-				},
-				{
-					type: "listInsert",
-					table: "thread",
-					id: props.threadId,
-					key: ["message_ids"],
-					value: messageId,
-					where: "append",
 				},
 				{
 					type: "set",

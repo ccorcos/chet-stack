@@ -4,6 +4,7 @@ import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/sc
 
 const debug = (...args: any[]) => console.log("STORAGE:", ...args)
 
+// TODO: rename to PersistentCache, generic interface. OfflineRecordCache is an abstraction on top.
 export class OfflineStorage {
 	private db = new IndexedDbKeyValueStore("app", "records")
 

@@ -96,7 +96,6 @@ const editableThreadProperties: (keyof ThreadRecord)[] = [
 	"member_ids",
 	"replied_at",
 	"subject",
-	"message_ids",
 ]
 
 function validateWriteThread(args: {
@@ -118,7 +117,6 @@ function validateWriteThread(args: {
 		// Updated.
 		if (after.created_by !== userId) return "You cannot edit a thread you did not create."
 
-		// No need to validate edits to message_ids because we'll be getting rid of that soon.
 		const error = validateEditableProperties({
 			table: "thread",
 			before,

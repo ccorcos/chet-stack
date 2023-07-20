@@ -22,6 +22,7 @@ export type RecordCacheApi = {
 	updateRecordMap(recordMap: RecordMap): void
 }
 
+// TODO: rename to InMemoryCache with a more generic interface. RecordCache is a layer on top just for types.
 export class RecordCache implements RecordCacheApi {
 	constructor(
 		private args: {

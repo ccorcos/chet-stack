@@ -1,5 +1,14 @@
 
-- permissions checking on reads and writes.
+- cheap list most
+	- better list mode with persisted length, idempotent transactions.
+
+
+
+- list query...
+	- RecordCache -> InMemoryCache more generic
+	- OfflineStorage -> PersistentCache more generic
+	- RecordLoader -> Loader more generic
+
 
 - proper where query for threads and messages.
 	- paging and custom reactivity hook
