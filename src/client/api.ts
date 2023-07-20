@@ -2,7 +2,13 @@ import type { ApiTypes } from "../shared/ApiTypes"
 import { RecordMap } from "../shared/schema"
 import { httpRequest } from "./httpRequest"
 
-type ApiResponse<Body> = { status: 200; body: Body } | { status: Exclude<number, 200>; body?: any }
+// https://github.com/microsoft/TypeScript/issues/55095
+type StatusCode = 0 | 200 | 400 | 409 | 424 | 403 | 500
+type ErrorStatusCode = Exclude<StatusCode, 200>
+
+type ApiResponse<Body> =
+	| { status: 200; body: Body }
+	| { status: Exclude<StatusCode, 200>; body?: any }
 
 export async function apiRequest<T extends keyof ApiTypes>(
 	name: T,
@@ -21,7 +27,7 @@ export async function apiRequest<T extends keyof ApiTypes>(
 		}
 	}
 
-	return result
+	return result as ApiResponse<any>
 }
 
 export type ClientApi = {

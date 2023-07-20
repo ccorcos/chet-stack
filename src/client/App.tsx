@@ -35,17 +35,6 @@ function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 	return record
 }
 
-function useMessages(threadId: string) {
-	const { api, cache, loader } = useClientEnvironment()
-
-	useEffect(() => {
-		// Read from storage
-		// Fetch in parallel
-		// Subscribe to changes
-		api.getMessages({ threadId })
-	}, [threadId])
-}
-
 function parseCookies(cookie: string) {
 	const entries = cookie.split(";").map((line) => line.split("=").map((p) => p.trim()))
 	const grouped = groupBy(entries, (entry) => entry[0])
@@ -325,19 +314,48 @@ function ThreadItem(props: { threadId: string; selected: boolean; onClick: () =>
 	)
 }
 
-function ThreadMessages(props: { userId: string; threadId: string }) {
-	const thread = useRecord({ table: "thread", id: props.threadId })
-	if (!thread) throw new Error("Could not find thread.")
+type MessagesResult = {
+	storage: string[] | undefined
+	api: string[] | undefined
+}
 
-	const messages = thread.message_ids || []
+function useMessages(threadId: string) {
+	const { api, cache, loader, storage } = useClientEnvironment()
+
+	const [state, setState] = useState<MessagesResult>({ storage: undefined, api: undefined })
+
+	useEffect(() => {
+		// Read from storage
+		// Subscribe to changes
+		// storage.getMessages({ threadId })
+
+		api.getMessages({ threadId }).then((response) => {
+			if (response.status !== 200) {
+				console.error("Failed request: getMessages", response.status)
+				return
+			}
+			setState((state) => ({ ...state, api: response.body.messageIds }))
+		})
+	}, [threadId])
+
+	return state
+}
+
+function ThreadMessages(props: { userId: string; threadId: string }) {
+	const { threadId, userId } = props
+
+	const result = useMessages(threadId)
+	const messages = result.api || result.storage
+
+	const loading = result.api === undefined
+
 	return (
 		<>
-			<ThreadMembersInput threadId={thread.id} userId={props.userId} />
-			<ThreadSubjectInput threadId={thread.id} userId={props.userId} />
-			{messages.map((id) => (
-				<Message messageId={id} />
-			))}
-			<NewMessageInput threadId={thread.id} userId={props.userId} />
+			<ThreadMembersInput threadId={threadId} userId={userId} />
+			<ThreadSubjectInput threadId={threadId} userId={userId} />
+			{loading && "Loading..."}
+			{messages && messages.map((id) => <Message messageId={id} />)}
+			<NewMessageInput threadId={threadId} userId={userId} />
 		</>
 	)
 }

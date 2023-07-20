@@ -1,10 +1,9 @@
 import { openDB } from "idb"
 import { iterateRecordMap } from "../shared/recordMapHelpers"
-import { RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
+import { MessageRecord, RecordMap, RecordPointer, RecordTable, RecordValue } from "../shared/schema"
 
 const debug = (...args: any[]) => console.log("STORAGE:", ...args)
 
-// TODO: rename to PersistentCache, generic interface. OfflineRecordCache is an abstraction on top.
 export class OfflineStorage {
 	private db = new IndexedDbKeyValueStore("app", "records")
 
@@ -23,16 +22,39 @@ export class OfflineStorage {
 	}
 
 	async updateRecordMap(recordMap: RecordMap, force = false) {
-		// Update only if they're new versions.
-		// TODO: we need an async queue to ensure we don't have concurrency issues here.
+		// TODO: technically, we need an async queue to ensure we don't have concurrency issues here.
 		for (const { table, id, record } of iterateRecordMap(recordMap)) {
 			const existing = (await this.getRecord({ table, id })) as RecordValue | undefined
+			// Update only if they're new versions.
 			if (force || !existing || existing.version < record.version) {
 				await this.setRecord({ table, id }, record)
 			}
 		}
 	}
+
+	async getMessages(args: { threadId: string }) {
+		const { threadId } = args
+		const messages: MessageRecord[] = []
+		this.db.iterate((key, value) => {
+			const [table, id] = key.split(":") as [RecordTable, string]
+			if (table !== "message") return
+			const message = value as MessageRecord
+			if (message.thread_id !== threadId) return
+			messages.push(message)
+		})
+		return messages
+	}
 }
+
+// TODO: at some point, use a more generic API
+// type StorageApi = {
+// 	set(key: string, val: any): Promise<void>
+// 	get(key: string): Promise<any>
+// 	delete(key: string): Promise<void>
+// 	clear(): Promise<void>
+// 	/** Return false to stop early */
+// 	iterate(callback: (key: string, value: any) => boolean | void): Promise<void>
+// }
 
 class IndexedDbKeyValueStore<K extends IDBValidKey = string, V = any> {
 	constructor(private dbName: string, private storeName: string) {}

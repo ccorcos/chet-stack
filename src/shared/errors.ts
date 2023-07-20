@@ -10,8 +10,8 @@ export class TransactionConflictError extends Error {
 }
 
 export class BrokenError extends Error {
-	static statusCode = 409
-	statusCode = 409
+	static statusCode = 424
+	statusCode = 424
 }
 
 export class PermissionError extends Error {
