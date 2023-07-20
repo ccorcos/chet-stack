@@ -1,7 +1,11 @@
 
-- cheap list most
-	- better list mode with persisted length, idempotent transactions.
+- getMessages
+	- we want to be able to index thread messages
 
+	- optimistic rendering
+	- should work offline
+	- display status of being sent or not
+	- subscribe and push updates
 
 
 - list query...

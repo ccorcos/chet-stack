@@ -21,13 +21,13 @@ function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 	const subscribe = useCallback(
 		(update: () => void) => {
 			// @ts-ignore
-			return cache.addListener(pointer, update)
+			return cache.subscribe(pointer, update)
 		},
 		[pointer.table, pointer.id]
 	)
 
 	const getSnapshot = useCallback(() => {
-		return cache.getRecord(pointer)
+		return cache.get(pointer)
 	}, [pointer.table, pointer.id])
 
 	const record = useSyncExternalStore(subscribe, getSnapshot)

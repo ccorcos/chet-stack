@@ -3,20 +3,20 @@ import ReactDOM from "react-dom"
 import { DeferredPromise } from "../shared/DeferredPromise"
 import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap } from "../shared/schema"
-import { createClientApi } from "./api"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
-import { config } from "./config"
 import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
 import { RecordLoader } from "./RecordLoader"
 import { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
+import { createClientApi } from "./api"
+import { config } from "./config"
 
 const subscriber = new WebsocketPubsubClient({
 	config,
 	onChange(pointer, version) {
-		const value = cache.getRecord(pointer)
+		const value = cache.get(pointer)
 		if (value && value.version < version) {
 			api.getRecords({ pointers: [pointer] })
 		}

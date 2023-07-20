@@ -1,6 +1,6 @@
 import { isEqual, uniqWith } from "lodash"
-import { SecondMs } from "../shared/dateHelpers"
 import { DeferredPromise } from "../shared/DeferredPromise"
+import { SecondMs } from "../shared/dateHelpers"
 import {
 	BrokenError,
 	PermissionError,
@@ -10,10 +10,10 @@ import {
 import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
-import { applyOperation, Transaction } from "../shared/transaction"
-import { ClientApi } from "./api"
+import { Transaction, applyOperation } from "../shared/transaction"
 import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
+import { ClientApi } from "./api"
 
 type Thunk = { deferred: DeferredPromise<void>; transaction: Transaction }
 
@@ -33,7 +33,7 @@ export class TransactionQueue {
 
 		const recordMap: RecordMap = {}
 		for (const pointer of pointers) {
-			const record = this.environment.cache.getRecord(pointer)
+			const record = this.environment.cache.get(pointer)
 			setRecordMap(recordMap, pointer, record)
 		}
 
