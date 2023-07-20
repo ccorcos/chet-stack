@@ -329,13 +329,27 @@ function useMessages(threadId: string) {
 		// Subscribe to changes
 		// storage.getMessages({ threadId })
 
+		function update() {
+			// Always fetch from RecordCache so we get optimistic updates.
+			const messageIds = cache.getMessagesIndex.get(threadId)
+			setState((state) => ({ ...state, api: messageIds }))
+		}
+
 		api.getMessages({ threadId }).then((response) => {
 			if (response.status !== 200) {
 				console.error("Failed request: getMessages", response.status)
 				return
 			}
-			setState((state) => ({ ...state, api: response.body.messageIds }))
+			update()
 		})
+
+		const unsubscribeCache = cache.getMessagesIndex.subscribe(threadId, () => {
+			update()
+		})
+
+		return () => {
+			unsubscribeCache()
+		}
 	}, [threadId])
 
 	return state

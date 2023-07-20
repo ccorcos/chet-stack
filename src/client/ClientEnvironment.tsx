@@ -1,14 +1,14 @@
 import React, { createContext, useContext } from "react"
-import type { ClientApi } from "./api"
 import { ClientConfig } from "./ClientConfig"
 import { OfflineStorage } from "./OfflineStorage"
-import type { RecordCacheApi } from "./RecordCache"
+import type { RecordCache } from "./RecordCache"
 import type { RecordLoaderApi } from "./RecordLoader"
 import type { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
+import type { ClientApi } from "./api"
 
 export type ClientEnvironment = {
-	cache: RecordCacheApi
+	cache: RecordCache // RecordCacheApi
 	loader: RecordLoaderApi
 	api: ClientApi
 	transactionQueue: TransactionQueue
