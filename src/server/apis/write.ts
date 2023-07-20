@@ -1,7 +1,7 @@
 import * as t from "data-type-ts"
 import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
 import { PermissionError } from "../../shared/errors"
-import { getRecordMap } from "../../shared/recordMapHelpers"
+import { getRecordMap, iterateRecordMap } from "../../shared/recordMapHelpers"
 import type { RecordPointer, RecordWithTable } from "../../shared/schema"
 import { Operation, Transaction, applyOperation } from "../../shared/transaction"
 import type { ServerEnvironment } from "../ServerEnvironment"
@@ -74,6 +74,28 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 			records.map(({ table, id, record: { version } }) => ({
 				key: [table, id].join(":"),
 				value: version,
+			}))
+		)
+	})
+
+	// Publish getMessages updates.
+	setImmediate(() => {
+		const threadIds = new Set<string>()
+
+		for (const { table, id, record: after } of iterateRecordMap(afterRecordMap)) {
+			if (table !== "message") return
+			const before = getRecordMap(beforeRecordMap, { table, id })
+			const created = after && !before
+			if (!created) return
+			threadIds.add(after.thread_id)
+		}
+
+		environment.pubsub.publish(
+			Array.from(threadIds).map((threadId) => ({
+				key: ["getMessages", threadId].join(":"),
+				// TODO: think of a clever stable version scheme to use here.
+				// Perhaps the last created record id?
+				value: Math.random(),
 			}))
 		)
 	})

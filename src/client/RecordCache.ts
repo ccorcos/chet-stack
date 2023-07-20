@@ -22,21 +22,20 @@ export type RecordCacheApi = {
 	get<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined
 	subscribe<T extends RecordTable>(pointer: RecordPointer<T>, fn: RecordListener<T>): () => void
 	updateRecordMap(recordMap: RecordMap): void
+	iterateRecords(callback: (value: RecordWithTable) => boolean | void): void
 }
 
-function pointerToKey<T extends RecordTable>({ table, id }: RecordPointer<T>) {
+export function pointerToKey<T extends RecordTable>({ table, id }: RecordPointer<T>) {
 	return [table, id].join(":")
 }
 
-function keyToPointer(key: string) {
+export function keyToPointer(key: string) {
 	const [table, id] = key.split(":")
 	return { table, id } as RecordPointer
 }
 
 export class RecordCache implements RecordCacheApi {
 	private cache: InMemoryCache
-
-	getMessagesIndex: getMessagesIndex
 
 	constructor(args: {
 		onSubscribe(pointer: RecordPointer): void
@@ -46,7 +45,6 @@ export class RecordCache implements RecordCacheApi {
 			onSubscribe: (key) => args.onSubscribe(keyToPointer(key)),
 			onUnsubscribe: (key) => args.onUnsubscribe(keyToPointer(key)),
 		})
-		this.getMessagesIndex = new getMessagesIndex(this.cache)
 	}
 
 	get<T extends RecordTable>(pointer: RecordPointer<T>): RecordValue<T> | undefined {
@@ -74,13 +72,19 @@ export class RecordCache implements RecordCacheApi {
 		}))
 
 		this.cache.write(writes)
+	}
 
-		this.getMessagesIndex.afterWrite(recordWrites)
+	iterateRecords(callback: (value: RecordWithTable) => boolean | void): void {
+		return this.cache.iterate((key, record) => {
+			const pointer = keyToPointer(key)
+			const value = { ...pointer, record } as RecordWithTable
+			return callback(value)
+		})
 	}
 }
 
-class getMessagesIndex {
-	constructor(private cache: InMemoryCache) {}
+export class GetMessagesCache {
+	constructor(private cache: RecordCache) {}
 
 	private listeners = new Map<string, Set<() => void>>()
 
@@ -116,10 +120,9 @@ class getMessagesIndex {
 	get(threadId: string) {
 		const messages: MessageRecord[] = []
 
-		this.cache.iterate((key, value) => {
-			const { table, id } = keyToPointer(key)
+		this.cache.iterateRecords(({ table, id, record }) => {
 			if (table !== "message") return
-			const message = value as MessageRecord
+			const message = record
 			if (message.thread_id !== threadId) return
 			messages.push(message)
 		})

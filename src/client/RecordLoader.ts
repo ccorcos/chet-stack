@@ -49,3 +49,23 @@ export class RecordLoader {
 		return newLoader
 	}
 }
+
+export class GetMessagesLoader {
+	constructor(private args: { onGetMessages: (threadId: string) => Promise<void> }) {}
+
+	private loaderMap: { [threadId: string]: Loader<void> } = {}
+
+	unloadRecord(threadId: string) {
+		delete this.loaderMap[threadId]
+	}
+
+	loadRecord(threadId: string) {
+		const loader = this.loaderMap[threadId]
+		if (loader) return loader
+		// if (loader && !loader.error) return loader
+
+		const newLoader = Loader.wrap(this.args.onGetMessages(threadId))
+		this.loaderMap[threadId] = newLoader
+		return newLoader
+	}
+}

@@ -6,26 +6,16 @@ import { RecordMap } from "../shared/schema"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
 import { OfflineStorage } from "./OfflineStorage"
-import { RecordCache } from "./RecordCache"
-import { RecordLoader } from "./RecordLoader"
+import { GetMessagesCache, RecordCache, keyToPointer } from "./RecordCache"
+import { GetMessagesLoader, RecordLoader } from "./RecordLoader"
 import { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 import { createClientApi } from "./api"
 import { config } from "./config"
 
-const subscriber = new WebsocketPubsubClient({
-	config,
-	onChange(pointer, version) {
-		const value = cache.get(pointer)
-		if (value && value.version < version) {
-			api.getRecords({ pointers: [pointer] })
-		}
-	},
-})
-
 const debugCache = (...args: any[]) => console.log("CACHE:", ...args)
 
-const cache = new RecordCache({
+const recordCache = new RecordCache({
 	onSubscribe: (pointer) => {
 		subscriber.subscribe(pointer)
 		debugCache("Subscribe", JSON.stringify(pointer))
@@ -33,20 +23,13 @@ const cache = new RecordCache({
 	onUnsubscribe: (pointer) => {
 		debugCache("Unsubscribe", JSON.stringify(pointer))
 		subscriber.unsubscribe(pointer)
-		loader.unloadRecord(pointer)
+		recordLoader.unloadRecord(pointer)
 	},
 })
 
-const api = createClientApi({
-	onUpdateRecordMap(recordMap) {
-		cache.updateRecordMap(recordMap)
-		storage.updateRecordMap(recordMap)
-	},
-})
+const recordStorage = new OfflineStorage()
 
-const storage = new OfflineStorage()
-
-const loader = new RecordLoader({
+const recordLoader = new RecordLoader({
 	async onFetchRecord(pointer) {
 		// Not using Promise.race because we don't want to resolve early when offline
 		// storage doesn't have the record.
@@ -54,11 +37,11 @@ const loader = new RecordLoader({
 
 		// If this contains a newer record (from offline edits) or an older record,
 		// the highest version will remain in the cache.
-		const cached = storage.getRecord(pointer).then((record) => {
+		const cached = recordStorage.getRecord(pointer).then((record) => {
 			if (!record) return
 			const recordMap: RecordMap = {}
 			setRecordMap(recordMap, pointer, record)
-			cache.updateRecordMap(recordMap)
+			recordCache.updateRecordMap(recordMap)
 			deferred.resolve()
 			return record
 		})
@@ -84,16 +67,79 @@ const loader = new RecordLoader({
 	},
 })
 
-const transactionQueue = new TransactionQueue({ cache, api, storage })
+const getMessagesCache = new GetMessagesCache(recordCache)
+
+const getMessagesLoader = new GetMessagesLoader({
+	onGetMessages: async (threadId) => {
+		const deferred = new DeferredPromise<void>()
+
+		// If this contains a newer record (from offline edits) or an older record,
+		// the highest version will remain in the cache.
+		// const cached = recordStorage.getRecord(pointer).then((record) => {
+		// 	if (!record) return
+		// 	const recordMap: RecordMap = {}
+		// 	setRecordMap(recordMap, pointer, record)
+		// 	recordCache.updateRecordMap(recordMap)
+		// 	deferred.resolve()
+		// 	return record
+		// })
+
+		// This fetches the record and the response contains a recordMap
+		// which gets merge into the RecordCache.
+		api.getMessages({ threadId }).then((response) => {
+			if (response.status === 200) return deferred.resolve()
+
+			// If we're offline, then we want to wait to see if its cached.
+			// if (response.status === 0) {
+			// 	return cached
+			// 		.then((record) => {
+			// 			if (!record) deferred.reject(new Error("Offline cache miss."))
+			// 		})
+			// 		.catch(deferred.reject)
+			// }
+
+			return deferred.reject(new Error("Network error: " + response.status))
+		})
+
+		return deferred.promise
+	},
+})
+
+const subscriber = new WebsocketPubsubClient({
+	config,
+	onChange(key, value) {
+		// TODO: this is a little messy
+		if (key.startsWith("getMessages:")) {
+			const [_, threadId] = key.split(":")
+			api.getMessages({ threadId })
+		} else {
+			const pointer = keyToPointer(key)
+			const version = value
+			const record = recordCache.get(pointer)
+			if (record && record.version < version) {
+				api.getRecords({ pointers: [pointer] })
+			}
+		}
+	},
+})
+
+const api = createClientApi({
+	onUpdateRecordMap(recordMap) {
+		recordCache.updateRecordMap(recordMap)
+		recordStorage.updateRecordMap(recordMap)
+	},
+})
+
+const transactionQueue = new TransactionQueue({ cache: recordCache, api, storage: recordStorage })
 
 const environment: ClientEnvironment = {
-	cache,
+	cache: recordCache,
 	api,
-	loader,
+	loader: recordLoader,
 	transactionQueue,
 	config,
 	subscriber,
-	storage,
+	storage: recordStorage,
 }
 
 // Render the app.

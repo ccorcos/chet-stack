@@ -327,7 +327,6 @@ function useMessages(threadId: string) {
 	useEffect(() => {
 		// Read from storage
 		// Subscribe to changes
-		// storage.getMessages({ threadId })
 
 		function update() {
 			// Always fetch from RecordCache so we get optimistic updates.
