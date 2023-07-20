@@ -11,15 +11,15 @@ import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap, RecordPointer } from "../shared/schema"
 import { sleep } from "../shared/sleep"
 import { Transaction, applyOperation } from "../shared/transaction"
-import { OfflineStorage } from "./OfflineStorage"
 import { RecordCache } from "./RecordCache"
+import { RecordStorage } from "./RecordStorage"
 import { ClientApi } from "./api"
 
 type Thunk = { deferred: DeferredPromise<void>; transaction: Transaction }
 
 export class TransactionQueue {
 	constructor(
-		private environment: { cache: RecordCache; api: ClientApi; storage: OfflineStorage }
+		private environment: { recordCache: RecordCache; api: ClientApi; recordStorage: RecordStorage }
 	) {}
 
 	private thunks: Thunk[] = []
@@ -33,7 +33,7 @@ export class TransactionQueue {
 
 		const recordMap: RecordMap = {}
 		for (const pointer of pointers) {
-			const record = this.environment.cache.get(pointer)
+			const record = this.environment.recordCache.get(pointer)
 			setRecordMap(recordMap, pointer, record)
 		}
 
@@ -43,8 +43,8 @@ export class TransactionQueue {
 		}
 
 		// Optimistically update the local cache.
-		this.environment.cache.updateRecordMap(recordMap)
-		this.environment.storage.updateRecordMap(recordMap)
+		this.environment.recordCache.updateRecordMap(recordMap)
+		this.environment.recordStorage.updateRecordMap(recordMap)
 
 		// This promise will get resolved once it is submitted.
 		const deferred = new DeferredPromise<void>()
@@ -113,7 +113,7 @@ export class TransactionQueue {
 
 		// Force update the cache.
 		const recordMap: RecordMap = response.body.recordMap
-		this.environment.cache.updateRecordMap(recordMap, true)
-		this.environment.storage.updateRecordMap(recordMap, true)
+		this.environment.recordCache.updateRecordMap(recordMap, true)
+		this.environment.recordStorage.updateRecordMap(recordMap, true)
 	}
 }

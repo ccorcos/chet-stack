@@ -5,9 +5,9 @@ import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap } from "../shared/schema"
 import { App } from "./App"
 import { ClientEnvironment, ClientEnvironmentProvider } from "./ClientEnvironment"
-import { OfflineStorage } from "./OfflineStorage"
 import { GetMessagesCache, RecordCache, keyToPointer } from "./RecordCache"
 import { GetMessagesLoader, RecordLoader } from "./RecordLoader"
+import { RecordStorage } from "./RecordStorage"
 import { TransactionQueue } from "./TransactionQueue"
 import { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 import { createClientApi } from "./api"
@@ -27,7 +27,7 @@ const recordCache = new RecordCache({
 	},
 })
 
-const recordStorage = new OfflineStorage()
+const recordStorage = new RecordStorage()
 
 const recordLoader = new RecordLoader({
 	async onFetchRecord(pointer) {
@@ -130,16 +130,21 @@ const api = createClientApi({
 	},
 })
 
-const transactionQueue = new TransactionQueue({ cache: recordCache, api, storage: recordStorage })
+const transactionQueue = new TransactionQueue({
+	recordCache: recordCache,
+	api,
+	recordStorage: recordStorage,
+})
 
 const environment: ClientEnvironment = {
-	cache: recordCache,
+	recordCache,
+	recordStorage,
+	recordLoader,
+
 	api,
-	loader: recordLoader,
 	transactionQueue,
 	config,
 	subscriber,
-	storage: recordStorage,
 }
 
 // Render the app.

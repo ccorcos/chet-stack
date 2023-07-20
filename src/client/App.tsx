@@ -14,20 +14,20 @@ export function App() {
 }
 
 function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
-	const { cache, loader } = useClientEnvironment()
-	const promise = loader.loadRecord(pointer)
+	const { recordCache, recordLoader } = useClientEnvironment()
+	const promise = recordLoader.loadRecord(pointer)
 	if (!promise.loaded) throw promise
 
 	const subscribe = useCallback(
 		(update: () => void) => {
 			// @ts-ignore
-			return cache.subscribe(pointer, update)
+			return recordCache.subscribe(pointer, update)
 		},
 		[pointer.table, pointer.id]
 	)
 
 	const getSnapshot = useCallback(() => {
-		return cache.get(pointer)
+		return recordCache.get(pointer)
 	}, [pointer.table, pointer.id])
 
 	const record = useSyncExternalStore(subscribe, getSnapshot)
@@ -320,7 +320,7 @@ type MessagesResult = {
 }
 
 function useMessages(threadId: string) {
-	const { api, cache, loader, storage } = useClientEnvironment()
+	const { api, recordCache, recordLoader, recordStorage } = useClientEnvironment()
 
 	const [state, setState] = useState<MessagesResult>({ storage: undefined, api: undefined })
 
@@ -330,7 +330,7 @@ function useMessages(threadId: string) {
 
 		function update() {
 			// Always fetch from RecordCache so we get optimistic updates.
-			const messageIds = cache.getMessagesIndex.get(threadId)
+			const messageIds = recordCache.getMessagesIndex.get(threadId)
 			setState((state) => ({ ...state, api: messageIds }))
 		}
 
@@ -342,7 +342,7 @@ function useMessages(threadId: string) {
 			update()
 		})
 
-		const unsubscribeCache = cache.getMessagesIndex.subscribe(threadId, () => {
+		const unsubscribeCache = recordCache.getMessagesIndex.subscribe(threadId, () => {
 			update()
 		})
 

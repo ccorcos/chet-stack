@@ -4,7 +4,7 @@ import { MessageRecord, RecordMap, RecordPointer, RecordTable, RecordValue } fro
 
 const debug = (...args: any[]) => console.log("STORAGE:", ...args)
 
-export class OfflineStorage {
+export class RecordStorage {
 	private db = new IndexedDbKeyValueStore("app", "records")
 
 	async getRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
@@ -45,16 +45,6 @@ export class OfflineStorage {
 		return messages
 	}
 }
-
-// TODO: at some point, use a more generic API
-// type StorageApi = {
-// 	set(key: string, val: any): Promise<void>
-// 	get(key: string): Promise<any>
-// 	delete(key: string): Promise<void>
-// 	clear(): Promise<void>
-// 	/** Return false to stop early */
-// 	iterate(callback: (key: string, value: any) => boolean | void): Promise<void>
-// }
 
 class IndexedDbKeyValueStore<K extends IDBValidKey = string, V = any> {
 	constructor(private dbName: string, private storeName: string) {}
