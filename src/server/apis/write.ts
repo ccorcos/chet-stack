@@ -87,7 +87,6 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 			const after = getRecordMap(afterRecordMap, pointer)
 			const before = getRecordMap(beforeRecordMap, pointer)
 			const created = after && !before
-			console.log(created, after, before)
 			if (!created) continue
 			threadIds.add(after.thread_id)
 		}

@@ -1,5 +1,6 @@
 import type { ApiTypes } from "../shared/ApiTypes"
 import { RecordMap } from "../shared/schema"
+import { sleep } from "../shared/sleep"
 import { httpRequest } from "./httpRequest"
 
 // https://github.com/microsoft/TypeScript/issues/55095
@@ -10,14 +11,18 @@ type ApiResponse<Body> =
 	| { status: 200; body: Body }
 	| { status: Exclude<StatusCode, 200>; body?: any }
 
+const debug = (...args: any[]) => console.log("api:", ...args)
+
 export async function apiRequest<T extends keyof ApiTypes>(
 	name: T,
 	args: ApiTypes[T]["input"],
 	onUpdateRecordMap: (recordMap: RecordMap) => void
 ): Promise<ApiResponse<Awaited<ApiTypes[T]["output"]>>> {
+	debug(name, JSON.stringify(args))
+
 	const result = await httpRequest("/api/" + name, args)
 
-	// await sleep(5000)
+	await sleep(2000)
 
 	// Update the local cache with any records returned from the server.
 	// By convention, any API request can return a recordMap.

@@ -1,5 +1,6 @@
 import { isEqual, uniqWith } from "lodash"
 import { DeferredPromise } from "../shared/DeferredPromise"
+import { ReactiveMap } from "../shared/EventEmitter"
 import { SecondMs } from "../shared/dateHelpers"
 import {
 	BrokenError,
@@ -8,10 +9,10 @@ import {
 	ValidationError,
 } from "../shared/errors"
 import { setRecordMap } from "../shared/recordMapHelpers"
-import { RecordMap, RecordPointer } from "../shared/schema"
+import { RecordMap, RecordPointer, RecordTable } from "../shared/schema"
 import { sleep } from "../shared/sleep"
 import { Transaction, applyOperation } from "../shared/transaction"
-import { RecordCache } from "./RecordCache"
+import { RecordCache, pointerToKey } from "./RecordCache"
 import { ClientApi } from "./api"
 
 type Thunk = { deferred: DeferredPromise<void>; transaction: Transaction }
@@ -26,12 +27,53 @@ export class TransactionQueue {
 
 	private thunks: Thunk[] = []
 
+	private pendingWrites = new ReactiveMap<string, number>()
+
+	private incPendingWrites(pointers: RecordPointer[]) {
+		const writes = pointers.map(pointerToKey).map((key) => {
+			const n = this.pendingWrites.get(key) || 0
+			return { key, value: n + 1 }
+		})
+		this.pendingWrites.write(writes)
+	}
+
+	private decPendingWrites(pointers: RecordPointer[]) {
+		const writes = pointers.map(pointerToKey).map((key) => {
+			const n = this.pendingWrites.get(key) || 0
+			if (n === 0) console.error("This should never be zero!")
+
+			if (n > 1) return { key, value: n - 1 }
+			else return { key, value: undefined }
+		})
+		this.pendingWrites.write(writes)
+	}
+
+	isPendingWrite<T extends RecordTable>(pointer: RecordPointer<T>) {
+		const n = this.pendingWrites.get(pointerToKey(pointer)) || 0
+		return n > 0
+	}
+	subscribeIsPendingWrite<T extends RecordTable>(
+		pointer: RecordPointer<T>,
+		fn: (pending: boolean) => void
+	): () => void {
+		let prev = this.isPendingWrite(pointer)
+		return this.pendingWrites.subscribe(pointerToKey(pointer), () => {
+			const next = this.isPendingWrite(pointer)
+			if (prev !== next) {
+				prev = next
+				fn(next)
+			}
+		})
+	}
+
 	enqueue(transaction: Transaction) {
 		// Apply operations to the local cache.
 		const pointers = uniqWith(
 			transaction.operations.map(({ table, id }) => ({ table, id } as RecordPointer)),
 			isEqual
 		)
+
+		this.incPendingWrites(pointers)
 
 		const recordMap: RecordMap = {}
 		for (const pointer of pointers) {
@@ -52,7 +94,9 @@ export class TransactionQueue {
 		this.thunks.push({ deferred, transaction })
 		this.dequeue()
 
-		return deferred.promise
+		return deferred.promise.finally(() => {
+			this.decPendingWrites(pointers)
+		})
 	}
 
 	private running = false

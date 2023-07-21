@@ -31,6 +31,10 @@ const recordLoader = new RecordLoader({
 		// storage doesn't have the record.
 		const deferred = new DeferredPromise<void>()
 
+		// If we already have the record in memory, then we don't need to load it.
+		const value = recordCache.get(pointer)
+		if (value) return deferred.resolve()
+
 		// If this contains a newer record (from offline edits) or an older record,
 		// the highest version will remain in the cache.
 		const cached = recordStorage.getRecord(pointer).then((record) => {

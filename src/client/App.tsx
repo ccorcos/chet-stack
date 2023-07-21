@@ -13,6 +13,25 @@ export function App() {
 	)
 }
 
+function useIsPendingWrite<T extends RecordTable>(pointer: RecordPointer<T>) {
+	const { transactionQueue } = useClientEnvironment()
+
+	const subscribe = useCallback(
+		(update: () => void) => {
+			return transactionQueue.subscribeIsPendingWrite(pointer, update)
+		},
+		[pointer.table, pointer.id]
+	)
+
+	const getSnapshot = useCallback(() => {
+		return transactionQueue.isPendingWrite(pointer)
+	}, [pointer.table, pointer.id])
+
+	const record = useSyncExternalStore(subscribe, getSnapshot)
+
+	return record
+}
+
 function useRecord<T extends RecordTable>(pointer: RecordPointer<T>) {
 	const { recordCache, recordLoader } = useClientEnvironment()
 	const promise = recordLoader.loadRecord(pointer)
@@ -353,13 +372,14 @@ function Message(props: { messageId: string }) {
 	const message = useRecord({ table: "message", id: props.messageId })
 	if (!message) throw new Error("Could not find message.")
 
-	message.author_id
+	const pending = useIsPendingWrite({ table: "message", id: message.id })
+
 	return (
 		<div>
 			<strong>
 				<Username userId={message.author_id} />:
 			</strong>
-			<span>{message.text}</span>
+			<span style={{ color: pending ? "gray" : undefined }}>{message.text}</span>
 		</div>
 	)
 }

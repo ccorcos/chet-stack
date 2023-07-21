@@ -1,10 +1,9 @@
 
 - getMessages
-	- should work offline
-	- display status of being sent or not
 	- display status of loaded from cache or most recent from network
 	- delayed unsubscribe for getMessages
 	- pagination
+	- should work offline
 
 - getThreads
 
