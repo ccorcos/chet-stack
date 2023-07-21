@@ -77,11 +77,15 @@ export class JsonDatabase implements DatabaseApi {
 	// 	return sortBy(threads, (thread) => thread.replied_at)
 	// }
 
-	async getMessageIds(threadId: string): Promise<string[]> {
+	async getMessageIds(threadId: string, limit: number): Promise<string[]> {
 		const messages = compact(Object.values(this.data.message || {})).filter(
 			(message) => message.thread_id === threadId
 		)
-		return sortBy(messages, (message) => message.created_at).map((message) => message.id)
+		// Newest messages first.
+		return sortBy(messages, (message) => message.created_at)
+			.map((message) => message.id)
+			.reverse()
+			.slice(0, limit)
 	}
 
 	async write(records: RecordWithTable[]): Promise<void> {

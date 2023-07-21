@@ -21,7 +21,7 @@ export type DatabaseApi = {
 
 	getMessageThread(messageId: string): Promise<ThreadRecord | undefined>
 
-	getMessageIds(threadId: string): Promise<string[]>
+	getMessageIds(threadId: string, limit: number): Promise<string[]>
 
 	/** This should only get called by the write api. */
 	write(records: RecordWithTable[]): Promise<void>

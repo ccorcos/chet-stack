@@ -1,5 +1,6 @@
 import React from "react"
-import ReactDOM from "react-dom"
+// import ReactDOM from "react-dom"
+import ReactDOM from "react-dom/profiling"
 import { DeferredPromise } from "../shared/DeferredPromise"
 import { setRecordMap } from "../shared/recordMapHelpers"
 import { RecordMap } from "../shared/schema"
@@ -79,7 +80,7 @@ const getMessagesCache = new GetMessagesCache({
 })
 
 const getMessagesLoader = new GetMessagesLoader({
-	onGetMessages: async (threadId) => {
+	onGetMessages: async (threadId, limit: number) => {
 		const deferred = new DeferredPromise<void>()
 
 		// If this contains a newer record (from offline edits) or an older record,
@@ -95,7 +96,7 @@ const getMessagesLoader = new GetMessagesLoader({
 
 		// This fetches the record and the response contains a recordMap
 		// which gets merge into the RecordCache.
-		api.getMessages({ threadId }).then((response) => {
+		api.getMessages({ threadId, limit }).then((response) => {
 			if (response.status === 200) return deferred.resolve()
 
 			// If we're offline, then we want to wait to see if its cached.
@@ -120,7 +121,8 @@ const subscriber = new WebsocketPubsubClient({
 		// TODO: this is a little messy
 		if (key.startsWith("getMessages:")) {
 			const [_, threadId] = key.split(":")
-			api.getMessages({ threadId })
+			const limit = getMessagesLoader.getLimit(threadId)
+			api.getMessages({ threadId, limit })
 		} else {
 			const pointer = keyToPointer(key)
 			const version = value

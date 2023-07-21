@@ -8,7 +8,7 @@ import { loadRecordsWithAncestors } from "../loadRecordsWithAncestors"
 import { filterRecordMapForPermission } from "../validateRead"
 
 // Schema for validating input.
-export const input = t.obj({ threadId: t.string })
+export const input = t.obj({ threadId: t.string, limit: t.or(t.number, t.undefined_) })
 
 // The actual api method.
 export async function getMessages(
@@ -17,12 +17,12 @@ export async function getMessages(
 	req: Request
 ) {
 	const { db } = environment
-	const { threadId } = args
+	const { threadId, limit } = args
 
 	const userId = await getCurrentUserId(environment, req)
 	if (!userId) throw new PermissionError("You need to be logged in.")
 
-	const messageIds = await db.getMessageIds(threadId)
+	const messageIds = await db.getMessageIds(threadId, (limit || 10) + 1)
 	const recordMap = await loadRecordsWithAncestors(
 		environment,
 		messageIds.map((id) => ({ table: "message", id }))

@@ -1,5 +1,12 @@
 import { groupBy, mapValues } from "lodash"
-import React, { Suspense, useCallback, useState, useSyncExternalStore } from "react"
+import React, {
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react"
 import { RecordPointer, RecordTable } from "../shared/schema"
 import { Transaction, op } from "../shared/transaction"
 import { useClientEnvironment } from "./ClientEnvironment"
@@ -333,10 +340,16 @@ function ThreadItem(props: { threadId: string; selected: boolean; onClick: () =>
 	)
 }
 
-function useGetMessages(threadId: string) {
+const LIMIT = 5
+const STEP = 5
+
+function useGetMessages(threadId: string, limit: number) {
 	const { getMessagesCache, getMessagesLoader } = useClientEnvironment()
-	const promise = getMessagesLoader.loadThread(threadId)
-	if (!promise.loaded) throw promise
+
+	const promise = getMessagesLoader.loadThread(threadId, limit)
+
+	// Suspend on initial load only.
+	if (!promise.loaded && limit === LIMIT) throw promise
 
 	const subscribe = useCallback(
 		(update: () => void) => {
@@ -346,23 +359,58 @@ function useGetMessages(threadId: string) {
 	)
 
 	const getSnapshot = useCallback(() => {
-		return getMessagesCache.get(threadId)
-	}, [threadId])
+		// Repeated calls to getSnapshot must return the same value, otherwise infinite loop.
+		return getMessagesCache.getMessages(threadId, limit)
+	}, [threadId, promise.loaded ? limit : limit - STEP])
 
-	const record = useSyncExternalStore(subscribe, getSnapshot)
+	const result = useSyncExternalStore(subscribe, getSnapshot)
 
-	return record
+	// getMessagesCache.subscribe could fire before the promise resolves.
+	const rerender = useRerender()
+	const loaded = useRef(promise.loaded)
+	loaded.current = promise.loaded
+
+	useEffect(() => {
+		if (promise.loaded) return
+		let canceled = false
+		promise.then(() => !canceled && rerender())
+		return () => {
+			canceled = true
+		}
+	}, [promise])
+
+	return {
+		...result,
+		loadingMore: !loaded.current,
+	}
 }
 
 function ThreadMessages(props: { userId: string; threadId: string }) {
 	const { threadId, userId } = props
-	const messages = useGetMessages(threadId)
 
+	const [limit, setLimit] = useState(LIMIT)
+	const loadMore = () => setLimit((n) => n + STEP)
+
+	const { messageIds, nextId, loadingMore } = useGetMessages(threadId, limit)
+
+	console.log("RENDER")
 	return (
 		<>
 			<ThreadMembersInput threadId={threadId} userId={userId} />
 			<ThreadSubjectInput threadId={threadId} userId={userId} />
-			{messages && messages.map((id) => <Message messageId={id} />)}
+			<div style={{ display: "flex", flexDirection: "column-reverse" }}>
+				{messageIds && messageIds.map((id) => <Message messageId={id} />)}
+				{loadingMore && <div style={{ color: "green" }}>Loading...</div>}
+				{nextId && (
+					<>
+						{/* Render so that we retain the object. */}
+						<div style={{ display: "none" }}>
+							<Message messageId={nextId} />
+						</div>
+						<button onClick={loadMore}>Load More</button>
+					</>
+				)}
+			</div>
 			<NewMessageInput threadId={threadId} userId={userId} />
 		</>
 	)
@@ -403,7 +451,6 @@ function Login(props: { onLogin: () => void }) {
 				e.preventDefault()
 				setError("")
 				const response = await api.login({ username, password })
-				console.log("HERE", response)
 				if (response.status !== 200) setError(response.body.message)
 				else props.onLogin()
 			}}

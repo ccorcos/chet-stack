@@ -9,12 +9,12 @@ class Loader<T> extends Promise<T> {
 		super((resolve, reject) => {
 			fn(
 				(value) => {
-					resolve(value)
 					this.loaded = true
+					resolve(value)
 				},
 				(error) => {
-					reject(error)
 					this.error = true
+					reject(error)
 				}
 			)
 		})
@@ -51,21 +51,36 @@ export class RecordLoader {
 }
 
 export class GetMessagesLoader {
-	constructor(private args: { onGetMessages: (threadId: string) => Promise<void> }) {}
+	constructor(
+		private args: { onGetMessages: (threadId: string, limit: number) => Promise<void> }
+	) {}
 
-	private loaderMap: { [threadId: string]: Loader<void> } = {}
+	private loaderMap: {
+		[threadId: string]: {
+			limit: number
+			loader: Loader<void>
+		}
+	} = {}
+
+	getLimit(threadId: string) {
+		const result = this.loaderMap[threadId]
+		if (result) return result.limit
+	}
 
 	unloadThread(threadId: string) {
 		delete this.loaderMap[threadId]
 	}
 
-	loadThread(threadId: string) {
-		const loader = this.loaderMap[threadId]
-		if (loader) return loader
-		// if (loader && !loader.error) return loader
+	loadThread(threadId: string, limit: number) {
+		const result = this.loaderMap[threadId]
 
-		const newLoader = Loader.wrap(this.args.onGetMessages(threadId))
-		this.loaderMap[threadId] = newLoader
-		return newLoader
+		if (result && result.limit >= limit) {
+			return result.loader
+			// if (loader && !loader.error) return loader
+		}
+
+		const loader = Loader.wrap(this.args.onGetMessages(threadId, limit))
+		this.loaderMap[threadId] = { limit, loader }
+		return loader
 	}
 }

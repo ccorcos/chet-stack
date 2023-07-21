@@ -55,6 +55,7 @@ export class RecordCache implements RecordCacheApi {
 		return this.cache.subscribe(pointerToKey(pointer), fn)
 	}
 
+	// TODO?: source: "api" | "cache"
 	updateRecordMap(recordMap: RecordMap, force = false) {
 		// Update only if they're new versions.
 		const recordWrites: RecordWithTable[] = []
@@ -108,6 +109,7 @@ export class GetMessagesCache {
 	}
 
 	emit(threadId: string) {
+		delete this.cache[threadId]
 		const listenerSet = this.listeners.get(threadId)
 		if (!listenerSet) return
 		for (const listener of listenerSet) listener()
@@ -127,16 +129,37 @@ export class GetMessagesCache {
 		}
 	}
 
-	get(threadId: string) {
+	// Caching the results here so that getSnapshot from useSyncExternalStore will receive the same value.
+	cache: {
+		[threadId: string]: { [limit: number]: { messageIds: string[]; nextId: string | undefined } }
+	} = {}
+
+	getMessages(threadId: string, limit: number) {
+		const cached = this.cache[threadId]?.[limit]
+		if (cached) return cached
+
 		const messages: MessageRecord[] = []
 
-		this.args.environment.recordCache.iterateRecords(({ table, id, record }) => {
+		this.args.environment.recordCache.iterateRecords(({ table, record }) => {
 			if (table !== "message") return
 			const message = record
 			if (message.thread_id !== threadId) return
 			messages.push(message)
 		})
 
-		return sortBy(messages, (message) => message.created_at).map((message) => message.id)
+		// Newset messages first.
+		const allMessages = sortBy(messages, (message) => message.created_at)
+			.map((message) => message.id)
+			.reverse()
+
+		const result = {
+			messageIds: allMessages.slice(0, limit),
+			nextId: allMessages[limit],
+		}
+
+		if (this.cache[threadId]) this.cache[threadId][limit] = result
+		else this.cache[threadId] = { [limit]: result }
+
+		return result
 	}
 }

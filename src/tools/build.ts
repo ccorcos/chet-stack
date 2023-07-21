@@ -3,6 +3,7 @@ import { build } from "estrella"
 import { path } from "../server/path"
 
 // Builds the client bundle.
+// process.env.NODE_ENV = "development"
 
 const watch = process.argv.includes("--watch")
 const cmd = watch ? "watch" : "copy"

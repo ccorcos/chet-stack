@@ -1,9 +1,9 @@
 
 - getMessages
-	- display status of loaded from cache or most recent from network
 	- delayed unsubscribe for getMessages
-	- pagination
+	- don't refetch-on-write
 	- should work offline
+	- display status of loaded from cache or most recent from network
 
 - getThreads
 
