@@ -26,9 +26,11 @@ export type RecordCacheApi = {
 }
 
 export function pointerToKey<T extends RecordTable>({ table, id }: RecordPointer<T>) {
-	return [table, id].join(":")
+	return [table, id].join(":") as `${T}:${string}`
 }
 
+export function keyToPointer<T extends RecordTable>(key: `${T}:${string}`): RecordPointer<T>
+export function keyToPointer(key: string): RecordPointer
 export function keyToPointer(key: string) {
 	const [table, id] = key.split(":")
 	return { table, id } as RecordPointer
