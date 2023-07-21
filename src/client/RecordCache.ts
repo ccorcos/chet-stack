@@ -92,13 +92,13 @@ export class GetMessagesCache {
 	constructor(
 		private args: {
 			environment: { recordCache: RecordCache }
-			onSubscribe(pointer: RecordPointer): void
-			onUnsubscribe(pointer: RecordPointer): void
+			onSubscribe(threadId: string): void
+			onUnsubscribe(threadId: string): void
 		}
 	) {
 		this.cache = new InMemoryCache({
-			onSubscribe: (key) => args.onSubscribe(keyToPointer(key)),
-			onUnsubscribe: (key) => args.onUnsubscribe(keyToPointer(key)),
+			onSubscribe: (threadId) => args.onSubscribe(threadId),
+			onUnsubscribe: (threadId) => args.onUnsubscribe(threadId),
 		})
 	}
 
