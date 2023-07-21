@@ -87,32 +87,27 @@ export class RecordCache implements RecordCacheApi {
 }
 
 export class GetMessagesCache {
+	private cache: InMemoryCache
+
 	constructor(
 		private args: {
 			environment: { recordCache: RecordCache }
-			onSubscribe(threadId: string): void
-			onUnsubscribe(threadId: string): void
+			onSubscribe(pointer: RecordPointer): void
+			onUnsubscribe(pointer: RecordPointer): void
 		}
-	) {}
-
-	private listeners = new Map<string, Set<() => void>>()
-
-	subscribe(threadId: string, fn: () => void): () => void {
-		const listenerSet = this.listeners.get(threadId) || new Set()
-		listenerSet.add(fn)
-		this.listeners.set(threadId, listenerSet)
-		this.args.onSubscribe(threadId)
-		return () => {
-			listenerSet.delete(fn)
-			this.args.onUnsubscribe(threadId)
-		}
+	) {
+		this.cache = new InMemoryCache({
+			onSubscribe: (key) => args.onSubscribe(keyToPointer(key)),
+			onUnsubscribe: (key) => args.onUnsubscribe(keyToPointer(key)),
+		})
 	}
 
-	emit(threadId: string) {
-		delete this.cache[threadId]
-		const listenerSet = this.listeners.get(threadId)
-		if (!listenerSet) return
-		for (const listener of listenerSet) listener()
+	get(threadId: string) {
+		return this.cache.get(threadId)
+	}
+
+	subscribe(threadId: string, fn: () => void): () => void {
+		return this.cache.subscribe(threadId, fn)
 	}
 
 	handleWrites(writes: RecordWithTable[]) {
@@ -124,20 +119,18 @@ export class GetMessagesCache {
 			}
 		}
 
-		for (const threadId of threadIds) {
-			this.emit(threadId)
-		}
+		// It's important that whenever useSyncExternalStore calls getSnapshot, it should return
+		// the same exact value. That's why we're going to cache it here at write time.
+		// TODO: we should probably evaluate all of this lazily though. Or in batch.
+		this.cache.write(
+			Array.from(threadIds).map((threadId) => ({
+				key: threadId,
+				value: this.getMessages(threadId),
+			}))
+		)
 	}
 
-	// Caching the results here so that getSnapshot from useSyncExternalStore will receive the same value.
-	cache: {
-		[threadId: string]: { [limit: number]: { messageIds: string[]; nextId: string | undefined } }
-	} = {}
-
-	getMessages(threadId: string, limit: number) {
-		const cached = this.cache[threadId]?.[limit]
-		if (cached) return cached
-
+	private getMessages(threadId: string) {
 		const messages: MessageRecord[] = []
 
 		this.args.environment.recordCache.iterateRecords(({ table, record }) => {
@@ -152,14 +145,6 @@ export class GetMessagesCache {
 			.map((message) => message.id)
 			.reverse()
 
-		const result = {
-			messageIds: allMessages.slice(0, limit),
-			nextId: allMessages[limit],
-		}
-
-		if (this.cache[threadId]) this.cache[threadId][limit] = result
-		else this.cache[threadId] = { [limit]: result }
-
-		return result
+		return allMessages
 	}
 }

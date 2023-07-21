@@ -140,7 +140,9 @@ function LoadUser(props: { userId: string }) {
 				))}
 			</div>
 			<div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-				{thread ? <ThreadMessages userId={user.id} threadId={thread} /> : "Select a thread"}
+				<Suspense fallback={<div>Loading...</div>}>
+					{thread ? <ThreadMessages userId={user.id} threadId={thread} /> : "Select a thread"}
+				</Suspense>
 			</div>
 		</div>
 	)
@@ -360,10 +362,16 @@ function useGetMessages(threadId: string, limit: number) {
 
 	const getSnapshot = useCallback(() => {
 		// Repeated calls to getSnapshot must return the same value, otherwise infinite loop.
-		return getMessagesCache.getMessages(threadId, limit)
-	}, [threadId, promise.loaded ? limit : limit - STEP])
+		return getMessagesCache.get(threadId)
+	}, [threadId])
 
-	const result = useSyncExternalStore(subscribe, getSnapshot)
+	const allMessages = useSyncExternalStore(subscribe, getSnapshot)
+
+	const currentLimit = promise.loaded ? limit : limit - STEP
+	const result = {
+		messageIds: allMessages.slice(0, currentLimit),
+		nextId: allMessages[currentLimit],
+	}
 
 	// getMessagesCache.subscribe could fire before the promise resolves.
 	const rerender = useRerender()
