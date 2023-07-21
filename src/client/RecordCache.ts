@@ -102,7 +102,7 @@ export class GetMessagesCache {
 		})
 	}
 
-	get(threadId: string) {
+	get(threadId: string): { messages: string[]; latestTxId: string | undefined } | undefined {
 		return this.cache.get(threadId)
 	}
 
@@ -110,10 +110,10 @@ export class GetMessagesCache {
 		return this.cache.subscribe(threadId, fn)
 	}
 
-	handleWrites(writes: RecordWithTable[]) {
+	handleWrites(writes: RecordWithTable[], txId: string | undefined) {
 		const threadIds = new Set<string>()
 
-		for (const { table, id, record } of writes) {
+		for (const { table, record } of writes) {
 			if (table === "message") {
 				threadIds.add(record.thread_id)
 			}
@@ -125,12 +125,15 @@ export class GetMessagesCache {
 		this.cache.write(
 			Array.from(threadIds).map((threadId) => ({
 				key: threadId,
-				value: this.getMessages(threadId),
+				value: {
+					messages: this.getMessages(threadId),
+					latestTxId: txId,
+				},
 			}))
 		)
 	}
 
-	private getMessages(threadId: string) {
+	private getMessages(threadId: string): string[] {
 		const messages: MessageRecord[] = []
 
 		this.args.environment.recordCache.iterateRecords(({ table, record }) => {

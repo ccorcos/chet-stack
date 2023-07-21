@@ -99,7 +99,11 @@ export async function login(
 		domain: config.production ? config.domain : undefined,
 	})
 
-	await write(environment, { authorId: config.adminUserId, operations })
+	await write(environment, {
+		txId: randomUUID(),
+		authorId: config.adminUserId,
+		operations,
+	})
 
 	const recordMap: RecordMap = {}
 	setRecordMap(recordMap, { table: "user", id: user.id }, user)

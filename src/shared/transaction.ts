@@ -31,7 +31,7 @@ export type ListRemoveOperation = {
 
 export type Operation = SetOperation | ListInsertOperation | ListRemoveOperation
 
-export type Transaction = { authorId: string; operations: Operation[] }
+export type Transaction = { txId: string; authorId: string; operations: Operation[] }
 
 export type AutoField = "version" | "last_version"
 

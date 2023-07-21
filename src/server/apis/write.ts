@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto"
 import * as t from "data-type-ts"
 import { cloneDeep, difference, isEqual, uniqWith } from "lodash"
 import { PermissionError } from "../../shared/errors"
@@ -10,12 +11,13 @@ import { loadRecordsWithAncestors } from "../loadRecordsWithAncestors"
 import { validateWrite as validateWritePermission } from "../validateWrite"
 
 export const input = t.obj<Transaction>({
+	txId: t.string,
 	authorId: t.string,
 	operations: t.array(t.any),
 })
 
 export async function write(environment: ServerEnvironment, args: typeof input.value) {
-	const { authorId, operations } = args
+	const { txId, authorId, operations } = args
 
 	const pointers = uniqWith(
 		operations.map(({ table, id }) => ({ table, id } as RecordPointer)),
@@ -94,9 +96,7 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 		environment.pubsub.publish(
 			Array.from(threadIds).map((threadId) => ({
 				key: ["getMessages", threadId].join(":"),
-				// TODO: think of a clever stable version scheme to use here.
-				// Perhaps the last created record id?
-				value: Math.random(),
+				value: txId,
 			}))
 		)
 	})
@@ -138,7 +138,11 @@ export async function write(environment: ServerEnvironment, args: typeof input.v
 
 		if (operations.length !== 0) {
 			// TODO: retry on transaction conflict!
-			await write(environment, { authorId: environment.config.adminUserId, operations })
+			await write(environment, {
+				txId: randomUUID(),
+				authorId: environment.config.adminUserId,
+				operations,
+			})
 		}
 	})
 

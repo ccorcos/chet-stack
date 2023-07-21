@@ -1,16 +1,17 @@
 import injectLiveReload from "connect-livereload"
 import cookieParser from "cookie-parser"
+import { randomUUID } from "crypto"
 import express from "express"
 import http from "http"
 import livereload from "livereload"
 import { op } from "../shared/transaction"
+import { JsonDatabase } from "./JsonDatabase"
+import { ServerEnvironment } from "./ServerEnvironment"
+import { WebsocketPubsubServer } from "./WebsocketPubsubServer"
 import { api } from "./api"
 import { write } from "./apis/write"
 import { config } from "./config"
-import { JsonDatabase } from "./JsonDatabase"
 import { path } from "./path"
-import { ServerEnvironment } from "./ServerEnvironment"
-import { WebsocketPubsubServer } from "./WebsocketPubsubServer"
 
 // Turn on request logging.
 // https://expressjs.com/en/guide/debugging.html
@@ -43,6 +44,7 @@ app.get("/logout", async (req, res) => {
 
 	try {
 		await write(environment, {
+			txId: randomUUID(),
 			authorId: environment.config.adminUserId,
 			operations: [
 				op.update<"auth_token", "deleted">(

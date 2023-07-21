@@ -1,3 +1,3 @@
 export type PubSubApi = {
-	publish(values: { key: string; value: number }[]): Promise<void>
+	publish(values: { key: string; value: number | string }[]): Promise<void>
 }

@@ -42,7 +42,7 @@ const recordLoader = new RecordLoader({
 			if (!record) return
 			const recordMap: RecordMap = {}
 			setRecordMap(recordMap, pointer, record)
-			updateCaches(recordMap)
+			updateCaches(recordMap, undefined, false)
 			deferred.resolve()
 			return record
 		})
@@ -122,10 +122,13 @@ const subscriber = new WebsocketPubsubClient({
 		if (key.startsWith("getMessages:")) {
 			const [_, threadId] = key.split(":")
 			const limit = getMessagesLoader.getLimit(threadId)
-			api.getMessages({ threadId, limit })
+			if (value !== getMessagesCache.get(threadId)?.latestTxId) {
+				api.getMessages({ threadId, limit })
+			}
 		} else {
 			const pointer = keyToPointer(key)
 			const version = value
+			if (typeof version !== "number") console.error("Oops!")
 			const record = recordCache.get(pointer)
 			if (record && record.version < version) {
 				api.getRecords({ pointers: [pointer] })
@@ -134,23 +137,23 @@ const subscriber = new WebsocketPubsubClient({
 	},
 })
 
-function updateCaches(recordMap: RecordMap) {
-	const writes = recordCache.updateRecordMap(recordMap)
-	getMessagesCache.handleWrites(writes)
+function updateCaches(recordMap: RecordMap, txId: string | undefined, force: boolean) {
+	const writes = recordCache.updateRecordMap(recordMap, force)
+	getMessagesCache.handleWrites(writes, txId)
 }
 
 const api = createClientApi({
 	onUpdateRecordMap(recordMap) {
-		updateCaches(recordMap)
+		updateCaches(recordMap, undefined, false)
 		recordStorage.updateRecordMap(recordMap)
 	},
 })
 
 const transactionQueue = new TransactionQueue({
 	environment: { recordCache, api },
-	onUpdateRecordMap(recordMap) {
-		updateCaches(recordMap)
-		recordStorage.updateRecordMap(recordMap)
+	onUpdateRecordMap(recordMap, txId, force) {
+		updateCaches(recordMap, txId, force)
+		recordStorage.updateRecordMap(recordMap, force)
 	},
 })
 

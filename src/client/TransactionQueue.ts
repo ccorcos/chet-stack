@@ -21,7 +21,7 @@ export class TransactionQueue {
 	constructor(
 		private args: {
 			environment: { recordCache: RecordCache; api: ClientApi }
-			onUpdateRecordMap: (recordMap: RecordMap, force?: boolean) => void
+			onUpdateRecordMap: (recordMap: RecordMap, txId: string | undefined, force: boolean) => void
 		}
 	) {}
 
@@ -87,7 +87,7 @@ export class TransactionQueue {
 		}
 
 		// Optimistically update the local cache.
-		this.args.onUpdateRecordMap(recordMap)
+		this.args.onUpdateRecordMap(recordMap, transaction.txId, false)
 
 		// This promise will get resolved once it is submitted.
 		const deferred = new DeferredPromise<void>()
@@ -158,6 +158,6 @@ export class TransactionQueue {
 
 		// Force update the cache.
 		const recordMap: RecordMap = response.body.recordMap
-		this.args.onUpdateRecordMap(recordMap, true)
+		this.args.onUpdateRecordMap(recordMap, undefined, true)
 	}
 }

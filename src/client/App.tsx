@@ -100,6 +100,7 @@ function LoadUser(props: { userId: string }) {
 		const id = window.crypto.randomUUID()
 
 		const transction: Transaction = {
+			txId: window.crypto.randomUUID(),
 			authorId: user.id,
 			operations: [
 				// Operation to create the thread
@@ -207,6 +208,7 @@ function ThreadMembersInput(props: { userId: string; threadId: string }) {
 						<button
 							onClick={() => {
 								transactionQueue.enqueue({
+									txId: window.crypto.randomUUID(),
 									authorId: props.userId,
 									operations: [
 										{
@@ -228,6 +230,7 @@ function ThreadMembersInput(props: { userId: string; threadId: string }) {
 			<UserLookup
 				onSelect={(userId) => {
 					transactionQueue.enqueue({
+						txId: window.crypto.randomUUID(),
 						authorId: props.userId,
 						operations: [
 							{
@@ -259,6 +262,7 @@ function ThreadSubjectInput(props: { userId: string; threadId: string }) {
 			onChange={(e) => {
 				const newSubject = e.target.value
 				transactionQueue.enqueue({
+					txId: window.crypto.randomUUID(),
 					authorId: props.userId,
 					operations: [
 						{
@@ -283,6 +287,7 @@ function NewMessageInput(props: { userId: string; threadId: string }) {
 	const onSubmit = () => {
 		const messageId = window.crypto.randomUUID()
 		transactionQueue.enqueue({
+			txId: window.crypto.randomUUID(),
 			authorId: props.userId,
 			operations: [
 				{
@@ -365,7 +370,8 @@ function useGetMessages(threadId: string, limit: number) {
 		return getMessagesCache.get(threadId)
 	}, [threadId])
 
-	const allMessages = useSyncExternalStore(subscribe, getSnapshot)
+	const cached = useSyncExternalStore(subscribe, getSnapshot)
+	const allMessages = cached?.messages || []
 
 	const currentLimit = promise.loaded ? limit : limit - STEP
 	const result = {
