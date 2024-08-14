@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+*.log
+build
+db
+uploads
+
+tmp
+.devcontainer
+playwright-report
+test-results

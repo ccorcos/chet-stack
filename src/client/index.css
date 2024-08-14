@@ -1,0 +1,175 @@
+body,
+html {
+	margin: 0px;
+	padding: 0px;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial,
+		sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+body,
+input,
+button {
+	font-size: 18px;
+}
+
+*,
+*::after,
+*::before {
+	box-sizing: border-box;
+}
+
+html {
+	/* Started with Apple variables */
+	/* https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/dark-mode */
+	/* https://sarunw.com/posts/dark-color-cheat-sheet/#background-color */
+	--background: rgba(255, 255, 255, 1);
+	--background2: rgba(242, 242, 247, 1);
+	--background3: rgba(255, 255, 255, 1);
+
+	--transparent1: rgba(0, 0, 18, 0.1);
+	--transparent2: rgba(0, 0, 18, 0.2);
+	--transparent3: rgba(0, 0, 18, 0.3);
+	--transparent4: rgba(0, 0, 18, 0.4);
+
+	--text-color: rgba(0, 0, 0, 1);
+	--text-color2: rgba(61, 61, 66, 0.6);
+	--text-color3: rgba(61, 61, 66, 0.3);
+	--text-color4: rgba(61, 61, 66, 0.18);
+
+	--placeholder: rgba(61, 61, 66, 0.3);
+	--separator: rgba(61, 61, 66, 0.29);
+	--separator-opaque: rgba(199, 199, 199, 1);
+
+	--hover: rgba(0, 122, 255, 0.3);
+	--active: rgba(0, 122, 255, 0.5);
+
+	--blue: rgba(0, 122, 255, 1);
+	--green: rgba(51, 199, 89, 1);
+	--indigo: rgba(89, 87, 214, 1);
+	--orange: rgba(255, 148, 0, 1);
+	--pink: rgba(255, 46, 84, 1);
+	--purple: rgba(176, 82, 222, 1);
+	--red: rgba(255, 59, 48, 1);
+	--teal: rgba(89, 199, 250, 1);
+	--yellow: rgba(255, 204, 0, 1);
+	--gray: rgba(143, 143, 148, 1);
+	--gray2: rgba(173, 173, 179, 1);
+	--gray3: rgba(199, 199, 204, 1);
+	--gray4: rgba(209, 209, 214, 1);
+	--gray5: rgba(230, 230, 235, 1);
+	--gray6: rgba(242, 242, 247, 1);
+
+	/* App Variables */
+	--popup-background: var(--background);
+	--shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px,
+		rgba(15, 15, 15, 0.2) 0px 9px 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+	}
+
+	html {
+		/* Apple Variables */
+		--background: rgba(0, 0, 0, 1);
+		--background2: rgb(36, 36, 40);
+		--background3: rgb(48, 48, 52);
+
+		--transparent1: rgba(243, 243, 255, 0.1);
+		--transparent2: rgba(243, 243, 255, 0.2);
+		--transparent3: rgba(243, 243, 255, 0.3);
+		--transparent4: rgba(243, 243, 255, 0.4);
+
+		--text-color: rgba(255, 255, 255, 1);
+		--text-color2: rgba(235, 235, 245, 0.6);
+		--text-color3: rgba(235, 235, 245, 0.3);
+		--text-color4: rgba(235, 235, 245, 0.18);
+
+		--placeholder: rgba(235, 235, 245, 0.3);
+		--separator: rgba(84, 84, 89, 0.6);
+		--separator-opaque: rgba(56, 56, 59, 1);
+
+		--hover: rgba(10, 133, 255, 0.3);
+		--active: rgba(10, 133, 255, 0.5);
+
+		--blue: rgba(10, 133, 255, 1);
+		--green: rgba(48, 209, 89, 1);
+		--indigo: rgba(94, 92, 230, 1);
+		--orange: rgba(255, 158, 10, 1);
+		--pink: rgba(255, 56, 94, 1);
+		--purple: rgba(191, 89, 242, 1);
+		--red: rgba(255, 69, 59, 1);
+		--teal: rgba(99, 209, 255, 1);
+		--yellow: rgba(255, 214, 10, 1);
+		--gray: rgba(143, 143, 148, 1);
+		--gray2: rgba(99, 99, 102, 1);
+		--gray3: rgba(71, 71, 74, 1);
+		--gray4: rgba(59, 59, 61, 1);
+		--gray5: rgba(43, 43, 46, 1);
+		--gray6: rgba(28, 28, 31, 1);
+
+		/* App Variables */
+		--popup-background: var(--background2);
+		--shadow: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px,
+			rgba(15, 15, 15, 0.2) 0px 9px 24px;
+	}
+}
+
+html,
+body {
+	background: var(--background);
+	color: var(--text-color);
+}
+
+input {
+	color: var(--text-color);
+}
+
+input::placeholder {
+	color: var(--placeholder);
+}
+
+a {
+	color: var(--text-color2);
+}
+
+.feedback:hover {
+	background-color: var(--hover);
+}
+.feedback:active {
+	background-color: var(--active);
+}
+
+input,
+button {
+	background: transparent;
+}
+
+/* https://cssloaders.github.io */
+@keyframes rotation {
+	from {
+		-webkit-transform: rotate(0deg);
+	}
+	to {
+		-webkit-transform: rotate(360deg);
+	}
+}
+
+.spinner {
+	width: 1.25em;
+	height: 1.25em;
+	border: 0.15em solid var(--text-color2);
+	border-bottom-color: transparent;
+	border-radius: 100%;
+	display: inline-block;
+	box-sizing: border-box;
+	animation: rotation 800ms linear infinite;
+}
+
+button:focus,
+input:focus,
+div:focus {
+	outline: 2px solid var(--orange);
+	outline-offset: -2px;
+}
