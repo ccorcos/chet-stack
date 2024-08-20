@@ -17,7 +17,7 @@ async function reset() {
 	const queue = new QueueDatabase(config.queuePath)
 	await queue.reset()
 
-	await bootstrap()
+	await bootstrap(db)
 }
 
 if (require.main === module) reset()

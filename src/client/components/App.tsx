@@ -23,16 +23,16 @@ import { GET_THREADS_LIMIT, GET_THREADS_STEP, useThreads } from "../hooks/useThr
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useRoute } from "../services/Router"
 import { formatResponseError } from "../services/api"
-import { Button } from "./Button"
 import { FileUpload, FileUploadDropZone, UploadPreview, useFileUpload } from "./FileUpload"
-import { Input } from "./Input"
 import { Link } from "./Link"
-import { ListBox, ListItem } from "./ListBox"
-import { MenuItem } from "./MenuItem"
-import { Popup, PopupFrame } from "./Popup"
 import { useRecordInspector } from "./RecordInspector"
-import { Spinner } from "./Spinner"
 import { Throttle } from "./Throttle"
+import { Button } from "./ui/Button"
+import { Input } from "./ui/Input"
+import { ListBox, ListItem } from "./ui/ListBox"
+import { MenuItem } from "./ui/MenuItem"
+import { Popup, PopupFrame } from "./ui/Popup"
+import { Spinner } from "./ui/Spinner"
 
 function useIsPendingWrite<T extends RecordTable>(pointer: RecordPointer<T>) {
 	const { transactionQueue } = useClientEnvironment()

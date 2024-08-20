@@ -1,11 +1,8 @@
 import { Placement, createPopper } from "@popperjs/core"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { passthroughRef } from "../helpers/passthroughRef"
-import { useShortcut } from "../hooks/useShortcut"
-
-// Consider using react-popper
-// https://popper.js.org/react-popper/v2/
+import { passthroughRef } from "../../helpers/passthroughRef"
+import { useShortcut } from "../../hooks/useShortcut"
 
 export function Popup(props: {
 	open: boolean

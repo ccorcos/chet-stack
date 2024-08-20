@@ -3,8 +3,8 @@ import React, { useState } from "react"
 import { getCurrentUserId } from "../helpers/getCurrentUserId"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { formatResponseError } from "../services/api"
-import { Button } from "./Button"
-import { Input } from "./Input"
+import { Button } from "./ui/Button"
+import { Input } from "./ui/Input"
 
 function LoginForm(props: { type: "login" | "signup" }) {
 	const [username, setUsername] = useState("")

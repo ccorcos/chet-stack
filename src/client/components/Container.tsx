@@ -1,13 +1,13 @@
 import React, { Suspense } from "react"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
 import { useRoute } from "../services/Router"
-import { Design } from "./Design"
 import { Login } from "./Login"
 import { Logout } from "./Logout"
 import { Product } from "./Product"
 import { Root } from "./Root"
-import { Spinner } from "./Spinner"
 import { Throttle } from "./Throttle"
+import { Design } from "./ui/Design"
+import { Spinner } from "./ui/Spinner"
 
 export function Container(props: { environment: ClientEnvironment }) {
 	return (

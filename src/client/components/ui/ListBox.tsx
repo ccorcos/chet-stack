@@ -1,8 +1,11 @@
 import React, { useRef } from "react"
-import { nextFocusable, prevFocusable } from "../helpers/focusHelpers"
-import { isShortcut } from "../hooks/useShortcut"
+import { nextFocusable, prevFocusable } from "../../helpers/focusHelpers"
+import { isShortcut } from "../../hooks/useShortcut"
 
-// Inspired by React-Aria: https://react-spectrum.adobe.com/react-aria/ComboBox.html
+/**
+ * Inspired by React-Aria: https://react-spectrum.adobe.com/react-aria/ComboBox.html
+ */
+//
 export function ListBox<T>(props: {
 	style?: React.CSSProperties
 	items: T[]
@@ -64,6 +67,7 @@ export function ListItem(props: {
 			className="feedback"
 			style={{
 				background: props.selected ? "var(--blue)" : undefined,
+				cursor: "pointer",
 				...props.style,
 			}}
 			onClick={props.onClick}

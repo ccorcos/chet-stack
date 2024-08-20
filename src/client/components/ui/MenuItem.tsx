@@ -1,5 +1,5 @@
 import React from "react"
-import { passthroughRef } from "../helpers/passthroughRef"
+import { passthroughRef } from "../../helpers/passthroughRef"
 
 /** MenuItem is not meant to be focusable by the browser like a ListItem is. */
 export const MenuItem = passthroughRef(

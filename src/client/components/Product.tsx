@@ -1,6 +1,6 @@
 import React from "react"
 import { useClientEnvironment } from "../services/ClientEnvironment"
-import { Button } from "./Button"
+import { Button } from "./ui/Button"
 
 export function Product() {
 	const { router } = useClientEnvironment()

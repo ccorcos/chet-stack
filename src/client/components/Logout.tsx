@@ -2,8 +2,8 @@ import React from "react"
 import { logout } from "../actions/logout"
 import { useAsync } from "../hooks/useAsync"
 import { useClientEnvironment } from "../services/ClientEnvironment"
-import { Spinner } from "./Spinner"
 import { Throttle } from "./Throttle"
+import { Spinner } from "./ui/Spinner"
 
 export function Logout() {
 	const environment = useClientEnvironment()

@@ -1,5 +1,5 @@
 import React from "react"
-import { passthroughRef } from "../helpers/passthroughRef"
+import { passthroughRef } from "../../helpers/passthroughRef"
 
 function _Input(props: JSX.IntrinsicElements["input"]) {
 	return (
