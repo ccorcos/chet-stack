@@ -43,7 +43,7 @@ export function ComboBoxSelect(props: {
 		)
 	} else {
 		return (
-			<Button ref={buttonRef} onClick={() => setOpen(true)}>
+			<Button ref={buttonRef} onClick={() => setOpen(true)} style={{ textAlign: "left" }}>
 				{props.value || <span style={{ color: "var(--text-color2" }}>{props.placeholder} </span>}{" "}
 				<span style={{ fontSize: "0.7rem", verticalAlign: "middle" }}>▼</span>
 			</Button>
@@ -109,7 +109,7 @@ export function ComboBox(props: {
 
 	// TODO: filter selected on key change to maintain selectedIndex position?
 	return (
-		<div>
+		<>
 			<Input
 				ref={inputRef}
 				onFocus={() => setFocused(true)}
@@ -144,6 +144,6 @@ export function ComboBox(props: {
 					))}
 				</PopupFrame>
 			</Popup>
-		</div>
+		</>
 	)
 }

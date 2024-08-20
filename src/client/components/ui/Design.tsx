@@ -1,7 +1,7 @@
 import { compact } from "lodash"
 import React, { useCallback, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "../../../shared/fuzzyMatch"
-import { useShortcut } from "../../hooks/useShortcut"
+import { isShortcut, useShortcut } from "../../hooks/useShortcut"
 import { useClientEnvironment } from "../../services/ClientEnvironment"
 import { FileUploadDropZone, UploadPreview, useFileUpload } from "../FileUpload"
 import { FuzzyString } from "../FuzzyString"
@@ -15,7 +15,7 @@ import { Popup, PopupFrame } from "./Popup"
 
 /*
 TODO:
-- Sidebar list of the different design files.
+- sidebar search should let you arrow around to select and item.
 - Shortcut to search / jump to a different design file.
 - Shortcut to show / hide the sidebar.
 - Various demos...
@@ -97,14 +97,20 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 
 	return (
 		<div>
-			{/* <Input
+			<Input
 				ref={input}
 				type="search"
 				style={{ width: "calc(100% - 1em)", margin: "0.5em" }}
 				placeholder="Search..."
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
-			/> */}
+				onKeyDown={(e) => {
+					if (isShortcut("down", e.nativeEvent)) {
+					} else if (isShortcut("up", e.nativeEvent)) {
+					} else {
+					}
+				}}
+			/>
 
 			<ListBox
 				items={results}
@@ -123,6 +129,7 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 }
 
 function Form() {
+	const [color, setColor] = useState<string | undefined>()
 	return (
 		<div
 			style={{
@@ -148,7 +155,12 @@ function Form() {
 			<Input type="date" />
 
 			<div>Select</div>
-			<div>TODO</div>
+			<ComboBoxSelect
+				items={["red", "orange", "yellow", "green", "blue", "purple"]}
+				placeholder="Select an option"
+				value={color}
+				onChange={(color) => setColor(color)}
+			/>
 
 			<div>Multi-Select</div>
 			<div>TODO</div>
