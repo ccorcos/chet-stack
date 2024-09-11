@@ -7,7 +7,7 @@ export function App() {
 	const environment = useClientEnvironment()
 	const route = useRoute()
 
-	return <div style={{ display: "flex", height: "100vh" }}>hellow world!</div>
+	return <div style={{ display: "flex", height: "100vh" }}>hellow worlds</div>
 }
 
 function useOnline() {

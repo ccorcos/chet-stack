@@ -26,15 +26,6 @@ if (config.production) {
 app.use(morgan((...args) => "express: " + morgan.dev(...args)))
 
 if (!config.production) {
-	app.use(
-		helmet.contentSecurityPolicy({
-			directives: {
-				scriptSrc: ["'self'", "localhost:35729"],
-				connectSrc: ["'self'", "ws://localhost:35729"],
-			},
-		})
-	)
-
 	// Injects into the html file so the browser reloads when files change.
 	app.use(injectLiveReload())
 

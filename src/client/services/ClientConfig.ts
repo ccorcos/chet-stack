@@ -1,4 +1,5 @@
 export type ClientConfig = {
+	production: boolean
 	host: string
 }
 
