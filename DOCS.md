@@ -1,5 +1,7 @@
 # Overview
 
+WARNING: these docs are out of date and are means for [🏷️ v0](https://github.com/ccorcos/chet-stack/tree/v0) of ChetStack.
+
 ## Organization
 
 This is a monorepo, client is for the web frontend, server is the backend, shared are used by both, and tools are for commandline scripts and stuff.
