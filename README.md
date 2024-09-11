@@ -20,7 +20,6 @@ git clone git@github.com:ccorcos/chet-stack.git project
 cd project
 git remote remove origin
 npm install
-npm run bootstrap
 npm start
 ```
 

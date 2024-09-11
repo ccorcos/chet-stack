@@ -5,7 +5,6 @@
 	"main": "index.js",
 	"scripts": {
 		"reset": "tsx src/tools/reset.ts",
-		"bootstrap": "tsx src/tools/bootstrap.ts",
 		"autoindex": "autoindex src",
 		"watch-autoindex": "autoindex src --watch",
 		"build-client": "tsx src/tools/build.ts",

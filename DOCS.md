@@ -12,8 +12,6 @@ The code is organized such that no files produce any side-effects when they are 
 
 `src/tools/build.ts` will move files into the `build` directory and uses estrella (which uses esbuild) to bundle everything together.
 
-`src/tools/bootstrap.ts` will create some initial records and `src/tools/reset.ts` will clear the databases and any other state of the application.
-
 We are using the `autoindex` package to generate `autoindex.ts` files which make it as simple as creating a file to create and wire up a new API endpoint.
 
 ## Backend Overview
