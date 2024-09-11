@@ -7,16 +7,6 @@ import { FuzzyString } from "./ui/FuzzyString"
 import { Input } from "./ui/Input"
 import { ListBox, ListItem } from "./ui/ListBox"
 
-/*
-TODO:
-- sidebar search should let you arrow around to select and item.
-- Shortcut to search / jump to a different design file.
-- Shortcut to show / hide the sidebar.
-- Various demos...
-- Infinite loading list from the server.
-
-*/
-
 import * as demos from "./ui/demos/autoindex"
 
 export function Design(props: { page: string | undefined }) {

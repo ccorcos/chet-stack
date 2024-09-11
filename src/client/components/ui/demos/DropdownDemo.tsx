@@ -19,7 +19,7 @@ export function DropdownDemo() {
 				Hello
 			</Button>
 			<Popup open={open} anchor={buttonRef.current} onDismiss={handleDismiss}>
-				<DropdownMenu>
+				<DropdownMenu style={{ minWidth: 120 }}>
 					<MenuItem
 						onClick={() => {
 							console.log("Item 1")

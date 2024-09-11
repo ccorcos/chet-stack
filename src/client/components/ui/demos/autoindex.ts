@@ -1,5 +1,6 @@
 /* WARNING: this file is generated! */
 
+import * as BadgeDemo from "./BadgeDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ComboBoxDemo from "./ComboBoxDemo"
 import * as DropdownDemo from "./DropdownDemo"
@@ -10,6 +11,7 @@ import * as PopupDemo from "./PopupDemo"
 import * as TokenInputDemo from "./TokenInputDemo"
 
 export {
+	BadgeDemo,
 	CalendarDemo,
 	ComboBoxDemo,
 	DropdownDemo,

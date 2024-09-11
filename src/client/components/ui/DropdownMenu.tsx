@@ -4,7 +4,7 @@ import { MenuItem } from "./MenuItem"
 import { PopupFrame } from "./Popup"
 
 /* This is meant to be inside a <Popup>. It will focus as soon as it mounts. It's children should be <MenuItem>.*/
-export function DropdownMenu(props: { children: JSX.Element[] }) {
+export function DropdownMenu(props: { style?: React.CSSProperties; children: JSX.Element[] }) {
 	const menuRef = useRef<HTMLDivElement>(null)
 
 	// Focus immediately.
@@ -57,7 +57,7 @@ export function DropdownMenu(props: { children: JSX.Element[] }) {
 	}
 
 	return (
-		<PopupFrame ref={menuRef} tabIndex={-1} onKeyDown={handleKeyDown}>
+		<PopupFrame ref={menuRef} tabIndex={-1} onKeyDown={handleKeyDown} style={props.style}>
 			{children}
 		</PopupFrame>
 	)

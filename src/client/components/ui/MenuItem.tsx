@@ -8,7 +8,11 @@ export const MenuItem = passthroughRef(
 			<div
 				{...props}
 				className={["menu-item", props.className].filter(Boolean).join(" ")}
-				style={{ backgroundColor: props.selected ? "var(--blue)" : undefined, ...props.style }}
+				style={{
+					cursor: "pointer",
+					backgroundColor: props.selected ? "var(--blue)" : undefined,
+					...props.style,
+				}}
 			/>
 		)
 	}
