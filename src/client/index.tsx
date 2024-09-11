@@ -1,7 +1,7 @@
 import React from "react"
-import ReactDOM from "react-dom"
+import { createRoot } from "react-dom/client"
 // import ReactDOM from "react-dom/profiling"
-import { Container } from "./components/Container"
+import { Root } from "./components/Root"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
 import { Router } from "./services/Router"
@@ -25,13 +25,12 @@ const environment: ClientEnvironment = {
 }
 
 // Render the app.
-const root = document.createElement("div")
-document.body.appendChild(root)
+const div = document.createElement("div")
+document.body.appendChild(div)
+const root = createRoot(div)
+root.render(<Root environment={environment} />)
 
-ReactDOM.render(<Container environment={environment} />, root)
-
-// For debugging from the Console.
-;(window as any)["environment"] = environment
+// For debugging from the Console.(window as any)["environment"] = environment
 Object.assign(window as any, environment)
 
 if (environment.config.production) {

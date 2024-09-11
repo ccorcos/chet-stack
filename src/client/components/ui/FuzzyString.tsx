@@ -1,5 +1,5 @@
 import React from "react"
-import { FuzzyMatch } from "../../shared/fuzzyMatch"
+import { FuzzyMatch } from "../../../shared/fuzzyMatch"
 
 export function FuzzyString(props: { match: FuzzyMatch }) {
 	const { match } = props

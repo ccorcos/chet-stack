@@ -2,11 +2,11 @@ import React, { Suspense } from "react"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
 import { useRoute } from "../services/Router"
 import { App } from "./App"
-import { Throttle } from "./Throttle"
-import { Design } from "./ui/Design"
+import { Design } from "./Design"
 import { Spinner } from "./ui/Spinner"
+import { Throttle } from "./ui/Throttle"
 
-export function Container(props: { environment: ClientEnvironment }) {
+export function Root(props: { environment: ClientEnvironment }) {
 	return (
 		<Suspense fallback={<Loading />}>
 			<ClientEnvironmentProvider value={props.environment}>

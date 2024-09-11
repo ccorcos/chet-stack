@@ -39,6 +39,7 @@ export function ListBox<T>(props: {
 		<div ref={list} style={props.style} role="listbox" tabIndex={0} onKeyDown={handleKeyDown}>
 			{props.items.map((item, i) =>
 				props.children(item, {
+					key: i,
 					selected: i === props.selectedIndex,
 					onClick: () => props.onSelectIndex(i),
 					onKeyDown: (e) => isShortcut("enter", e.nativeEvent) && props.onSelectIndex(i),
@@ -48,7 +49,9 @@ export function ListBox<T>(props: {
 	)
 }
 
-type ListItemProps = Omit<Parameters<typeof ListItem>[0], "children" | "style">
+type ListItemProps = Omit<Parameters<typeof ListItem>[0], "children" | "style"> & {
+	key: string | number
+}
 
 export function ListItem(props: {
 	children: React.ReactNode
