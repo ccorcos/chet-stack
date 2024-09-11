@@ -1,8 +1,5 @@
 import { scrypt } from "crypto"
-import type { Response } from "express"
-import { DayMs } from "../../shared/dateHelpers"
-import { randomId } from "../../shared/randomId"
-import { AuthTokenRecord } from "../../shared/schema"
+import type { Request, Response } from "express"
 import { ServerConfig } from "../services/ServerConfig"
 import { ServerEnvironment } from "../services/ServerEnvironment"
 
@@ -18,24 +15,18 @@ export async function getPasswordHash(environment: { config: ServerConfig }, pas
 
 export async function setAuthCookies(
 	environment: ServerEnvironment,
-	userId: string,
+	args: {
+		authToken: string
+		expiration: Date
+		userId: string
+	},
 	res: Response<any, Record<string, any>>
 ) {
 	const { config } = environment
-
-	const expiration = new Date(Date.now() + 120 * DayMs)
-	const authToken: AuthTokenRecord = {
-		id: randomId(),
-		version: 0,
-		user_id: userId,
-		created_at: new Date().toISOString(),
-		updated_at: new Date().toISOString(),
-		expires_at: expiration.toISOString(),
-	}
-	await environment.db.createAuthToken(authToken)
+	const { authToken, expiration, userId } = args
 
 	// Set the cookie on the response.
-	res.cookie("authToken", authToken.id, {
+	res.cookie("authToken", authToken, {
 		secure: config.production,
 		httpOnly: true,
 		expires: expiration,
@@ -49,4 +40,14 @@ export async function setAuthCookies(
 		expires: expiration,
 		domain: config.production ? config.domain : undefined,
 	})
+}
+
+export async function getAuthTokenCookie(req: Request) {
+	const authTokenId = req.cookies.authToken as string | undefined
+	return authTokenId
+}
+
+export async function clearAuthCookies(res: Response) {
+	res.clearCookie("authToken")
+	res.clearCookie("userId")
 }

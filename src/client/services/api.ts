@@ -1,6 +1,4 @@
-import { flatten } from "lodash"
 import type * as apis from "../../server/apis/autoindex"
-import { BatchedQueue } from "../../shared/BatchedQueue"
 import { sleep } from "../../shared/sleep"
 
 type InputOutput<T extends (...any: any[]) => any> = {
@@ -41,47 +39,11 @@ export type ClientApi = {
 }
 
 export function createApi() {
-	const getRecordsQueue = new BatchedQueue<
-		ApiSchema["getRecords"]["input"],
-		ApiResponse<Awaited<ApiSchema["getRecords"]["output"]>>
-	>({
-		async processBatch(args) {
-			const pointers = flatten(args.map((args) => args.pointers))
-			const response = await apiRequest("getRecords", { pointers })
-
-			// This is going to return more records than expected but that's fine.
-			// Otherwise, we need to crawl ancestor records to filter things out for each request.
-			return args.map(() => response)
-		},
-		maxBatchSize: 1000,
-		maxParallel: 5,
-		delayMs: 2,
-	})
-
-	const getSignedFileUrlsQueue = new BatchedQueue<
-		ApiSchema["getSignedFileUrls"]["input"],
-		ApiResponse<Awaited<ApiSchema["getSignedFileUrls"]["output"]>>
-	>({
-		async processBatch(args) {
-			const fileIds = flatten(args.map((args) => args.fileIds))
-			const response = await apiRequest("getSignedFileUrls", { fileIds })
-
-			// This is going to return more records than expected but that's fine.
-			// Otherwise, we need to crawl ancestor records to filter things out for each request.
-			return args.map(() => response)
-		},
-		maxBatchSize: 1000,
-		maxParallel: 5,
-		delayMs: 2,
-	})
-
 	return new Proxy(
 		{},
 		{
 			get(target, key: any, reciever) {
 				return (args: any) => {
-					if (key === "getRecords") return getRecordsQueue.enqueue(args)
-					if (key === "getSignedFileUrls") return getSignedFileUrlsQueue.enqueue(args)
 					return apiRequest(key, args)
 				}
 			},

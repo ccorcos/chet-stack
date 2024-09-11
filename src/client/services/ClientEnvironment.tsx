@@ -1,29 +1,14 @@
 import React, { createContext, useContext } from "react"
 import type { ClientConfig } from "./ClientConfig"
-import type { LoaderCache } from "./LoaderCache"
-import type { RecordCache } from "./RecordCache"
-import type { RecordStorage } from "./RecordStorage"
 import { Router } from "./Router"
-import type { SubscriptionCache } from "./SubscriptionCache"
-import type { TransactionQueue } from "./TransactionQueue"
-import { UndoRedoStack } from "./UndoRedoStack"
 import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 import type { ClientApi } from "./api"
 
 export type ClientEnvironment = {
 	config: ClientConfig
-
-	recordCache: RecordCache
-	recordStorage: RecordStorage
-	subscriptionCache: SubscriptionCache
-	loaderCache: LoaderCache
-
+	router: Router
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
-	transactionQueue: TransactionQueue
-	undoRedo: UndoRedoStack
-
-	router: Router
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

@@ -4,10 +4,10 @@ import { DayS } from "../shared/dateHelpers"
 import { FileSignatureData } from "./helpers/fileHelpers"
 import { path } from "./helpers/path"
 import { verifySignature } from "./helpers/signatureHelpers"
-import { ServerEnvironment } from "./services/ServerEnvironment"
+import { ServerConfig } from "./services/ServerConfig"
 
 function verifyRequest(
-	environment: ServerEnvironment,
+	environment: { config: ServerConfig },
 	req: Request<{ id: string; filename: string }>,
 	res: Response
 ) {
@@ -46,7 +46,7 @@ function verifyRequest(
 	return true
 }
 
-export function FileServer(environment: ServerEnvironment, app: Express) {
+export function FileServer(environment: { config: ServerConfig }, app: Express) {
 	const uploadDir = path("uploads")
 	mkdirpSync(uploadDir)
 
