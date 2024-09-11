@@ -2,4 +2,6 @@
 
 import * as followup from "./followup"
 
-export { followup }
+export {
+	followup,
+}
