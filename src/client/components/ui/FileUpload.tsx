@@ -1,11 +1,8 @@
-import React, { CSSProperties, useState } from "react"
-import { DeferredPromise } from "../../shared/DeferredPromise"
-import { randomId } from "../../shared/randomId"
-import { passthroughRef } from "../helpers/passthroughRef"
-import { useAsync } from "../hooks/useAsync"
-import { useClientEnvironment } from "../services/ClientEnvironment"
-import { useRecordInspector } from "./RecordInspector"
-import { RetainRecord } from "./RetainRecord"
+import React, { useState } from "react"
+import { DeferredPromise } from "../../../shared/DeferredPromise"
+import { randomId } from "../../../shared/randomId"
+import { passthroughRef } from "../../helpers/passthroughRef"
+import { useAsync } from "../../hooks/useAsync"
 
 type Upload = {
 	id: string
@@ -15,9 +12,12 @@ type Upload = {
 	uploaded?: boolean
 }
 
-export function useFileUpload() {
-	const { api, recordCache, recordStorage } = useClientEnvironment()
-
+export function useFileUpload(
+	handleUpload: (
+		upload: { id: string; file: File },
+		onProgress: (progress: number) => void
+	) => Promise<void>
+) {
 	const [uploads, setUploads] = useState<Upload[]>([])
 
 	const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -25,39 +25,16 @@ export function useFileUpload() {
 		const fileData = Array.from(e.dataTransfer.files) as File[]
 
 		const uploads: Upload[] = fileData.map((file) => {
-			return {
-				id: randomId(),
-				file,
-				progress: 0,
-			}
+			return { id: randomId(), file, progress: 0 }
 		})
-
-		const ids = new Set(uploads.map(({ id }) => id))
 
 		setUploads((ups) => [...ups, ...uploads])
-
-		const response = await api.createUploadUrls({
-			files: uploads.map(({ id, file }) => ({ id, filename: file.name })),
-		})
-
-		if (response.status !== 200) {
-			const error = `UploadError: ${response.status} ${response.body}`
-			setUploads((uploads) =>
-				uploads.map((upload) => (ids.has(upload.id) ? { ...upload, error } : upload))
-			)
-
-			return
-		}
-
-		const { urls, recordMap } = response.body
-		recordCache.writeRecordMap(recordMap)
-		recordStorage.writeRecordMap(recordMap)
 
 		for (const upload of uploads) {
 			const update = (obj: Partial<Upload>) =>
 				setUploads((ups) => ups.map((up) => (up.id === upload.id ? { ...up, ...obj } : up)))
 
-			uploadFile(upload.file, urls[upload.id], (progress) => update({ progress }))
+			handleUpload(upload, (progress) => update({ progress }))
 				.catch((error) => update({ error: error.toString() }))
 				.then(() => update({ uploaded: true }))
 		}
@@ -88,54 +65,12 @@ export function UploadPreview(props: Upload) {
 				}),
 			}}
 		>
-			{/* Retain record so that we can set its parent when we submit. */}
-			<RetainRecord table="file" id={id} />
 			<div style={{ flex: 1, textOverflow: "ellipsis", overflow: "hidden", fontSize: "0.6em" }}>
 				{file.name}
 			</div>
 			<div>{uploaded ? "✅" : error ? "❌" : `${progress}%`}</div>
 		</div>
 	)
-}
-
-export function FileUpload(props: { fileId: string }) {
-	const { api, recordCache, recordStorage } = useClientEnvironment()
-
-	const url = useAsync(
-		async (fileId) => {
-			const response = await api.getSignedFileUrls({ fileIds: [fileId] })
-			if (response.status === 200) {
-				recordCache.writeRecordMap(response.body.recordMap)
-				recordStorage.writeRecordMap(response.body.recordMap)
-				return response.body.urls[fileId]
-			}
-		},
-		[props.fileId]
-	)
-
-	const style: CSSProperties = {
-		height: 120,
-		width: 120,
-		background: "var(--gray)",
-	}
-
-	const { inspectPane, onClick } = useRecordInspector({ table: "file", id: props.fileId })
-
-	if (url) {
-		return (
-			<>
-				{inspectPane}
-				<img onClick={onClick} style={style} src={url}></img>
-			</>
-		)
-	} else {
-		return (
-			<>
-				{inspectPane}
-				<div onClick={onClick} style={style}></div>
-			</>
-		)
-	}
 }
 
 export const FileUploadDropZone = passthroughRef(

@@ -12,3 +12,13 @@ export function deleteCookie(cookieName: string): void {
 	const path: string = "/"
 	document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${domain}; path=${path}`
 }
+
+export function getCurrentUserId() {
+	const cookies = parseCookies(document.cookie)
+	const userId = cookies.userId?.[0]
+	return userId
+}
+
+export function deleteLoginCookie() {
+	deleteCookie("userId")
+}

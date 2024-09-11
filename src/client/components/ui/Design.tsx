@@ -1,13 +1,14 @@
 import { compact } from "lodash"
 import React, { useCallback, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "../../../shared/fuzzyMatch"
+import { sleep } from "../../../shared/sleep"
 import { isShortcut, useShortcut } from "../../hooks/useShortcut"
 import { useClientEnvironment } from "../../services/ClientEnvironment"
-import { FileUploadDropZone, UploadPreview, useFileUpload } from "../FileUpload"
 import { FuzzyString } from "../FuzzyString"
 import { Button } from "./Button"
 import { ComboBoxSelect } from "./ComboBox"
 import { DropdownMenu } from "./DropdownMenu"
+import { FileUploadDropZone, UploadPreview, useFileUpload } from "./FileUpload"
 import { Input } from "./Input"
 import { ListBox, ListItem } from "./ListBox"
 import { MenuItem } from "./MenuItem"
@@ -314,7 +315,13 @@ function ComboBoxDemo() {
 }
 
 export function FileUploaderDemo() {
-	const { uploads, handleDrop } = useFileUpload()
+	const { uploads, handleDrop } = useFileUpload(async (upload, onProgress) => {
+		for (let i = 0; i < 100; i += Math.round(Math.random() * 10)) {
+			await sleep(100)
+			onProgress(i)
+		}
+	})
+
 	return (
 		<FileUploadDropZone
 			onDrop={handleDrop}
