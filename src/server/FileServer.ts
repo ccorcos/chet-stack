@@ -91,6 +91,3 @@ export function FileServer(environment: { config: ServerConfig }, app: Express) 
 		res.sendFile(filePath)
 	})
 }
-
-// getUploadUrl
-// getFileUrl

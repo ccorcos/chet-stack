@@ -1,9 +1,5 @@
 /* WARNING: this file is generated! */
 
-import * as sendFollowupMessage from "./sendFollowupMessage"
-import * as sendWelcomeMessage from "./sendWelcomeMessage"
+import * as followup from "./followup"
 
-export {
-	sendFollowupMessage,
-	sendWelcomeMessage,
-}
+export { followup }

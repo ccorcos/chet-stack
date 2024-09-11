@@ -1,35 +1,29 @@
 /*
 
-This api isn't expected to be used, but is here for demonstration purposes.
+This API is a template.
 
 */
 
 import * as t from "data-type-ts"
-import type { Request } from "express"
-import { BrokenError, PermissionError } from "../../shared/errors"
-import { getCurrentUserId } from "../helpers/getCurrentUserId"
+import type { Request, Response } from "express"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
-export const input = t.object({
-	prefix: t.string,
-})
+// Used for request validation.
+export const input = t.object({ name: t.string })
 
-export async function hello(
-	environment: ServerEnvironment,
-	args: t.Infer<typeof input>,
-	userId: string
-) {
-	const user = await environment.db.getRecord({ table: "user", id: userId })
-	if (!user) throw new BrokenError(`User does not exist: ${userId}`)
-	return { message: `Hello ${args.prefix} ${user.username}!` }
+// It's helpful to be able to call this api functionality internally so we definite a separate
+// function that isn't the API request handler.
+export async function hello(name: string) {
+	return { message: `Hello ${name}!` }
 }
 
+// This is the actual HTTP request handler. You can call this API from the client with:
+// environment.api.hello({name: "World"})
 export async function handler(
 	environment: ServerEnvironment,
 	args: t.Infer<typeof input>,
-	req: Request
+	req: Request,
+	res: Response
 ) {
-	const userId = await getCurrentUserId(environment, req)
-	if (!userId) throw new PermissionError("You need to be logged in.")
-	return hello(environment, args, userId)
+	return hello(args.name)
 }
