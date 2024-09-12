@@ -66,28 +66,10 @@ function fuzzyMatchHelper(
 	}
 }
 
-function isMatch(matchItem: MatchItem): matchItem is { match: string } {
-	return "match" in matchItem
-}
-
-export function fuzzyMatchScore(query: string, text: string) {
-	const match = fuzzyMatch(query, text)
-	if (!match) return 0
-
-	const matchingLetters = match.reduce((score, current) => {
-		if (isMatch(current)) {
-			return score + current.match.length
-		}
-		return score
-	}, 0)
-
-	const normalizedScore = (matchingLetters * 2) / (query.length + text.length)
-
-	return normalizedScore
-}
-
 export function fuzzyMatch(query: string, text: string) {
-	const result = fuzzyMatchHelper(query, text)
+	const trimmed = query.trim()
+	if (trimmed === "") return
+	const result = fuzzyMatchHelper(trimmed, text)
 	if (result) return reduceMatches(result)
 }
 
@@ -116,16 +98,50 @@ function reduceMatches(items: FuzzyMatch): FuzzyMatch {
 	)
 }
 
-export function computeMatchScore(match: FuzzyMatch) {
+// TODO: These scoring functions are pretty arbitrary currently...
+
+/**
+ * matchedChars^2 / textLength
+ * This is ok, but really discounts matching long text.
+ */
+export function fuzzyMatchScore(match: FuzzyMatch | undefined) {
+	if (!match) return 0
+
+	let matched = 0
+	let unmatched = 0
+
+	for (const item of match) {
+		if ("match" in item) {
+			matched += item.match.length
+		} else {
+			unmatched += item.skip.length
+		}
+	}
+
+	const normalizedScore = matched ** 2 / (matched + unmatched)
+
+	return normalizedScore
+}
+
+/**
+ * sum(matchedChars^2 / distanceFromStart^(1/2))^(1/2)
+ * Weighted on bigger matches closer to the beginning of the string.
+ */
+export function fuzzyMatchScore2(match: FuzzyMatch | undefined) {
 	// This scoring is kind of an arbitrary idea.
 	// Quatratic sum of the size of the length of the matches.
 	// Discounted by how far from the beginning the match is.
-	return Math.sqrt(
-		match
-			.map((item, i) => {
-				if ("match" in item) return Math.pow(item.match.length, 2) / Math.sqrt(i + 1)
-				else return 0
-			})
-			.reduce((a, b) => a + b, 0)
-	)
+
+	if (!match) return 0
+
+	let score = 0
+
+	for (let i = 0; i < match.length; i++) {
+		const item = match[i]
+		if ("match" in item) {
+			score += Math.pow(item.match.length, 2) / Math.sqrt(i + 1)
+		}
+	}
+
+	return Math.sqrt(score)
 }
