@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 
+// TODO: I don't think this thing works very well.
+
 /**
  * Don't show the spinner unless we have a very slow request.
  * If we show the spinner, hold it for a moment.
