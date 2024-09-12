@@ -69,6 +69,8 @@ export function ComboBox(props: {
 	const [text, setText] = useState("")
 
 	const filteredItems = useMemo(() => {
+		if (text === "") return props.items.map((str) => ({ value: str, match: [{ skip: str }] }))
+
 		return props.items
 			.map((str) => ({ value: str, match: fuzzyMatch(text, str)! }))
 			.filter(({ match }) => Boolean(match))
@@ -134,6 +136,7 @@ export function ComboBox(props: {
 					{props.notice}
 					{filteredItems.map((item, i) => (
 						<MenuItem
+							key={i}
 							selected={selectedIndex === i}
 							onClick={() => props.onChange(item.value)}
 							onMouseDown={(e) => e.preventDefault()}

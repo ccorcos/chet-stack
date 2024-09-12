@@ -11,6 +11,7 @@ import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
+import * as TableDemo from "./TableDemo"
 import * as TokenInputDemo from "./TokenInputDemo"
 
 export {
@@ -25,5 +26,6 @@ export {
 	ListBoxDemo,
 	PopupDemo,
 	SpinnerDemo,
+	TableDemo,
 	TokenInputDemo,
 }
