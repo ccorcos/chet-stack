@@ -134,11 +134,18 @@ a {
 	color: var(--text-color2);
 }
 
-.feedback:hover {
+button.feedback:hover {
 	background-color: var(--hover);
 }
-.feedback:active {
+button.feedback:active {
 	background-color: var(--active);
+}
+
+input.feedback:hover {
+	background-color: var(--gray6);
+}
+input.feedback:focus {
+	background-color: var(--background);
 }
 
 input,

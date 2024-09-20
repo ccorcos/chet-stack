@@ -8,6 +8,7 @@ import * as DropdownDemo from "./DropdownDemo"
 import * as FileUploadDemo from "./FileUploadDemo"
 import * as FormDemo from "./FormDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
+import * as InputDemo from "./InputDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
@@ -23,6 +24,7 @@ export {
 	FileUploadDemo,
 	FormDemo,
 	FuzzyStringDemo,
+	InputDemo,
 	ListBoxDemo,
 	PopupDemo,
 	SpinnerDemo,

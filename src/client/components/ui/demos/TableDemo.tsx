@@ -3,7 +3,7 @@ import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
 import { useTupleDatabase } from "tuple-database/useTupleDatabase"
 import { ComboBoxSelect } from "../ComboBox"
-import { Input } from "../Input"
+import { NakedInput } from "../Input"
 
 type Property =
 	| { id: string; name?: string; type: "string" }
@@ -50,6 +50,25 @@ if (db.scan({ limit: 1 }).length === 0) {
 		],
 	})
 }
+
+// type RowSelection = {
+// 	type: "row"
+// 	rowIds: string[]
+// }
+
+// type ColumnSelection = {
+// 	type: "column"
+// 	propertyIds: string[]
+// }
+
+// type CellSelection = {
+// 	top: number
+// 	left: number
+// 	right: number
+// 	bottom: number
+// }
+
+// type TableSelection = RowSelection | ColumnSelection | CellSelection
 
 export function TableDemo() {
 	const nColumns = PlantSchema.properties.length
@@ -125,21 +144,21 @@ function PropertyValue(props: { obj: Row; property: Property }) {
 	if (property.type === "string") {
 		if (value === undefined) value = ""
 		value = value.toString()
-		return <Input value={value} onChange={(e) => update(e.target.value)} />
+		return <NakedInput value={value} onChange={(e) => update(e.target.value)} />
 	}
 
 	if (property.type === "number") {
 		if (typeof value === "string") value = parseFloat(value)
 		if (typeof value === "boolean") value = value === true ? 1 : 0
 		if (value === undefined || isNaN(value)) value = ""
-		return <Input type="number" value={value} onChange={(e) => update(e.target.value)} />
+		return <NakedInput type="number" value={value} onChange={(e) => update(e.target.value)} />
 	}
 
 	if (property.type === "boolean") {
 		if (value === undefined || value === "") value = false
 		if (typeof value === "string") value = true
 		if (typeof value === "number") value = value > 0
-		return <Input type="checkbox" checked={value} onChange={(e) => update(e.target.checked)} />
+		return <NakedInput type="checkbox" checked={value} onChange={(e) => update(e.target.checked)} />
 	}
 
 	if (property.type === "select") {
@@ -160,6 +179,11 @@ function PropertyValue(props: { obj: Row; property: Property }) {
 }
 
 // TODO:
-// - input types
+// - naked inputs
+// - add rows
+// - delete / duplicate rows
+// - edit the schema
+// - edit the schema
+// - row selection
 // - selection and moving
 // - edit the schema

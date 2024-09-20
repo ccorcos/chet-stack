@@ -20,14 +20,15 @@ function _Button(props: JSX.IntrinsicElements["button"]) {
 export const Button = passthroughRef(_Button)
 
 export const PrimaryButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
-	return (
-		<Button
-			{...props}
-			style={{ background: "var(--blue)", color: "var(--white)", ...props.style }}
-		></Button>
-	)
+	return _Button({
+		...props,
+		style: { background: "var(--blue)", color: "var(--white)", ...props.style },
+	})
 })
 
 export const NakedButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
-	return <Button {...props} style={{ borderColor: "transparent", ...props.style }}></Button>
+	return _Button({
+		...props,
+		style: { borderColor: "transparent", ...props.style },
+	})
 })
