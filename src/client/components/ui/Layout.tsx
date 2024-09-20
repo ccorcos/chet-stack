@@ -1,10 +1,27 @@
-import React from "react"
+import React, { useCallback } from "react"
 
-const GAP = 1
+const GAP = 2
 
 const transition = "0.15s cubic-bezier(0.4, 0, 0.2, 1)"
+
+function useIsVisible(show: boolean) {
+	const [isVisible, setIsVisible] = React.useState(show)
+
+	React.useEffect(() => {
+		if (show) setIsVisible(true)
+	}, [show])
+
+	const handleTransitionEnd = useCallback(() => {
+		if (!show) setIsVisible(false)
+	}, [show])
+
+	return { isVisible, handleTransitionEnd }
+}
+
 export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
+	const { isVisible, handleTransitionEnd } = useIsVisible(show)
+
 	return (
 		<div
 			{...rest}
@@ -14,11 +31,12 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 				// borderBottom: "2px solid var(--transparent1)",
 				background: "var(--background)",
 				transition: `height ${transition}`,
-				height: props.show ? 64 : 0,
+				height: show ? 64 : 0,
 				overflow: "hidden",
 				position: "relative",
 				...props.style,
 			}}
+			onTransitionEnd={handleTransitionEnd}
 		>
 			<div
 				style={{
@@ -29,7 +47,7 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 					height: 64,
 				}}
 			>
-				{props.children}
+				{isVisible && props.children}
 			</div>
 		</div>
 	)
@@ -37,6 +55,8 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 
 export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
+	const { isVisible, handleTransitionEnd } = useIsVisible(show)
+
 	return (
 		<div
 			{...rest}
@@ -46,11 +66,12 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				// borderTop: "2px solid var(--transparent1)",
 				background: "var(--background)",
 				transition: `height ${transition}`,
-				height: props.show ? 64 : 0,
+				height: show ? 64 : 0,
 				overflow: "hidden",
 				position: "relative",
 				...props.style,
 			}}
+			onTransitionEnd={handleTransitionEnd}
 		>
 			<div
 				style={{
@@ -61,7 +82,7 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 					height: 64,
 				}}
 			>
-				{props.children}
+				{isVisible && props.children}
 			</div>
 		</div>
 	)
@@ -69,6 +90,8 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 
 export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
+	const { isVisible, handleTransitionEnd } = useIsVisible(show)
+
 	return (
 		<div
 			{...rest}
@@ -78,11 +101,12 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				// borderRight: "2px solid var(--transparent1)",
 				background: "var(--background)",
 				transition: `width ${transition}`,
-				width: props.show ? 256 : 0,
+				width: show ? 256 : 0,
 				overflow: "hidden",
 				position: "relative",
 				...props.style,
 			}}
+			onTransitionEnd={handleTransitionEnd}
 		>
 			<div
 				style={{
@@ -93,7 +117,7 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 					width: 256,
 				}}
 			>
-				{props.children}
+				{isVisible && props.children}
 			</div>
 		</div>
 	)
@@ -101,6 +125,8 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 
 export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
+	const { isVisible, handleTransitionEnd } = useIsVisible(show)
+
 	return (
 		<div
 			{...rest}
@@ -110,11 +136,12 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 				// borderLeft: "2px solid var(--transparent1)",
 				background: "var(--background)",
 				transition: `width ${transition}`,
-				width: props.show ? 256 : 0,
+				width: show ? 256 : 0,
 				overflow: "hidden",
 				position: "relative",
 				...props.style,
 			}}
+			onTransitionEnd={handleTransitionEnd}
 		>
 			<div
 				style={{
@@ -125,7 +152,7 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 					width: 256,
 				}}
 			>
-				{props.children}
+				{isVisible && props.children}
 			</div>
 		</div>
 	)
