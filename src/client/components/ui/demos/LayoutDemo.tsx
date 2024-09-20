@@ -1,100 +1,6 @@
 import React, { useState } from "react"
 import { Button } from "../Button"
-
-function TopbarLayout(props: { show: boolean; setShow: (show: boolean) => void }) {
-	return (
-		<div
-			style={{
-				flexGrow: 0,
-				flexShrink: 0,
-				borderBottom: "2px solid var(--transparent1)",
-				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
-				height: props.show ? 64 : 0,
-				overflow: "hidden",
-			}}
-		>
-			<div style={{ display: "flex", alignItems: "center", height: "100%", width: "100%" }}>
-				<Button onClick={() => props.setShow(!props.show)}>{props.show ? "close" : "open"}</Button>
-			</div>
-		</div>
-	)
-}
-
-function BottombarLayout(props: { show: boolean; setShow: (show: boolean) => void }) {
-	return (
-		<div
-			style={{
-				flexGrow: 0,
-				flexShrink: 0,
-				borderTop: "2px solid var(--transparent1)",
-				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
-				height: props.show ? 64 : 0,
-				overflow: "hidden",
-			}}
-		>
-			<div
-				style={{
-					padding: 8,
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-				}}
-			>
-				<span>Footer content</span>
-				<button
-					onClick={() => props.setShow(!props.show)}
-					style={{ background: "none", border: "none", color: "white", cursor: "pointer" }}
-				>
-					{props.show ? "down" : "up"}
-				</button>
-			</div>
-		</div>
-	)
-}
-
-function LeftPanelLayout(props: { show: boolean; setShow: (show: boolean) => void }) {
-	return (
-		<div
-			style={{
-				flexGrow: 0,
-				flexShrink: 0,
-				borderRight: "2px solid var(--transparent1)",
-				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
-				width: props.show ? 256 : 0,
-				overflow: "hidden",
-			}}
-		>
-			<div style={{ padding: "16px" }}>
-				<h2>Sidebar</h2>
-				<button onClick={() => props.setShow(!props.show)} style={{ marginTop: "16px" }}>
-					{props.show ? "left" : "right"}
-				</button>
-			</div>
-		</div>
-	)
-}
-
-function RightPanelLayout(props: { show: boolean; setShow: (show: boolean) => void }) {
-	return (
-		<div
-			style={{
-				flexGrow: 0,
-				flexShrink: 0,
-				borderLeft: "2px solid var(--transparent1)",
-				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
-				width: props.show ? 256 : 0,
-				overflow: "hidden",
-			}}
-		>
-			<div style={{ padding: "16px" }}>
-				<h2>Right Panel</h2>
-				<button onClick={() => props.setShow(!props.show)} style={{ marginTop: "16px" }}>
-					{props.show ? "right" : "left"}
-				</button>
-			</div>
-		</div>
-	)
-}
+import { BottombarLayout, Layout, LeftPanelLayout, RightPanelLayout, TopbarLayout } from "../Layout"
 
 export function LayoutDemo() {
 	const [showTopbar, setShowTopbar] = useState(true)
@@ -103,31 +9,66 @@ export function LayoutDemo() {
 	const [showBottomBar, setShowBottomBar] = useState(true)
 
 	return (
-		<div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-			<TopbarLayout show={showTopbar} setShow={setShowTopbar} />
-
-			<div style={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
-				<LeftPanelLayout show={showSidebar} setShow={setShowSidebar} />
-
-				<div style={{ flexGrow: 1, overflowY: "auto", padding: "16px" }}>
-					<h2>Main Content</h2>
-					<div style={{ marginTop: "16px", display: "flex", gap: 12 }}>
-						<Button onClick={() => setShowTopbar(!showTopbar)}>Toggle Topbar</Button>
-						<Button onClick={() => setShowSidebar(!showSidebar)}>Toggle Sidebar</Button>
-						<Button onClick={() => setShowRightPanel(!showRightPanel)}>Toggle Right Panel</Button>
-						<Button onClick={() => setShowBottomBar(!showBottomBar)}>Toggle Bottom Bar</Button>
+		<Layout
+			Topbar={
+				<TopbarLayout show={showTopbar}>
+					<div style={{ display: "flex", alignItems: "center", height: "100%", width: "100%" }}>
+						<Button onClick={() => setShowTopbar(!showTopbar)}>
+							{showTopbar ? "close" : "open"}
+						</Button>
 					</div>
-					{[...Array(20)].map((_, i) => (
-						<p key={i} style={{ marginBottom: "16px" }}>
-							Scroll content {i + 1}
-						</p>
-					))}
-				</div>
-
-				<RightPanelLayout show={showRightPanel} setShow={setShowRightPanel} />
+				</TopbarLayout>
+			}
+			Bottombar={
+				<BottombarLayout show={showBottomBar}>
+					<div
+						style={{
+							padding: 8,
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						}}
+					>
+						<Button onClick={() => setShowBottomBar(!showBottomBar)}>
+							{showBottomBar ? "close" : "open"}
+						</Button>
+					</div>
+				</BottombarLayout>
+			}
+			LeftPanel={
+				<LeftPanelLayout show={showSidebar}>
+					<div style={{ padding: "16px" }}>
+						<Button onClick={() => setShowSidebar(!showSidebar)} style={{ marginTop: "16px" }}>
+							{showSidebar ? "close" : "open"}
+						</Button>
+					</div>
+				</LeftPanelLayout>
+			}
+			RightPanel={
+				<RightPanelLayout show={showRightPanel}>
+					<div style={{ padding: "16px" }}>
+						<Button
+							onClick={() => setShowRightPanel(!showRightPanel)}
+							style={{ marginTop: "16px" }}
+						>
+							{showRightPanel ? "close" : "open"}
+						</Button>
+					</div>
+				</RightPanelLayout>
+			}
+		>
+			<h2>Main Content</h2>
+			<div style={{ marginTop: "16px", display: "flex", gap: 12 }}>
+				<Button onClick={() => setShowTopbar(!showTopbar)}>Toggle Topbar</Button>
+				<Button onClick={() => setShowSidebar(!showSidebar)}>Toggle Sidebar</Button>
+				<Button onClick={() => setShowRightPanel(!showRightPanel)}>Toggle Right Panel</Button>
+				<Button onClick={() => setShowBottomBar(!showBottomBar)}>Toggle Bottom Bar</Button>
 			</div>
-
-			<BottombarLayout show={showBottomBar} setShow={setShowBottomBar} />
-		</div>
+			{[...Array(20)].map((_, i) => (
+				<p key={i} style={{ marginBottom: "16px" }}>
+					Scroll content {i + 1}
+				</p>
+			))}
+		</Layout>
 	)
 }
