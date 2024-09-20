@@ -1,6 +1,7 @@
 import React, { useCallback } from "react"
 
-const GAP = 2
+const GAP = 1
+const BORDER_RADIUS = 0
 
 const transition = "0.15s cubic-bezier(0.4, 0, 0.2, 1)"
 
@@ -34,6 +35,7 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 				height: show ? 64 : 0,
 				overflow: "hidden",
 				position: "relative",
+				borderRadius: BORDER_RADIUS,
 				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
@@ -69,6 +71,7 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				height: show ? 64 : 0,
 				overflow: "hidden",
 				position: "relative",
+				borderRadius: BORDER_RADIUS,
 				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
@@ -104,6 +107,7 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				width: show ? 256 : 0,
 				overflow: "hidden",
 				position: "relative",
+				borderRadius: BORDER_RADIUS,
 				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
@@ -139,6 +143,7 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 				width: show ? 256 : 0,
 				overflow: "hidden",
 				position: "relative",
+				borderRadius: BORDER_RADIUS,
 				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
@@ -154,6 +159,23 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 			>
 				{isVisible && props.children}
 			</div>
+		</div>
+	)
+}
+
+export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
+	return (
+		<div
+			style={{
+				flexGrow: 1,
+				background: "var(--background)",
+				overflowY: "auto",
+				padding: "16px",
+				borderRadius: BORDER_RADIUS,
+				...props.style,
+			}}
+		>
+			{props.children}
 		</div>
 	)
 }
@@ -180,16 +202,7 @@ export function Layout(props: {
 			<div style={{ flexGrow: 1, display: "flex", overflow: "hidden", gap: GAP }}>
 				{props.LeftPanel}
 
-				<div
-					style={{
-						flexGrow: 1,
-						overflowY: "auto",
-						padding: "16px",
-						background: "var(--background)",
-					}}
-				>
-					{props.children}
-				</div>
+				{props.children}
 
 				{props.RightPanel}
 			</div>

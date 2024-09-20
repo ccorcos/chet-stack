@@ -1,7 +1,14 @@
 import React, { useState } from "react"
 import { useShortcut } from "../../../hooks/useShortcut"
 import { Button } from "../Button"
-import { BottombarLayout, Layout, LeftPanelLayout, RightPanelLayout, TopbarLayout } from "../Layout"
+import {
+	BottombarLayout,
+	ContentLayout,
+	Layout,
+	LeftPanelLayout,
+	RightPanelLayout,
+	TopbarLayout,
+} from "../Layout"
 
 export function LayoutDemo() {
 	const [showTopbar, setShowTopbar] = useState(true)
@@ -63,18 +70,20 @@ export function LayoutDemo() {
 				</RightPanelLayout>
 			}
 		>
-			<h2>Main Content</h2>
-			<div style={{ marginTop: "16px", display: "flex", gap: 12 }}>
-				<Button onClick={() => setShowTopbar(!showTopbar)}>Toggle Topbar</Button>
-				<Button onClick={() => setShowSidebar(!showSidebar)}>Toggle Sidebar</Button>
-				<Button onClick={() => setShowRightPanel(!showRightPanel)}>Toggle Right Panel</Button>
-				<Button onClick={() => setShowBottomBar(!showBottomBar)}>Toggle Bottom Bar</Button>
-			</div>
-			{[...Array(20)].map((_, i) => (
-				<p key={i} style={{ marginBottom: "16px" }}>
-					Scroll content {i + 1}
-				</p>
-			))}
+			<ContentLayout>
+				<h2>Main Content</h2>
+				<div style={{ marginTop: "16px", display: "flex", gap: 12 }}>
+					<Button onClick={() => setShowTopbar(!showTopbar)}>Toggle Topbar</Button>
+					<Button onClick={() => setShowSidebar(!showSidebar)}>Toggle Sidebar</Button>
+					<Button onClick={() => setShowRightPanel(!showRightPanel)}>Toggle Right Panel</Button>
+					<Button onClick={() => setShowBottomBar(!showBottomBar)}>Toggle Bottom Bar</Button>
+				</div>
+				{[...Array(20)].map((_, i) => (
+					<p key={i} style={{ marginBottom: "16px" }}>
+						Scroll content {i + 1}
+					</p>
+				))}
+			</ContentLayout>
 		</Layout>
 	)
 }

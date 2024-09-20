@@ -94,6 +94,7 @@ export function TableDemo() {
 				style={{
 					display: "grid",
 					gridTemplateColumns: `repeat(${nColumns + 1}, 1fr)`,
+					width: "fit-content",
 					gap: 1,
 					// border: "1px solid black",
 				}}

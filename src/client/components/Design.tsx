@@ -8,7 +8,7 @@ import { Input } from "./ui/Input"
 import { ListBox, ListItem } from "./ui/ListBox"
 
 import * as demos from "./ui/demos/autoindex"
-import { Layout, LeftPanelLayout } from "./ui/Layout"
+import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
 
 export function Design(props: { page: string | undefined }) {
 	const { router } = useClientEnvironment()
@@ -23,11 +23,13 @@ export function Design(props: { page: string | undefined }) {
 
 	return (
 		<Layout LeftPanel={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}>
-			{demos[currentPage] ? (
-				React.createElement(demos[currentPage][currentPage])
-			) : (
-				<div>Select a page</div>
-			)}
+			<ContentLayout>
+				{demos[currentPage] ? (
+					React.createElement(demos[currentPage][currentPage])
+				) : (
+					<div>Select a page</div>
+				)}
+			</ContentLayout>
 		</Layout>
 	)
 }
