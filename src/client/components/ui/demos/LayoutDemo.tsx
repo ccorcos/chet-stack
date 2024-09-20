@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { useShortcut } from "../../../hooks/useShortcut"
 import { Button } from "../Button"
 import { BottombarLayout, Layout, LeftPanelLayout, RightPanelLayout, TopbarLayout } from "../Layout"
 
@@ -7,6 +8,11 @@ export function LayoutDemo() {
 	const [showSidebar, setShowSidebar] = useState(true)
 	const [showRightPanel, setShowRightPanel] = useState(true)
 	const [showBottomBar, setShowBottomBar] = useState(true)
+
+	useShortcut("up", () => setShowTopbar(!showTopbar))
+	useShortcut("left", () => setShowSidebar(!showSidebar))
+	useShortcut("right", () => setShowRightPanel(!showRightPanel))
+	useShortcut("down", () => setShowBottomBar(!showBottomBar))
 
 	return (
 		<Layout
