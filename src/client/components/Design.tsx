@@ -15,6 +15,11 @@ export function Design(props: { page: string | undefined }) {
 	const currentPage = props.page || Object.keys(demos)[0]
 	const setCurrentPage = (page: string) => router.navigate({ type: "design", page })
 
+	// Layout is a full-page demo.
+	if (currentPage === "LayoutDemo") {
+		return React.createElement(demos.LayoutDemo.LayoutDemo)
+	}
+
 	return (
 		<Layout
 			sidebar={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}
