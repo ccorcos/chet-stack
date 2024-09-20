@@ -1,9 +1,9 @@
 import React from "react"
-import { passthroughRef } from "../../helpers/passthroughRef"
 
 const GAP = 1
 
-function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+const transition = "0.15s cubic-bezier(0.4, 0, 0.2, 1)"
+export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	return (
 		<div
@@ -13,18 +13,29 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 				flexShrink: 0,
 				// borderBottom: "2px solid var(--transparent1)",
 				background: "var(--background)",
-				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
+				transition: `height ${transition}`,
 				height: props.show ? 64 : 0,
 				overflow: "hidden",
+				position: "relative",
 				...props.style,
 			}}
-		/>
+		>
+			<div
+				style={{
+					position: "absolute",
+					bottom: 0,
+					left: 0,
+					right: 0,
+					height: 64,
+				}}
+			>
+				{props.children}
+			</div>
+		</div>
 	)
 }
 
-export const TopbarLayout = passthroughRef(_TopbarLayout)
-
-function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	return (
 		<div
@@ -34,18 +45,29 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 				flexShrink: 0,
 				// borderTop: "2px solid var(--transparent1)",
 				background: "var(--background)",
-				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
+				transition: `height ${transition}`,
 				height: props.show ? 64 : 0,
 				overflow: "hidden",
+				position: "relative",
 				...props.style,
 			}}
-		/>
+		>
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					left: 0,
+					right: 0,
+					height: 64,
+				}}
+			>
+				{props.children}
+			</div>
+		</div>
 	)
 }
 
-export const BottombarLayout = passthroughRef(_BottombarLayout)
-
-function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	return (
 		<div
@@ -55,18 +77,29 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 				flexShrink: 0,
 				// borderRight: "2px solid var(--transparent1)",
 				background: "var(--background)",
-				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
+				transition: `width ${transition}`,
 				width: props.show ? 256 : 0,
 				overflow: "hidden",
+				position: "relative",
 				...props.style,
 			}}
-		/>
+		>
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					bottom: 0,
+					right: 0,
+					width: 256,
+				}}
+			>
+				{props.children}
+			</div>
+		</div>
 	)
 }
 
-export const LeftPanelLayout = passthroughRef(_LeftPanelLayout)
-
-function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	return (
 		<div
@@ -76,16 +109,27 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 				flexShrink: 0,
 				// borderLeft: "2px solid var(--transparent1)",
 				background: "var(--background)",
-				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
+				transition: `width ${transition}`,
 				width: props.show ? 256 : 0,
 				overflow: "hidden",
+				position: "relative",
 				...props.style,
 			}}
-		/>
+		>
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					bottom: 0,
+					left: 0,
+					width: 256,
+				}}
+			>
+				{props.children}
+			</div>
+		</div>
 	)
 }
-
-export const RightPanelLayout = passthroughRef(_RightPanelLayout)
 
 export function Layout(props: {
 	Topbar?: React.ReactNode
