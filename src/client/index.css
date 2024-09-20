@@ -135,10 +135,12 @@ a {
 }
 
 button.feedback:hover {
-	background-color: var(--hover);
+	/* background-color: var(--hover); */
+	background-color: var(--gray6);
 }
 button.feedback:active {
-	background-color: var(--active);
+	/* background-color: var(--active); */
+	background-color: var(--gray4);
 }
 
 input.feedback:hover {

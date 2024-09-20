@@ -2,6 +2,7 @@ import React from "react"
 import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
 import { useTupleDatabase } from "tuple-database/useTupleDatabase"
+import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { NakedInput } from "../Input"
 
@@ -171,6 +172,7 @@ function PropertyValue(props: { obj: Row; property: Property }) {
 				placeholder="Select"
 				value={value as any}
 				onChange={update}
+				Button={NakedButton}
 			/>
 		)
 	}
@@ -179,7 +181,8 @@ function PropertyValue(props: { obj: Row; property: Property }) {
 }
 
 // TODO:
-// - naked inputs
+// - combobox with naked input.
+
 // - add rows
 // - delete / duplicate rows
 // - edit the schema

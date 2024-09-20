@@ -1,5 +1,5 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { fuzzyMatch } from "../../../shared/fuzzyMatch"
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { FuzzyMatch, fuzzyMatch } from "../../../shared/fuzzyMatch"
 import { useRefPrevious } from "../../hooks/useRefPrevious"
 import { isShortcut } from "../../hooks/useShortcut"
 import { Button } from "./Button"
@@ -13,6 +13,8 @@ export function ComboBoxSelect(props: {
 	placeholder: string
 	value: string | undefined
 	onChange: (value: string) => void
+	Input?: React.FC<JSX.IntrinsicElements["input"]>
+	Button?: React.FC<JSX.IntrinsicElements["button"]>
 }) {
 	const [open, setOpen] = useState(false)
 
@@ -39,15 +41,94 @@ export function ComboBoxSelect(props: {
 					console.log("DIsmiss")
 					setOpen(false)
 				}}
+				Input={props.Input}
 			/>
 		)
 	} else {
+		const ComboButton = props.Button ?? Button
 		return (
-			<Button ref={buttonRef} onClick={() => setOpen(true)} style={{ textAlign: "left" }}>
+			<ComboButton ref={buttonRef} onClick={() => setOpen(true)} style={{ textAlign: "left" }}>
 				{props.value || <span style={{ color: "var(--text-color2" }}>{props.placeholder} </span>}{" "}
 				<span style={{ fontSize: "0.7rem", verticalAlign: "middle" }}>▼</span>
-			</Button>
+			</ComboButton>
 		)
+	}
+}
+
+export function useComboBox(props: {
+	items: string[]
+	value: string | undefined
+	onChange: (value: string) => void
+	onDismiss?: () => void
+}) {
+	const [text, setText] = useState("")
+	const [focused, setFocused] = useState(false)
+	const [selectedIndex, setSelectedIndex] = useState(0)
+
+	const filteredItems = useMemo(() => {
+		if (text === "") return props.items.map((str) => ({ value: str, match: [{ skip: str }] }))
+
+		return props.items
+			.map((str) => ({ value: str, match: fuzzyMatch(text, str)! }))
+			.filter(({ match }) => Boolean(match))
+	}, [text, props.items])
+
+	const handleKeydown = useCallback(
+		(event: React.KeyboardEvent) => {
+			if (isShortcut("down", event.nativeEvent)) {
+				event.preventDefault()
+				setSelectedIndex((i) => {
+					if (i >= filteredItems.length - 1) return filteredItems.length - 1
+					else return i + 1
+				})
+				return
+			}
+			if (isShortcut("up", event.nativeEvent)) {
+				event.preventDefault()
+				setSelectedIndex((i) => {
+					if (i === 0) return i
+					else return i - 1
+				})
+				return
+			}
+			if (isShortcut("enter", event.nativeEvent)) {
+				event.preventDefault()
+				if (filteredItems[selectedIndex]) {
+					props.onChange(filteredItems[selectedIndex].value)
+				}
+				return
+			}
+			if (isShortcut("escape", event.nativeEvent)) {
+				event.preventDefault()
+				props.onDismiss?.()
+				return
+			}
+		},
+		[filteredItems, selectedIndex, props]
+	)
+
+	return {
+		inputProps: {
+			value: text,
+			onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+				setText(e.target.value)
+				setSelectedIndex(0)
+			},
+			onFocus: () => setFocused(true),
+			onBlur: () => {
+				setFocused(false)
+				props.onDismiss?.()
+			},
+			onKeyDown: handleKeydown,
+		},
+		resultsProps: {
+			filteredItems,
+			selectedIndex,
+			setSelectedIndex,
+			onChange: props.onChange,
+			onDismiss: props.onDismiss,
+		},
+		focused,
 	}
 }
 
@@ -58,95 +139,54 @@ export function ComboBox(props: {
 	onDismiss?: () => void
 	autoFocus?: boolean
 	notice?: React.ReactNode
+	Input?: React.FC<JSX.IntrinsicElements["input"]>
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
-	const [focused, setFocused] = useState(false)
+	const args = useComboBox(props)
 
 	useEffect(() => {
 		if (props.autoFocus) inputRef.current?.focus()
-	}, [])
+	}, [props.autoFocus])
 
-	const [text, setText] = useState("")
-
-	const filteredItems = useMemo(() => {
-		if (text === "") return props.items.map((str) => ({ value: str, match: [{ skip: str }] }))
-
-		return props.items
-			.map((str) => ({ value: str, match: fuzzyMatch(text, str)! }))
-			.filter(({ match }) => Boolean(match))
-	}, [text])
-
-	const [selectedIndex, setSelectedIndex] = useState(0)
-
-	const handleKeydown = (event: React.KeyboardEvent) => {
-		if (isShortcut("down", event.nativeEvent)) {
-			event.preventDefault()
-			setSelectedIndex((i) => {
-				if (i >= filteredItems.length - 1) return filteredItems.length - 1
-				else return i + 1
-			})
-			return
-		}
-		if (isShortcut("up", event.nativeEvent)) {
-			event.preventDefault()
-			setSelectedIndex((i) => {
-				if (i === 0) return i
-				else return i - 1
-			})
-			return
-		}
-		if (isShortcut("enter", event.nativeEvent)) {
-			event.preventDefault()
-			if (filteredItems[selectedIndex]) {
-				props.onChange(filteredItems[selectedIndex].value)
-			}
-			return
-		}
-		if (isShortcut("escape", event.nativeEvent)) {
-			event.preventDefault()
-			props.onDismiss?.()
-			return
-		}
-	}
-
-	// TODO: filter selected on key change to maintain selectedIndex position?
+	const ComboInput = props.Input ?? Input
 	return (
 		<>
-			<Input
-				ref={inputRef}
-				onFocus={() => setFocused(true)}
-				onBlur={() => {
-					setFocused(false)
-					props.onDismiss?.()
-				}}
-				value={text}
-				onChange={(e) => {
-					setText(e.target.value)
-					setSelectedIndex(0)
-				}}
-				onKeyDown={handleKeydown}
-			/>
-
+			<ComboInput ref={inputRef} {...args.inputProps} />
 			<Popup
-				open={focused && filteredItems.length > 0}
+				open={args.focused && args.resultsProps.filteredItems.length > 0}
 				anchor={inputRef.current}
 				onDismiss={props.onDismiss}
 			>
 				<PopupFrame>
-					{props.notice}
-					{filteredItems.map((item, i) => (
-						<MenuItem
-							key={i}
-							selected={selectedIndex === i}
-							onClick={() => props.onChange(item.value)}
-							onMouseDown={(e) => e.preventDefault()}
-							onMouseEnter={() => setSelectedIndex(i)}
-						>
-							<FuzzyString match={item.match} />
-						</MenuItem>
-					))}
+					<ComboBoxResults notice={props.notice} {...args.resultsProps} />
 				</PopupFrame>
 			</Popup>
+		</>
+	)
+}
+
+export function ComboBoxResults(props: {
+	notice?: React.ReactNode
+	filteredItems: { value: string; match: FuzzyMatch }[]
+	selectedIndex: number
+	setSelectedIndex: (index: number) => void
+	onChange: (value: string) => void
+	onDismiss?: () => void
+}) {
+	return (
+		<>
+			{props.notice}
+			{props.filteredItems.map((item, i) => (
+				<MenuItem
+					key={i}
+					selected={props.selectedIndex === i}
+					onClick={() => props.onChange(item.value)}
+					onMouseDown={(e) => e.preventDefault()}
+					onMouseEnter={() => props.setSelectedIndex(i)}
+				>
+					<FuzzyString match={item.match} />
+				</MenuItem>
+			))}
 		</>
 	)
 }
