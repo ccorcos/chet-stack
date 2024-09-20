@@ -8,6 +8,7 @@ import { Input } from "./ui/Input"
 import { ListBox, ListItem } from "./ui/ListBox"
 
 import * as demos from "./ui/demos/autoindex"
+import { Layout, LeftPanelLayout } from "./ui/Layout"
 
 export function Design(props: { page: string | undefined }) {
 	const { router } = useClientEnvironment()
@@ -21,32 +22,13 @@ export function Design(props: { page: string | undefined }) {
 	}
 
 	return (
-		<Layout
-			sidebar={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}
-			content={
-				demos[currentPage] ? (
-					React.createElement(demos[currentPage][currentPage])
-				) : (
-					<div>Select a page</div>
-				)
-			}
-		/>
-	)
-}
-
-function Layout(props: { sidebar: React.ReactNode; content: React.ReactNode }) {
-	return (
-		<div
-			style={{
-				display: "grid",
-				gridTemplateColumns: "250px 1fr",
-				// gridGap: "20px",
-				height: "100vh",
-			}}
-		>
-			{props.sidebar}
-			<div>{props.content}</div>
-		</div>
+		<Layout LeftPanel={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}>
+			{demos[currentPage] ? (
+				React.createElement(demos[currentPage][currentPage])
+			) : (
+				<div>Select a page</div>
+			)}
+		</Layout>
 	)
 }
 
@@ -83,7 +65,7 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 	})
 
 	return (
-		<div>
+		<LeftPanelLayout show={true}>
 			<Input
 				ref={input}
 				type="search"
@@ -111,6 +93,6 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 					</ListItem>
 				)}
 			</ListBox>
-		</div>
+		</LeftPanelLayout>
 	)
 }
