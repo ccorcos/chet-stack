@@ -1,6 +1,8 @@
 import React from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
 
+const GAP = 1
+
 function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	return (
@@ -9,7 +11,8 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				borderBottom: "2px solid var(--transparent1)",
+				// borderBottom: "2px solid var(--transparent1)",
+				background: "var(--background)",
 				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
 				height: props.show ? 64 : 0,
 				overflow: "hidden",
@@ -29,7 +32,8 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				borderTop: "2px solid var(--transparent1)",
+				// borderTop: "2px solid var(--transparent1)",
+				background: "var(--background)",
 				transition: !props.show ? "height 0.1s ease-in" : "height 0.1s ease-out",
 				height: props.show ? 64 : 0,
 				overflow: "hidden",
@@ -49,7 +53,8 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				borderRight: "2px solid var(--transparent1)",
+				// borderRight: "2px solid var(--transparent1)",
+				background: "var(--background)",
 				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
 				width: props.show ? 256 : 0,
 				overflow: "hidden",
@@ -69,7 +74,8 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				borderLeft: "2px solid var(--transparent1)",
+				// borderLeft: "2px solid var(--transparent1)",
+				background: "var(--background)",
 				transition: !props.show ? "width 0.1s ease-in" : "width 0.1s ease-out",
 				width: props.show ? 256 : 0,
 				overflow: "hidden",
@@ -94,15 +100,25 @@ export function Layout(props: {
 				height: "100vh",
 				display: "flex",
 				flexDirection: "column",
-				gap: 8,
+				gap: GAP,
+				background: "var(--background2)",
 			}}
 		>
 			{props.Topbar}
 
-			<div style={{ flexGrow: 1, display: "flex", overflow: "hidden" }}>
+			<div style={{ flexGrow: 1, display: "flex", overflow: "hidden", gap: GAP }}>
 				{props.LeftPanel}
 
-				<div style={{ flexGrow: 1, overflowY: "auto", padding: "16px" }}>{props.children}</div>
+				<div
+					style={{
+						flexGrow: 1,
+						overflowY: "auto",
+						padding: "16px",
+						background: "var(--background)",
+					}}
+				>
+					{props.children}
+				</div>
 
 				{props.RightPanel}
 			</div>
