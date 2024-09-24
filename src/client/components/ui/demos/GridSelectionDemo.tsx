@@ -1,3 +1,4 @@
+import { clamp } from "lodash"
 import React from "react"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
@@ -11,8 +12,8 @@ type TableSelection =
 			start: { row: number; col: number }
 			end: { row: number; col: number }
 	  }
-	| { type: "cols"; start: number; end: number }
-	| { type: "rows"; start: number; end: number }
+	| { type: "cols"; start: { row: number; col: number }; end: { row: number; col: number } }
+	| { type: "rows"; start: { row: number; col: number }; end: { row: number; col: number } }
 
 export function GridSelectionDemo() {
 	const nColumns = 40
@@ -30,32 +31,80 @@ export function GridSelectionDemo() {
 		return { row, col }
 	}
 
-	const startCellSelection = (row: number, col: number) => {
-		setSelection({ type: "cells", start: { row, col }, end: { row, col } })
+	const startSelection = (type: "cells" | "cols" | "rows", row: number, col: number) => {
+		setSelection({ type: type, start: { row, col }, end: { row, col } })
 	}
 
-	const expandSelection = (selection: TableSelection, row: number, col: number) => {
-		switch (selection.type) {
-			case "cells":
-				setSelection({ ...selection, end: { row, col } })
-				return
-			case "cols":
-				setSelection({ ...selection, end: col })
-				return
-			case "rows":
-				setSelection({ ...selection, end: row })
-				return
+	const expandSelectionTo = (selection: TableSelection, row: number, col: number) => {
+		setSelection({ ...selection, end: { row, col } })
+	}
+
+	const expandSelectionBy = (selection: TableSelection, rowOffset: number, colOffset: number) => {
+		const { row, col } = selection.end
+
+		if (selection.type === "rows") {
+			setSelection({ ...selection, end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 } })
+			return
+		}
+		if (selection.type === "cols") {
+			setSelection({ ...selection, end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) } })
+			return
+		}
+		if (selection.type === "cells") {
+			setSelection({
+				...selection,
+				end: {
+					row: clamp(row + rowOffset, 0, nRows - 1),
+					col: clamp(col + colOffset, 0, nColumns - 1),
+				},
+			})
+			return
+		}
+	}
+
+	const moveSelectionBy = (selection: TableSelection, rowOffset: number, colOffset: number) => {
+		const { row, col } = selection.end
+
+		if (selection.type === "rows") {
+			if (selection.start.row === selection.end.row) {
+				startSelection("rows", clamp(row + rowOffset, 0, nRows - 1), -1)
+			} else {
+				startSelection("rows", row, -1)
+			}
+			return
+		}
+
+		if (selection.type === "cols") {
+			if (selection.start.col === selection.end.col) {
+				startSelection("cols", -1, clamp(col + colOffset, 0, nColumns - 1))
+			} else {
+				startSelection("cols", -1, col)
+			}
+			return
+		}
+
+		if (selection.type === "cells") {
+			if (selection.start.row === selection.end.row && selection.start.col === selection.end.col) {
+				startSelection(
+					"cells",
+					clamp(row + rowOffset, 0, nRows - 1),
+					clamp(col + colOffset, 0, nColumns - 1)
+				)
+			} else {
+				startSelection("cells", row, col)
+			}
+			return
 		}
 	}
 
 	const handleDoubleClickColumnHeader = (e: React.MouseEvent<HTMLDivElement>) => {
-		const { col } = getRowCol(e)
-		setSelection({ type: "cols", start: col, end: col })
+		const { row, col } = getRowCol(e)
+		startSelection("cols", row, col)
 	}
 
 	const handleDoubleClickRowHeader = (e: React.MouseEvent<HTMLDivElement>) => {
-		const { row } = getRowCol(e)
-		setSelection({ type: "rows", start: row, end: row })
+		const { row, col } = getRowCol(e)
+		startSelection("rows", row, col)
 	}
 
 	const handleClickHeader = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -63,20 +112,20 @@ export function GridSelectionDemo() {
 		if (!e.shiftKey) return
 		if (selection.type === "cells") return
 		const { row, col } = getRowCol(e)
-		expandSelection(selection, row, col)
+		expandSelectionTo(selection, row, col)
 	}
 
-	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleCellMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
 		const { row, col } = getRowCol(e)
 		setIsDragging(true)
-		if (!e.shiftKey || !selection) startCellSelection(row, col)
-		else expandSelection(selection, row, col)
+		if (!e.shiftKey || !selection) startSelection("cells", row, col)
+		else expandSelectionTo(selection, row, col)
 	}
 
-	const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleCellMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
 		if (!isDragging || !selection) return
 		const { row, col } = getRowCol(e)
-		expandSelection(selection, row, col)
+		expandSelectionTo(selection, row, col)
 	}
 
 	useDomEvent("mouseup", () => setIsDragging(false))
@@ -91,42 +140,48 @@ export function GridSelectionDemo() {
 			outlineOffset: -1,
 		}
 
-		if (selection.type === "cells") {
-			if (row === selection.start.row && col === selection.start.col) {
-				return anchorStyle
-			}
+		if (row === selection.end.row && col === selection.end.col) {
+			return anchorStyle
+		}
 
+		if (selection.type === "cells" || selection.type === "rows") {
 			if (row < Math.min(selection.start.row, selection.end.row)) return {}
 			if (row > Math.max(selection.start.row, selection.end.row)) return {}
+		}
+		if (selection.type === "cells" || selection.type === "cols") {
 			if (col < Math.min(selection.start.col, selection.end.col)) return {}
 			if (col > Math.max(selection.start.col, selection.end.col)) return {}
-			return selectedStyle
 		}
 
-		if (selection.type === "cols") {
-			if (col === selection.start && row === -1) {
-				return anchorStyle
-			}
-			if (col < Math.min(selection.start, selection.end)) return {}
-			if (col > Math.max(selection.start, selection.end)) return {}
-			return selectedStyle
-		}
-
-		if (selection.type === "rows") {
-			if (row === selection.start && col === -1) {
-				return anchorStyle
-			}
-			if (row < Math.min(selection.start, selection.end)) return {}
-			if (row > Math.max(selection.start, selection.end)) return {}
-			return selectedStyle
-		}
-		return {}
+		return selectedStyle
 	}
 
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {}
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		if (!selection) return
+		const offset = { row: 0, col: 0 }
+		if (e.key === "ArrowDown") offset.row = 1
+		if (e.key === "ArrowUp") offset.row = -1
+		if (e.key === "ArrowRight") offset.col = 1
+		if (e.key === "ArrowLeft") offset.col = -1
+		if (offset.row === 0 && offset.col === 0) return
+
+		e.preventDefault()
+
+		const expand = e.shiftKey
+
+		if (expand) {
+			expandSelectionBy(selection, offset.row, offset.col)
+		} else {
+			moveSelectionBy(selection, offset.row, offset.col)
+		}
+	}
 
 	return (
-		<div style={{ width: "100%", height: "100%", overflow: "auto" }} onKeyDown={handleKeyDown}>
+		<div
+			style={{ width: "100%", height: "100%", overflow: "auto" }}
+			onKeyDown={handleKeyDown}
+			tabIndex={0}
+		>
 			<div
 				style={{
 					display: "grid",
@@ -134,6 +189,7 @@ export function GridSelectionDemo() {
 					width: "fit-content",
 					gap: 1,
 					userSelect: "none",
+					border: "2px solid transparent", // space for focus outline
 				}}
 			>
 				{/* Empty top-left corner cell */}
@@ -219,8 +275,8 @@ export function GridSelectionDemo() {
 										className="hover"
 										data-row-index={row}
 										data-column-index={col}
-										onMouseDown={handleMouseDown}
-										onMouseEnter={handleMouseEnter}
+										onMouseDown={handleCellMouseDown}
+										onMouseEnter={handleCellMouseEnter}
 									>
 										{index}
 									</div>
