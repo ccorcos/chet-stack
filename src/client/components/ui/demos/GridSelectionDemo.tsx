@@ -1,9 +1,8 @@
 import { clamp } from "lodash"
-import React from "react"
+import React, { useLayoutEffect, useRef, useState } from "react"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
-// - render performance
 // - drag to re-order rows and columns
 // - click cell to edit
 // - click header to edit
@@ -18,8 +17,19 @@ type TableSelection =
 	| { type: "rows"; start: { row: number; col: number }; end: { row: number; col: number } }
 
 export function GridSelectionDemo() {
-	const nColumns = 40
-	const nRows = 140
+	const nColumns = 10000
+	const nRows = 6000
+
+	const rowHeight = 22
+	const colWidth = 120
+	const columnGap = 1
+	const rowGap = 1
+	const rowMargin = 5
+	const colMargin = 2
+
+	// ==========================================================================
+	// Selection
+	// ==========================================================================
 
 	const [isDragging, setIsDragging] = React.useState(false)
 	const [selection, setSelection] = React.useState<TableSelection | undefined>()
@@ -132,32 +142,6 @@ export function GridSelectionDemo() {
 
 	useDomEvent("mouseup", () => setIsDragging(false))
 
-	const cellStyle = (row: number, col: number): React.CSSProperties => {
-		if (!selection) return {}
-
-		const selectedStyle = { backgroundColor: "var(--highlight2)" }
-		const anchorStyle = {
-			...selectedStyle,
-			outline: "2px solid var(--highlight)",
-			outlineOffset: -1,
-		}
-
-		if (row === selection.end.row && col === selection.end.col) {
-			return anchorStyle
-		}
-
-		if (selection.type === "cells" || selection.type === "rows") {
-			if (row < Math.min(selection.start.row, selection.end.row)) return {}
-			if (row > Math.max(selection.start.row, selection.end.row)) return {}
-		}
-		if (selection.type === "cells" || selection.type === "cols") {
-			if (col < Math.min(selection.start.col, selection.end.col)) return {}
-			if (col > Math.max(selection.start.col, selection.end.col)) return {}
-		}
-
-		return selectedStyle
-	}
-
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (!selection) {
 			if (e.key === "Enter") {
@@ -190,115 +174,199 @@ export function GridSelectionDemo() {
 		}
 	}
 
+	const cellStyle = (row: number, col: number): React.CSSProperties => {
+		if (!selection) return {}
+
+		const selectedStyle = { backgroundColor: "var(--highlight2)" }
+		const anchorStyle = {
+			...selectedStyle,
+			outline: "2px solid var(--highlight)",
+			outlineOffset: -1,
+		}
+
+		if (row === selection.end.row && col === selection.end.col) {
+			return anchorStyle
+		}
+
+		if (selection.type === "cells" || selection.type === "rows") {
+			if (row < Math.min(selection.start.row, selection.end.row)) return {}
+			if (row > Math.max(selection.start.row, selection.end.row)) return {}
+		}
+		if (selection.type === "cells" || selection.type === "cols") {
+			if (col < Math.min(selection.start.col, selection.end.col)) return {}
+			if (col > Math.max(selection.start.col, selection.end.col)) return {}
+		}
+
+		return selectedStyle
+	}
+
+	// ==========================================================================
+	// Virtual Rendering
+	// ==========================================================================
+
+	const containerRef = useRef<HTMLDivElement>(null)
+	const [visibleRange, setVisibleRange] = useState({ top: 0, left: 0, right: 0, bottom: 0 })
+
+	const gridHeight = (nRows + 1) * rowHeight + nRows * rowGap
+	const gridWidth = (nColumns + 1) * colWidth + nColumns * columnGap
+
+	const updateVisibleRange = () => {
+		if (!containerRef.current) return
+
+		const { scrollTop, scrollLeft, clientHeight, clientWidth } = containerRef.current
+		const startRow = Math.floor(scrollTop / (rowHeight + rowGap))
+		const endRow = Math.ceil((scrollTop + clientHeight) / (rowHeight + rowGap))
+		const startCol = Math.floor(scrollLeft / (colWidth + columnGap))
+		const endCol = Math.ceil((scrollLeft + clientWidth) / (colWidth + columnGap))
+
+		setVisibleRange({
+			top: clamp(startRow - rowMargin, 0, nRows - 1),
+			left: clamp(startCol - colMargin, 0, nColumns - 1),
+			bottom: clamp(endRow + rowMargin, 0, nRows - 1),
+			right: clamp(endCol + colMargin, 0, nColumns - 1),
+		})
+	}
+
+	const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+		updateVisibleRange()
+	}
+
+	useLayoutEffect(() => {
+		updateVisibleRange()
+	}, [])
+
+	const nVisibleRows = visibleRange.bottom - visibleRange.top + 1
+	const nVisibleCols = visibleRange.right - visibleRange.left + 1
+
 	return (
 		<div
-			style={{ width: "100%", height: "100%", overflow: "auto" }}
+			ref={containerRef}
+			style={{ width: "100%", height: "100%", overflow: "auto", position: "relative" }}
 			onKeyDown={handleKeyDown}
+			onScroll={handleScroll}
 			tabIndex={0}
 		>
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: `auto repeat(${nColumns}, 1fr)`,
-					width: "fit-content",
-					gap: 1,
-					userSelect: "none",
-					border: "2px solid transparent", // space for focus outline
-				}}
-			>
-				{/* Empty top-left corner cell */}
-				<div
-					style={{
-						position: "sticky",
-						top: 0,
-						left: 0,
-						zIndex: 2,
-						backgroundColor: "var(--background)",
-					}}
-				></div>
+			<div style={{ height: gridHeight, width: gridWidth }}>
+				{containerRef.current && (
+					<div
+						style={{
+							display: "grid",
+							gridTemplateColumns: `repeat(${nVisibleCols + 1}, ${colWidth}px)`,
+							gridTemplateRows: `repeat(${nVisibleRows + 1}, ${rowHeight}px)`,
 
-				{/* Column headers */}
-				{Array.from({ length: nColumns }).map((_, i) => {
-					const row = -1
-					const col = i
-					return (
+							userSelect: "none",
+							border: "2px solid transparent", // space for focus outline
+
+							// Positioning
+							position: "absolute",
+							top: visibleRange.top * (rowHeight + rowGap),
+							left: visibleRange.left * (colWidth + columnGap),
+
+							// Sizing
+							// width: "fit-content",
+							rowGap,
+							columnGap,
+						}}
+					>
+						{/* Empty top-left corner cell */}
 						<div
-							key={`header-${col}`}
 							style={{
-								height: 22,
-								width: 120,
-								backgroundColor: "var(--background2)",
 								position: "sticky",
 								top: 0,
-								zIndex: 1,
-								textAlign: "center",
-								fontWeight: "bold",
-								...cellStyle(row, col),
+								left: 0,
+								zIndex: 2,
+								backgroundColor: "var(--background)",
+								width: colWidth,
+								height: rowHeight,
 							}}
-							data-column-index={col}
-							data-row-index={row}
-							onClick={handleClickHeader}
-							onDoubleClick={handleDoubleClickColumnHeader}
-						>
-							Column {col + 1}
-						</div>
-					)
-				})}
+						></div>
 
-				{Array.from({ length: nRows }).map((_, i) => {
-					const row = i
-					const col = -1
+						{/* Column headers */}
+						{Array.from({ length: nVisibleCols }).map((_, i) => {
+							const row = -1
+							const col = visibleRange.left + i
+							return (
+								<div
+									key={`header-${col}`}
+									style={{
+										width: colWidth,
+										height: rowHeight,
+										backgroundColor: "var(--background2)",
+										position: "sticky",
+										top: 0,
+										zIndex: 1,
+										textAlign: "center",
+										fontWeight: "bold",
+										...cellStyle(row, col),
+									}}
+									data-column-index={col}
+									data-row-index={row}
+									onClick={handleClickHeader}
+									onDoubleClick={handleDoubleClickColumnHeader}
+								>
+									Column {col + 1}
+								</div>
+							)
+						})}
 
-					return (
-						<React.Fragment key={`row-${row}`}>
-							{/* Row header */}
-							<div
-								data-type="header-row"
-								style={{
-									height: 22,
-									width: 80,
-									backgroundColor: "var(--background2)",
-									position: "sticky",
-									left: 0,
-									zIndex: 1,
-									textAlign: "center",
-									fontWeight: "bold",
-									...cellStyle(row, col),
-								}}
-								data-column-index={col}
-								data-row-index={row}
-								onClick={handleClickHeader}
-								onDoubleClick={handleDoubleClickRowHeader}
-							>
-								Row {row + 1}
-							</div>
+						{/* Row headers and cells */}
+						{Array.from({ length: nVisibleRows }).map((_, i) => {
+							const row = visibleRange.top + i
+							const col = -1
 
-							{/* Cells */}
-							{Array.from({ length: nColumns }).map((_, j) => {
-								const col = j
-								const index = row * nColumns + col
-								return (
+							return (
+								<React.Fragment key={`row-${row}`}>
+									{/* Row header */}
 									<div
-										key={index}
+										data-type="header-row"
 										style={{
-											height: 22,
-											width: 120,
-											userSelect: isDragging ? "none" : undefined,
+											width: colWidth,
+											height: rowHeight,
+											backgroundColor: "var(--background2)",
+											position: "sticky",
+											left: 0,
+											zIndex: 1,
+											textAlign: "center",
+											fontWeight: "bold",
 											...cellStyle(row, col),
+											// top: `${(row + 1) * rowHeight}px`,
 										}}
-										className="hover"
-										data-row-index={row}
 										data-column-index={col}
-										onMouseDown={handleCellMouseDown}
-										onMouseEnter={handleCellMouseEnter}
+										data-row-index={row}
+										onClick={handleClickHeader}
+										onDoubleClick={handleDoubleClickRowHeader}
 									>
-										{index}
+										Row {row + 1}
 									</div>
-								)
-							})}
-						</React.Fragment>
-					)
-				})}
+
+									{/* Cells */}
+									{Array.from({ length: nVisibleCols }).map((_, j) => {
+										const col = visibleRange.left + j
+										const index = row * nColumns + col
+										return (
+											<div
+												key={index}
+												style={{
+													width: colWidth,
+													height: rowHeight,
+													userSelect: isDragging ? "none" : undefined,
+													...cellStyle(row, col),
+												}}
+												className="hover"
+												data-row-index={row}
+												data-column-index={col}
+												onMouseDown={handleCellMouseDown}
+												onMouseEnter={handleCellMouseEnter}
+											>
+												{index}
+											</div>
+										)
+									})}
+								</React.Fragment>
+							)
+						})}
+					</div>
+				)}
 			</div>
 		</div>
 	)
