@@ -3,6 +3,7 @@ import React, { useLayoutEffect, useRef, useState } from "react"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
+// - scroll to follow selection focus anchor
 // - drag to re-order rows and columns
 // - click cell to edit
 // - click header to edit
@@ -21,7 +22,7 @@ export function GridSelectionDemo() {
 	const nRows = 6000
 
 	const rowHeight = 22
-	const colWidth = 120
+	const colWidth = 140
 	const columnGap = 1
 	const rowGap = 1
 	const rowMargin = 5
@@ -43,27 +44,38 @@ export function GridSelectionDemo() {
 		return { row, col }
 	}
 
+	const setAndFocusSelection = (selection: TableSelection) => {
+		setSelection(selection)
+		scrollToSelection(selection)
+	}
+
 	const startSelection = (type: "cells" | "cols" | "rows", row: number, col: number) => {
-		setSelection({ type: type, start: { row, col }, end: { row, col } })
+		setAndFocusSelection({ type: type, start: { row, col }, end: { row, col } })
 	}
 
 	const expandSelectionTo = (selection: TableSelection, row: number, col: number) => {
-		setSelection({ ...selection, end: { row, col } })
+		setAndFocusSelection({ ...selection, end: { row, col } })
 	}
 
 	const expandSelectionBy = (selection: TableSelection, rowOffset: number, colOffset: number) => {
 		const { row, col } = selection.end
 
 		if (selection.type === "rows") {
-			setSelection({ ...selection, end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 } })
+			setAndFocusSelection({
+				...selection,
+				end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 },
+			})
 			return
 		}
 		if (selection.type === "cols") {
-			setSelection({ ...selection, end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) } })
+			setAndFocusSelection({
+				...selection,
+				end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) },
+			})
 			return
 		}
 		if (selection.type === "cells") {
-			setSelection({
+			setAndFocusSelection({
 				...selection,
 				end: {
 					row: clamp(row + rowOffset, 0, nRows - 1),
@@ -234,6 +246,58 @@ export function GridSelectionDemo() {
 	useLayoutEffect(() => {
 		updateVisibleRange()
 	}, [])
+
+	// ==========================================================================
+	// Focus Selection
+	// ==========================================================================
+
+	const scrollToSelection = (selection: TableSelection) => {
+		const { row, col } = selection.end
+
+		if (!containerRef.current) return
+		const { scrollTop, scrollLeft, clientHeight, clientWidth } = containerRef.current
+
+		const scrollRect = {
+			top: scrollTop,
+			left: scrollLeft,
+			bottom: scrollTop + clientHeight,
+			right: scrollLeft + clientWidth,
+		}
+
+		const anchorRect = {
+			top: (row + 1) * (rowHeight + rowGap),
+			bottom: (row + 2) * (rowHeight + rowGap),
+			left: (col + 1) * (colWidth + columnGap),
+			right: (col + 2) * (colWidth + columnGap),
+		}
+
+		let scrollToTop: number | undefined
+		let scrollToLeft: number | undefined
+
+		console.log(scrollRect, anchorRect)
+
+		if (anchorRect.bottom > scrollRect.bottom) {
+			scrollToTop = anchorRect.bottom - clientHeight
+		}
+
+		const topHeaderRoom = rowHeight - rowGap
+		if (anchorRect.top - topHeaderRoom < scrollRect.top) {
+			scrollToTop = anchorRect.top - topHeaderRoom
+		}
+
+		if (anchorRect.right > scrollRect.right) {
+			scrollToLeft = anchorRect.right - clientWidth
+		}
+
+		const leftHeaderRoom = colWidth - columnGap
+		if (anchorRect.left - leftHeaderRoom < scrollRect.left) {
+			scrollToLeft = anchorRect.left - leftHeaderRoom
+		}
+
+		if (scrollToTop !== undefined || scrollToLeft !== undefined) {
+			containerRef.current.scrollTo({ top: scrollToTop, left: scrollToLeft })
+		}
+	}
 
 	const nVisibleRows = visibleRange.bottom - visibleRange.top + 1
 	const nVisibleCols = visibleRange.right - visibleRange.left + 1
