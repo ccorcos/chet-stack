@@ -3,8 +3,10 @@ import React from "react"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
-// - shift click header selection
-// - keyboard selection
+// - render performance
+// - drag to re-order rows and columns
+// - click cell to edit
+// - click header to edit
 
 type TableSelection =
 	| {
@@ -157,22 +159,34 @@ export function GridSelectionDemo() {
 	}
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		if (!selection) return
+		if (!selection) {
+			if (e.key === "Enter") {
+				e.preventDefault()
+				startSelection("cells", 0, 0)
+			}
+			return
+		}
+
 		const offset = { row: 0, col: 0 }
 		if (e.key === "ArrowDown") offset.row = 1
 		if (e.key === "ArrowUp") offset.row = -1
 		if (e.key === "ArrowRight") offset.col = 1
 		if (e.key === "ArrowLeft") offset.col = -1
-		if (offset.row === 0 && offset.col === 0) return
+		if (offset.row !== 0 || offset.col !== 0) {
+			e.preventDefault()
 
-		e.preventDefault()
+			const expand = e.shiftKey
 
-		const expand = e.shiftKey
+			if (expand) {
+				expandSelectionBy(selection, offset.row, offset.col)
+			} else {
+				moveSelectionBy(selection, offset.row, offset.col)
+			}
+		}
 
-		if (expand) {
-			expandSelectionBy(selection, offset.row, offset.col)
-		} else {
-			moveSelectionBy(selection, offset.row, offset.col)
+		if (e.key === "Escape") {
+			e.preventDefault()
+			setSelection(undefined)
 		}
 	}
 
