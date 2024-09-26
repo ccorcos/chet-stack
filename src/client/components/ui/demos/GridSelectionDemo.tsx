@@ -1,12 +1,14 @@
-import { clamp } from "lodash"
-import React, { useLayoutEffect, useRef, useState } from "react"
+import { clamp, throttle } from "lodash"
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { useDeepState } from "../../../hooks/useDeepState"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
-// - scroll to follow selection focus anchor
+// - edge scroll only if you move the mouse in that direction.
 // - drag to re-order rows and columns
 // - click cell to edit
 // - click header to edit
+// - copy / paste
 
 type TableSelection =
 	| {
@@ -32,8 +34,8 @@ export function GridSelectionDemo() {
 	// Selection
 	// ==========================================================================
 
-	const [isDragging, setIsDragging] = React.useState(false)
-	const [selection, setSelection] = React.useState<TableSelection | undefined>()
+	const [isDragging, setIsDragging] = useDeepState(false)
+	const [selection, setSelection] = useDeepState<TableSelection | undefined>(undefined)
 
 	const getRowCol = (e: React.MouseEvent<HTMLDivElement>) => {
 		const elm = e.target as HTMLElement
@@ -46,7 +48,7 @@ export function GridSelectionDemo() {
 
 	const setAndFocusSelection = (selection: TableSelection) => {
 		setSelection(selection)
-		scrollToSelection(selection)
+		if (!isDragging) scrollToSelection(selection)
 	}
 
 	const startSelection = (type: "cells" | "cols" | "rows", row: number, col: number) => {
@@ -152,7 +154,17 @@ export function GridSelectionDemo() {
 		expandSelectionTo(selection, row, col)
 	}
 
-	useDomEvent("mouseup", () => setIsDragging(false))
+	const [dragDirection, setDragDirection] = useDeepState({
+		up: false,
+		down: false,
+		left: false,
+		right: false,
+	})
+
+	useDomEvent("mouseup", () => {
+		setIsDragging(false)
+		setDragDirection({ up: false, down: false, left: false, right: false })
+	})
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (!selection) {
@@ -217,7 +229,7 @@ export function GridSelectionDemo() {
 	// ==========================================================================
 
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [visibleRange, setVisibleRange] = useState({ top: 0, left: 0, right: 0, bottom: 0 })
+	const [visibleRange, setVisibleRange] = useDeepState({ top: 0, left: 0, right: 0, bottom: 0 })
 
 	const gridHeight = (nRows + 1) * rowHeight + nRows * rowGap
 	const gridWidth = (nColumns + 1) * colWidth + nColumns * columnGap
@@ -241,6 +253,7 @@ export function GridSelectionDemo() {
 
 	const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
 		updateVisibleRange()
+		if (isDragging) handleEdgeScroll()
 	}
 
 	useLayoutEffect(() => {
@@ -274,8 +287,6 @@ export function GridSelectionDemo() {
 		let scrollToTop: number | undefined
 		let scrollToLeft: number | undefined
 
-		console.log(scrollRect, anchorRect)
-
 		if (anchorRect.bottom > scrollRect.bottom) {
 			scrollToTop = anchorRect.bottom - clientHeight
 		}
@@ -299,8 +310,95 @@ export function GridSelectionDemo() {
 		}
 	}
 
+	// ==========================================================================
+	// Selection Edge Scroll
+	// ==========================================================================
+
+	const scrollRectRef = useRef<DOMRect | null>(null)
+
+	const measureScrollRect = useMemo(() => {
+		return throttle(
+			() => {
+				if (!containerRef.current) return
+				scrollRectRef.current = containerRef.current.getBoundingClientRect()
+			},
+			500,
+			{ leading: true }
+		)
+	}, [])
+
+	const mousePositionRef = useRef({ x: 0, y: 0 })
+	useEffect(() => {
+		const handleMouseMove = (e: MouseEvent) => {
+			mousePositionRef.current = { x: e.clientX, y: e.clientY }
+		}
+		window.addEventListener("mousemove", handleMouseMove)
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove)
+		}
+	}, [])
+
+	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (!isDragging) return
+
+		setDragDirection({
+			up: dragDirection.up || e.movementY < 0,
+			down: dragDirection.down || e.movementY > 0,
+			left: dragDirection.left || e.movementX < 0,
+			right: dragDirection.right || e.movementX > 0,
+		})
+
+		handleEdgeScroll()
+	}
+
+	const handleEdgeScroll = () => {
+		measureScrollRect()
+
+		const container = containerRef.current
+		if (!container) return
+
+		const scrollRect = scrollRectRef.current
+		if (!scrollRect) return
+
+		const yThreshold = container.clientHeight * 0.1
+		const xThreshold = container.clientWidth * 0.1
+
+		const currentMouseY = mousePositionRef.current.y
+		const currentMouseX = mousePositionRef.current.x
+
+		const distToBottom = scrollRect.bottom - currentMouseY
+		const distToTop = currentMouseY - scrollRect.top
+		const distToLeft = currentMouseX - scrollRect.left
+		const distToRight = scrollRect.right - currentMouseX
+
+		const speed = (dist: number, threshold: number) => {
+			// 0-1 quadratic scale
+			const scale = clamp((threshold - dist) / threshold, 0, 1) ** 2
+
+			// This bit is a bit arbitrary. You can kind of assume 60fps.
+			const min = 1
+			const max = threshold / 15
+
+			return min + (max - min) * scale
+		}
+
+		let scrollDelta = { top: 0, left: 0 }
+
+		if (dragDirection.down && distToBottom < yThreshold)
+			scrollDelta.top = speed(distToBottom, yThreshold)
+		if (dragDirection.up && distToTop < yThreshold) scrollDelta.top = -speed(distToTop, yThreshold)
+		if (dragDirection.left && distToLeft < xThreshold)
+			scrollDelta.left = -speed(distToLeft, xThreshold)
+		if (dragDirection.right && distToRight < xThreshold)
+			scrollDelta.left = speed(distToRight, xThreshold)
+
+		if (scrollDelta.top !== 0 || scrollDelta.left !== 0) container.scrollBy(scrollDelta)
+	}
+
 	const nVisibleRows = visibleRange.bottom - visibleRange.top + 1
 	const nVisibleCols = visibleRange.right - visibleRange.left + 1
+
+	// console.log("RENDER", visibleRange)
 
 	return (
 		<div
@@ -308,6 +406,7 @@ export function GridSelectionDemo() {
 			style={{ width: "100%", height: "100%", overflow: "auto", position: "relative" }}
 			onKeyDown={handleKeyDown}
 			onScroll={handleScroll}
+			onMouseMove={handleMouseMove}
 			tabIndex={0}
 		>
 			<div style={{ height: gridHeight, width: gridWidth }}>
