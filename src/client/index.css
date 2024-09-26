@@ -40,9 +40,6 @@ html {
 	--separator: rgba(61, 61, 66, 0.29);
 	--separator-opaque: rgba(199, 199, 199, 1);
 
-	--hover: rgba(0, 122, 255, 0.3);
-	--active: rgba(0, 122, 255, 0.5);
-
 	--blue: rgba(0, 122, 255, 1);
 	--green: rgba(51, 199, 89, 1);
 	--indigo: rgba(89, 87, 214, 1);
@@ -63,6 +60,12 @@ html {
 	--popup-background: var(--background);
 	--shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px,
 		rgba(15, 15, 15, 0.2) 0px 9px 24px;
+
+	/* --highlight: rgba(0, 122, 255, 0.5); */
+	--highlight2: color-mix(in srgb, var(--blue) 50%, var(--background) 50%);
+
+	/* --highlight2: rgba(0, 122, 255, 0.3); */
+	--highlight2: color-mix(in srgb, var(--blue) 30%, var(--background) 70%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -90,9 +93,6 @@ html {
 		--separator: rgba(84, 84, 89, 0.6);
 		--separator-opaque: rgba(56, 56, 59, 1);
 
-		--hover: rgba(10, 133, 255, 0.3);
-		--active: rgba(10, 133, 255, 0.5);
-
 		--blue: rgba(10, 133, 255, 1);
 		--green: rgba(48, 209, 89, 1);
 		--indigo: rgba(94, 92, 230, 1);
@@ -113,6 +113,12 @@ html {
 		--popup-background: var(--background2);
 		--shadow: rgba(255, 255, 255, 0.2) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px,
 			rgba(15, 15, 15, 0.2) 0px 9px 24px;
+
+		/* --highlight: rgba(0, 122, 255, 0.5); */
+		--highlight: color-mix(in srgb, var(--blue) 50%, var(--background) 50%);
+
+		/* --highlight2: rgba(0, 122, 255, 0.3); */
+		--highlight2: color-mix(in srgb, var(--blue) 30%, var(--background) 70%);
 	}
 }
 
@@ -139,11 +145,9 @@ a {
 }
 
 button.feedback:hover {
-	/* background-color: var(--hover); */
 	background-color: var(--gray6);
 }
 button.feedback:active {
-	/* background-color: var(--active); */
 	background-color: var(--gray4);
 }
 

@@ -4,7 +4,6 @@ import { useDeepState } from "../../../hooks/useDeepState"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
-// - edge scroll only if you move the mouse in that direction.
 // - drag to re-order rows and columns
 // - click cell to edit
 // - click header to edit
@@ -46,65 +45,94 @@ export function GridSelectionDemo() {
 		return { row, col }
 	}
 
-	const setAndFocusSelection = (selection: TableSelection) => {
+	const updateSelection = (selection: TableSelection, focus: boolean) => {
 		setSelection(selection)
-		if (!isDragging) scrollToSelection(selection)
+		if (focus) scrollToSelection(selection)
 	}
 
-	const startSelection = (type: "cells" | "cols" | "rows", row: number, col: number) => {
-		setAndFocusSelection({ type: type, start: { row, col }, end: { row, col } })
+	const startSelection = (
+		type: "cells" | "cols" | "rows",
+		row: number,
+		col: number,
+		focus: boolean
+	) => {
+		updateSelection({ type: type, start: { row, col }, end: { row, col } }, focus)
 	}
 
-	const expandSelectionTo = (selection: TableSelection, row: number, col: number) => {
-		setAndFocusSelection({ ...selection, end: { row, col } })
+	const expandSelectionTo = (
+		selection: TableSelection,
+		row: number,
+		col: number,
+		focus: boolean
+	) => {
+		updateSelection({ ...selection, end: { row, col } }, focus)
 	}
 
-	const expandSelectionBy = (selection: TableSelection, rowOffset: number, colOffset: number) => {
+	const expandSelectionBy = (
+		selection: TableSelection,
+		rowOffset: number,
+		colOffset: number,
+		focus: boolean
+	) => {
 		const { row, col } = selection.end
 
 		if (selection.type === "rows") {
-			setAndFocusSelection({
-				...selection,
-				end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 },
-			})
+			updateSelection(
+				{
+					...selection,
+					end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 },
+				},
+				focus
+			)
 			return
 		}
 		if (selection.type === "cols") {
-			setAndFocusSelection({
-				...selection,
-				end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) },
-			})
+			updateSelection(
+				{
+					...selection,
+					end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) },
+				},
+				focus
+			)
 			return
 		}
 		if (selection.type === "cells") {
-			setAndFocusSelection({
-				...selection,
-				end: {
-					row: clamp(row + rowOffset, 0, nRows - 1),
-					col: clamp(col + colOffset, 0, nColumns - 1),
+			updateSelection(
+				{
+					...selection,
+					end: {
+						row: clamp(row + rowOffset, 0, nRows - 1),
+						col: clamp(col + colOffset, 0, nColumns - 1),
+					},
 				},
-			})
+				focus
+			)
 			return
 		}
 	}
 
-	const moveSelectionBy = (selection: TableSelection, rowOffset: number, colOffset: number) => {
+	const moveSelectionBy = (
+		selection: TableSelection,
+		rowOffset: number,
+		colOffset: number,
+		focus: boolean
+	) => {
 		const { row, col } = selection.end
 
 		if (selection.type === "rows") {
 			if (selection.start.row === selection.end.row) {
-				startSelection("rows", clamp(row + rowOffset, 0, nRows - 1), -1)
+				startSelection("rows", clamp(row + rowOffset, 0, nRows - 1), -1, focus)
 			} else {
-				startSelection("rows", row, -1)
+				startSelection("rows", row, -1, focus)
 			}
 			return
 		}
 
 		if (selection.type === "cols") {
 			if (selection.start.col === selection.end.col) {
-				startSelection("cols", -1, clamp(col + colOffset, 0, nColumns - 1))
+				startSelection("cols", -1, clamp(col + colOffset, 0, nColumns - 1), focus)
 			} else {
-				startSelection("cols", -1, col)
+				startSelection("cols", -1, col, focus)
 			}
 			return
 		}
@@ -114,10 +142,11 @@ export function GridSelectionDemo() {
 				startSelection(
 					"cells",
 					clamp(row + rowOffset, 0, nRows - 1),
-					clamp(col + colOffset, 0, nColumns - 1)
+					clamp(col + colOffset, 0, nColumns - 1),
+					focus
 				)
 			} else {
-				startSelection("cells", row, col)
+				startSelection("cells", row, col, focus)
 			}
 			return
 		}
@@ -125,12 +154,12 @@ export function GridSelectionDemo() {
 
 	const handleDoubleClickColumnHeader = (e: React.MouseEvent<HTMLDivElement>) => {
 		const { row, col } = getRowCol(e)
-		startSelection("cols", row, col)
+		startSelection("cols", row, col, false)
 	}
 
 	const handleDoubleClickRowHeader = (e: React.MouseEvent<HTMLDivElement>) => {
 		const { row, col } = getRowCol(e)
-		startSelection("rows", row, col)
+		startSelection("rows", row, col, false)
 	}
 
 	const handleClickHeader = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -138,22 +167,23 @@ export function GridSelectionDemo() {
 		if (!e.shiftKey) return
 		if (selection.type === "cells") return
 		const { row, col } = getRowCol(e)
-		expandSelectionTo(selection, row, col)
+		expandSelectionTo(selection, row, col, false)
 	}
 
 	const handleCellMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
 		const { row, col } = getRowCol(e)
 		setIsDragging(true)
-		if (!e.shiftKey || !selection) startSelection("cells", row, col)
-		else expandSelectionTo(selection, row, col)
+		if (!e.shiftKey || !selection) startSelection("cells", row, col, false)
+		else expandSelectionTo(selection, row, col, false)
 	}
 
 	const handleCellMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
 		if (!isDragging || !selection) return
 		const { row, col } = getRowCol(e)
-		expandSelectionTo(selection, row, col)
+		expandSelectionTo(selection, row, col, false)
 	}
 
+	// We don't want to allow edge scrolling in a direction until a user has started dragging in that direction.
 	const [dragDirection, setDragDirection] = useDeepState({
 		up: false,
 		down: false,
@@ -170,7 +200,7 @@ export function GridSelectionDemo() {
 		if (!selection) {
 			if (e.key === "Enter") {
 				e.preventDefault()
-				startSelection("cells", 0, 0)
+				startSelection("cells", 0, 0, true)
 			}
 			return
 		}
@@ -186,9 +216,9 @@ export function GridSelectionDemo() {
 			const expand = e.shiftKey
 
 			if (expand) {
-				expandSelectionBy(selection, offset.row, offset.col)
+				expandSelectionBy(selection, offset.row, offset.col, true)
 			} else {
-				moveSelectionBy(selection, offset.row, offset.col)
+				moveSelectionBy(selection, offset.row, offset.col, true)
 			}
 		}
 
@@ -366,9 +396,10 @@ export function GridSelectionDemo() {
 		const currentMouseY = mousePositionRef.current.y
 		const currentMouseX = mousePositionRef.current.x
 
+		// Account for sticky header row and column
+		const distToTop = currentMouseY - (scrollRect.top + rowHeight)
+		const distToLeft = currentMouseX - (scrollRect.left + colWidth)
 		const distToBottom = scrollRect.bottom - currentMouseY
-		const distToTop = currentMouseY - scrollRect.top
-		const distToLeft = currentMouseX - scrollRect.left
 		const distToRight = scrollRect.right - currentMouseX
 
 		const speed = (dist: number, threshold: number) => {
