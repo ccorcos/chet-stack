@@ -62,7 +62,7 @@ html {
 		rgba(15, 15, 15, 0.2) 0px 9px 24px;
 
 	/* --highlight: rgba(0, 122, 255, 0.5); */
-	--highlight2: color-mix(in srgb, var(--blue) 50%, var(--background) 50%);
+	--highlight: color-mix(in srgb, var(--blue) 50%, var(--background) 50%);
 
 	/* --highlight2: rgba(0, 122, 255, 0.3); */
 	--highlight2: color-mix(in srgb, var(--blue) 30%, var(--background) 70%);

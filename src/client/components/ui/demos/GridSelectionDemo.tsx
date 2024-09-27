@@ -4,6 +4,7 @@ import { useDeepState } from "../../../hooks/useDeepState"
 import { useDomEvent } from "../../../hooks/useDomEvent"
 
 // TODO:
+// - dynamic loading of data.
 // - drag to re-order rows and columns
 // - click cell to edit
 // - click header to edit
@@ -18,7 +19,37 @@ type TableSelection =
 	| { type: "cols"; start: { row: number; col: number }; end: { row: number; col: number } }
 	| { type: "rows"; start: { row: number; col: number }; end: { row: number; col: number } }
 
-export function GridSelectionDemo() {
+type CellRange = { top: number; left: number; right: number; bottom: number }
+
+export function GridSelectionDemo<T>(props: {
+	getCells: (range: CellRange) => T
+	renderCell: (data: T, row: number, col: number) => JSX.Element
+}) {
+	const nColumns = 10000
+	const nRows = 6000
+
+	const rowHeight = 22
+	const colWidth = 140
+	const columnGap = 1
+	const rowGap = 1
+	const rowMargin = 5
+	const colMargin = 2
+
+	return (
+		<Grid
+			fetch={(range: CellRange) => {
+				return null
+			}}
+		>
+			{(row, col, data) => <div>Hello</div>}
+		</Grid>
+	)
+}
+
+function Grid<T>(props: {
+	fetch: (range: CellRange) => T
+	children: (row: number, col: number, data: T) => JSX.Element
+}) {
 	const nColumns = 10000
 	const nRows = 6000
 
