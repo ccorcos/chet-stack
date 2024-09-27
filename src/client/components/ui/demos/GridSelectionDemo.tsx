@@ -1,7 +1,9 @@
-import { clamp, throttle } from "lodash"
+import { clamp, debounce, isEqual, throttle } from "lodash"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import { sleep } from "../../../../shared/sleep"
 import { useDeepState } from "../../../hooks/useDeepState"
 import { useDomEvent } from "../../../hooks/useDomEvent"
+import { useRefCurrent } from "../../../hooks/useRefCurrent"
 
 // TODO:
 // - dynamic loading of data.
@@ -21,12 +23,17 @@ type TableSelection =
 
 type CellRange = { top: number; left: number; right: number; bottom: number }
 
-export function GridSelectionDemo<T>(props: {
-	getCells: (range: CellRange) => T
-	renderCell: (data: T, row: number, col: number) => JSX.Element
-}) {
-	const nColumns = 10000
-	const nRows = 6000
+type GridData<T> = {
+	nColumns: number
+	nRows: number
+	moreRows: boolean
+	moreColumns: boolean
+	data: T
+}
+
+export function GridSelectionDemo() {
+	const nColumns = 100
+	const nRows = 400
 
 	const rowHeight = 22
 	const colWidth = 140
@@ -37,22 +44,34 @@ export function GridSelectionDemo<T>(props: {
 
 	return (
 		<Grid
-			fetch={(range: CellRange) => {
-				return null
+			fetch={async (range: CellRange) => {
+				await sleep(200)
+				return {
+					nColumns: clamp(range.right, 0, nColumns),
+					moreColumns: nColumns > range.right,
+					nRows: clamp(range.bottom, 0, nRows),
+					moreRows: nRows > range.bottom,
+					data: range,
+				}
 			}}
 		>
-			{(row, col, data) => <div>Hello</div>}
+			{(props, row, col, data) => {
+				let content = "."
+				if (data) {
+					if (row <= data.bottom && col <= data.right) content = [row, col].toString()
+					else content = "-"
+				}
+				return <div {...props}>{content}</div>
+			}}
 		</Grid>
 	)
 }
 
 function Grid<T>(props: {
-	fetch: (range: CellRange) => T
-	children: (row: number, col: number, data: T) => JSX.Element
+	fetch: (range: CellRange) => Promise<GridData<T>>
+	// TODO: fix html div props type here.
+	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
 }) {
-	const nColumns = 10000
-	const nRows = 6000
-
 	const rowHeight = 22
 	const colWidth = 140
 	const columnGap = 1
@@ -63,6 +82,15 @@ function Grid<T>(props: {
 	// ==========================================================================
 	// Selection
 	// ==========================================================================
+
+	const [visibleRange, setVisibleRange] = useDeepState({ top: 0, left: 0, right: 0, bottom: 0 })
+	const [gridData, setGridData] = useDeepState<GridData<T | undefined>>({
+		nColumns: 0,
+		nRows: 0,
+		moreColumns: true,
+		moreRows: true,
+		data: undefined,
+	})
 
 	const [isDragging, setIsDragging] = useDeepState(false)
 	const [selection, setSelection] = useDeepState<TableSelection | undefined>(undefined)
@@ -107,11 +135,14 @@ function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
+		const rowMax = gridData.nRows - 1
+		const colMax = gridData.nColumns - 1
+
 		if (selection.type === "rows") {
 			updateSelection(
 				{
 					...selection,
-					end: { row: clamp(row + rowOffset, 0, nRows - 1), col: -1 },
+					end: { row: clamp(row + rowOffset, 0, rowMax), col: -1 },
 				},
 				focus
 			)
@@ -121,7 +152,7 @@ function Grid<T>(props: {
 			updateSelection(
 				{
 					...selection,
-					end: { row: -1, col: clamp(col + colOffset, 0, nColumns - 1) },
+					end: { row: -1, col: clamp(col + colOffset, 0, colMax) },
 				},
 				focus
 			)
@@ -132,8 +163,8 @@ function Grid<T>(props: {
 				{
 					...selection,
 					end: {
-						row: clamp(row + rowOffset, 0, nRows - 1),
-						col: clamp(col + colOffset, 0, nColumns - 1),
+						row: clamp(row + rowOffset, 0, rowMax),
+						col: clamp(col + colOffset, 0, colMax),
 					},
 				},
 				focus
@@ -150,9 +181,12 @@ function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
+		const rowMax = gridData.nRows - 1
+		const colMax = gridData.nColumns - 1
+
 		if (selection.type === "rows") {
 			if (selection.start.row === selection.end.row) {
-				startSelection("rows", clamp(row + rowOffset, 0, nRows - 1), -1, focus)
+				startSelection("rows", clamp(row + rowOffset, 0, rowMax), -1, focus)
 			} else {
 				startSelection("rows", row, -1, focus)
 			}
@@ -161,7 +195,7 @@ function Grid<T>(props: {
 
 		if (selection.type === "cols") {
 			if (selection.start.col === selection.end.col) {
-				startSelection("cols", -1, clamp(col + colOffset, 0, nColumns - 1), focus)
+				startSelection("cols", -1, clamp(col + colOffset, 0, colMax), focus)
 			} else {
 				startSelection("cols", -1, col, focus)
 			}
@@ -172,8 +206,8 @@ function Grid<T>(props: {
 			if (selection.start.row === selection.end.row && selection.start.col === selection.end.col) {
 				startSelection(
 					"cells",
-					clamp(row + rowOffset, 0, nRows - 1),
-					clamp(col + colOffset, 0, nColumns - 1),
+					clamp(row + rowOffset, 0, rowMax),
+					clamp(col + colOffset, 0, colMax),
 					focus
 				)
 			} else {
@@ -290,26 +324,50 @@ function Grid<T>(props: {
 	// ==========================================================================
 
 	const containerRef = useRef<HTMLDivElement>(null)
-	const [visibleRange, setVisibleRange] = useDeepState({ top: 0, left: 0, right: 0, bottom: 0 })
 
-	const gridHeight = (nRows + 1) * rowHeight + nRows * rowGap
-	const gridWidth = (nColumns + 1) * colWidth + nColumns * columnGap
+	// const gridHeight = (gridData.nRows + 1) * rowHeight + gridData.nRows * rowGap
+	// const gridWidth = (gridData.nColumns + 1) * colWidth + gridData.nColumns * columnGap
+
+	const gridRows = gridData.moreRows ? visibleRange.bottom : gridData.nRows
+	const gridCols = gridData.moreColumns ? visibleRange.right : gridData.nColumns
+	const gridHeight = (gridRows + 1) * rowHeight + gridRows * rowGap
+	const gridWidth = (gridCols + 1) * colWidth + gridCols * columnGap
+
+	const visibleRangeRef = useRefCurrent<CellRange | undefined>(visibleRange)
+	const fetchRef = useRefCurrent(props.fetch)
+	const loadMore = useMemo(() => {
+		return debounce(
+			async (range: CellRange) => {
+				try {
+					console.log("FETCH")
+					const data = await fetchRef.current(range)
+					// Need to use isEqual because useDeepState may not preseve the value equality.
+					if (!isEqual(range, visibleRangeRef.current)) return console.warn("Wasted fetch.")
+					setGridData(data)
+					setVisibleRange(clampVisibleRange(range, data))
+				} catch (error) {
+					console.error(error)
+				}
+			},
+			100,
+			{ leading: false, trailing: true }
+		)
+	}, [])
 
 	const updateVisibleRange = () => {
 		if (!containerRef.current) return
 
-		const { scrollTop, scrollLeft, clientHeight, clientWidth } = containerRef.current
-		const startRow = Math.floor(scrollTop / (rowHeight + rowGap))
-		const endRow = Math.ceil((scrollTop + clientHeight) / (rowHeight + rowGap))
-		const startCol = Math.floor(scrollLeft / (colWidth + columnGap))
-		const endCol = Math.ceil((scrollLeft + clientWidth) / (colWidth + columnGap))
+		let range = getVisibleRange(containerRef.current, { rowHeight, rowGap, colWidth, columnGap })
+		range = expandVisibleRange(range, { rowMargin, colMargin })
+		range = clampVisibleRange(range, gridData)
 
-		setVisibleRange({
-			top: clamp(startRow - rowMargin, 0, nRows - 1),
-			left: clamp(startCol - colMargin, 0, nColumns - 1),
-			bottom: clamp(endRow + rowMargin, 0, nRows - 1),
-			right: clamp(endCol + colMargin, 0, nColumns - 1),
-		})
+		const loadMoreBottom = gridData.moreRows && range.bottom > gridData.nRows - rowMargin
+		const loadMoreRight = gridData.moreColumns && range.right > gridData.nColumns - colMargin
+		// const loadMoreLeft =
+
+		if (loadMoreRight || loadMoreBottom) loadMore(range)
+
+		setVisibleRange(range)
 	}
 
 	const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -460,7 +518,7 @@ function Grid<T>(props: {
 	const nVisibleRows = visibleRange.bottom - visibleRange.top + 1
 	const nVisibleCols = visibleRange.right - visibleRange.left + 1
 
-	// console.log("RENDER", visibleRange)
+	console.log("RENDER", visibleRange.bottom, visibleRange.right)
 
 	return (
 		<div
@@ -510,10 +568,11 @@ function Grid<T>(props: {
 						{Array.from({ length: nVisibleCols }).map((_, i) => {
 							const row = -1
 							const col = visibleRange.left + i
-							return (
-								<div
-									key={`header-${col}`}
-									style={{
+
+							return props.children(
+								{
+									key: `header-${col}`,
+									style: {
 										width: colWidth,
 										height: rowHeight,
 										backgroundColor: "var(--background2)",
@@ -523,15 +582,38 @@ function Grid<T>(props: {
 										textAlign: "center",
 										fontWeight: "bold",
 										...cellStyle(row, col),
-									}}
-									data-column-index={col}
-									data-row-index={row}
-									onClick={handleClickHeader}
-									onDoubleClick={handleDoubleClickColumnHeader}
-								>
-									Column {col + 1}
-								</div>
+									},
+									"data-column-index": col,
+									"data-row-index": row,
+									onClick: handleClickHeader,
+									onDoubleClick: handleDoubleClickColumnHeader,
+								},
+								row,
+								col,
+								gridData.data
 							)
+							// return (
+							// 	<div
+							// 		key={`header-${col}`}
+							// 		style={{
+							// 			width: colWidth,
+							// 			height: rowHeight,
+							// 			backgroundColor: "var(--background2)",
+							// 			position: "sticky",
+							// 			top: 0,
+							// 			zIndex: 1,
+							// 			textAlign: "center",
+							// 			fontWeight: "bold",
+							// 			...cellStyle(row, col),
+							// 		}}
+							// 		data-column-index={col}
+							// 		data-row-index={row}
+							// 		onClick={handleClickHeader}
+							// 		onDoubleClick={handleDoubleClickColumnHeader}
+							// 	>
+							// 		Column {col + 1}
+							// 	</div>
+							// )
 						})}
 
 						{/* Row headers and cells */}
@@ -542,7 +624,7 @@ function Grid<T>(props: {
 							return (
 								<React.Fragment key={`row-${row}`}>
 									{/* Row header */}
-									<div
+									{/* <div
 										data-type="header-row"
 										style={{
 											width: colWidth,
@@ -562,29 +644,74 @@ function Grid<T>(props: {
 										onDoubleClick={handleDoubleClickRowHeader}
 									>
 										Row {row + 1}
-									</div>
+									</div> */}
+									{props.children(
+										{
+											"data-type": "header-row",
+											style: {
+												width: colWidth,
+												height: rowHeight,
+												backgroundColor: "var(--background2)",
+												position: "sticky",
+												left: 0,
+												zIndex: 1,
+												textAlign: "center",
+												fontWeight: "bold",
+												...cellStyle(row, col),
+												// top: `${(row + 1) * rowHeight}px`,
+											},
+											"data-column-index": col,
+											"data-row-index": row,
+											onClick: handleClickHeader,
+											onDoubleClick: handleDoubleClickRowHeader,
+										},
+										row,
+										col,
+										gridData.data
+									)}
 
 									{/* Cells */}
 									{Array.from({ length: nVisibleCols }).map((_, j) => {
 										const col = visibleRange.left + j
-										const index = row * nColumns + col
-										return (
-											<div
-												key={index}
-												style={{
+										const index = [row, col].toString()
+
+										// return (
+										// 	<div
+										// 		key={index}
+										// 		style={{
+										// 			width: colWidth,
+										// 			height: rowHeight,
+										// 			userSelect: isDragging ? "none" : undefined,
+										// 			...cellStyle(row, col),
+										// 		}}
+										// 		className="hover"
+										// 		data-row-index={row}
+										// 		data-column-index={col}
+										// 		onMouseDown={handleCellMouseDown}
+										// 		onMouseEnter={handleCellMouseEnter}
+										// 	>
+										// 		{index}
+										// 	</div>
+										// )
+
+										return props.children(
+											{
+												key: index,
+												style: {
 													width: colWidth,
 													height: rowHeight,
 													userSelect: isDragging ? "none" : undefined,
 													...cellStyle(row, col),
-												}}
-												className="hover"
-												data-row-index={row}
-												data-column-index={col}
-												onMouseDown={handleCellMouseDown}
-												onMouseEnter={handleCellMouseEnter}
-											>
-												{index}
-											</div>
+												},
+												className: "hover",
+												"data-row-index": row,
+												"data-column-index": col,
+												onMouseDown: handleCellMouseDown,
+												onMouseEnter: handleCellMouseEnter,
+											},
+											row,
+											col,
+											gridData.data
 										)
 									})}
 								</React.Fragment>
@@ -595,4 +722,54 @@ function Grid<T>(props: {
 			</div>
 		</div>
 	)
+}
+
+// TODO: is this off by one for the headers?
+const getVisibleRange = (
+	container: HTMLDivElement,
+	args: {
+		rowHeight: number
+		rowGap: number
+		colWidth: number
+		columnGap: number
+	}
+) => {
+	const { rowHeight, rowGap, colWidth, columnGap } = args
+	const { scrollTop, scrollLeft, clientHeight, clientWidth } = container
+
+	const startRow = Math.floor(scrollTop / (rowHeight + rowGap))
+	const endRow = Math.ceil((scrollTop + clientHeight) / (rowHeight + rowGap))
+	const startCol = Math.floor(scrollLeft / (colWidth + columnGap))
+	const endCol = Math.ceil((scrollLeft + clientWidth) / (colWidth + columnGap))
+
+	return { top: startRow, left: startCol, bottom: endRow, right: endCol }
+}
+
+const expandVisibleRange = (range: CellRange, args: { rowMargin: number; colMargin: number }) => {
+	const { rowMargin, colMargin } = args
+	return {
+		top: Math.max(0, range.top - rowMargin),
+		left: Math.max(0, range.left - colMargin),
+		bottom: range.bottom + rowMargin,
+		right: range.right + colMargin,
+	}
+}
+
+const clampVisibleRange = (range: CellRange, gridData: GridData<any>) => {
+	let newRange = { ...range }
+	if (!gridData.moreRows) {
+		if (newRange.bottom > gridData.nRows - 1) {
+			const offset = newRange.bottom - (gridData.nRows - 1)
+			newRange.top -= offset
+			newRange.bottom -= offset
+		}
+	}
+	if (!gridData.moreColumns) {
+		if (newRange.right > gridData.nColumns - 1) {
+			const offset = newRange.right - (gridData.nColumns - 1)
+			newRange.left -= offset
+			newRange.right -= offset
+		}
+	}
+	return newRange
 }
