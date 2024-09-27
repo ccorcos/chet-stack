@@ -1,9 +1,8 @@
 import { clamp, debounce, defaults, isEqual, throttle } from "lodash"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
-import { sleep } from "../../../../shared/sleep"
-import { useDeepState } from "../../../hooks/useDeepState"
-import { useDomEvent } from "../../../hooks/useDomEvent"
-import { useRefCurrent } from "../../../hooks/useRefCurrent"
+import { useDeepState } from "../../hooks/useDeepState"
+import { useDomEvent } from "../../hooks/useDomEvent"
+import { useRefCurrent } from "../../hooks/useRefCurrent"
 
 // TODO:
 // - drag to re-order rows and columns
@@ -11,7 +10,7 @@ import { useRefCurrent } from "../../../hooks/useRefCurrent"
 // - click header to edit
 // - copy / paste
 
-type TableSelection =
+type GridSelection =
 	| {
 			type: "cells"
 			start: { row: number; col: number }
@@ -20,7 +19,7 @@ type TableSelection =
 	| { type: "cols"; start: { row: number; col: number }; end: { row: number; col: number } }
 	| { type: "rows"; start: { row: number; col: number }; end: { row: number; col: number } }
 
-type CellRange = { top: number; left: number; right: number; bottom: number }
+export type CellRange = { top: number; left: number; right: number; bottom: number }
 
 type GridSize = { nRows: number; nColumns: number; moreRows: boolean; moreColumns: boolean }
 
@@ -37,62 +36,7 @@ type GridData<T> = {
 	data: T
 }
 
-export function GridSelectionDemo() {
-	const nColumns = 100
-	const nRows = 400
-
-	const fetchCells = (range: CellRange) => {
-		const resultRange = {
-			top: clamp(range.top, 0, nRows - 1),
-			left: clamp(range.left, 0, nColumns - 1),
-			right: clamp(range.right, 0, nColumns - 1),
-			bottom: clamp(range.bottom, 0, nRows - 1),
-		}
-		const rows: Record<number, Record<number, string>> = {}
-		for (let i = resultRange.top; i <= resultRange.bottom; i++) {
-			const cols: Record<number, string> = {}
-			for (let j = resultRange.left; j <= resultRange.right; j++) {
-				cols[j] = "cell-" + [i, j].toString()
-			}
-			cols[-1] = "row-" + i
-			rows[i] = cols
-		}
-
-		rows[-1] = {}
-		for (let j = resultRange.left; j <= resultRange.right; j++) {
-			rows[-1][j] = "col-" + j
-		}
-
-		return {
-			nColumns: Math.min(range.right, nColumns - 1),
-			nRows: Math.min(range.bottom, nRows - 1),
-			moreRows: range.bottom < nRows - 1,
-			moreColumns: range.right < nColumns - 1,
-			data: rows,
-		}
-	}
-
-	return (
-		<Grid
-			fetch={async (range: CellRange) => {
-				await sleep(200)
-				return fetchCells(range)
-			}}
-		>
-			{(props, row, col, data) => {
-				let content = "."
-				if (data) {
-					content = "-"
-					const value = data[row]?.[col]
-					if (value !== undefined) content = value
-				}
-				return <div {...props}>{content}</div>
-			}}
-		</Grid>
-	)
-}
-
-function Grid<T>(props: {
+export function Grid<T>(props: {
 	fetch: (range: CellRange) => Promise<FetchData<T>>
 	// TODO: fix html div props type here.
 	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
@@ -110,8 +54,8 @@ function Grid<T>(props: {
 			colWidth: 140,
 			columnGap: 1,
 			rowGap: 1,
-			rowMargin: 5,
-			colMargin: 2,
+			rowMargin: 20,
+			colMargin: 10,
 		},
 		props
 	)
@@ -133,7 +77,7 @@ function Grid<T>(props: {
 	})
 
 	const [isDragging, setIsDragging] = useDeepState(false)
-	const [selection, setSelection] = useDeepState<TableSelection | undefined>(undefined)
+	const [selection, setSelection] = useDeepState<GridSelection | undefined>(undefined)
 
 	const getRowCol = (e: React.MouseEvent<HTMLDivElement>) => {
 		const elm = e.target as HTMLElement
@@ -144,7 +88,7 @@ function Grid<T>(props: {
 		return { row, col }
 	}
 
-	const updateSelection = (selection: TableSelection, focus: boolean) => {
+	const updateSelection = (selection: GridSelection, focus: boolean) => {
 		setSelection(selection)
 		if (focus) scrollToSelection(selection)
 	}
@@ -159,7 +103,7 @@ function Grid<T>(props: {
 	}
 
 	const expandSelectionTo = (
-		selection: TableSelection,
+		selection: GridSelection,
 		row: number,
 		col: number,
 		focus: boolean
@@ -168,7 +112,7 @@ function Grid<T>(props: {
 	}
 
 	const expandSelectionBy = (
-		selection: TableSelection,
+		selection: GridSelection,
 		rowOffset: number,
 		colOffset: number,
 		focus: boolean
@@ -214,7 +158,7 @@ function Grid<T>(props: {
 	}
 
 	const moveSelectionBy = (
-		selection: TableSelection,
+		selection: GridSelection,
 		rowOffset: number,
 		colOffset: number,
 		focus: boolean
@@ -435,7 +379,7 @@ function Grid<T>(props: {
 	// Focus Selection
 	// ==========================================================================
 
-	const scrollToSelection = (selection: TableSelection) => {
+	const scrollToSelection = (selection: GridSelection) => {
 		const { row, col } = selection.end
 
 		if (!containerRef.current) return

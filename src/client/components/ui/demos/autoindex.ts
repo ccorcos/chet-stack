@@ -8,7 +8,7 @@ import * as DropdownDemo from "./DropdownDemo"
 import * as FileUploadDemo from "./FileUploadDemo"
 import * as FormDemo from "./FormDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
-import * as GridSelectionDemo from "./GridSelectionDemo"
+import * as GridDemo from "./GridDemo"
 import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
@@ -26,7 +26,7 @@ export {
 	FileUploadDemo,
 	FormDemo,
 	FuzzyStringDemo,
-	GridSelectionDemo,
+	GridDemo,
 	InputDemo,
 	LayoutDemo,
 	ListBoxDemo,
