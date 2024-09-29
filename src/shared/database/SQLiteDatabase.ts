@@ -1,16 +1,15 @@
 import { Database, Statement, Transaction } from "better-sqlite3"
-import { Codec, jsonCodec } from "lexicodec"
 import { OrderedKeyValueApi } from "./types"
 
-export class SQLiteDatabase<K = any, V = any> implements OrderedKeyValueApi<K, V> {
+type K = string
+type V = string
+
+export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 	/**
 	 * import sqlite from "better-sqlite3"
-	 * new SQLiteOKV(sqlite("path/to.db"))
+	 * new SQLiteDatabase(sqlite("path/to.db"))
 	 */
-	constructor(
-		private db: Database,
-		public codec: Codec = jsonCodec
-	) {
+	constructor(private db: Database) {
 		const createTableQuery = db.prepare(
 			`create table if not exists data ( key text primary key, value text)`
 		)
@@ -26,13 +25,10 @@ export class SQLiteDatabase<K = any, V = any> implements OrderedKeyValueApi<K, V
 		this.writeFactsQuery = this.db.transaction(
 			(tx: { set?: { key: K; value: V }[]; delete?: K[] }) => {
 				for (const { key, value } of tx.set || []) {
-					insertQuery.run({
-						key: this.codec.encode(key),
-						value: this.codec.encode(value),
-					})
+					insertQuery.run({ key, value })
 				}
 				for (const key of tx.delete || []) {
-					deleteQuery.run({ key: this.codec.encode(key) })
+					deleteQuery.run({ key: key })
 				}
 			}
 		)
@@ -42,37 +38,26 @@ export class SQLiteDatabase<K = any, V = any> implements OrderedKeyValueApi<K, V
 	private writeFactsQuery: Transaction
 
 	get(key: K) {
-		return this.getQuery
-			.all({ key: this.codec.encode(key) })
-			.map((row: any) => this.codec.decode(row.value))[0] as V | undefined
+		return this.getQuery.all({ key: key }).map((row: any) => row.value)[0] as V | undefined
 	}
 
-	list(
-		args: {
-			gt?: K
-			gte?: K
-			lt?: K
-			lte?: K
-			limit?: number
-			reverse?: boolean
-		} = {}
-	) {
+	list(args: { gt?: K; gte?: K; lt?: K; lte?: K; limit?: number; reverse?: boolean } = {}) {
 		const sqlArgs: any = {}
 		const whereClauses: string[] = []
 
 		if (args.gte !== undefined) {
-			sqlArgs.gte = this.codec.encode(args.gte)
+			sqlArgs.gte = args.gte
 			whereClauses.push("key >= $gte")
 		} else if (args.gt !== undefined) {
-			sqlArgs.gt = this.codec.encode(args.gt)
+			sqlArgs.gt = args.gt
 			whereClauses.push("key > $gt")
 		}
 
 		if (args.lte !== undefined) {
-			sqlArgs.lte = this.codec.encode(args.lte)
+			sqlArgs.lte = args.lte
 			whereClauses.push("key <= $lte")
 		} else if (args.lt !== undefined) {
-			sqlArgs.lt = this.codec.encode(args.lt)
+			sqlArgs.lt = args.lt
 			whereClauses.push("key < $lt")
 		}
 
@@ -93,10 +78,7 @@ export class SQLiteDatabase<K = any, V = any> implements OrderedKeyValueApi<K, V
 
 		const results: any[] = this.db.prepare(sqlQuery).all(sqlArgs)
 
-		return results.map(({ key, value }) => ({
-			key: this.codec.decode(key),
-			value: this.codec.decode(value),
-		}))
+		return results
 	}
 
 	set(key: K, value: V) {
