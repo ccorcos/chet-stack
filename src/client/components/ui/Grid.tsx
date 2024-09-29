@@ -4,12 +4,6 @@ import { useDeepState } from "../../hooks/useDeepState"
 import { useDomEvent } from "../../hooks/useDomEvent"
 import { useRefCurrent } from "../../hooks/useRefCurrent"
 
-// TODO:
-// - drag to re-order rows and columns
-// - click cell to edit
-// - click header to edit
-// - copy / paste
-
 type GridSelection =
 	| {
 			type: "cells"

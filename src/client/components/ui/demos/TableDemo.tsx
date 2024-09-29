@@ -1,9 +1,9 @@
 import React from "react"
 import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
-import { useTupleDatabase } from "tuple-database/useTupleDatabase"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
+import { Grid } from "../Grid"
 import { NakedInput } from "../Input"
 
 type Property =
@@ -86,7 +86,35 @@ export function TableDemo() {
 		zIndex: 1,
 	}
 
-	const rows = useTupleDatabase(db, (tx) => tx.scan(), [])
+	return (
+		<Grid
+			fetch={async (range) => {
+				const rows = db.scan()
+				return {
+					nRows: rows.length,
+					nColumns: 100,
+					moreRows: false,
+					moreColumns: false,
+					data: rows,
+				}
+			}}
+		>
+			{(props, row, col, data) => {
+				const prop = PlantSchema.properties[col]
+				if (row === -1) {
+					if (!prop) return <div {...props}>-</div>
+					return <div {...props}>{prop.name || prop.id}</div>
+				}
+
+				const obj = data?.[row]
+				if (col === -1) {
+					return <div {...props}>{obj.id}</div>
+				}
+
+				return <div {...props}>{obj && prop && <PropertyValue obj={obj} property={prop} />}</div>
+			}}
+		</Grid>
+	)
 
 	return (
 		<div style={{ padding: 12 }}>
@@ -120,7 +148,6 @@ export function TableDemo() {
 								return (
 									<div key={prop.id} style={cell}>
 										{/* {value || "_"} */}
-										<PropertyValue obj={obj} property={prop} />
 									</div>
 								)
 							})}

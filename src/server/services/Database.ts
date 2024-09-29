@@ -1,14 +1,13 @@
 import sqlite from "better-sqlite3"
 import { SQLiteDatabase } from "../../shared/database/SQLiteDatabase"
-import { Simplify } from "../../shared/typeHelpers"
-import { path } from "../helpers/path"
+import { OrderedKeyValueApi } from "../../shared/database/types"
 
 export class Database extends SQLiteDatabase {
 	constructor(public dbPath: string) {
-		super(sqlite(path(dbPath)))
+		super(sqlite(dbPath))
 	}
 
 	reset() {}
 }
 
-export type DatabaseApi = Simplify<Database>
+export type DatabaseApi = OrderedKeyValueApi<string, string>

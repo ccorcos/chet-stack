@@ -13,6 +13,7 @@ import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as PopupDemo from "./PopupDemo"
+import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 import * as TokenInputDemo from "./TokenInputDemo"
@@ -31,6 +32,7 @@ export {
 	LayoutDemo,
 	ListBoxDemo,
 	PopupDemo,
+	RawDatabaseDemo,
 	SpinnerDemo,
 	TableDemo,
 	TokenInputDemo,
