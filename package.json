@@ -25,6 +25,8 @@
 		"@popperjs/core": "^2.11.8",
 		"better-sqlite3": "^11.3.0",
 		"cookie-parser": "^1.4.6",
+		"csv": "^6.3.10",
+		"csv-parse": "^5.5.6",
 		"data-type-ts": "^1.0.2",
 		"date-fns": "^2.30.0",
 		"fs-extra": "^11.1.1",

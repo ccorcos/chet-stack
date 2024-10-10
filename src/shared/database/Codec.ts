@@ -1,11 +1,22 @@
-import { Codec } from "lexicodec"
 import { OrderedKeyValueApi } from "./types"
+
+type Codec<I, O> = {
+	encode: (key: I) => O
+	decode: (key: O) => I
+}
 
 // This is the equivalent fo the "tuple-layer" from foundationdb.
 
+export function Subspace(prefix: string, db: OrderedKeyValueApi<string, any>) {
+	return KeyEncoder(db, {
+		encode: (key) => prefix + key,
+		decode: (key) => key.slice(prefix.length),
+	})
+}
+
 export function KeyEncoder<K, V>(
 	db: OrderedKeyValueApi<string, V>,
-	codec: Codec
+	codec: Codec<K, string>
 ): OrderedKeyValueApi<K, V> {
 	return {
 		get(key: K) {
@@ -43,7 +54,7 @@ export function KeyEncoder<K, V>(
 
 export function ValueEncoder<K, V>(
 	db: OrderedKeyValueApi<K, string>,
-	codec: Codec
+	codec: Codec<V, string>
 ): OrderedKeyValueApi<K, V> {
 	return {
 		get(key: K) {

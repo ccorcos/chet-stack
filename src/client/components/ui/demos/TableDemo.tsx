@@ -115,48 +115,6 @@ export function TableDemo() {
 			}}
 		</Grid>
 	)
-
-	return (
-		<div style={{ padding: 12 }}>
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: `repeat(${nColumns + 1}, 1fr)`,
-					width: "fit-content",
-					gap: 1,
-					// border: "1px solid black",
-				}}
-			>
-				<div style={header}>id</div>
-				{PlantSchema.properties.map((prop) => {
-					return (
-						<div key={prop.id} style={header}>
-							{prop.name || prop.id}
-						</div>
-					)
-				})}
-
-				{rows.map((row) => {
-					const obj = row.value
-
-					return (
-						<React.Fragment key={obj.id}>
-							<div style={cell}>{obj.id}</div>
-							{PlantSchema.properties.map((prop) => {
-								// const type = prop.type
-								const value = obj[prop.id]
-								return (
-									<div key={prop.id} style={cell}>
-										{/* {value || "_"} */}
-									</div>
-								)
-							})}
-						</React.Fragment>
-					)
-				})}
-			</div>
-		</div>
-	)
 }
 
 function PropertyValue(props: { obj: Row; property: Property }) {

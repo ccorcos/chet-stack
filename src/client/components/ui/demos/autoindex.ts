@@ -12,6 +12,7 @@ import * as GridDemo from "./GridDemo"
 import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
+import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
@@ -31,6 +32,7 @@ export {
 	InputDemo,
 	LayoutDemo,
 	ListBoxDemo,
+	PlantDatabaseDemo,
 	PopupDemo,
 	RawDatabaseDemo,
 	SpinnerDemo,

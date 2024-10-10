@@ -7,23 +7,21 @@ import { CellRange, Grid } from "../Grid"
 const db = FnCallProxy<OrderedKeyValueApi<string, string>>()
 
 export function RawDatabaseDemo() {
-	const nColumns = 100
-	const nRows = 400
-
 	const { api } = useClientEnvironment()
 
 	const fetchCells = async (range: CellRange) => {
-		const response = await api.query(db.list({ limit: range.bottom + 1 }))
+		// {bottom: 2} means we're requesting 3 rows. But we also want to fetch one more to check if there's a next page.
+		const response = await api.query(db.list({ limit: range.bottom + 2 }))
 		if (response.status !== 200) throw new Error(response.status.toString())
 		const result = response.body
 
-		result.map(({ key, value }) => {})
+		console.log("FETCH", range, result.length, result.length > range.bottom)
 
 		return {
 			nColumns: 1, // key is the header.
 			moreColumns: false,
 			nRows: result.length,
-			moreRows: result.length > range.bottom,
+			moreRows: result.length > range.bottom + 1,
 			data: result,
 		}
 	}

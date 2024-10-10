@@ -31,6 +31,7 @@ type GridData<T> = {
 }
 
 export function Grid<T>(props: {
+	// Note that {top: 0, bottom: 2} means we're requesting 3 rows.
 	fetch: (range: CellRange) => Promise<FetchData<T>>
 	// TODO: fix html div props type here.
 	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
@@ -113,14 +114,14 @@ export function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
-		const rowMax = gridSize.nRows - 1
-		const colMax = gridSize.nColumns - 1
+		const rowMaxIndex = gridSize.nRows - 1
+		const colMaxIndex = gridSize.nColumns - 1
 
 		if (selection.type === "rows") {
 			updateSelection(
 				{
 					...selection,
-					end: { row: clamp(row + rowOffset, 0, rowMax), col: -1 },
+					end: { row: clamp(row + rowOffset, 0, rowMaxIndex), col: -1 },
 				},
 				focus
 			)
@@ -130,7 +131,7 @@ export function Grid<T>(props: {
 			updateSelection(
 				{
 					...selection,
-					end: { row: -1, col: clamp(col + colOffset, 0, colMax) },
+					end: { row: -1, col: clamp(col + colOffset, 0, colMaxIndex) },
 				},
 				focus
 			)
@@ -141,8 +142,8 @@ export function Grid<T>(props: {
 				{
 					...selection,
 					end: {
-						row: clamp(row + rowOffset, 0, rowMax),
-						col: clamp(col + colOffset, 0, colMax),
+						row: clamp(row + rowOffset, 0, rowMaxIndex),
+						col: clamp(col + colOffset, 0, colMaxIndex),
 					},
 				},
 				focus
@@ -159,12 +160,12 @@ export function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
-		const rowMax = gridSize.nRows - 1
-		const colMax = gridSize.nColumns - 1
+		const rowMaxIndex = gridSize.nRows - 1
+		const colMaxIndex = gridSize.nColumns - 1
 
 		if (selection.type === "rows") {
 			if (selection.start.row === selection.end.row) {
-				startSelection("rows", clamp(row + rowOffset, 0, rowMax), -1, focus)
+				startSelection("rows", clamp(row + rowOffset, 0, rowMaxIndex), -1, focus)
 			} else {
 				startSelection("rows", row, -1, focus)
 			}
@@ -173,7 +174,7 @@ export function Grid<T>(props: {
 
 		if (selection.type === "cols") {
 			if (selection.start.col === selection.end.col) {
-				startSelection("cols", -1, clamp(col + colOffset, 0, colMax), focus)
+				startSelection("cols", -1, clamp(col + colOffset, 0, colMaxIndex), focus)
 			} else {
 				startSelection("cols", -1, col, focus)
 			}
@@ -184,8 +185,8 @@ export function Grid<T>(props: {
 			if (selection.start.row === selection.end.row && selection.start.col === selection.end.col) {
 				startSelection(
 					"cells",
-					clamp(row + rowOffset, 0, rowMax),
-					clamp(col + colOffset, 0, colMax),
+					clamp(row + rowOffset, 0, rowMaxIndex),
+					clamp(col + colOffset, 0, colMaxIndex),
 					focus
 				)
 			} else {
@@ -316,7 +317,7 @@ export function Grid<T>(props: {
 		const expandedRange = expandVisibleRange(visibleRange, { rowMargin, colMargin })
 
 		// Clamp down to the known size of the grid.
-		const clampedRange = clampRenderedRange(expandedRange, gridSize)
+		const clampedRange = clampToGridSize(expandedRange, gridSize)
 
 		// If the visible range is not in the gridData response, then fetch more.
 		const loadMoreTop = visibleRange.top < gridData.range.top
@@ -345,9 +346,10 @@ export function Grid<T>(props: {
 					// Expand the known gridSize.
 					const size = updateGridSize(gridSizeRef.current, fetchData)
 					setGridSize(size)
+					console.log("Set grid size", size)
 
 					// Adjust the rendered range to the new gridSize.
-					setRenderedRange(clampRenderedRange(range, size))
+					setRenderedRange(clampToGridSize(range, size))
 
 					// Keep track the results.
 					setGridData({ range, data: fetchData.data })
@@ -512,11 +514,15 @@ export function Grid<T>(props: {
 	const gridCols = gridSize.moreColumns
 		? Math.max(renderedRange.right, gridSize.nColumns)
 		: gridSize.nColumns
+
+	// + 1 for the sticky header row and column.
 	const gridHeight = (gridRows + 1) * rowHeight + gridRows * rowGap
 	const gridWidth = (gridCols + 1) * colWidth + gridCols * columnGap
 
-	const nVisibleRows = renderedRange.bottom - renderedRange.top + 1
-	const nVisibleCols = renderedRange.right - renderedRange.left + 1
+	// top: 0, bottom: 2 means there are 3 visible rows, hence the + 1
+	// This doesnt account for the sticky row or col headers.
+	const nVisibleDataRows = renderedRange.bottom - renderedRange.top + 1
+	const nVisibleDataCols = renderedRange.right - renderedRange.left + 1
 
 	return (
 		<div
@@ -532,8 +538,9 @@ export function Grid<T>(props: {
 					<div
 						style={{
 							display: "grid",
-							gridTemplateColumns: `repeat(${nVisibleCols + 1}, ${colWidth}px)`,
-							gridTemplateRows: `repeat(${nVisibleRows + 1}, ${rowHeight}px)`,
+							// + 1 for the sticky header row and column.
+							gridTemplateColumns: `repeat(${nVisibleDataCols + 1}, ${colWidth}px)`,
+							gridTemplateRows: `repeat(${nVisibleDataRows + 1}, ${rowHeight}px)`,
 
 							userSelect: "none",
 							border: "2px solid transparent", // space for focus outline
@@ -563,7 +570,7 @@ export function Grid<T>(props: {
 						></div>
 
 						{/* Column headers */}
-						{Array.from({ length: nVisibleCols }).map((_, i) => {
+						{Array.from({ length: nVisibleDataCols }).map((_, i) => {
 							const row = -1
 							const col = renderedRange.left + i
 
@@ -615,7 +622,7 @@ export function Grid<T>(props: {
 						})}
 
 						{/* Row headers and cells */}
-						{Array.from({ length: nVisibleRows }).map((_, i) => {
+						{Array.from({ length: nVisibleDataRows }).map((_, i) => {
 							const row = renderedRange.top + i
 							const col = -1
 
@@ -669,7 +676,7 @@ export function Grid<T>(props: {
 									)}
 
 									{/* Cells */}
-									{Array.from({ length: nVisibleCols }).map((_, j) => {
+									{Array.from({ length: nVisibleDataCols }).map((_, j) => {
 										const col = renderedRange.left + j
 										const index = [row, col].toString()
 
@@ -754,22 +761,27 @@ const expandVisibleRange = (range: CellRange, args: { rowMargin: number; colMarg
 }
 
 // This doesn't just clamp, but will actually offset back to a valid range.
-const clampRenderedRange = (range: CellRange, gridSize: GridSize) => {
+const clampToGridSize = (range: CellRange, gridSize: GridSize) => {
 	let newRange = { ...range }
+
 	if (!gridSize.moreRows) {
-		if (newRange.bottom > gridSize.nRows - 1) {
+		if (newRange.bottom > gridSize.nRows) {
+			// for nRows = 3, max bottom is 2, hence the - 1
 			const offset = newRange.bottom - (gridSize.nRows - 1)
-			newRange.top -= offset
+			newRange.top = Math.max(0, newRange.top - offset)
 			newRange.bottom -= offset
 		}
 	}
+
 	if (!gridSize.moreColumns) {
-		if (newRange.right > gridSize.nColumns - 1) {
+		if (newRange.right > gridSize.nColumns) {
+			// for nColumns = 3, max right is 2, hence the - 1
 			const offset = newRange.right - (gridSize.nColumns - 1)
-			newRange.left -= offset
+			newRange.left = Math.max(0, newRange.left - offset)
 			newRange.right -= offset
 		}
 	}
+
 	return newRange
 }
 
@@ -782,6 +794,7 @@ const updateGridSize = (gridSize: GridSize, data: FetchData<any>) => {
 	}
 
 	if (data.nRows >= size.nRows) {
+		console.log("HERE", data.nRows, size.nRows, data.moreRows)
 		size.nRows = data.nRows
 		size.moreRows = data.moreRows
 	}
