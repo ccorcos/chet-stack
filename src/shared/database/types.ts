@@ -12,6 +12,7 @@ export type OrderedKeyValueApi<K = any, V = any> = KeyValueApi<K, V> & {
 		lt?: K
 		lte?: K
 		limit?: number
+		offset?: number
 		reverse?: boolean
 	}): { key: K; value: V }[]
 }
@@ -27,6 +28,7 @@ export type IntervalTreeApi<
 		lt?: B
 		lte?: B
 		limit?: number
+		offset?: number
 		reverse?: boolean
 	}) => { key: [B, B, K]; value: V }[]
 }

@@ -19,6 +19,7 @@ export class InMemoryDatabase<K = any, V = any> implements OrderedKeyValueApi<K,
 			gte?: K
 			lt?: K
 			lte?: K
+			offset?: number
 			limit?: number
 			reverse?: boolean
 		} = {}
@@ -67,7 +68,8 @@ export class InMemoryDatabase<K = any, V = any> implements OrderedKeyValueApi<K,
 
 		const result = this.data.slice(startIndex, endIndex)
 		if (args.reverse) result.reverse()
-		if (args.limit) result.splice(args.limit, result.length)
+		if (args.offset) result.splice(0, args.offset)
+		if (args.limit) result.splice(args.limit - (args.offset || 0), result.length)
 		return result
 	}
 

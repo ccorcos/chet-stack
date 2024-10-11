@@ -41,7 +41,17 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 		return this.getQuery.all({ key: key }).map((row: any) => row.value)[0] as V | undefined
 	}
 
-	list(args: { gt?: K; gte?: K; lt?: K; lte?: K; limit?: number; reverse?: boolean } = {}) {
+	list(
+		args: {
+			gt?: K
+			gte?: K
+			lt?: K
+			lte?: K
+			offset?: number
+			limit?: number
+			reverse?: boolean
+		} = {}
+	) {
 		const sqlArgs: any = {}
 		const whereClauses: string[] = []
 
@@ -71,9 +81,14 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 		if (args.reverse) {
 			sqlQuery += " desc"
 		}
+
 		if (args.limit) {
 			sqlArgs.limit = args.limit
 			sqlQuery += ` limit $limit`
+		}
+		if (args.offset) {
+			sqlArgs.offset = args.offset
+			sqlQuery += ` offset $offset`
 		}
 
 		const results: any[] = this.db.prepare(sqlQuery).all(sqlArgs)

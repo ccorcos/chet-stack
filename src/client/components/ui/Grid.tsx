@@ -1,4 +1,4 @@
-import { clamp, debounce, defaults, isEqual, throttle } from "lodash"
+import { clamp, debounce, isEqual, throttle } from "lodash"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useDeepState } from "../../hooks/useDeepState"
 import { useDomEvent } from "../../hooks/useDomEvent"
@@ -15,13 +15,14 @@ type GridSelection =
 
 export type CellRange = { top: number; left: number; right: number; bottom: number }
 
-type GridSize = { nRows: number; nColumns: number; moreRows: boolean; moreColumns: boolean }
+// The known size of the data grid.
+type GridSize = { nRows: number; nColumns: number }
 
 type FetchData<T> = {
+	// Number of data columns in the entire dataset, excluding the header column.
 	nColumns: number
+	// Number of data rows in the entire dataset, excluding the header row.
 	nRows: number
-	moreRows: boolean
-	moreColumns: boolean
 	data: T
 }
 
@@ -43,17 +44,15 @@ export function Grid<T>(props: {
 	rowMargin?: number
 	colMargin?: number
 }) {
-	const { rowHeight, colWidth, columnGap, rowGap, rowMargin, colMargin } = defaults(
-		{
-			rowHeight: 22,
-			colWidth: 140,
-			columnGap: 1,
-			rowGap: 1,
-			rowMargin: 20,
-			colMargin: 10,
-		},
-		props
-	)
+	// Default values.
+	const { rowHeight, colWidth, columnGap, rowGap, rowMargin, colMargin } = {
+		rowHeight: props.rowHeight ?? 22,
+		colWidth: props.colWidth ?? 140,
+		columnGap: props.columnGap ?? 1,
+		rowGap: props.rowGap ?? 1,
+		rowMargin: props.rowMargin ?? 20,
+		colMargin: props.colMargin ?? 10,
+	}
 
 	// ==========================================================================
 	// Selection
@@ -64,12 +63,7 @@ export function Grid<T>(props: {
 		range: { top: 0, left: 0, right: 0, bottom: 0 },
 		data: undefined,
 	})
-	const [gridSize, setGridSize] = useDeepState<GridSize>({
-		nColumns: 0,
-		nRows: 0,
-		moreColumns: true,
-		moreRows: true,
-	})
+	const [gridSize, setGridSize] = useDeepState<GridSize | undefined>(undefined)
 
 	const [isDragging, setIsDragging] = useDeepState(false)
 	const [selection, setSelection] = useDeepState<GridSelection | undefined>(undefined)
@@ -114,8 +108,8 @@ export function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
-		const rowMaxIndex = gridSize.nRows - 1
-		const colMaxIndex = gridSize.nColumns - 1
+		const rowMaxIndex = gridSize ? gridSize.nRows - 1 : 0
+		const colMaxIndex = gridSize ? gridSize.nColumns - 1 : 0
 
 		if (selection.type === "rows") {
 			updateSelection(
@@ -160,8 +154,8 @@ export function Grid<T>(props: {
 	) => {
 		const { row, col } = selection.end
 
-		const rowMaxIndex = gridSize.nRows - 1
-		const colMaxIndex = gridSize.nColumns - 1
+		const rowMaxIndex = gridSize ? gridSize.nRows - 1 : 0
+		const colMaxIndex = gridSize ? gridSize.nColumns - 1 : 0
 
 		if (selection.type === "rows") {
 			if (selection.start.row === selection.end.row) {
@@ -338,18 +332,18 @@ export function Grid<T>(props: {
 		return debounce(
 			async (range: CellRange) => {
 				try {
-					const fetchData = await fetchRef.current(range)
+					// Fetch an extra row and an extra column to see if there's more.
+					const fetchData = await fetchRef.current(overfetchRange(range))
 
 					// Need to use isEqual because useDeepState may not preseve the value equality.
 					if (!isEqual(range, renderedRangeRef.current)) return console.warn("Wasted fetch.")
 
-					// Expand the known gridSize.
-					const size = updateGridSize(gridSizeRef.current, fetchData)
-					setGridSize(size)
-					console.log("Set grid size", size)
-
-					// Adjust the rendered range to the new gridSize.
-					setRenderedRange(clampToGridSize(range, size))
+					const gridSize = {
+						nColumns: fetchData.nColumns,
+						nRows: fetchData.nRows,
+					}
+					setGridSize(gridSize)
+					setRenderedRange(clampToGridSize(range, gridSize))
 
 					// Keep track the results.
 					setGridData({ range, data: fetchData.data })
@@ -508,12 +502,8 @@ export function Grid<T>(props: {
 	}
 
 	// If we don't know the size of the grid yet, use the rendered range.
-	const gridRows = gridSize.moreRows
-		? Math.max(renderedRange.bottom, gridSize.nRows)
-		: gridSize.nRows
-	const gridCols = gridSize.moreColumns
-		? Math.max(renderedRange.right, gridSize.nColumns)
-		: gridSize.nColumns
+	const gridRows = gridSize ? gridSize.nRows : renderedRange.bottom
+	const gridCols = gridSize ? gridSize.nColumns : renderedRange.right
 
 	// + 1 for the sticky header row and column.
 	const gridHeight = (gridRows + 1) * rowHeight + gridRows * rowGap
@@ -557,7 +547,7 @@ export function Grid<T>(props: {
 						}}
 					>
 						{/* Empty top-left corner cell */}
-						<div
+						{/* <div
 							style={{
 								position: "sticky",
 								top: 0,
@@ -567,7 +557,30 @@ export function Grid<T>(props: {
 								width: colWidth,
 								height: rowHeight,
 							}}
-						></div>
+						></div> */}
+						{props.children(
+							{
+								key: `header-${-1}`,
+								style: {
+									width: colWidth,
+									height: rowHeight,
+									backgroundColor: "var(--background2)",
+									position: "sticky",
+									top: 0,
+									zIndex: 2,
+									textAlign: "center",
+									fontWeight: "bold",
+									...cellStyle(-1, -1),
+								},
+								"data-column-index": -1,
+								"data-row-index": -1,
+								onClick: handleClickHeader,
+								onDoubleClick: handleDoubleClickColumnHeader,
+							},
+							-1,
+							-1,
+							gridData.data
+						)}
 
 						{/* Column headers */}
 						{Array.from({ length: nVisibleDataCols }).map((_, i) => {
@@ -760,44 +773,20 @@ const expandVisibleRange = (range: CellRange, args: { rowMargin: number; colMarg
 	}
 }
 
-// This doesn't just clamp, but will actually offset back to a valid range.
-const clampToGridSize = (range: CellRange, gridSize: GridSize) => {
-	let newRange = { ...range }
-
-	if (!gridSize.moreRows) {
-		if (newRange.bottom > gridSize.nRows) {
-			// for nRows = 3, max bottom is 2, hence the - 1
-			const offset = newRange.bottom - (gridSize.nRows - 1)
-			newRange.top = Math.max(0, newRange.top - offset)
-			newRange.bottom -= offset
-		}
+const overfetchRange = (range: CellRange) => {
+	return {
+		...range,
+		bottom: range.bottom + 1,
+		right: range.right + 1,
 	}
-
-	if (!gridSize.moreColumns) {
-		if (newRange.right > gridSize.nColumns) {
-			// for nColumns = 3, max right is 2, hence the - 1
-			const offset = newRange.right - (gridSize.nColumns - 1)
-			newRange.left = Math.max(0, newRange.left - offset)
-			newRange.right -= offset
-		}
-	}
-
-	return newRange
 }
 
-const updateGridSize = (gridSize: GridSize, data: FetchData<any>) => {
-	const size = { ...gridSize }
-
-	if (data.nColumns >= size.nColumns) {
-		size.nColumns = data.nColumns
-		size.moreColumns = data.moreColumns
+const clampToGridSize = (range: CellRange, gridSize: GridSize | undefined) => {
+	if (!gridSize) return range
+	return {
+		top: clamp(range.top, 0, gridSize.nRows - 1),
+		bottom: clamp(range.bottom, 0, gridSize.nRows - 1),
+		left: clamp(range.left, 0, gridSize.nColumns - 1),
+		right: clamp(range.right, 0, gridSize.nColumns - 1),
 	}
-
-	if (data.nRows >= size.nRows) {
-		console.log("HERE", data.nRows, size.nRows, data.moreRows)
-		size.nRows = data.nRows
-		size.moreRows = data.moreRows
-	}
-
-	return size
 }

@@ -36,10 +36,8 @@ export function GridDemo() {
 		}
 
 		return {
-			nColumns: Math.min(range.right, nColumns - 1),
-			nRows: Math.min(range.bottom, nRows - 1),
-			moreRows: range.bottom < nRows - 1,
-			moreColumns: range.right < nColumns - 1,
+			nColumns,
+			nRows,
 			data: rows,
 		}
 	}

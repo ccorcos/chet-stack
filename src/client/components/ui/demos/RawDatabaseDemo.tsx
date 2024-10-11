@@ -10,42 +10,39 @@ export function RawDatabaseDemo() {
 	const { api } = useClientEnvironment()
 
 	const fetchCells = async (range: CellRange) => {
-		// {bottom: 2} means we're requesting 3 rows. But we also want to fetch one more to check if there's a next page.
-		const response = await api.query(db.list({ limit: range.bottom + 2 }))
+		const response = await api.query(db.list({ limit: range.bottom + 1 }))
+
 		if (response.status !== 200) throw new Error(response.status.toString())
 		const result = response.body
 
-		console.log("FETCH", range, result.length, result.length > range.bottom)
-
 		return {
 			nColumns: 1, // key is the header.
-			moreColumns: false,
-			nRows: result.length,
-			moreRows: result.length > range.bottom + 1,
+			// Heres a trick if you don't actually know the number of rows.
+			nRows: result.length > range.bottom ? range.bottom + 500 : result.length,
 			data: result,
 		}
 	}
 
 	return (
-		<Grid
-			fetch={async (range: CellRange) => {
-				return fetchCells(range)
-			}}
-		>
+		<Grid fetch={fetchCells}>
 			{(props, row, col, data) => {
 				let content = "."
-
-				if (row === -1) {
-					if (col === 0) content = "key"
-					if (col === 1) content = "value"
-				}
 
 				if (data !== undefined) {
 					if (col === -1) content = data[row]?.key
 					if (col === 0) content = data[row]?.value
 				}
 
-				return <div {...props}>{content}</div>
+				if (row === -1) {
+					if (col === -1) content = "key"
+					if (col === 0) content = "value"
+				}
+
+				return (
+					<div {...props} style={{ ...props.style, overflow: "hidden" }}>
+						{content}
+					</div>
+				)
 			}}
 		</Grid>
 	)
