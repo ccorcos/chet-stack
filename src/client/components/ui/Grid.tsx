@@ -1,4 +1,4 @@
-import { clamp, debounce, isEqual, throttle } from "lodash"
+import { clamp, debounce, isEqual, range, throttle } from "lodash"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useDeepState } from "../../hooks/useDeepState"
 import { useDomEvent } from "../../hooks/useDomEvent"
@@ -272,7 +272,7 @@ export function Grid<T>(props: {
 		const anchorStyle = {
 			...selectedStyle,
 			outline: "2px solid var(--highlight)",
-			outlineOffset: -1,
+			outlineOffset: -2,
 		}
 
 		if (row === selection.end.row && col === selection.end.col) {
@@ -545,126 +545,50 @@ export function Grid<T>(props: {
 							columnGap,
 						}}
 					>
-						{/* Empty top-left corner cell */}
-						{/* <div
-							style={{
-								position: "sticky",
-								top: 0,
-								left: 0,
-								zIndex: 2,
-								backgroundColor: "var(--background)",
-								width: colWidth,
-								height: rowHeight,
-							}}
-						></div> */}
-						{props.children(
-							{
-								key: `header-${-1}`,
-								style: {
-									width: colWidth,
-									height: rowHeight,
-									backgroundColor: "var(--background2)",
-									position: "sticky",
-									top: 0,
-									zIndex: 2,
-									textAlign: "center",
-									fontWeight: "bold",
-									...cellStyle(-1, -1),
-								},
-								"data-column-index": -1,
-								"data-row-index": -1,
-								onClick: handleClickHeader,
-								onDoubleClick: handleDoubleClickColumnHeader,
-							},
-							-1,
-							-1,
-							gridData.data
-						)}
+						{range(-1, nVisibleDataRows).map((i) => {
+							return range(-1, nVisibleDataCols).map((j) => {
+								const row = i === -1 ? -1 : renderedRange.top + i
+								const col = j === -1 ? -1 : renderedRange.left + j
 
-						{/* Column headers */}
-						{Array.from({ length: nVisibleDataCols }).map((_, i) => {
-							const row = -1
-							const col = renderedRange.left + i
+								const key = [row, col].toString()
 
-							return props.children(
-								{
-									key: `header-${col}`,
-									style: {
-										width: colWidth,
-										height: rowHeight,
-										backgroundColor: "var(--background2)",
-										position: "sticky",
-										top: 0,
-										zIndex: 1,
-										textAlign: "center",
-										fontWeight: "bold",
-										...cellStyle(row, col),
-									},
-									"data-column-index": col,
-									"data-row-index": row,
-									onClick: handleClickHeader,
-									onDoubleClick: handleDoubleClickColumnHeader,
-								},
-								row,
-								col,
-								gridData.data
-							)
-							// return (
-							// 	<div
-							// 		key={`header-${col}`}
-							// 		style={{
-							// 			width: colWidth,
-							// 			height: rowHeight,
-							// 			backgroundColor: "var(--background2)",
-							// 			position: "sticky",
-							// 			top: 0,
-							// 			zIndex: 1,
-							// 			textAlign: "center",
-							// 			fontWeight: "bold",
-							// 			...cellStyle(row, col),
-							// 		}}
-							// 		data-column-index={col}
-							// 		data-row-index={row}
-							// 		onClick={handleClickHeader}
-							// 		onDoubleClick={handleDoubleClickColumnHeader}
-							// 	>
-							// 		Column {col + 1}
-							// 	</div>
-							// )
-						})}
-
-						{/* Row headers and cells */}
-						{Array.from({ length: nVisibleDataRows }).map((_, i) => {
-							const row = renderedRange.top + i
-							const col = -1
-
-							return (
-								<React.Fragment key={`row-${row}`}>
-									{/* Row header */}
-									{/* <div
-										data-type="header-row"
-										style={{
-											width: colWidth,
-											height: rowHeight,
-											backgroundColor: "var(--background2)",
-											position: "sticky",
-											left: 0,
-											zIndex: 1,
-											textAlign: "center",
-											fontWeight: "bold",
-											...cellStyle(row, col),
-											// top: `${(row + 1) * rowHeight}px`,
-										}}
-										data-column-index={col}
-										data-row-index={row}
-										onClick={handleClickHeader}
-										onDoubleClick={handleDoubleClickRowHeader}
-									>
-										Row {row + 1}
-									</div> */}
-									{props.children(
+								if (row === -1) {
+									// Column header
+									return props.children(
 										{
-											"data-type": "header-row",
+											key,
+											"data-row-index": row,
+											"data-column-index": col,
+											onClick: handleClickHeader,
+											onDoubleClick: handleDoubleClickColumnHeader,
+											style: {
+												width: colWidth,
+												height: rowHeight,
+												backgroundColor: "var(--background2)",
+												position: "sticky",
+												top: 0,
+												left: col === -1 ? 0 : undefined,
+												zIndex: col === -1 ? 2 : 1,
+												textAlign: "center",
+												fontWeight: "bold",
+												...cellStyle(row, col),
+											},
+										},
+										row,
+										col,
+										gridData.data
+									)
+								}
+
+								if (col === -1) {
+									// Row header
+									return props.children(
+										{
+											key,
+											"data-row-index": row,
+											"data-column-index": col,
+											onClick: handleClickHeader,
+											onDoubleClick: handleDoubleClickRowHeader,
 											style: {
 												width: colWidth,
 												height: rowHeight,
@@ -677,62 +601,33 @@ export function Grid<T>(props: {
 												...cellStyle(row, col),
 												// top: `${(row + 1) * rowHeight}px`,
 											},
-											"data-column-index": col,
-											"data-row-index": row,
-											onClick: handleClickHeader,
-											onDoubleClick: handleDoubleClickRowHeader,
 										},
 										row,
 										col,
 										gridData.data
-									)}
+									)
+								}
 
-									{/* Cells */}
-									{Array.from({ length: nVisibleDataCols }).map((_, j) => {
-										const col = renderedRange.left + j
-										const index = [row, col].toString()
-
-										// return (
-										// 	<div
-										// 		key={index}
-										// 		style={{
-										// 			width: colWidth,
-										// 			height: rowHeight,
-										// 			userSelect: isDragging ? "none" : undefined,
-										// 			...cellStyle(row, col),
-										// 		}}
-										// 		className="hover"
-										// 		data-row-index={row}
-										// 		data-column-index={col}
-										// 		onMouseDown={handleCellMouseDown}
-										// 		onMouseEnter={handleCellMouseEnter}
-										// 	>
-										// 		{index}
-										// 	</div>
-										// )
-
-										return props.children(
-											{
-												key: index,
-												style: {
-													width: colWidth,
-													height: rowHeight,
-													userSelect: isDragging ? "none" : undefined,
-													...cellStyle(row, col),
-												},
-												className: "hover",
-												"data-row-index": row,
-												"data-column-index": col,
-												onMouseDown: handleCellMouseDown,
-												onMouseEnter: handleCellMouseEnter,
-											},
-											row,
-											col,
-											gridData.data
-										)
-									})}
-								</React.Fragment>
-							)
+								return props.children(
+									{
+										key,
+										"data-row-index": row,
+										"data-column-index": col,
+										onMouseDown: handleCellMouseDown,
+										onMouseEnter: handleCellMouseEnter,
+										className: "hover",
+										style: {
+											width: colWidth,
+											height: rowHeight,
+											userSelect: isDragging ? "none" : undefined,
+											...cellStyle(row, col),
+										},
+									},
+									row,
+									col,
+									gridData.data
+								)
+							})
 						})}
 					</div>
 				)}

@@ -40,7 +40,7 @@ export function PlantDatabaseDemo() {
 		const result = response.body.map(({ key, value }) => ({ key, value: JSON.parse(value) }))
 
 		return {
-			nColumns: columns.length - 1, // key is the header.
+			nColumns: columns.length,
 			nRows: result.length > range.bottom ? range.bottom + 100 : result.length,
 			data: result,
 		}
@@ -64,7 +64,7 @@ export function PlantDatabaseDemo() {
 				}
 
 				return (
-					<div {...props} style={{ ...props.style, overflow: "hidden" }}>
+					<div {...props} style={{ ...props.style }}>
 						{content}
 					</div>
 				)
