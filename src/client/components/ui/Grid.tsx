@@ -33,6 +33,7 @@ type GridData<T> = {
 
 export function Grid<T>(props: {
 	fetch: (range: CellRange) => FetchData<T> | Promise<FetchData<T>>
+	/** row: -1 and col: -1 are for header cells. */
 	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
 	rowHeight?: number
 	colWidth?: number
@@ -41,15 +42,17 @@ export function Grid<T>(props: {
 	// How much to overfetch when loading more data.
 	rowMargin?: number
 	colMargin?: number
+	debounceMs?: number
 }) {
 	// Default values.
-	const { rowHeight, colWidth, columnGap, rowGap, rowMargin, colMargin } = {
+	const { rowHeight, colWidth, columnGap, rowGap, rowMargin, colMargin, debounceMs } = {
 		rowHeight: props.rowHeight ?? 22,
 		colWidth: props.colWidth ?? 140,
 		columnGap: props.columnGap ?? 1,
 		rowGap: props.rowGap ?? 1,
 		rowMargin: props.rowMargin ?? 20,
 		colMargin: props.colMargin ?? 10,
+		debounceMs: props.debounceMs ?? 0,
 	}
 
 	// ==========================================================================
@@ -306,17 +309,23 @@ export function Grid<T>(props: {
 			columnGap,
 		})
 
+		// We want to fetch new data slightly before we need it to account for latency.
+		const requireLoadedRange = expandVisibleRange(visibleRange, {
+			rowMargin: Math.floor(rowMargin / 2),
+			colMargin: Math.floor(colMargin / 2),
+		})
+
+		// If the visible range is not in the gridData response, then fetch more.
+		const loadMoreTop = requireLoadedRange.top < gridData.range.top
+		const loadMoreBottom = requireLoadedRange.bottom > gridData.range.bottom
+		const loadMoreLeft = requireLoadedRange.left < gridData.range.left
+		const loadMoreRight = requireLoadedRange.right > gridData.range.right
+
 		// Expand by some margin.
 		const expandedRange = expandVisibleRange(visibleRange, { rowMargin, colMargin })
 
 		// Clamp down to the known size of the grid.
 		const clampedRange = clampToGridSize(expandedRange, gridSize)
-
-		// If the visible range is not in the gridData response, then fetch more.
-		const loadMoreTop = visibleRange.top < gridData.range.top
-		const loadMoreBottom = visibleRange.bottom > gridData.range.bottom
-		const loadMoreLeft = visibleRange.left < gridData.range.left
-		const loadMoreRight = visibleRange.right > gridData.range.right
 
 		// Overfetch with the expanded range.
 		if (loadMoreTop || loadMoreLeft || loadMoreRight || loadMoreBottom) loadMore(clampedRange)
@@ -350,7 +359,7 @@ export function Grid<T>(props: {
 					console.error(error)
 				}
 			},
-			100,
+			debounceMs,
 			{ leading: false, trailing: true }
 		)
 	}, [])
