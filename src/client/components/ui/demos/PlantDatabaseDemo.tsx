@@ -41,9 +41,7 @@ export function PlantDatabaseDemo() {
 
 		return {
 			nColumns: columns.length - 1, // key is the header.
-			moreColumns: false,
-			nRows: result.length,
-			moreRows: result.length > range.bottom,
+			nRows: result.length > range.bottom ? range.bottom + 100 : result.length,
 			data: result,
 		}
 	}
@@ -65,7 +63,11 @@ export function PlantDatabaseDemo() {
 					// content = row.toString()
 				}
 
-				return <div {...props}>{content}</div>
+				return (
+					<div {...props} style={{ ...props.style, overflow: "hidden" }}>
+						{content}
+					</div>
+				)
 			}}
 		</Grid>
 	)

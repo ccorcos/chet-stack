@@ -32,9 +32,7 @@ type GridData<T> = {
 }
 
 export function Grid<T>(props: {
-	// Note that {top: 0, bottom: 2} means we're requesting 3 rows.
-	fetch: (range: CellRange) => Promise<FetchData<T>>
-	// TODO: fix html div props type here.
+	fetch: (range: CellRange) => FetchData<T> | Promise<FetchData<T>>
 	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
 	rowHeight?: number
 	colWidth?: number
@@ -58,15 +56,16 @@ export function Grid<T>(props: {
 	// Selection
 	// ==========================================================================
 
-	const [renderedRange, setRenderedRange] = useDeepState({ top: 0, left: 0, right: 0, bottom: 0 })
+	const [selection, setSelection] = useDeepState<GridSelection | undefined>(undefined)
+
 	const [gridData, setGridData] = useDeepState<GridData<T | undefined>>({
 		range: { top: 0, left: 0, right: 0, bottom: 0 },
 		data: undefined,
 	})
-	const [gridSize, setGridSize] = useDeepState<GridSize | undefined>(undefined)
 
+	const [renderedRange, setRenderedRange] = useDeepState({ top: 0, left: 0, right: 0, bottom: 0 })
+	const [gridSize, setGridSize] = useDeepState<GridSize | undefined>(undefined)
 	const [isDragging, setIsDragging] = useDeepState(false)
-	const [selection, setSelection] = useDeepState<GridSelection | undefined>(undefined)
 
 	const getRowCol = (e: React.MouseEvent<HTMLDivElement>) => {
 		const elm = e.target as HTMLElement
