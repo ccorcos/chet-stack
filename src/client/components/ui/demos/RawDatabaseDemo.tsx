@@ -1,16 +1,25 @@
-import React from "react"
+import React, { useState } from "react"
 import { OrderedKeyValueApi } from "../../../../shared/database/types"
 import { FnCallProxy } from "../../../../shared/fnCall"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { CellRange, Grid } from "../Grid"
+import { Input } from "../Input"
 
 const db = FnCallProxy<OrderedKeyValueApi<string, string>>()
 
 export function RawDatabaseDemo() {
 	const { api } = useClientEnvironment()
 
+	const [prefix, setPrefix] = useState("")
+
 	const fetchCells = async (range: CellRange) => {
-		const response = await api.query(db.list({ limit: range.bottom + 1 }))
+		const response = await api.query(
+			db.list({
+				limit: range.bottom + 1,
+				gte: prefix + "\x00",
+				lte: prefix + "\xff",
+			})
+		)
 
 		if (response.status !== 200) throw new Error(response.status.toString())
 		const result = response.body
@@ -24,26 +33,29 @@ export function RawDatabaseDemo() {
 	}
 
 	return (
-		<Grid fetch={fetchCells}>
-			{(props, row, col, data) => {
-				let content = "."
+		<div style={{ display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
+			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+			<Grid key={prefix} fetch={fetchCells}>
+				{(props, row, col, data) => {
+					let content = "."
 
-				if (data !== undefined) {
-					if (col === -1) content = data[row]?.key
-					if (col === 0) content = data[row]?.value
-				}
+					if (data !== undefined) {
+						if (col === -1) content = data[row]?.key
+						if (col === 0) content = data[row]?.value
+					}
 
-				if (row === -1) {
-					if (col === -1) content = "key"
-					if (col === 0) content = "value"
-				}
+					if (row === -1) {
+						if (col === -1) content = "key"
+						if (col === 0) content = "value"
+					}
 
-				return (
-					<div {...props} style={{ ...props.style, overflow: "hidden" }}>
-						{content}
-					</div>
-				)
-			}}
-		</Grid>
+					return (
+						<div {...props} style={{ ...props.style, overflow: "hidden" }}>
+							{content}
+						</div>
+					)
+				}}
+			</Grid>
+		</div>
 	)
 }

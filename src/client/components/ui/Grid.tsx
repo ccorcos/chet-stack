@@ -115,20 +115,14 @@ export function Grid<T>(props: {
 
 		if (selection.type === "rows") {
 			updateSelection(
-				{
-					...selection,
-					end: { row: clamp(row + rowOffset, 0, rowMaxIndex), col: -1 },
-				},
+				{ ...selection, end: { row: clamp(row + rowOffset, 0, rowMaxIndex), col: -1 } },
 				focus
 			)
 			return
 		}
 		if (selection.type === "cols") {
 			updateSelection(
-				{
-					...selection,
-					end: { row: -1, col: clamp(col + colOffset, 0, colMaxIndex) },
-				},
+				{ ...selection, end: { row: -1, col: clamp(col + colOffset, 0, colMaxIndex) } },
 				focus
 			)
 			return
@@ -333,7 +327,6 @@ export function Grid<T>(props: {
 	}
 
 	const renderedRangeRef = useRefCurrent(renderedRange)
-	const gridSizeRef = useRefCurrent(gridSize)
 	const fetchRef = useRefCurrent(props.fetch)
 
 	const loadMore = useMemo(() => {

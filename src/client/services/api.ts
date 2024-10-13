@@ -87,7 +87,7 @@ export async function httpRequest(url: string, args: any): Promise<HttpResponse>
 			const body = await response.json()
 			return { status: 200, body }
 		} catch (error) {
-			return { status: 200, body: {} }
+			return { status: 200, body: undefined }
 		}
 	}
 

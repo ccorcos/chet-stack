@@ -17,6 +17,8 @@ export type OrderedKeyValueApi<K = any, V = any> = KeyValueApi<K, V> & {
 	}): { key: K; value: V }[]
 }
 
+// TODO: count, aggregations
+
 export type IntervalTreeApi<
 	B = (string | number)[],
 	K = (string | number)[],
