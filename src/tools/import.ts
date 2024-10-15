@@ -4,7 +4,7 @@ import { parse } from "csv-parse/sync"
 import { readFileSync } from "fs"
 import { Database } from "../server/services/Database"
 import { config } from "../server/services/ServerConfig"
-import { Subspace } from "../shared/database/Codec"
+import { Subspace } from "../shared/database/DatabaseEncoder"
 
 const db = new Database(config.dbPath)
 

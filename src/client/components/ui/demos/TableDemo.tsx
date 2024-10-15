@@ -1,8 +1,9 @@
-import React, { useState } from "react"
+import React from "react"
 import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
 import { randomId } from "../../../../shared/randomId"
 import { useCounter } from "../../../hooks/useCounter"
+import { useLocalStorageState } from "../../../hooks/useLocalStorageState"
 import { useSuspense } from "../../../hooks/useSuspense"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Button, NakedButton } from "../Button"
@@ -129,9 +130,17 @@ export function TableDemo() {
 		return JSON.parse(response.body) as SchemaList
 	})
 
-	const [selectedIndex, setSelectedIndex] = useState<number | undefined>()
+	const [selectedSchemaId, setSelectedSchemaId] = useLocalStorageState(
+		"selectedSchemaId",
+		schemas.schemas[0]
+	) as any
 
-	const selectedSchemaId = selectedIndex === undefined ? undefined : schemas.schemas[selectedIndex]
+	const selectedIndex = schemas.schemas.indexOf(selectedSchemaId)
+
+	const setSelectedIndex = (index: number) => {
+		const newSchemaId = schemas.schemas[index] as any
+		setSelectedSchemaId(newSchemaId)
+	}
 
 	return (
 		<div style={{ display: "flex", gap: 12 }}>
@@ -181,7 +190,7 @@ export function TableDemo() {
 						])
 						inc()
 
-						setSelectedIndex((i) => (i === undefined ? 0 : i + 1))
+						setSelectedSchemaId(newSchema.id)
 					}}
 				>
 					New Schema
@@ -198,8 +207,26 @@ function DisplaySchema(props: { id: `schema:${string}` }) {
 		const response = await api.query(["get", props.id])
 		return response.status === 200 ? (JSON.parse(response.body) as Schema) : undefined
 	})
+	if (!schema) return <div>Schema not found</div>
 
-	return <div>{JSON.stringify(schema, null, 2)}</div>
+	return (
+		<Grid
+			key={props.id}
+			fetch={(range) => {
+				return { nRows: 1, nColumns: schema.properties.length, data: [] }
+			}}
+		>
+			{(props, row, col, data) => {
+				if (row === -1) {
+					if (col === -1) return <div {...props}>ID</div>
+					const prop = schema.properties[col]
+					if (!prop) return <div {...props}>.</div>
+					return <div {...props}>{prop.name || prop.id}</div>
+				}
+				return <div {...props}>.</div>
+			}}
+		</Grid>
+	)
 }
 
 export function SchemaName(props: { id: `schema:${string}` }) {
