@@ -1,9 +1,13 @@
 /* WARNING: this file is generated! */
 
+import * as get from "./get"
 import * as hello from "./hello"
-import * as query from "./query"
+import * as list from "./list"
+import * as write from "./write"
 
 export {
+	get,
 	hello,
-	query,
+	list,
+	write,
 }

@@ -1,10 +1,6 @@
 import React from "react"
-import { OrderedKeyValueApi } from "../../../../shared/database/types"
-import { FnCallProxy } from "../../../../shared/fnCall"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { CellRange, Grid } from "../Grid"
-
-const db = FnCallProxy<OrderedKeyValueApi<string, string>>()
 
 const columns = [
 	"﻿Common Name",
@@ -33,9 +29,11 @@ export function PlantDatabaseDemo() {
 	const { api } = useClientEnvironment()
 
 	const fetchCells = async (range: CellRange) => {
-		const response = await api.query(
-			db.list({ gte: "plants\x00", lt: "plants\xff", limit: range.bottom + 1 })
-		)
+		const response = await api.list({
+			gte: "plants\x00",
+			lt: "plants\xff",
+			limit: range.bottom + 1,
+		})
 		if (response.status !== 200) throw new Error(response.status.toString())
 		const result = response.body.map(({ key, value }) => ({ key, value: JSON.parse(value) }))
 

@@ -1,11 +1,7 @@
 import React, { useState } from "react"
-import { OrderedKeyValueApi } from "../../../../shared/database/types"
-import { FnCallProxy } from "../../../../shared/fnCall"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { CellRange, Grid } from "../Grid"
 import { Input } from "../Input"
-
-const db = FnCallProxy<OrderedKeyValueApi<string, string>>()
 
 export function RawDatabaseDemo() {
 	const { api } = useClientEnvironment()
@@ -13,13 +9,11 @@ export function RawDatabaseDemo() {
 	const [prefix, setPrefix] = useState("")
 
 	const fetchCells = async (range: CellRange) => {
-		const response = await api.query(
-			db.list({
-				limit: range.bottom + 1,
-				gte: prefix + "\x00",
-				lte: prefix + "\xff",
-			})
-		)
+		const response = await api.list({
+			limit: range.bottom + 1,
+			gte: prefix + "\x00",
+			lte: prefix + "\xff",
+		})
 
 		if (response.status !== 200) throw new Error(response.status.toString())
 		const result = response.body

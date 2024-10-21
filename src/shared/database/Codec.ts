@@ -3,6 +3,8 @@ import {
 	BooleanEncoding,
 	Codec,
 	Encoding,
+	MAX,
+	MIN,
 	MaxEncoding,
 	MinEncoding,
 	NullEncoding,
@@ -10,6 +12,8 @@ import {
 	ObjectEncoding,
 	StringEncoding,
 } from "lexicodec"
+
+export { MAX, MIN }
 
 const DateEncoding: Encoding<Date> = {
 	match: (value: unknown) =>

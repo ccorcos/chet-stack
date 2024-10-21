@@ -1,6 +1,7 @@
 import React from "react"
 import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
+import { MAX, MIN, codec } from "../../../../shared/database/Codec"
 import { randomId } from "../../../../shared/randomId"
 import { useCounter } from "../../../hooks/useCounter"
 import { useLocalStorageState } from "../../../hooks/useLocalStorageState"
@@ -9,7 +10,7 @@ import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Button, NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { Grid } from "../Grid"
-import { NakedInput } from "../Input"
+import { Input, NakedInput } from "../Input"
 import { ListBox, ListItem } from "../ListBox"
 
 type Property =
@@ -34,6 +35,7 @@ type TableView = {
 
 type Record = {
 	id: `record:${string}`
+	schemaId: `schema:${string}`
 	properties: {
 		[propertyId: string]: string | number | boolean | undefined
 	}
@@ -123,9 +125,8 @@ export function TableDemo() {
 
 	const [n, inc] = useCounter()
 	const schemas = useSuspense("load schemas" + n, async () => {
-		const response = await api.query(["get", "schemaList"])
+		const response = await api.get({ key: "schemaList" })
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		console.log(response)
 		if (!response.body) return { id: "schemaList", schemas: [] } as SchemaList
 		return JSON.parse(response.body) as SchemaList
 	})
@@ -173,21 +174,18 @@ export function TableDemo() {
 							],
 						}
 
-						await api.query([
-							"write",
-							{
-								set: [
-									{
-										key: "schemaList",
-										value: JSON.stringify({
-											id: "schemaList",
-											schemas: [...schemas.schemas, newSchema.id],
-										}),
-									},
-									{ key: newSchema.id, value: JSON.stringify(newSchema) },
-								],
-							},
-						])
+						await api.write({
+							set: [
+								{
+									key: "schemaList",
+									value: JSON.stringify({
+										id: "schemaList",
+										schemas: [...schemas.schemas, newSchema.id],
+									}),
+								},
+								{ key: newSchema.id, value: JSON.stringify(newSchema) },
+							],
+						})
 						inc()
 
 						setSelectedSchemaId(newSchema.id)
@@ -203,29 +201,90 @@ export function TableDemo() {
 
 function DisplaySchema(props: { id: `schema:${string}` }) {
 	const { api } = useClientEnvironment()
+
 	const schema = useSuspense(props.id, async () => {
-		const response = await api.query(["get", props.id])
-		return response.status === 200 ? (JSON.parse(response.body) as Schema) : undefined
+		const response = await api.get({ key: props.id })
+		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
 	})
 	if (!schema) return <div>Schema not found</div>
 
+	const [n, inc] = useCounter()
+
+	const newRow = async () => {
+		const record: Record = {
+			id: `record:${randomId()}`,
+			schemaId: props.id,
+			properties: {},
+		}
+		await api.write({
+			set: [
+				{ key: record.id, value: JSON.stringify(record) },
+				{
+					key: codec.encode(["schemaRecords", props.id, record.id]),
+					value: JSON.stringify(record),
+				},
+			],
+		})
+		inc()
+	}
+
+	const updateSchema = async (schema: Schema) => {
+		await api.write({
+			set: [{ key: schema.id, value: JSON.stringify(schema) }],
+		})
+	}
+
 	return (
-		<Grid
-			key={props.id}
-			fetch={(range) => {
-				return { nRows: 1, nColumns: schema.properties.length, data: [] }
-			}}
-		>
-			{(props, row, col, data) => {
-				if (row === -1) {
-					if (col === -1) return <div {...props}>ID</div>
-					const prop = schema.properties[col]
-					if (!prop) return <div {...props}>.</div>
-					return <div {...props}>{prop.name || prop.id}</div>
-				}
-				return <div {...props}>.</div>
-			}}
-		</Grid>
+		<>
+			<Input
+				value={schema.name}
+				onChange={(e) => updateSchema({ ...schema, name: e.target.value })}
+			/>
+			<Grid
+				key={props.id + n}
+				fetch={async (range) => {
+					const response = await api.list({
+						gte: codec.encode(["schemaRecords", props.id, MIN]),
+						lte: codec.encode(["schemaRecords", props.id, MAX]),
+					})
+					if (response.status !== 200) throw new Error("Request failed: " + response.status)
+
+					const records = response.body
+					return {
+						nRows: records.length + 1,
+						nColumns: schema.properties.length,
+						data: records,
+					}
+				}}
+			>
+				{(props, row, col, data) => {
+					const lastRow = row === (data?.length || 0)
+
+					if (row === -1) {
+						if (col === -1) return <div {...props}>ID</div>
+						const prop = schema.properties[col]
+						if (!prop) return <div {...props}>.</div>
+						return <div {...props}>{prop.name || prop.id}</div>
+					}
+
+					if (lastRow) {
+						if (col !== -1) return <div></div>
+
+						const { onClick, onDoubleClick, style, ...rest } = props
+						return (
+							<div {...rest} style={{ ...style, cursor: "pointer" }} onClick={newRow}>
+								+
+							</div>
+						)
+					}
+					if (!data) return <div {...props}>.</div>
+
+					const record = JSON.parse(data[row].value)
+					if (col === -1) return <div {...props}>{record.id}</div>
+					return <div {...props}>.</div>
+				}}
+			</Grid>
+		</>
 	)
 }
 
@@ -234,8 +293,8 @@ export function SchemaName(props: { id: `schema:${string}` }) {
 	const { api } = useClientEnvironment()
 
 	const schema = useSuspense(`schema ${id}`, async () => {
-		const response = await api.query(["get", id])
-		return response.status === 200 ? (response.body as Schema) : undefined
+		const response = await api.get({ key: id })
+		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
 	})
 
 	return <>{schema?.name || "Untitled"}</>
