@@ -7,10 +7,10 @@ export const input = t.any
 
 export async function handler(
 	environment: ServerEnvironment,
-	args: { key: string },
+	args: string,
 	req: Request,
 	res: Response
 ) {
 	const { db } = environment
-	return db.get(args.key)
+	return db.get(args)
 }

@@ -17,7 +17,7 @@ export function ApiServer(environment: ServerEnvironment, app: Express) {
 			`/api/${name}`,
 			cookieParser(),
 			express.json({ limit: "4mb" }),
-			// express.text(),
+			express.text(),
 			async (req, res) => {
 				const error = input.validate(req.body)
 				if (error) return res.status(400).json({ message: t.formatError(error) })

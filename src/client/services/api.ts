@@ -74,8 +74,8 @@ export async function httpRequest(url: string, args: any): Promise<HttpResponse>
 		response = await fetch(url, {
 			method: "post",
 			credentials: "same-origin",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(args),
+			headers: { "Content-Type": typeof args === "string" ? "text/plain" : "application/json" },
+			body: typeof args === "string" ? args : JSON.stringify(args),
 		})
 	} catch (error) {
 		// Offline
@@ -84,8 +84,14 @@ export async function httpRequest(url: string, args: any): Promise<HttpResponse>
 
 	if (response.status === 200) {
 		try {
-			const body = await response.json()
-			return { status: 200, body }
+			const contentType = response.headers.get("Content-Type")
+			if (contentType?.includes("application/json")) {
+				const body = await response.json()
+				return { status: 200, body }
+			} else {
+				const body = await response.text()
+				return { status: 200, body }
+			}
 		} catch (error) {
 			return { status: 200, body: undefined }
 		}

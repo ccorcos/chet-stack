@@ -125,7 +125,7 @@ export function TableDemo() {
 
 	const [n, inc] = useCounter()
 	const schemas = useSuspense("load schemas" + n, async () => {
-		const response = await api.get({ key: "schemaList" })
+		const response = await api.get("schemaList")
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		if (!response.body) return { id: "schemaList", schemas: [] } as SchemaList
 		return JSON.parse(response.body) as SchemaList
@@ -203,7 +203,7 @@ function DisplaySchema(props: { id: `schema:${string}` }) {
 	const { api } = useClientEnvironment()
 
 	const schema = useSuspense(props.id, async () => {
-		const response = await api.get({ key: props.id })
+		const response = await api.get(props.id)
 		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
 	})
 	if (!schema) return <div>Schema not found</div>
@@ -293,7 +293,7 @@ export function SchemaName(props: { id: `schema:${string}` }) {
 	const { api } = useClientEnvironment()
 
 	const schema = useSuspense(`schema ${id}`, async () => {
-		const response = await api.get({ key: id })
+		const response = await api.get(id)
 		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
 	})
 
