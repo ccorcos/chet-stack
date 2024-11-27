@@ -1,11 +1,10 @@
-import React from "react"
+import React, { Fragment } from "react"
 import { TupleDatabase, TupleDatabaseClient } from "tuple-database"
 import { BrowserTupleStorage } from "tuple-database/storage/BrowserTupleStorage"
 import { MAX, MIN, codec } from "../../../../shared/database/Codec"
 import { randomId } from "../../../../shared/randomId"
-import { useCounter } from "../../../hooks/useCounter"
+import { useKeyValue, writeKeyValue } from "../../../hooks/useKeyValue"
 import { useLocalStorageState } from "../../../hooks/useLocalStorageState"
-import { useSuspense } from "../../../hooks/useSuspense"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Button, NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
@@ -123,13 +122,10 @@ type SchemaList = {
 export function TableDemo() {
 	const { api } = useClientEnvironment()
 
-	const [n, inc] = useCounter()
-	const schemas = useSuspense("load schemas" + n, async () => {
-		const response = await api.get("schemaList")
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		if (!response.body) return { id: "schemaList", schemas: [] } as SchemaList
-		return JSON.parse(response.body) as SchemaList
-	})
+	const schemas: SchemaList = JSON.parse(useKeyValue("schemaList")) || {
+		id: "schemaList",
+		schemas: [],
+	}
 
 	const [selectedSchemaId, setSelectedSchemaId] = useLocalStorageState(
 		"selectedSchemaId",
@@ -174,7 +170,7 @@ export function TableDemo() {
 							],
 						}
 
-						await api.write({
+						writeKeyValue(api, {
 							set: [
 								{
 									key: "schemaList",
@@ -186,7 +182,6 @@ export function TableDemo() {
 								{ key: newSchema.id, value: JSON.stringify(newSchema) },
 							],
 						})
-						inc()
 
 						setSelectedSchemaId(newSchema.id)
 					}}
@@ -200,15 +195,9 @@ export function TableDemo() {
 }
 
 function DisplaySchema(props: { id: `schema:${string}` }) {
-	const { api } = useClientEnvironment()
+	const { api, db } = useClientEnvironment()
 
-	const schema = useSuspense(props.id, async () => {
-		const response = await api.get(props.id)
-		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
-	})
-	if (!schema) return <div>Schema not found</div>
-
-	const [n, inc] = useCounter()
+	const schema: Schema = JSON.parse(useKeyValue(props.id))
 
 	const newRow = async () => {
 		const record: Record = {
@@ -216,7 +205,8 @@ function DisplaySchema(props: { id: `schema:${string}` }) {
 			schemaId: props.id,
 			properties: {},
 		}
-		await api.write({
+
+		writeKeyValue(api, {
 			set: [
 				{ key: record.id, value: JSON.stringify(record) },
 				{
@@ -225,23 +215,24 @@ function DisplaySchema(props: { id: `schema:${string}` }) {
 				},
 			],
 		})
-		inc()
 	}
 
 	const updateSchema = async (schema: Schema) => {
-		await api.write({
+		writeKeyValue(api, {
 			set: [{ key: schema.id, value: JSON.stringify(schema) }],
 		})
 	}
 
+	console.log("schema", schema)
 	return (
-		<>
+		<Fragment key={props.id}>
 			<Input
 				value={schema.name}
 				onChange={(e) => updateSchema({ ...schema, name: e.target.value })}
 			/>
 			<Grid
-				key={props.id + n}
+				// TODO: we manually changed this key on every record update
+				key={props.id}
 				fetch={async (range) => {
 					const response = await api.list({
 						gte: codec.encode(["schemaRecords", props.id, MIN]),
@@ -284,19 +275,12 @@ function DisplaySchema(props: { id: `schema:${string}` }) {
 					return <div {...props}>.</div>
 				}}
 			</Grid>
-		</>
+		</Fragment>
 	)
 }
 
 export function SchemaName(props: { id: `schema:${string}` }) {
-	const { id } = props
-	const { api } = useClientEnvironment()
-
-	const schema = useSuspense(`schema ${id}`, async () => {
-		const response = await api.get(id)
-		return response.status === 200 ? (JSON.parse(response.body!) as Schema) : undefined
-	})
-
+	const schema: Schema = JSON.parse(useKeyValue(props.id))
 	return <>{schema?.name || "Untitled"}</>
 }
 

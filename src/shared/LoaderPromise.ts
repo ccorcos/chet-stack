@@ -1,4 +1,4 @@
-export class LoaderPromise<T> {
+export class LoaderPromise<T = any> {
 	public promise: Promise<T>
 	public resolved = false
 	public value?: T

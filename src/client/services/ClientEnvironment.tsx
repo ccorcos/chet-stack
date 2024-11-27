@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from "react"
+import { InMemoryDatabase } from "../../shared/database/InMemoryDatabase"
 import type { ClientConfig } from "./ClientConfig"
 import { Router } from "./Router"
 import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
@@ -9,6 +10,7 @@ export type ClientEnvironment = {
 	router: Router
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
+	db: InMemoryDatabase
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

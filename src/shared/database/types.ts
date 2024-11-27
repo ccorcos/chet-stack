@@ -1,10 +1,10 @@
-export type Transaction<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
+export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
 
 export type KeyValueApi<K = any, V = any> = {
 	get: (key: K) => V | undefined
 	set: (key: K, value: V) => void
 	delete: (key: K) => void
-	write: (tx: Transaction<K, V>) => void
+	write: (tx: WriteArgs<K, V>) => void
 }
 
 export type ListArgs<K = any> = {
@@ -28,4 +28,11 @@ export type IntervalTreeApi<
 	V = any,
 > = KeyValueApi<[B, B, K], V> & {
 	overlaps: (args?: ListArgs<B>) => { key: [B, B, K]; value: V }[]
+}
+
+function itree<B, K, V>(okv: OrderedKeyValueApi<any, any>) {
+	return {
+		set: (b1: B, b2: B, k: K, v: V) => okv.set([b1, b2, k], v),
+		overlaps: (b1: B, b2: B) => okv.list({ gt: [b1, b1, undefined], lt: [b2, b2, undefined] }),
+	}
 }

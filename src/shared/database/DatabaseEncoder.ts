@@ -1,5 +1,12 @@
 import { OrderedKeyValueApi } from "./types"
 
+type KeyValueEncoder<K, V> = {
+	encodeKey: (key: K) => string
+	decodeKey: (key: string) => K
+	encodeValue: (value: V) => string
+	decodeValue: (value: string) => V
+}
+
 type Encoder<I, O> = {
 	encode: (key: I) => O
 	decode: (key: O) => I
