@@ -18,7 +18,8 @@ const domain = production ? "example.com" : `localhost:${port}`
 const protocol = production ? "https" : "http"
 const baseUrl = `${protocol}://${domain}`
 
-const dbPath = process.env.DB_PATH || path("db/database.sqlite")
+const dbPath = process.env.DB_PATH || path("db/database2.sqlite")
+console.log("DB_PATH", dbPath)
 const queuePath = process.env.QUEUE_PATH || path("db/queue.json")
 
 export const config: ServerConfig = {

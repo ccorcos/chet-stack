@@ -13,7 +13,9 @@ import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
+import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
+import * as RawDatabase2Demo from "./RawDatabase2Demo"
 import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
@@ -33,7 +35,9 @@ export {
 	LayoutDemo,
 	ListBoxDemo,
 	PlantDatabaseDemo,
+	PlaygroundDemo,
 	PopupDemo,
+	RawDatabase2Demo,
 	RawDatabaseDemo,
 	SpinnerDemo,
 	TableDemo,

@@ -18,4 +18,10 @@ export class LoaderPromise<T = any> {
 				throw error
 			})
 	}
+
+	suspend() {
+		if (this.rejected) throw this.error!
+		if (this.resolved) return this.value as T
+		throw this.promise
+	}
 }

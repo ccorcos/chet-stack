@@ -1,40 +1,10 @@
-import { useEffect, useMemo } from "react"
-import { LoaderPromise } from "../../shared/LoaderPromise"
+import { useEffect } from "react"
 import { WriteArgs } from "../../shared/database/types"
+import { incStr } from "../../shared/incStr"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { ClientApi } from "../services/api"
 import { useCounter } from "./useCounter"
-
-type Loaders = { [key: string]: { refs: number; loader: LoaderPromise } }
-
-const loaders: Loaders = {}
-
-function useLoader<T>(key: string, fn: () => Promise<T>): LoaderPromise<T> {
-	const loader = useMemo(() => {
-		if (loaders[key]) {
-			const loader = loaders[key]
-			loader.refs += 1
-			return loader.loader
-		}
-		// console.log("load", id)
-		const loader = new LoaderPromise(fn())
-		loaders[key] = { refs: 1, loader }
-		return loader
-	}, [key])
-
-	useEffect(
-		() => () => {
-			if (loaders[key]) {
-				const loader = loaders[key]
-				loader.refs -= 1
-				if (loader.refs === 0) delete loaders[key]
-			}
-		},
-		[key]
-	)
-
-	return loader as LoaderPromise<T>
-}
+import { useLoader } from "./useLoader"
 
 // function useLoaderResult<T>(loader: LoaderPromise<T>) {
 // 	const [_, rerender] = useCounter()
@@ -47,12 +17,6 @@ function useLoader<T>(key: string, fn: () => Promise<T>): LoaderPromise<T> {
 // 	return { loading: true }
 // }
 
-function suspendLoader<T>(loader: LoaderPromise<T>) {
-	if (loader.rejected) throw loader.error!
-	if (loader.resolved) return loader.value as T
-	throw loader.promise
-}
-
 type Cache = { [key: string]: string }
 
 const cache: Cache = {}
@@ -60,6 +24,36 @@ const cache: Cache = {}
 type Listeners = { [key: string]: Set<(value: string) => void> }
 
 const listeners: Listeners = {}
+
+function getEmit(keys: string[]) {
+	const fns = new Set<(value: string) => void>()
+	for (const key of keys) {
+		for (const listener of listeners[key] ?? []) fns.add(listener)
+		for (const [prefix, listenersSet] of Object.entries(listenRanges)) {
+			if (key.startsWith(prefix)) {
+				for (const listener of listenersSet) {
+					fns.add(listener)
+				}
+			}
+		}
+	}
+	return fns
+}
+
+function emitListeners(key: string, value: string) {
+	for (const listener of listeners[key] ?? []) listener(value)
+}
+
+function emitListenRanges(key: string, value: string) {
+	// TODO: use a prefix tree or an interval tree to make this faster.
+	for (const [prefix, listenersSet] of Object.entries(listenRanges)) {
+		if (key.startsWith(prefix)) {
+			for (const listener of listenersSet) listener(value)
+		}
+	}
+}
+
+const listenRanges: Listeners = {}
 
 function useCache(key: string) {
 	const [_, rerender] = useCounter()
@@ -86,7 +80,43 @@ function useCache(key: string) {
 function setCache(key: string, value: any) {
 	if (value === undefined) delete cache[key]
 	else cache[key] = value
-	for (const listener of listeners[key] ?? []) listener(value)
+	emitListeners(key, value)
+	emitListenRanges(key, value)
+}
+
+function setCacheList(args: { key: string; value: any }[]) {
+	for (const { key, value } of args) {
+		if (value === undefined) delete cache[key]
+		else cache[key] = value
+	}
+	const fns = getEmit(args.map(({ key }) => key))
+	// TODO: need to re-fetch the values here.
+	for (const fn of fns) fn(undefined as any)
+}
+
+function useCacheList(prefix: string) {
+	const [_, rerender] = useCounter()
+
+	// Subscribe to local updates.
+	useEffect(() => {
+		const listener = () => rerender()
+		if (listenRanges[prefix]) {
+			listenRanges[prefix].add(listener)
+		} else {
+			listenRanges[prefix] = new Set([listener])
+		}
+		return () => {
+			if (listenRanges[prefix]) {
+				listenRanges[prefix].delete(listener)
+				if (listenRanges[prefix].size === 0) delete listenRanges[prefix]
+			}
+		}
+	}, [prefix])
+
+	// TODO: use a prefix tree or an interval tree to make this faster.
+	return Object.entries(cache)
+		.filter(([key, value]) => key.startsWith(prefix))
+		.map(([key, value]) => ({ key, value }))
 }
 
 // TODO: move cache, listeners, and loaders to the client environment.
@@ -100,9 +130,27 @@ export function useKeyValue<T>(key: string): string {
 		setCache(key, response.body)
 	})
 
-	suspendLoader(loader)
+	loader.suspend()
 
 	const value = useCache(key)
+	// TODO: subscribe to remote updates
+
+	return value! // because of suspense
+}
+
+export function useList<T>(prefix: string): { key: string; value: string }[] {
+	const { api } = useClientEnvironment()
+
+	const loader = useLoader("list:" + prefix, async () => {
+		const response = await api.list({ gte: prefix, lt: incStr(prefix) })
+		if (response.status !== 200) throw new Error("Request failed: " + response.status)
+		// db.set(key, response.body)
+		setCacheList(response.body)
+	})
+
+	loader.suspend()
+
+	const value = useCacheList(prefix)
 	// TODO: subscribe to remote updates
 
 	return value! // because of suspense
