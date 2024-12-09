@@ -2,6 +2,7 @@ import React, { Suspense, useLayoutEffect, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { useCounter } from "../../../hooks/useCounter"
 import { useLoader } from "../../../hooks/useLoader"
+import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
 
@@ -32,7 +33,7 @@ export function RawDatabase2Demo() {
 function RenderTable(props: { prefix: string }) {
 	const { api } = useClientEnvironment()
 
-	const [columnWidths, setColumnWidths] = useState([320])
+	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths", [320])
 
 	const [count, rerender] = useCounter()
 	const { prefix } = props

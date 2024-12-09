@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react"
 import { InMemoryDatabase } from "../../shared/database/InMemoryDatabase"
 import type { ClientConfig } from "./ClientConfig"
+import { LocalPreferences } from "./LocalPreferences"
 import { Router } from "./Router"
 import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 import type { ClientApi } from "./api"
@@ -11,6 +12,7 @@ export type ClientEnvironment = {
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
 	db: InMemoryDatabase
+	prefs: LocalPreferences
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

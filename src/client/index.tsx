@@ -5,6 +5,7 @@ import { InMemoryDatabase } from "../shared/database/InMemoryDatabase"
 import { Root } from "./components/Root"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
+import { LocalPreferences } from "./services/LocalPreferences"
 import { Router } from "./services/Router"
 import { WebsocketPubsubClient } from "./services/WebsocketPubsubClient"
 import { createApi } from "./services/api"
@@ -19,6 +20,7 @@ const pubsub = new WebsocketPubsubClient({
 })
 
 const db = new InMemoryDatabase()
+const prefs = new LocalPreferences()
 
 const environment: ClientEnvironment = {
 	config: clientConfig,
@@ -26,6 +28,7 @@ const environment: ClientEnvironment = {
 	api,
 	pubsub,
 	db,
+	prefs,
 }
 
 // Render the app.
