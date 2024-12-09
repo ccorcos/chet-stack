@@ -47,7 +47,7 @@ function RenderTable(props: { prefix: string }) {
 	const list = loader.suspend()
 
 	return (
-		<>
+		<React.Fragment key={prefix + count}>
 			<div>{list.length} results</div>
 
 			<div
@@ -159,7 +159,7 @@ function RenderTable(props: { prefix: string }) {
 					}}
 				/>
 			</div>
-		</>
+		</React.Fragment>
 	)
 }
 
