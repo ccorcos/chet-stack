@@ -9,7 +9,7 @@ import { Input } from "../Input"
 
 const GAP = 12
 
-export function RawDatabase2Demo(props: { params: Record<string, string> }) {
+export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const prefix = props.params.prefix || ""
 
 	const { router } = useClientEnvironment()
