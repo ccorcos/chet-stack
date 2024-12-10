@@ -1,4 +1,4 @@
-import React, { Suspense, useLayoutEffect, useRef, useState } from "react"
+import React, { startTransition, useLayoutEffect, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { formatRoute, parseRoute } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
@@ -7,18 +7,22 @@ import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
 
+const GAP = 12
+
 export function RawDatabase2Demo(props: { params: Record<string, string> }) {
 	const prefix = props.params.prefix || ""
 
 	const { router } = useClientEnvironment()
 
 	const setPrefix = (prefix: string) => {
-		const route = parseRoute(router.state.url)
-		if (route.type !== "design") return
-		const params: Record<string, string> = { ...route.params, prefix }
-		if (prefix === "") delete params.prefix
-		const url = formatRoute({ type: "design", params })
-		router.replace(url)
+		startTransition(() => {
+			const route = parseRoute(router.state.url)
+			if (route.type !== "design") return
+			const params: Record<string, string> = { ...route.params, prefix }
+			if (prefix === "") delete params.prefix
+			const url = formatRoute({ type: "design", params })
+			router.replace(url)
+		})
 	}
 
 	return (
@@ -36,12 +40,11 @@ export function RawDatabase2Demo(props: { params: Record<string, string> }) {
 			}}
 		>
 			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
-			<Suspense fallback={<div>Loading...</div>}>
-				<RenderTable prefix={prefix} />
-			</Suspense>
+			<RenderTable prefix={prefix} />
 		</div>
 	)
 }
+
 function RenderTable(props: { prefix: string }) {
 	const { api } = useClientEnvironment()
 
@@ -59,7 +62,7 @@ function RenderTable(props: { prefix: string }) {
 	const list = loader.suspend()
 
 	return (
-		<React.Fragment key={prefix + count}>
+		<React.Fragment>
 			<div>{list.length} results</div>
 
 			<div
@@ -85,7 +88,7 @@ function RenderTable(props: { prefix: string }) {
 						style={{
 							display: "grid",
 							gridTemplateColumns: `${columnWidths[0]}px 1fr`,
-							gap: 12,
+							gap: GAP,
 						}}
 					>
 						<div
@@ -115,7 +118,7 @@ function RenderTable(props: { prefix: string }) {
 							value
 						</div>
 						{list.map(({ key, value }) => (
-							<React.Fragment key={key}>
+							<React.Fragment key={key + count}>
 								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{key}</div> */}
 								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{value}</div> */}
 								<TextInput
@@ -145,8 +148,8 @@ function RenderTable(props: { prefix: string }) {
 					style={{
 						position: "absolute",
 						top: 0,
-						left: `${columnWidths[0]}px`,
-						width: "4px",
+						left: `${columnWidths[0] + GAP / 2 - 2}px`,
+						width: 4,
 						bottom: 0,
 						cursor: "col-resize",
 						backgroundColor: "black",

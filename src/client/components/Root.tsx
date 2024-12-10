@@ -29,7 +29,6 @@ function Loading() {
 
 function Router() {
 	const routerState = useRouterState()
-	console.log(routerState)
 	const route = parseRoute(routerState.url)
 
 	if (route.type === "root") return <App />
