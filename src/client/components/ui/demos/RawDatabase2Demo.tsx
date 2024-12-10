@@ -53,13 +53,47 @@ function RenderTable(props: { prefix: string }) {
 	const [count, rerender] = useCounter()
 	const { prefix } = props
 
+	const anchor = prefix
+
 	const loader = useLoader([prefix, count], async () => {
-		const response = await api.list({ gte: prefix, lt: incStr(prefix) })
+		const response = await api.list({ gte: prefix, lt: incStr(prefix), limit: 300 })
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		return response.body
 	})
 
 	const list = loader.suspend()
+
+	// when the user scrolls down past the 100th item, we want to find that item key and loading the next 300 items.
+	// when we're no longer at the beginning of the list (the prefix), then when we scroll up then we want to shift as well.
+
+	const scrollRef = useRef<HTMLDivElement>(null)
+
+	useLayoutEffect(() => {
+		const scrollDiv = scrollRef.current
+		if (!scrollDiv) return
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						console.log("100th item entered view")
+					}
+				})
+			},
+			{
+				root: scrollDiv,
+				threshold: 0,
+			}
+		)
+
+		// Find the 100th item if it exists
+		const hundredthItem = scrollDiv.querySelector('[data-index="99"]')
+		if (hundredthItem) {
+			observer.observe(hundredthItem)
+		}
+
+		return () => observer.disconnect()
+	}, [list])
 
 	return (
 		<React.Fragment>
@@ -77,6 +111,7 @@ function RenderTable(props: { prefix: string }) {
 				}}
 			>
 				<div
+					ref={scrollRef}
 					style={{
 						// Overflow grid with relative for stick headers.
 						flex: 1,
@@ -117,11 +152,12 @@ function RenderTable(props: { prefix: string }) {
 						>
 							value
 						</div>
-						{list.map(({ key, value }) => (
+						{list.map(({ key, value }, index) => (
 							<React.Fragment key={key + count}>
 								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{key}</div> */}
 								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{value}</div> */}
 								<TextInput
+									data-index={index}
 									value={key}
 									onSubmit={async (newKey) => {
 										await api.write({
@@ -178,20 +214,24 @@ function RenderTable(props: { prefix: string }) {
 	)
 }
 
-function TextInput(props: {
-	value: string
-	onSubmit: (value: string) => void
-	style?: React.CSSProperties
-}) {
-	const [draft, setDraft] = useState(props.value)
+function TextInput(
+	props: {
+		value: string
+		onSubmit: (value: string) => void
+	} & React.HTMLProps<HTMLDivElement>
+) {
+	const { value, onSubmit, ...rest } = props
+
+	const [draft, setDraft] = useState(value)
 
 	const submit = () => {
-		if (draft === props.value) return
-		props.onSubmit(draft)
+		if (draft === value) return
+		onSubmit(draft)
 	}
 
 	return (
 		<ContentEditableInput
+			{...rest}
 			value={draft}
 			onChange={(value) => setDraft(value)}
 			onBlur={() => {
@@ -212,13 +252,12 @@ function TextInput(props: {
 	)
 }
 
-function ContentEditableInput(props: {
-	value: string
-	onChange: (value: string) => void
-	onBlur?: () => void
-	onKeyDown?: (e: React.KeyboardEvent) => void
-	style?: React.CSSProperties
-}) {
+function ContentEditableInput(
+	props: {
+		value: string
+		onChange: (value: string) => void
+	} & React.HTMLProps<HTMLDivElement>
+) {
 	const ref = useRef<HTMLDivElement>(null)
 
 	useLayoutEffect(() => {
@@ -226,12 +265,15 @@ function ContentEditableInput(props: {
 		ref.current.textContent = props.value
 	}, [])
 
+	const { value, onChange, style, ...rest } = props
+
 	return (
 		<div
 			ref={ref}
+			{...rest}
 			contentEditable
 			style={{
-				...props.style,
+				...style,
 				// whiteSpace: "pre-wrap",
 				whiteSpace: "normal",
 				wordBreak: "break-all",
@@ -245,10 +287,8 @@ function ContentEditableInput(props: {
 				document.execCommand("insertText", false, text)
 			}}
 			onInput={(e) => {
-				props.onChange(e.currentTarget.textContent || "")
+				onChange(e.currentTarget.textContent || "")
 			}}
-			onBlur={props.onBlur}
-			onKeyDown={props.onKeyDown}
 			suppressContentEditableWarning={true}
 		></div>
 	)
