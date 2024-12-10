@@ -1,13 +1,25 @@
 import React, { Suspense, useLayoutEffect, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
+import { formatRoute, parseRoute } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
 import { useLoader } from "../../../hooks/useLoader"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
 
-export function RawDatabase2Demo() {
-	const [prefix, setPrefix] = useState("")
+export function RawDatabase2Demo(props: { params: Record<string, string> }) {
+	const prefix = props.params.prefix || ""
+
+	const { router } = useClientEnvironment()
+
+	const setPrefix = (prefix: string) => {
+		const route = parseRoute(router.state.url)
+		if (route.type !== "design") return
+		const params: Record<string, string> = { ...route.params, prefix }
+		if (prefix === "") delete params.prefix
+		const url = formatRoute({ type: "design", params })
+		router.replace(url)
+	}
 
 	return (
 		<div

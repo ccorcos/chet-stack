@@ -7,25 +7,28 @@ import { FuzzyString } from "./ui/FuzzyString"
 import { Input } from "./ui/Input"
 import { ListBox, ListItem } from "./ui/ListBox"
 
-import * as demos from "./ui/demos/autoindex"
+import { formatRoute } from "../../shared/routeHelpers"
 import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
+import * as demos from "./ui/demos/autoindex"
 
-export function Design(props: { page: string | undefined }) {
+export function Design(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()
+	const { params } = props
 
-	const currentPage = props.page || Object.keys(demos)[0]
-	const setCurrentPage = (page: string) => router.navigate({ type: "design", page })
+	const currentPage = params.page || Object.keys(demos)[0]
+	const setCurrentPage = (page: string) =>
+		router.navigate(formatRoute({ type: "design", params: { page } }))
 
 	// Layout is a full-page demo.
 	if (currentPage === "LayoutDemo") {
-		return React.createElement(demos.LayoutDemo.LayoutDemo)
+		return React.createElement(demos.LayoutDemo.LayoutDemo, { params })
 	}
 
 	return (
 		<Layout LeftPanel={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}>
 			<ContentLayout>
 				{demos[currentPage] ? (
-					React.createElement(demos[currentPage][currentPage])
+					React.createElement(demos[currentPage][currentPage], { params })
 				) : (
 					<div>Select a page</div>
 				)}

@@ -1,11 +1,11 @@
 import React, { useState } from "react"
 import { useClientEnvironment } from "../services/ClientEnvironment"
-import { useRoute } from "../services/Router"
+import { useRouterState } from "../services/Router"
 import { Button } from "./ui/Button"
 
 export function App() {
 	const environment = useClientEnvironment()
-	const route = useRoute()
+	const route = useRouterState()
 
 	// return <div style={{ display: "flex", height: "100vh" }}>hello world</div>
 	return <Layout />

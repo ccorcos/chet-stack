@@ -1,15 +1,30 @@
 export type RootRoute = { type: "root" }
-export type DesignRoute = { type: "design"; page?: string }
+export type DesignRoute = { type: "design"; params: Record<string, string> }
 export type UnknownRoute = { type: "unknown"; url: string }
 
 export type Route = RootRoute | DesignRoute | UnknownRoute
 
+function parseSearchParams(url: URL) {
+	const params: Record<string, string> = {}
+	url.searchParams.forEach((value, key) => {
+		params[key] = value
+	})
+	return params
+}
+
+function formatSearchParams(params: Record<string, string>) {
+	const urlParams = new URLSearchParams()
+	for (const [key, value] of Object.entries(params)) {
+		urlParams.set(key, value)
+	}
+	return urlParams.toString()
+}
+
 export function parseRoute(url: string): Route {
-	const parsed = new URL(url)
+	const parsed = new URL(url.startsWith("/") ? "https://example.com" + url : url)
 	if (parsed.pathname === "/") return { type: "root" }
 	if (parsed.pathname === "/design") {
-		const page = parsed.searchParams.get("page") || undefined
-		return { type: "design", page }
+		return { type: "design", params: parseSearchParams(parsed) }
 	}
 	return { type: "unknown", url }
 }
@@ -17,9 +32,12 @@ export function parseRoute(url: string): Route {
 export function formatRoute(route: Route) {
 	if (route.type === "root") return "/"
 	if (route.type === "design") {
-		if (route.page) return "/design?page=" + route.page
+		if (route.params) {
+			return "/design?" + formatSearchParams(route.params)
+		}
 		return "/design"
 	}
+	throw new Error("Unknown route:" + JSON.stringify(route))
 }
 
 // `/thread/:threadId` will return {threadId: string}

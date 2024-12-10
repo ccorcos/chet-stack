@@ -20,7 +20,7 @@ function getRelativeUrl(link: string) {
 export type HistoryState = {}
 
 export type RouterState = {
-	route: string
+	url: string
 	historyState: HistoryState | undefined
 }
 
@@ -28,16 +28,16 @@ export class Router {
 	state: RouterState
 
 	constructor() {
-		const route = getRelativeUrl(window.location.href)
+		const url = getRelativeUrl(window.location.href)
 		const historyState: HistoryState | undefined = window.history.state
-		this.state = { route, historyState }
+		this.state = { url, historyState }
 		window.onpopstate = this.onPopState
 	}
 
 	private onPopState = (event: PopStateEvent) => {
-		const route = getRelativeUrl(window.location.href)
+		const url = getRelativeUrl(window.location.href)
 		const historyState: HistoryState | undefined = event.state
-		this.setState({ historyState, route })
+		this.setState({ historyState, url })
 	}
 
 	private listeners: Set<(state: RouterState) => void> = new Set()
@@ -59,20 +59,20 @@ export class Router {
 		// Open external links in a new tab.
 		if (isExternalLink(link)) return window.open(link, "_blank")
 
-		const route = getRelativeUrl(link)
+		const url = getRelativeUrl(link)
 		const historyState = undefined
-		window.history.pushState(historyState, "", route)
-		this.setState({ historyState, route })
+		window.history.pushState(historyState, "", url)
+		this.setState({ historyState, url })
 	}
 
-	setParam = (key: string, value: string) => {
-		const url = new URL(window.location.href)
-		url.searchParams.set(key, value)
-		const route = getRelativeUrl(url.toString())
+	replace = (link: string) => {
+		// Open external links in a new tab.
+		if (isExternalLink(link)) return window.open(link, "_blank")
 
+		const url = getRelativeUrl(link)
 		const historyState = undefined
-		window.history.replaceState(historyState, "", route)
-		this.setState({ route, historyState })
+		window.history.replaceState(historyState, "", url)
+		this.setState({ historyState, url })
 	}
 
 	back = () => {
@@ -84,11 +84,11 @@ export class Router {
 	}
 }
 
-export function useRoute() {
+export function useRouterState() {
 	const { router } = useClientEnvironment()
 	const [state, setState] = useState(router.state)
 	useEffect(() => {
 		return router.addListener(setState)
 	}, [])
-	return state.route
+	return state
 }

@@ -1,6 +1,7 @@
 import React, { Suspense } from "react"
+import { parseRoute } from "../../shared/routeHelpers"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
-import { useRoute } from "../services/Router"
+import { useRouterState } from "../services/Router"
 import { App } from "./App"
 import { Design } from "./Design"
 import { Spinner } from "./ui/Spinner"
@@ -27,8 +28,11 @@ function Loading() {
 }
 
 function Router() {
-	const route = useRoute()
+	const routerState = useRouterState()
+	console.log(routerState)
+	const route = parseRoute(routerState.url)
+
 	if (route.type === "root") return <App />
-	if (route.type === "design") return <Design page={route.page} />
+	if (route.type === "design") return <Design params={route.params} />
 	return <div>Unknown route: {route.url}</div>
 }
