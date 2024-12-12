@@ -10,7 +10,7 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 				borderWidth: 1,
 				borderStyle: "solid",
 				borderRadius: "0.2em",
-				borderColor: props.disabled ? "var(--gray4)" : "var(--black)",
+				borderColor: props.disabled ? "var(--gray4)" : "var(--text-color)",
 				padding: "0.2em 0.4em",
 				...props.style,
 			}}

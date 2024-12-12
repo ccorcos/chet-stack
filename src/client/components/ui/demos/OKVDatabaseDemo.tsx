@@ -157,7 +157,7 @@ function RenderTable(props: { prefix: string }) {
 							style={{
 								position: "sticky",
 								top: 0,
-								backgroundColor: "white",
+								backgroundColor: "var(--background)",
 								fontWeight: "bold",
 								whiteSpace: "normal",
 								wordBreak: "break-all",
@@ -170,7 +170,7 @@ function RenderTable(props: { prefix: string }) {
 							style={{
 								position: "sticky",
 								top: 0,
-								backgroundColor: "white",
+								backgroundColor: "var(--background)",
 								fontWeight: "bold",
 								whiteSpace: "normal",
 								wordBreak: "break-all",
@@ -209,37 +209,68 @@ function RenderTable(props: { prefix: string }) {
 						))}
 					</div>
 				</div>
-				<div
-					style={{
-						position: "absolute",
-						top: 0,
-						left: `${columnWidths[0] + GAP / 2 - 2}px`,
-						width: 4,
-						bottom: 0,
-						cursor: "col-resize",
-						backgroundColor: "black",
-						userSelect: "none",
-					}}
-					onMouseDown={(e) => {
-						const startX = e.clientX
-						const startWidth = columnWidths[0]
-
-						const onMouseMove = (e: MouseEvent) => {
-							const delta = e.clientX - startX
-							setColumnWidths([Math.max(50, startWidth + delta)])
-						}
-
-						const onMouseUp = () => {
-							document.removeEventListener("mousemove", onMouseMove)
-							document.removeEventListener("mouseup", onMouseUp)
-						}
-
-						document.addEventListener("mousemove", onMouseMove)
-						document.addEventListener("mouseup", onMouseUp)
-					}}
-				/>
+				<Resizer columnWidths={columnWidths} setColumnWidths={setColumnWidths} />
 			</div>
 		</React.Fragment>
+	)
+}
+
+function useHover() {
+	const [hover, setHover] = useState(false)
+
+	return [
+		hover,
+		{ onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false) },
+	] as const
+}
+
+function Resizer(props: { columnWidths: number[]; setColumnWidths: (value: number[]) => void }) {
+	const { columnWidths, setColumnWidths } = props
+
+	const lineWidth = Math.floor(GAP * 0.7)
+	const [hover, hoverProps] = useHover()
+	return (
+		<div
+			style={{
+				position: "absolute",
+				top: 0,
+				left: `${columnWidths[0] + GAP / 2 - lineWidth / 2}px`,
+				width: lineWidth,
+				bottom: 0,
+				cursor: "col-resize",
+				userSelect: "none",
+				display: "flex",
+				justifyContent: "center",
+			}}
+			onMouseDown={(e) => {
+				const startX = e.clientX
+				const startWidth = columnWidths[0]
+
+				const onMouseMove = (e: MouseEvent) => {
+					const delta = e.clientX - startX
+					setColumnWidths([Math.max(50, startWidth + delta)])
+				}
+
+				const onMouseUp = () => {
+					document.removeEventListener("mousemove", onMouseMove)
+					document.removeEventListener("mouseup", onMouseUp)
+				}
+
+				document.addEventListener("mousemove", onMouseMove)
+				document.addEventListener("mouseup", onMouseUp)
+			}}
+			{...hoverProps}
+		>
+			<div
+				style={{
+					width: 1,
+					height: "100%",
+					backgroundColor: "var(--text-color)",
+					boxShadow: hover ? `0 0 3px 1px var(--text-color)` : "none",
+					transition: "box-shadow 0.2s ease-in-out",
+				}}
+			/>
+		</div>
 	)
 }
 
