@@ -40,6 +40,16 @@ export function formatRoute(route: Route) {
 	throw new Error("Unknown route:" + JSON.stringify(route))
 }
 
+const tmpOrigin = "https://example.com"
+export function setParam(url: string, key: string, value: string | undefined) {
+	const parsed = new URL(url.startsWith("/") ? tmpOrigin + url : url)
+	if (value === undefined) parsed.searchParams.delete(key)
+	else parsed.searchParams.set(key, value)
+	const newUrl = parsed.toString()
+	if (url.startsWith("/")) return newUrl.slice(tmpOrigin.length)
+	return newUrl
+}
+
 // `/thread/:threadId` will return {threadId: string}
 function matchRoutePath(pattern: string, urlPath: string) {
 	const patternSegments = pattern.split("/")

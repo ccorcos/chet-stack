@@ -57,7 +57,7 @@ const fruits: string[] = [
 export function ComboBoxDemo() {
 	const [value, setValue] = useState<string | undefined>()
 	return (
-		<div>
+		<div style={{ padding: 12 }}>
 			<ComboBoxSelect
 				items={fruits}
 				value={value}

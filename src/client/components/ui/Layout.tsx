@@ -36,7 +36,6 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 				overflow: "hidden",
 				position: "relative",
 				borderRadius: BORDER_RADIUS,
-				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
@@ -47,6 +46,7 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 					left: 0,
 					right: 0,
 					height: 64,
+					...props.style,
 				}}
 			>
 				{isVisible && props.children}
@@ -72,7 +72,6 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				overflow: "hidden",
 				position: "relative",
 				borderRadius: BORDER_RADIUS,
-				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
@@ -83,6 +82,7 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 					left: 0,
 					right: 0,
 					height: 64,
+					...props.style,
 				}}
 			>
 				{isVisible && props.children}
@@ -109,7 +109,6 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 				overflowY: "auto",
 				position: "relative",
 				borderRadius: BORDER_RADIUS,
-				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
@@ -120,6 +119,7 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 					bottom: 0,
 					right: 0,
 					width: 256,
+					...props.style,
 				}}
 			>
 				{isVisible && props.children}
@@ -145,7 +145,6 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 				overflow: "hidden",
 				position: "relative",
 				borderRadius: BORDER_RADIUS,
-				...props.style,
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
@@ -156,6 +155,7 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 					bottom: 0,
 					left: 0,
 					width: 256,
+					...props.style,
 				}}
 			>
 				{isVisible && props.children}
@@ -171,7 +171,7 @@ export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
 				flexGrow: 1,
 				background: "var(--background)",
 				overflowY: "auto",
-				padding: "16px",
+				// padding: "16px",
 				borderRadius: BORDER_RADIUS,
 				...props.style,
 			}}

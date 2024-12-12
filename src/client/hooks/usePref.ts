@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useClientEnvironment } from "../services/ClientEnvironment"
+import { Store, useStore } from "./useStore"
 
-export function usePref<T = any>(key: string, defaultValue: T): [T, (value: T) => void]
-export function usePref<T = any>(
-	key: string,
-	defaultValue?: T
-): [T | undefined, (value: T | undefined) => void] {
+export function usePref<T = any>(key: string, defaultValue: T): [T, (value: T) => void] {
 	const { prefs } = useClientEnvironment()
-	const [value, setValue] = useState<T | undefined>(() => prefs.get(key) ?? defaultValue)
+	const [value, setValue] = useState<T>(() => prefs.get(key) ?? defaultValue)
 
 	useEffect(() => {
 		return prefs.addListener(key, setValue)
@@ -16,8 +13,23 @@ export function usePref<T = any>(
 	const setPref = (newValue: T | undefined) => {
 		if (newValue === undefined) prefs.remove(key)
 		else prefs.set(key, newValue)
-		// setValue(newValue)
 	}
 
 	return [value, setPref]
+}
+
+export function usePrefStore<T = any>(key: string, defaultValue: T): Store<T> {
+	const { prefs } = useClientEnvironment()
+	const initialValue = useMemo(() => prefs.get(key) ?? defaultValue, [])
+	const store = useStore<T>(initialValue)
+
+	useEffect(() => {
+		return prefs.addListener(key, store.setState)
+	}, [key])
+
+	useEffect(() => {
+		return store.addListener((value) => prefs.set(key, value))
+	}, [key])
+
+	return store
 }

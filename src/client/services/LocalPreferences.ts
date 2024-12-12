@@ -1,3 +1,5 @@
+import { isEqual } from "lodash"
+
 type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue }
 
 /**
@@ -21,6 +23,8 @@ export class LocalPreferences<V = any> {
 	}
 
 	set(key: string, value: V): void {
+		const currentValue = this.get(key)
+		if (isEqual(currentValue, value)) return
 		localStorage.setItem(this.prefix + key, JSON.stringify(value))
 		this.emit(key, value)
 	}

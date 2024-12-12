@@ -1,27 +1,33 @@
-import React, { Suspense, useLayoutEffect, useRef, useState, useTransition } from "react"
+import React, {
+	Suspense,
+	useDeferredValue,
+	useLayoutEffect,
+	useRef,
+	useState,
+	useTransition,
+} from "react"
 import { incStr } from "../../../../shared/incStr"
-import { formatRoute, parseRoute } from "../../../../shared/routeHelpers"
+import { setParam } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
 import { useLoader } from "../../../hooks/useLoader"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
+import { TextInput } from "../TextInput"
 
 const GAP = 12
 
 export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
-	const prefix = props.params.prefix || ""
-
 	const { router } = useClientEnvironment()
 
+	const prefix = props.params.prefix || ""
 	const setPrefix = (prefix: string) => {
-		const route = parseRoute(router.state.url)
-		if (route.type !== "design") return
-		const params: Record<string, string> = { ...route.params, prefix }
-		if (prefix === "") delete params.prefix
-		const url = formatRoute({ type: "design", params })
+		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
 	}
+
+	const deferredPrefix = useDeferredValue(prefix)
+	const stalePrefix = deferredPrefix !== prefix
 
 	return (
 		<div
@@ -39,7 +45,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		>
 			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
 			<Suspense fallback={<div>Loading...</div>}>
-				<RenderTable prefix={prefix} />
+				<RenderTable prefix={deferredPrefix} stale={stalePrefix} />
 			</Suspense>
 		</div>
 	)
@@ -52,7 +58,7 @@ const debug = (...args: any[]) => {
 const DESIRED_SCREENS = 20
 const DEFAULT_LIMIT = 50
 
-function RenderTable(props: { prefix: string }) {
+function RenderTable(props: { prefix: string; stale: boolean }) {
 	// const { prefix } = props
 	const { api } = useClientEnvironment()
 
@@ -63,19 +69,17 @@ function RenderTable(props: { prefix: string }) {
 	const [pendingUp, startTransitionUp] = useTransition()
 	const [pendingDown, startTransitionDown] = useTransition()
 
-	// Update the state with the prefix. We do this so that we can render the transition inside
-	// this component and persist the scroller element.
-	const [prefix, setPrefix] = useState(props.prefix)
+	// Update state with the prefix. We do this so that we persist the scroller element.
+	const { prefix } = props
 	useLayoutEffect(() => {
 		startTransitionSearch(() => {
-			setPrefix(props.prefix)
 			setAnchor(({ limit }) => ({
-				key: props.prefix,
+				key: prefix,
 				limit,
 				reverse: false,
 			}))
 		})
-	}, [props.prefix])
+	}, [prefix])
 
 	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean; limit: number }>({
 		key: prefix,
@@ -266,7 +270,7 @@ function RenderTable(props: { prefix: string }) {
 									? "var(--red)"
 									: pendingDown
 									? "var(--green)"
-									: pendingSearch
+									: pendingSearch || props.stale
 									? "var(--blue)"
 									: "var(--background)",
 								// backgroundColor: "var(--background)",
@@ -394,89 +398,3 @@ function Resizer(props: { columnWidths: number[]; setColumnWidths: (value: numbe
 		</div>
 	)
 }
-
-function TextInput(
-	props: {
-		value: string
-		onSubmit: (value: string) => void
-	} & React.HTMLProps<HTMLDivElement>
-) {
-	const { value, onSubmit, ...rest } = props
-
-	const [draft, setDraft] = useState(value)
-
-	const submit = () => {
-		if (draft === value) return
-		onSubmit(draft)
-	}
-
-	return (
-		<ContentEditableInput
-			{...rest}
-			value={draft}
-			onChange={(value) => setDraft(value)}
-			onBlur={() => {
-				submit()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" && !e.shiftKey) {
-					const elm = e.target as HTMLDivElement
-					e.preventDefault()
-					elm.blur()
-				} else if (e.key === "Escape") {
-					const elm = e.target as HTMLDivElement
-					e.preventDefault()
-					elm.blur()
-				}
-			}}
-		/>
-	)
-}
-
-function ContentEditableInput(
-	props: {
-		value: string
-		onChange: (value: string) => void
-	} & React.HTMLProps<HTMLDivElement>
-) {
-	const ref = useRef<HTMLDivElement>(null)
-
-	useLayoutEffect(() => {
-		if (!ref.current) return
-		ref.current.textContent = props.value
-	}, [])
-
-	const { value, onChange, style, ...rest } = props
-
-	return (
-		<div
-			ref={ref}
-			{...rest}
-			contentEditable
-			style={{
-				...style,
-				// whiteSpace: "pre-wrap",
-				whiteSpace: "normal",
-				wordBreak: "break-all",
-				cursor: "text",
-				userSelect: "text",
-				WebkitUserModify: "read-write-plaintext-only",
-			}}
-			onPaste={(e) => {
-				e.preventDefault()
-				const text = e.clipboardData.getData("text/plain")
-				document.execCommand("insertText", false, text)
-			}}
-			onInput={(e) => {
-				onChange(e.currentTarget.textContent || "")
-			}}
-			suppressContentEditableWarning={true}
-		></div>
-	)
-}
-
-// TODO:
-// resizable columns
-// custom view rendering
-// pagination / virtual rendering
-// resizable columns
