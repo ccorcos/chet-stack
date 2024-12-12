@@ -6,7 +6,6 @@
 
 import { Database } from "../services/Database"
 import { config } from "../services/ServerConfig"
-import { importAppleContacts, indexVCards } from "./importAppleContacts"
 
 const db = new Database(config.dbPath)
 
@@ -21,5 +20,20 @@ function clear() {
 }
 
 clear()
-importAppleContacts(db)
-indexVCards(db)
+// importAppleContacts(db)
+// indexVCards(db)
+
+console.log("Writing numbers...")
+for (let i = 0; i < 100000; i += 10000) {
+	const batch: { key: string; value: string }[] = []
+	for (let j = 0; j < 10000 && i + j < 100000; j++) {
+		const num = i + j
+		// Pad number with zeros to ensure lexicographic ordering
+		const key = `num:${num.toString().padStart(12, "0")}`
+		batch.push({ key, value: num.toString() })
+	}
+
+	db.write({ set: batch })
+	console.log(`Wrote ${i + batch.length} numbers...`)
+}
+console.log("Done writing numbers")

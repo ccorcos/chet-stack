@@ -1,4 +1,4 @@
-import React, { startTransition, useLayoutEffect, useRef, useState } from "react"
+import React, { Suspense, useLayoutEffect, useRef, useState, useTransition } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { formatRoute, parseRoute } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
@@ -15,14 +15,12 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()
 
 	const setPrefix = (prefix: string) => {
-		startTransition(() => {
-			const route = parseRoute(router.state.url)
-			if (route.type !== "design") return
-			const params: Record<string, string> = { ...route.params, prefix }
-			if (prefix === "") delete params.prefix
-			const url = formatRoute({ type: "design", params })
-			router.replace(url)
-		})
+		const route = parseRoute(router.state.url)
+		if (route.type !== "design") return
+		const params: Record<string, string> = { ...route.params, prefix }
+		if (prefix === "") delete params.prefix
+		const url = formatRoute({ type: "design", params })
+		router.replace(url)
 	}
 
 	return (
@@ -40,7 +38,9 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 			}}
 		>
 			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
-			<RenderTable key={prefix} prefix={prefix} />
+			<Suspense fallback={<div>Loading...</div>}>
+				<RenderTable prefix={prefix} />
+			</Suspense>
 		</div>
 	)
 }
@@ -50,20 +50,36 @@ const debug = (...args: any[]) => {
 }
 
 function RenderTable(props: { prefix: string }) {
+	// const { prefix } = props
 	const { api } = useClientEnvironment()
 
+	const [count, rerender] = useCounter()
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths", [320])
 
-	const [count, rerender] = useCounter()
-	const { prefix } = props
+	const [pendingSearch, startTransitionSearch] = useTransition()
+	const [pendingUp, startTransitionUp] = useTransition()
+	const [pendingDown, startTransitionDown] = useTransition()
+
+	const [prefix, setPrefix] = useState(props.prefix)
+	useLayoutEffect(() => {
+		startTransitionSearch(() => {
+			setPrefix(props.prefix)
+			setAnchor(({ limit }) => ({
+				key: props.prefix,
+				limit,
+				reverse: false,
+			}))
+		})
+	}, [props.prefix])
+
 	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean; limit: number }>({
 		key: prefix,
 		// Inital request can use a small limit since we'll measure and adjust.
-		limit: 10,
+		limit: 50,
 		reverse: false,
 	})
 
-	const loader = useLoader([anchor.key, anchor.reverse, anchor.limit, count], async () => {
+	const loader = useLoader([prefix, anchor.key, anchor.reverse, anchor.limit, count], async () => {
 		const response = await api.list(
 			anchor.reverse
 				? { gte: prefix, lte: anchor.key, limit: anchor.limit, reverse: true }
@@ -77,10 +93,9 @@ function RenderTable(props: { prefix: string }) {
 
 	const list = loader.suspend()
 
-	// when the user scrolls down past the 100th item, we want to find that item key and loading the next 300 items.
-	// when we're no longer at the beginning of the list (the prefix), then when we scroll up then we want to shift as well.
 	const scrollRef = useRef<HTMLDivElement>(null)
 
+	// Adjust the limit size based on rendered items.
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
@@ -97,12 +112,14 @@ function RenderTable(props: { prefix: string }) {
 		const newLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * desiredScreens)
 		if (newLimit === anchor.limit) return
 
+		const startTransition = anchor.reverse ? startTransitionUp : startTransitionDown
 		startTransition(() => {
 			debug("NEW LIMIT", newLimit)
 			setAnchor((a) => ({ ...a, limit: newLimit }))
 		})
 	}, [list])
 
+	// Adjust the anchor query based on scroll position.
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
@@ -118,38 +135,45 @@ function RenderTable(props: { prefix: string }) {
 			const isAtBottom = !anchor.reverse && list.length < PAGE_SIZE
 
 			// const margin = clientHeight * 2
-			const margin = clientHeight * 0.2
+			const margin = (scrollHeight - clientHeight * 2) * 0.15
 
 			// If we're within 2 viewport heights from the bottom
-			if (!isAtBottom && distanceFromBottom < margin) {
-				debug("DOWN")
+			if (!pendingDown && !isAtBottom && distanceFromBottom < margin) {
 				const anchorIndex = Math.round((list.length * 2) / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
-				setAnchor({
-					key: anchorItem.getAttribute("data-key")!,
-					limit: PAGE_SIZE,
-					reverse: false,
+				startTransitionDown(() => {
+					debug("DOWN")
+					setAnchor({
+						key: anchorItem.getAttribute("data-key")!,
+						limit: PAGE_SIZE,
+						reverse: false,
+					})
 				})
 				return
 			}
 
 			// If we're within 2 viewport heights from the top
-			if (!isAtTop && distanceFromTop < margin) {
-				debug("UP")
+			if (!pendingUp && !isAtTop && distanceFromTop < margin) {
 				const anchorIndex = Math.round(list.length / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
-				setAnchor({
-					key: anchorItem.getAttribute("data-key")!,
-					limit: PAGE_SIZE,
-					reverse: true,
+
+				startTransitionUp(() => {
+					debug("UP", distanceFromTop)
+					setAnchor({
+						key: anchorItem.getAttribute("data-key")!,
+						limit: PAGE_SIZE,
+						reverse: true,
+					})
 				})
 				return
 			}
 		}
 
+		if (scrollDiv.scrollTop === 0 && anchor.key !== prefix) onScroll()
+
 		scrollDiv.addEventListener("scroll", onScroll)
 		return () => scrollDiv.removeEventListener("scroll", onScroll)
-	}, [list])
+	}, [list, pendingUp, pendingDown])
 
 	return (
 		<React.Fragment>
@@ -186,7 +210,14 @@ function RenderTable(props: { prefix: string }) {
 							style={{
 								position: "sticky",
 								top: 0,
-								backgroundColor: "var(--background)",
+								backgroundColor: pendingUp
+									? "var(--red)"
+									: pendingDown
+									? "var(--green)"
+									: pendingSearch
+									? "var(--blue)"
+									: "var(--background)",
+								// backgroundColor: "var(--background)",
 								fontWeight: "bold",
 								whiteSpace: "normal",
 								wordBreak: "break-all",
@@ -208,6 +239,11 @@ function RenderTable(props: { prefix: string }) {
 						>
 							value
 						</div>
+						<>
+							<div key="up">{pendingUp ? "Loading..." : ""}</div>
+							<div key="up2" />
+						</>
+
 						{list.map(({ key, value }, index) => (
 							<React.Fragment key={key + count}>
 								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{key}</div> */}
@@ -236,6 +272,10 @@ function RenderTable(props: { prefix: string }) {
 								/>
 							</React.Fragment>
 						))}
+						<>
+							<div key="down">{pendingDown ? "Loading..." : ""}</div>
+							<div key="down2" />
+						</>
 					</div>
 				</div>
 				<Resizer columnWidths={columnWidths} setColumnWidths={setColumnWidths} />
