@@ -60,6 +60,8 @@ function RenderTable(props: { prefix: string }) {
 	const [pendingUp, startTransitionUp] = useTransition()
 	const [pendingDown, startTransitionDown] = useTransition()
 
+	// Update the state with the prefix. We do this so that we can render the transition inside
+	// this component and persist the scroller element.
 	const [prefix, setPrefix] = useState(props.prefix)
 	useLayoutEffect(() => {
 		startTransitionSearch(() => {
@@ -118,6 +120,42 @@ function RenderTable(props: { prefix: string }) {
 			setAnchor((a) => ({ ...a, limit: newLimit }))
 		})
 	}, [list])
+
+	// The browser does a good job maintaining scroll position when scrolling down, but has issues
+	// when scrolling up, especially when hitting the top of the scroller.
+	const fixRef = useRef<{ element: HTMLElement; offset: number }>()
+
+	useLayoutEffect(() => {
+		const scrollDiv = scrollRef.current
+		if (!scrollDiv) return
+
+		// On the render after we measure, fix the scroll position.
+		if (fixRef.current) {
+			const { element, offset } = fixRef.current
+			fixRef.current = undefined
+			const currentScrollTop = element.offsetTop - scrollDiv.scrollTop
+			debug("FIX", currentScrollTop - offset)
+			// scrollDiv.removeEventListener("scroll", onScroll)
+			scrollDiv.scrollTop = currentScrollTop - offset
+		}
+
+		if (!pendingUp) return
+		debug("LISTEN")
+
+		// When we hit the top of the scroller, keep track of where the top element is.
+		const onScroll = () => {
+			if (scrollDiv.scrollTop !== 0) return
+			const element = scrollDiv.querySelector(`[data-index="0"]`) as HTMLElement
+			if (!element) return
+			// Get the first visible element and its position before the update
+			const initialScrollTop = element.offsetTop - scrollDiv.scrollTop
+			debug("MEASURE", initialScrollTop)
+			fixRef.current = { element, offset: initialScrollTop }
+		}
+
+		scrollDiv.addEventListener("scroll", onScroll)
+		return () => scrollDiv.removeEventListener("scroll", onScroll)
+	}, [list, pendingUp])
 
 	// Adjust the anchor query based on scroll position.
 	useLayoutEffect(() => {
