@@ -16,11 +16,7 @@ export function CustomDatabaseDemo(props: { params: Record<string, string | unde
 
 	return (
 		<Layout LeftPanel={<SchemaListPanel selected={selected} />}>
-			<ContentLayout>
-				<Suspense fallback={<div>Loading...</div>}>
-					<SchemaDetails selected={selected} />
-				</Suspense>
-			</ContentLayout>
+			<SchemaDetails selected={selected} />
 		</Layout>
 	)
 }
@@ -105,8 +101,17 @@ function SchemaDetails(props: { selected: string | undefined }) {
 	const selected = useDeferredValue(props.selected)
 	const stale = selected !== props.selected
 
-	if (!selected) return <div>No schema selected</div>
-	else return <SchemaEditor key={selected} selected={selected} stale={stale} />
+	return (
+		<ContentLayout>
+			<Suspense fallback={<div>Loading...</div>}>
+				{selected ? (
+					<SchemaEditor key={selected} selected={selected} stale={stale} />
+				) : (
+					<div>No schema selected</div>
+				)}
+			</Suspense>
+		</ContentLayout>
+	)
 }
 
 function SchemaEditor(props: { selected: string; stale: boolean }) {
