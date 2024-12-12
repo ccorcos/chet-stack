@@ -45,8 +45,6 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	)
 }
 
-const PAGE_SIZE = 300
-
 const debug = (...args: any[]) => {
 	// console.log(...args)
 }
@@ -58,16 +56,18 @@ function RenderTable(props: { prefix: string }) {
 
 	const [count, rerender] = useCounter()
 	const { prefix } = props
-	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean }>({
+	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean; limit: number }>({
 		key: prefix,
+		// Inital request can use a small limit since we'll measure and adjust.
+		limit: 10,
 		reverse: false,
 	})
 
-	const loader = useLoader([anchor.key, anchor.reverse, count], async () => {
+	const loader = useLoader([anchor.key, anchor.reverse, anchor.limit, count], async () => {
 		const response = await api.list(
 			anchor.reverse
-				? { gte: prefix, lte: anchor.key, limit: PAGE_SIZE, reverse: true }
-				: { gte: anchor.key, lt: incStr(prefix), limit: PAGE_SIZE }
+				? { gte: prefix, lte: anchor.key, limit: anchor.limit, reverse: true }
+				: { gte: anchor.key, lt: incStr(prefix), limit: anchor.limit }
 		)
 
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
@@ -84,6 +84,30 @@ function RenderTable(props: { prefix: string }) {
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
+		if (list.length < anchor.limit) return
+
+		const desiredScreens = 20
+		const min = desiredScreens - 2
+		const max = desiredScreens + 2
+
+		const actualScreens = scrollDiv.scrollHeight / scrollDiv.clientHeight
+		if (actualScreens > min && actualScreens < max) return
+
+		const avgHeight = scrollDiv.scrollHeight / anchor.limit
+		const newLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * desiredScreens)
+		if (newLimit === anchor.limit) return
+
+		startTransition(() => {
+			debug("NEW LIMIT", newLimit)
+			setAnchor((a) => ({ ...a, limit: newLimit }))
+		})
+	}, [list])
+
+	useLayoutEffect(() => {
+		const scrollDiv = scrollRef.current
+		if (!scrollDiv) return
+
+		const PAGE_SIZE = anchor.limit
 
 		const onScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = scrollDiv
@@ -93,25 +117,30 @@ function RenderTable(props: { prefix: string }) {
 			const isAtTop = anchor.key === prefix || (anchor.reverse && list.length < PAGE_SIZE)
 			const isAtBottom = !anchor.reverse && list.length < PAGE_SIZE
 
+			// const margin = clientHeight * 2
+			const margin = clientHeight * 0.2
+
 			// If we're within 2 viewport heights from the bottom
-			if (!isAtBottom && distanceFromBottom < clientHeight * 2) {
+			if (!isAtBottom && distanceFromBottom < margin) {
 				debug("DOWN")
 				const anchorIndex = Math.round((list.length * 2) / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
 				setAnchor({
 					key: anchorItem.getAttribute("data-key")!,
+					limit: PAGE_SIZE,
 					reverse: false,
 				})
 				return
 			}
 
 			// If we're within 2 viewport heights from the top
-			if (!isAtTop && distanceFromTop < clientHeight * 2) {
+			if (!isAtTop && distanceFromTop < margin) {
 				debug("UP")
 				const anchorIndex = Math.round(list.length / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
 				setAnchor({
 					key: anchorItem.getAttribute("data-key")!,
+					limit: PAGE_SIZE,
 					reverse: true,
 				})
 				return
