@@ -6,7 +6,7 @@
 
 import { Database } from "../services/Database"
 import { config } from "../services/ServerConfig"
-import { indexVCards } from "./importAppleContacts"
+import { importAppleContacts, indexVCards } from "./importAppleContacts"
 
 const db = new Database(config.dbPath)
 
@@ -20,7 +20,6 @@ function clear() {
 	console.log("Cleared")
 }
 
-// clear()
-// importAppleContacts(db)
-
+clear()
+importAppleContacts(db)
 indexVCards(db)

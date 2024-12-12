@@ -88,6 +88,28 @@ function compareFilters(a: string, b: string) {
 	return match / total
 }
 
+function removePhoto(card: string) {
+	const lines: string[] = []
+	const allLines = card.split("\n")
+
+	let removing = false
+	for (let i = 0; i < allLines.length; i++) {
+		const line = allLines[i]
+		if (removing) {
+			if (line.startsWith(" ")) continue
+			removing = false
+		}
+
+		if (line.startsWith("PHOTO;")) {
+			removing = true
+			continue
+		}
+
+		lines.push(line)
+	}
+	return lines.join("\n")
+}
+
 export function importAppleContacts(db: Database) {
 	const vcf = readFileSync(path("data/appleContacts.vcf"), "utf-8")
 
@@ -95,6 +117,8 @@ export function importAppleContacts(db: Database) {
 		.split("BEGIN:VCARD")
 		.filter(Boolean)
 		.map((card) => "BEGIN:VCARD" + card)
+
+	cards = cards.map(removePhoto)
 
 	const set = cards.map((card) => ({ key: `vcard/${randomId(card)}`, value: card }))
 	console.log("Importing", set.length, "vCards")
