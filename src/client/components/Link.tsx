@@ -1,5 +1,5 @@
 import React from "react"
-import { Route } from "../../shared/routeHelpers"
+import { Route, formatRoute } from "../../shared/routeHelpers"
 import { passthroughRef } from "../helpers/passthroughRef"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 
@@ -15,7 +15,7 @@ function _Link(props: JSX.IntrinsicElements["a"] & { route: Route }) {
 				...props.style,
 			}}
 			onClick={(e) => {
-				router.navigate(props.route)
+				router.navigate(formatRoute(props.route))
 				if (props.onClick) props.onClick(e)
 			}}
 		/>

@@ -6,11 +6,21 @@
 
 import { Database } from "../services/Database"
 import { config } from "../services/ServerConfig"
+import { indexVCards } from "./importAppleContacts"
 
 const db = new Database(config.dbPath)
 
-for (let i = 0; i < 1000; i++) {
-	db.write({
-		set: [{ key: i.toString().padStart(8, "0"), value: `${Math.log10(i)}` }],
-	})
+function clear() {
+	console.log("Clearing...")
+	while (true) {
+		const list = db.list({ limit: 300 })
+		if (list.length === 0) break
+		db.write({ delete: list.map(({ key }) => key) })
+	}
+	console.log("Cleared")
 }
+
+// clear()
+// importAppleContacts(db)
+
+indexVCards(db)

@@ -203,6 +203,7 @@ function RenderTable(props: { prefix: string }) {
 										})
 										rerender()
 									}}
+									style={{ maxHeight: 300, overflowY: "auto" }}
 								/>
 							</React.Fragment>
 						))}
