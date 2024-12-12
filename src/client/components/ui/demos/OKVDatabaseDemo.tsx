@@ -49,6 +49,9 @@ const debug = (...args: any[]) => {
 	// console.log(...args)
 }
 
+const DESIRED_SCREENS = 20
+const DEFAULT_LIMIT = 50
+
 function RenderTable(props: { prefix: string }) {
 	// const { prefix } = props
 	const { api } = useClientEnvironment()
@@ -77,7 +80,7 @@ function RenderTable(props: { prefix: string }) {
 	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean; limit: number }>({
 		key: prefix,
 		// Inital request can use a small limit since we'll measure and adjust.
-		limit: 50,
+		limit: DEFAULT_LIMIT,
 		reverse: false,
 	})
 
@@ -97,21 +100,26 @@ function RenderTable(props: { prefix: string }) {
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 
-	// Adjust the limit size based on rendered items.
+	const computeDesiredLimit = () => {
+		const scrollDiv = scrollRef.current
+		if (!scrollDiv) return anchor.limit
+		const avgHeight = scrollDiv.scrollHeight / anchor.limit
+		const limit = Math.ceil((scrollDiv.clientHeight / avgHeight) * DESIRED_SCREENS)
+		return limit
+	}
+
+	// Adjust the limit if its too small.
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
 		if (list.length < anchor.limit) return
 
-		const desiredScreens = 20
-		const min = desiredScreens - 2
-		const max = desiredScreens + 2
+		const min = 2
 
 		const actualScreens = scrollDiv.scrollHeight / scrollDiv.clientHeight
-		if (actualScreens > min && actualScreens < max) return
+		if (actualScreens > min) return
 
-		const avgHeight = scrollDiv.scrollHeight / anchor.limit
-		const newLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * desiredScreens)
+		const newLimit = computeDesiredLimit()
 		if (newLimit === anchor.limit) return
 
 		const startTransition = anchor.reverse ? startTransitionUp : startTransitionDown
@@ -164,8 +172,17 @@ function RenderTable(props: { prefix: string }) {
 
 		const PAGE_SIZE = anchor.limit
 
+		let prev = scrollDiv.scrollTop
+		let dir: "up" | "down" | undefined = undefined
+
 		const onScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = scrollDiv
+
+			if (scrollTop > prev) dir = "down"
+			else if (scrollTop < prev) dir = "up"
+			else dir === undefined
+			prev = scrollTop
+
 			const distanceFromBottom = scrollHeight - scrollTop - clientHeight
 			const distanceFromTop = scrollTop
 
@@ -175,15 +192,14 @@ function RenderTable(props: { prefix: string }) {
 			// const margin = clientHeight * 2
 			const margin = (scrollHeight - clientHeight * 2) * 0.15
 
-			// If we're within 2 viewport heights from the bottom
-			if (!pendingDown && !isAtBottom && distanceFromBottom < margin) {
+			if (dir === "down" && !pendingDown && !isAtBottom && distanceFromBottom < margin) {
 				const anchorIndex = Math.round((list.length * 2) / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
 				startTransitionDown(() => {
 					debug("DOWN")
 					setAnchor({
 						key: anchorItem.getAttribute("data-key")!,
-						limit: PAGE_SIZE,
+						limit: computeDesiredLimit(),
 						reverse: false,
 					})
 				})
@@ -191,7 +207,7 @@ function RenderTable(props: { prefix: string }) {
 			}
 
 			// If we're within 2 viewport heights from the top
-			if (!pendingUp && !isAtTop && distanceFromTop < margin) {
+			if (dir === "up" && !pendingUp && !isAtTop && distanceFromTop < margin) {
 				const anchorIndex = Math.round(list.length / 3)
 				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
 
@@ -199,15 +215,13 @@ function RenderTable(props: { prefix: string }) {
 					debug("UP", distanceFromTop)
 					setAnchor({
 						key: anchorItem.getAttribute("data-key")!,
-						limit: PAGE_SIZE,
+						limit: computeDesiredLimit(),
 						reverse: true,
 					})
 				})
 				return
 			}
 		}
-
-		if (scrollDiv.scrollTop === 0 && anchor.key !== prefix) onScroll()
 
 		scrollDiv.addEventListener("scroll", onScroll)
 		return () => scrollDiv.removeEventListener("scroll", onScroll)

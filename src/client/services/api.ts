@@ -1,5 +1,4 @@
 import type * as apis from "../../server/apis/autoindex"
-import { sleep } from "../../shared/sleep"
 
 type InputOutput<T extends (...any: any[]) => any> = {
 	input: Parameters<T>[1]
@@ -27,7 +26,7 @@ export async function apiRequest<T extends keyof ApiSchema>(
 	const result = await httpRequest("/api/" + name, args)
 
 	// Control how much loading spinners we see during development.
-	await sleep(500)
+	// await sleep(500)
 
 	return result as ApiResponse<any>
 }
