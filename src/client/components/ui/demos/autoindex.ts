@@ -10,6 +10,7 @@ import * as FileUploadDemo from "./FileUploadDemo"
 import * as FormDemo from "./FormDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as GridDemo from "./GridDemo"
+import * as InfiniteLoaderDemo from "./InfiniteLoaderDemo"
 import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
@@ -33,6 +34,7 @@ export {
 	FormDemo,
 	FuzzyStringDemo,
 	GridDemo,
+	InfiniteLoaderDemo,
 	InputDemo,
 	LayoutDemo,
 	ListBoxDemo,
