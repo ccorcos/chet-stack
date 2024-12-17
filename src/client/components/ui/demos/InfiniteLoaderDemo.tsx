@@ -18,14 +18,14 @@ import { TextInput } from "../TextInput"
 
 const GAP = 12
 
-function useListQuery(query: { prefix: string; key: string; limit: number; reverse: boolean }) {
+function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
 	const { api } = useClientEnvironment()
 
 	const loader = useLoader(JSON.stringify(query), async () => {
 		const response = await api.list(
 			query.reverse
-				? { gte: query.prefix, lte: query.key, limit: query.limit, reverse: true }
-				: { gte: query.key, lt: incStr(query.prefix), limit: query.limit }
+				? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
+				: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
 		)
 
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
@@ -44,16 +44,14 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
 	}
-
-	const [cursor, setCursor] = useState<{ key: string; limit: number; reverse: boolean }>({
-		key: prefix,
+	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
+		anchor: prefix,
 		limit: DEFAULT_LIMIT,
 		reverse: false,
 	})
-
 	const [count, rerender] = useCounter()
-
 	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
+
 	const deferredQuery = useDeferredValue(query)
 	const staleQuery = deferredQuery !== query
 
@@ -61,6 +59,29 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	const deferredListCount = useDeferredValue(list.length)
 
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths", [320])
+
+	const scrollRef = useRef<HTMLDivElement>(null)
+	const firstRef = useRef<HTMLDivElement>(null)
+	const lastRef = useRef<HTMLDivElement>(null)
+
+	const { pendingUp, pendingDown } = useInfiniteLoader({
+		scrollRef,
+		firstRef,
+		lastRef,
+		query: deferredQuery,
+		resultCount: deferredListCount,
+		onLoadMore: (limit, dir) => {
+			if (dir === "up") {
+				const { key } = list[Math.ceil(list.length / 3)]
+				setCursor({ anchor: key, limit, reverse: true })
+			} else if (dir === "down") {
+				const { key } = list[Math.ceil((list.length * 2) / 3)]
+				setCursor({ anchor: key, limit, reverse: false })
+			} else {
+				setCursor((cursor) => ({ ...cursor, limit }))
+			}
+		},
+	})
 
 	return (
 		<div
@@ -89,103 +110,91 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 						display: "flex",
 					}}
 				>
-					<InfiniteLoader
-						query={deferredQuery}
-						resultCount={deferredListCount}
-						onLoadMore={(limit, dir) => {
-							if (dir === "up") {
-								const { key } = list[Math.ceil(list.length / 3)]
-								setCursor({ key, limit, reverse: true })
-							} else if (dir === "down") {
-								const { key } = list[Math.ceil((list.length * 2) / 3)]
-								setCursor({ key, limit, reverse: false })
-							} else {
-								setCursor((cursor) => ({ ...cursor, limit }))
-							}
-						}}
+					<div
+						ref={scrollRef}
 						style={{
+							overflowY: "auto",
 							// Overflow grid with relative for stick headers.
 							flex: 1,
 							position: "relative",
 						}}
 					>
-						{({ pendingUp, pendingDown }) => (
+						<div
+							style={{
+								display: "grid",
+								gridTemplateColumns: `${columnWidths[0]}px 1fr`,
+								gap: GAP,
+							}}
+						>
 							<div
 								style={{
-									display: "grid",
-									gridTemplateColumns: `${columnWidths[0]}px 1fr`,
-									gap: GAP,
+									position: "sticky",
+									top: 0,
+									backgroundColor: pendingUp
+										? "var(--red)"
+										: pendingDown
+										? "var(--green)"
+										: staleQuery
+										? "var(--blue)"
+										: "var(--background)",
+									fontWeight: "bold",
+									whiteSpace: "normal",
+									wordBreak: "break-all",
+									zIndex: 1,
 								}}
 							>
-								<div
-									style={{
-										position: "sticky",
-										top: 0,
-										backgroundColor: pendingUp
-											? "var(--red)"
-											: pendingDown
-											? "var(--green)"
-											: staleQuery
-											? "var(--blue)"
-											: "var(--background)",
-										fontWeight: "bold",
-										whiteSpace: "normal",
-										wordBreak: "break-all",
-										zIndex: 1,
-									}}
-								>
-									key
-								</div>
-								<div
-									style={{
-										position: "sticky",
-										top: 0,
-										backgroundColor: "var(--background)",
-										fontWeight: "bold",
-										whiteSpace: "normal",
-										wordBreak: "break-all",
-										zIndex: 1,
-									}}
-								>
-									value
-								</div>
-								<>
-									<div key="up">{pendingUp ? "Loading..." : ""}</div>
-									<div key="up2" />
-								</>
-
-								{list.map(({ key, value }, index) => (
-									<React.Fragment key={key + index}>
-										<TextInput
-											data-index={index}
-											value={key}
-											onSubmit={async (newKey) => {
-												await api.write({
-													set: [{ key: newKey, value }],
-													delete: [key],
-												})
-												rerender()
-											}}
-										/>
-										<TextInput
-											value={value}
-											onSubmit={async (newValue) => {
-												await api.write({
-													set: [{ key, value: newValue }],
-												})
-												rerender()
-											}}
-											style={{ maxHeight: 300, overflowY: "auto" }}
-										/>
-									</React.Fragment>
-								))}
-								<>
-									<div key="down">{pendingDown ? "Loading..." : ""}</div>
-									<div key="down2" />
-								</>
+								key
 							</div>
-						)}
-					</InfiniteLoader>
+							<div
+								style={{
+									position: "sticky",
+									top: 0,
+									backgroundColor: "var(--background)",
+									fontWeight: "bold",
+									whiteSpace: "normal",
+									wordBreak: "break-all",
+									zIndex: 1,
+								}}
+							>
+								value
+							</div>
+							<>
+								<div key="up">{pendingUp ? "Loading..." : ""}</div>
+								<div key="up2" />
+							</>
+
+							{list.map(({ key, value }, index) => (
+								<React.Fragment key={key}>
+									<TextInput
+										ref={index === 0 ? firstRef : index === list.length - 1 ? lastRef : undefined}
+										data-key={key}
+										value={key}
+										onSubmit={async (newKey) => {
+											await api.write({
+												set: [{ key: newKey, value }],
+												delete: [key],
+											})
+											rerender()
+										}}
+									/>
+									<TextInput
+										value={value}
+										onSubmit={async (newValue) => {
+											await api.write({
+												set: [{ key, value: newValue }],
+											})
+											rerender()
+										}}
+										style={{ maxHeight: 300, overflowY: "auto" }}
+									/>
+								</React.Fragment>
+							))}
+							<>
+								<div key="down">{pendingDown ? "Loading..." : ""}</div>
+								<div key="down2" />
+							</>
+						</div>
+					</div>
 					<Resizer columnWidths={columnWidths} setColumnWidths={setColumnWidths} />
 				</div>
 			</Suspense>
@@ -200,25 +209,32 @@ const debug = (...args: any[]) => {
 const DESIRED_SCREENS = 20
 const DEFAULT_LIMIT = 50
 
-function InfiniteLoader<I extends { limit: number; reverse: boolean }>(props: {
-	query: I
+// infiniteloader should just be a hook
+// usePreserveScrollPosition accepts a ref.
+
+function useInfiniteLoader(args: {
+	scrollRef: React.RefObject<HTMLElement>
+	/** References so we can preserve scroll position. */
+	firstRef: React.RefObject<HTMLElement>
+	lastRef: React.RefObject<HTMLElement>
+	/** The query can contain more data than just this. */
+	query: { limit: number; reverse: boolean }
 	resultCount: number
+	/** When dir is undefined, we're just loading a different window size. */
 	onLoadMore: (limit: number, dir?: "up" | "down" | undefined) => void
-	style?: React.CSSProperties
-	children: (args: { pendingUp: boolean; pendingDown: boolean }) => React.ReactNode
+	/** When to signal that the results changed */
+	// deps: any[]
 }) {
 	const [pendingUp, startTransitionUp] = useTransition()
 	const [pendingDown, startTransitionDown] = useTransition()
-	const scrollRef = useRef<HTMLDivElement>(null)
-
-	const { query, resultCount } = props
+	const { scrollRef, firstRef, lastRef, query, resultCount, onLoadMore } = args
 
 	const computeDesiredLimit = () => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return query.limit
 		const avgHeight = scrollDiv.scrollHeight / query.limit
-		const limit = Math.ceil((scrollDiv.clientHeight / avgHeight) * DESIRED_SCREENS)
-		return limit
+		const desiredLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * DESIRED_SCREENS)
+		return desiredLimit
 	}
 
 	// Adjust the limit if its too big or too small.
@@ -227,95 +243,65 @@ function InfiniteLoader<I extends { limit: number; reverse: boolean }>(props: {
 		if (!scrollDiv) return
 		if (resultCount < query.limit) return
 
-		const min = 2
-
+		const minScreens = 2
 		const actualScreens = scrollDiv.scrollHeight / scrollDiv.clientHeight
-		if (actualScreens > min) return
+		if (actualScreens > minScreens) return
 
 		const newLimit = computeDesiredLimit()
 		if (newLimit === query.limit) return
 
 		debug("NEW LIMIT", newLimit)
 		if (query.reverse) {
-			startTransitionUp(() => props.onLoadMore(newLimit))
+			startTransitionUp(() => onLoadMore(newLimit))
 		} else {
-			startTransitionDown(() => props.onLoadMore(newLimit))
+			startTransitionDown(() => onLoadMore(newLimit))
 		}
 	}, [query])
-
 	// Measure scroll position before loading new data
-	const measureRef = useRef<{ element: HTMLElement; offset: number }>()
+	const scrollPositionRef = useRef<{ element: HTMLElement; offset: number }[]>([])
 
+	// const logScrollPositions = () => {
+	// 	return scrollPositionRef.current
+	// 		.map(({ element, offset }) => {
+	// 			const key = element.getAttribute("data-key")
+	// 			return [key, offset]
+	// 		})
+	// 		.join(", ")
+	// }
+
+	// Restore scroll position after new data renders.
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
 
+		const scrollPositions = scrollPositionRef.current
+		if (scrollPositions.length === 0) return
+
 		// Restore scroll position after new data renders
-		if (measureRef.current) {
-			console.log("RESTORE")
-			const { element, offset } = measureRef.current
-			measureRef.current = undefined
-			const currentScrollTop = element.offsetTop - scrollDiv.scrollTop
-			scrollDiv.scrollTop = currentScrollTop - offset
+		scrollPositionRef.current = []
+
+		for (const { element, offset } of scrollPositions) {
+			if (!scrollDiv.contains(element)) continue
+			debug("RESTORE SCROLL")
+			// offset is the distance from top of viewport to the element
+			// we want to maintain that same distance after scroll
+			scrollDiv.scrollTop = element.offsetTop - offset
+			break
 		}
 	}, [query])
 
-	// Take measurement on first render
+	// Take measurement of the previous render when the query changes.
 	useMemo(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
-		console.log("MEASURE")
-		const element = scrollDiv.querySelector(
-			`[data-index="${Math.round(query.limit / 2)}"]`
-		) as HTMLElement
-		if (!element) return
-		const initialScrollTop = element.offsetTop - scrollDiv.scrollTop
-		measureRef.current = { element, offset: initialScrollTop }
+		scrollPositionRef.current = [firstRef.current, lastRef.current].filter(Boolean).map((div) => {
+			const element = div!
+			// Measure distance from top of viewport to the element
+			const offset = element.offsetTop - scrollDiv.scrollTop
+			return { element, offset }
+		})
+		debug("MEASURE SCROLL")
 	}, [query])
-
-	// // The browser does a good job maintaining scroll position when scrolling down, but has issues
-	// // when scrolling up, especially when hitting the top of the scroller.
-	// const fixRef = useRef<{ element: HTMLElement; offset: number }>()
-
-	// useLayoutEffect(() => {
-	// 	console.log("FIXING")
-	// 	const scrollDiv = scrollRef.current
-	// 	if (!scrollDiv) return
-	// 	// On the render after we measure, fix the scroll position.
-	// 	if (fixRef.current) {
-	// 		const { element, offset } = fixRef.current
-	// 		fixRef.current = undefined
-	// 		const currentScrollTop = element.offsetTop - scrollDiv.scrollTop
-	// 		debug("FIX", currentScrollTop - offset)
-	// 		// scrollDiv.removeEventListener("scroll", onScroll)
-	// 		scrollDiv.scrollTop = currentScrollTop - offset
-	// 	}
-	// }, [props.query])
-
-	// const deferredQuery = useDeferredValue(props.query)
-	// const staleQuery = deferredQuery !== props.query
-
-	// useLayoutEffect(() => {
-	// 	const scrollDiv = scrollRef.current
-	// 	if (!scrollDiv) return
-
-	// 	debug("LISTEN")
-	// 	// When we hit the top of the scroller, keep track of where the top element is.
-	// 	const onScroll = () => {
-	// 		// if (scrollDiv.scrollTop !== 0) return
-	// 		// Get element at the middle point of the viewport
-	// 		const element = scrollDiv.querySelector(`[data-index="0"]`) as HTMLElement
-	// 		console.log("SCROLL", element)
-	// 		if (!element) return
-	// 		// Get the first visible element and its position before the update
-	// 		const initialScrollTop = element.offsetTop - scrollDiv.scrollTop
-	// 		debug("MEASURE", initialScrollTop)
-	// 		fixRef.current = { element, offset: initialScrollTop }
-	// 	}
-
-	// 	scrollDiv.addEventListener("scroll", onScroll)
-	// 	return () => scrollDiv.removeEventListener("scroll", onScroll)
-	// }, [query])
 
 	// Adjust the query based on scroll position.
 	useLayoutEffect(() => {
@@ -344,7 +330,7 @@ function InfiniteLoader<I extends { limit: number; reverse: boolean }>(props: {
 			if (scrollingDir === "down" && !pendingDown && !isAtBottom && distanceFromBottom < margin) {
 				startTransitionDown(() => {
 					debug("DOWN")
-					props.onLoadMore(computeDesiredLimit(), "down")
+					onLoadMore(computeDesiredLimit(), "down")
 				})
 				return
 			}
@@ -353,7 +339,7 @@ function InfiniteLoader<I extends { limit: number; reverse: boolean }>(props: {
 			if (scrollingDir === "up" && !pendingUp && !isAtTop && distanceFromTop < margin) {
 				startTransitionUp(() => {
 					debug("UP", distanceFromTop)
-					props.onLoadMore(computeDesiredLimit(), "up")
+					onLoadMore(computeDesiredLimit(), "up")
 				})
 				return
 			}
@@ -363,11 +349,7 @@ function InfiniteLoader<I extends { limit: number; reverse: boolean }>(props: {
 		return () => scrollDiv.removeEventListener("scroll", onScroll)
 	}, [query, pendingUp, pendingDown])
 
-	return (
-		<div ref={scrollRef} style={{ ...props.style, overflowY: "auto" }}>
-			{props.children({ pendingUp, pendingDown })}
-		</div>
-	)
+	return { scrollRef, firstRef, lastRef, pendingUp, pendingDown }
 }
 
 function useHover() {

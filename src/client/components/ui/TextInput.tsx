@@ -1,14 +1,16 @@
 import React, { useState } from "react"
+import { passthroughRef } from "../../helpers/passthroughRef"
 import { ContentEditableInput } from "./ContentEditableInput"
 
-export function TextInput(
+export const TextInput = passthroughRef(_TextInput)
+
+function _TextInput(
 	props: {
 		value: string
 		onSubmit: (value: string) => void
 	} & React.HTMLProps<HTMLDivElement>
 ) {
 	const { value, onSubmit, ...rest } = props
-
 	const [draft, setDraft] = useState(value)
 
 	const submit = () => {

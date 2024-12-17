@@ -1,6 +1,10 @@
 import React, { useLayoutEffect, useRef } from "react"
+import { mergeRefs } from "../../helpers/mergeRefs"
+import { passthroughRef } from "../../helpers/passthroughRef"
 
-export function ContentEditableInput(
+export const ContentEditableInput = passthroughRef(_ContentEditableInput)
+
+function _ContentEditableInput(
 	props: {
 		value: string
 		onChange: (value: string) => void
@@ -17,8 +21,8 @@ export function ContentEditableInput(
 
 	return (
 		<div
-			ref={ref}
 			{...rest}
+			ref={mergeRefs([ref, props.ref])}
 			contentEditable
 			style={{
 				...style,
