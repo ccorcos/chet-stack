@@ -43,12 +43,15 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	const setPrefix = (prefix: string) => {
 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
+		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
 	}
+
 	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
 		anchor: prefix,
 		limit: DEFAULT_LIMIT,
 		reverse: false,
 	})
+
 	const [count, rerender] = useCounter()
 	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
 
@@ -203,7 +206,7 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 }
 
 const debug = (...args: any[]) => {
-	console.log(...args)
+	// console.log(...args)
 }
 
 const DESIRED_SCREENS = 20
@@ -232,7 +235,7 @@ function useInfiniteLoader(args: {
 	const computeDesiredLimit = () => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return query.limit
-		const avgHeight = scrollDiv.scrollHeight / query.limit
+		const avgHeight = scrollDiv.scrollHeight / resultCount
 		const desiredLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * DESIRED_SCREENS)
 		return desiredLimit
 	}
@@ -325,7 +328,10 @@ function useInfiniteLoader(args: {
 			const isAtTop = query.reverse && resultCount < query.limit
 			const isAtBottom = !query.reverse && resultCount < query.limit
 
-			const margin = (scrollHeight - clientHeight * 2) * 0.15
+			// If scroll height is less than 2 viewport heights, use a smaller margin.
+			const margin = Math.max((scrollHeight - clientHeight * 2) * 0.15, scrollHeight * 0.15)
+
+			// console.log("distanceFromBottom", distanceFromBottom, "margin", margin)
 
 			if (scrollingDir === "down" && !pendingDown && !isAtBottom && distanceFromBottom < margin) {
 				startTransitionDown(() => {
