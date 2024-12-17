@@ -22,6 +22,8 @@ export function InputDemo() {
 			<Input type="date" placeholder="2024-01-01" />
 			<div>Naked Input</div>
 			<NakedInput type="text" placeholder="Hello" />
+			<div>Slider Input</div>
+			<Input type="range" min="0" max="100" defaultValue="50" />
 		</div>
 	)
 }
