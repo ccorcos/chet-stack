@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
 import { useHover } from "../../hooks/useHover"
 
@@ -69,9 +69,12 @@ function Resizer(props: {
 }) {
 	const { gap, width, minWidth, setWidth } = props
 
-	const lineWidth = Math.floor(gap * 0.2)
+	const lineWidth = Math.floor(gap * 0.7)
 	const [hover, hoverProps] = useHover()
 	const right = -lineWidth / 2 - 0.5
+
+	const [dragging, setDragging] = useState(false)
+	const show = dragging || hover
 
 	return (
 		<div
@@ -87,6 +90,7 @@ function Resizer(props: {
 				justifyContent: "center",
 			}}
 			onMouseDown={(e) => {
+				setDragging(true)
 				const startX = e.clientX
 				const startWidth = width
 
@@ -99,6 +103,7 @@ function Resizer(props: {
 				const onMouseUp = () => {
 					document.removeEventListener("mousemove", onMouseMove)
 					document.removeEventListener("mouseup", onMouseUp)
+					setDragging(false)
 				}
 
 				document.addEventListener("mousemove", onMouseMove)
@@ -110,9 +115,9 @@ function Resizer(props: {
 				style={{
 					width: 1,
 					height: "100%",
-					backgroundColor: "var(--text-color)",
-					boxShadow: hover ? `0 0 3px 1px var(--text-color)` : "none",
-					transition: "box-shadow 0.2s ease-in-out",
+					backgroundColor: show ? `var(--text-color)` : "transparent",
+					boxShadow: show ? `0 0 1px 1px var(--text-color)` : "none",
+					transition: "box-shadow 0.1s ease-in-out, background-color 0.1s ease-in-out",
 				}}
 			/>
 		</div>
