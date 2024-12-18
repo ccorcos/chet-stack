@@ -10,14 +10,6 @@ import { Input } from "../Input"
 import { HeaderCell, Table } from "../Table"
 import { TextInput } from "../TextInput"
 
-// TODO:
-// - useListQuery elsewhere
-// - infinite loader demo just with numbers.
-// - default limit and desired screens of content.
-// - resizable table component entirely separate.
-// - put it all together in the OKV demo
-// - think about selection and the other GridDemo stuff we did.
-
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
 	const { api } = useClientEnvironment()
 

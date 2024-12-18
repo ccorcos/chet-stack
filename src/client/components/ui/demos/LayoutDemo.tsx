@@ -54,6 +54,11 @@ export function LayoutDemo() {
 						<Button onClick={() => setShowSidebar(!showSidebar)} style={{ marginTop: "16px" }}>
 							{showSidebar ? "close" : "open"}
 						</Button>
+						{[...Array(200)].map((_, i) => (
+							<p key={i} style={{ marginBottom: "16px" }}>
+								Scroll content {i + 1}
+							</p>
+						))}
 					</div>
 				</LeftPanelLayout>
 			}

@@ -1,4 +1,5 @@
 import React, { useCallback } from "react"
+import { passthroughRef } from "../../helpers/passthroughRef"
 
 const GAP = 1
 const BORDER_RADIUS = 0
@@ -19,7 +20,9 @@ function useIsVisible(show: boolean) {
 	return { isVisible, handleTransitionEnd }
 }
 
-export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export const TopbarLayout = passthroughRef(_TopbarLayout)
+
+function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
@@ -39,6 +42,7 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
+			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
 				style={{
 					position: "absolute",
@@ -55,7 +59,9 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boole
 	)
 }
 
-export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export const BottombarLayout = passthroughRef(_BottombarLayout)
+
+function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
@@ -75,6 +81,7 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
+			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
 				style={{
 					position: "absolute",
@@ -91,7 +98,9 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 	)
 }
 
-export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+export const LeftPanelLayout = passthroughRef(_LeftPanelLayout)
+
+function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
@@ -112,6 +121,7 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
+			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
 				style={{
 					position: "absolute",
@@ -127,8 +137,9 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: bo
 		</div>
 	)
 }
+export const RightPanelLayout = passthroughRef(_RightPanelLayout)
 
-export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
+function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
 	const { show, ...rest } = props
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
@@ -148,6 +159,7 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: b
 			}}
 			onTransitionEnd={handleTransitionEnd}
 		>
+			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
 				style={{
 					position: "absolute",

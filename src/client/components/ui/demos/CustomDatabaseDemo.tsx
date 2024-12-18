@@ -25,8 +25,8 @@ function SchemaListPanel(props: { selected: string | undefined }) {
 	const { api, router } = useClientEnvironment()
 
 	const [count, stale, rerender] = useDeferredCounter()
-
 	const [pending, startTransition] = useTransition()
+
 	const onNewSchema = useAction(async (key: string) => {
 		await api.write({ set: [{ key, value: "hello" }] })
 		router.replace(setParam(router.state.url, "schema", key))
@@ -37,26 +37,32 @@ function SchemaListPanel(props: { selected: string | undefined }) {
 		router.replace(setParam(router.state.url, "schema", key))
 	}
 
+	// TODO: eventually useInfiniteLoader
+
 	const loading = pending || stale
 
 	return (
 		<LeftPanelLayout show={true} style={{ padding: 12 }}>
-			<div>Schemas</div>
-			<Suspense fallback={<div>Loading...</div>}>
-				<SchemaList
-					renderCount={count}
-					stale={loading}
-					selected={props.selected}
-					onSelectKey={onSelectKey}
-				/>
-				<Button
-					onClick={() => {
-						startTransition(() => onNewSchema(`schema:${randomId()}`))
-					}}
-				>
-					New Schema
-				</Button>
-			</Suspense>
+			<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
+				<div>Schemas</div>
+				<Suspense fallback={<div>Loading...</div>}>
+					<div style={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
+						<SchemaList
+							renderCount={count}
+							stale={loading}
+							selected={props.selected}
+							onSelectKey={onSelectKey}
+						/>
+					</div>
+					<Button
+						onClick={() => {
+							startTransition(() => onNewSchema(`schema:${randomId()}`))
+						}}
+					>
+						New Schema
+					</Button>
+				</Suspense>
+			</div>
 		</LeftPanelLayout>
 	)
 }

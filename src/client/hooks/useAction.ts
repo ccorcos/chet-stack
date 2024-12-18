@@ -10,7 +10,7 @@ export function useAction<T extends any[]>(fn: (...args: T) => Promise<void>) {
 		setArgs(undefined)
 	})
 
-	loader.suspend()
+	if (args) loader.suspend()
 
 	return (...args: T) => setArgs(args)
 }
