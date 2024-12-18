@@ -11,7 +11,6 @@ import * as FormDemo from "./FormDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as GridDemo from "./GridDemo"
 import * as InfiniteLoaderDemo from "./InfiniteLoaderDemo"
-import * as InfiniteLoaderDemo3 from "./InfiniteLoaderDemo3"
 import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
@@ -37,7 +36,6 @@ export {
 	FuzzyStringDemo,
 	GridDemo,
 	InfiniteLoaderDemo,
-	InfiniteLoaderDemo3,
 	InputDemo,
 	LayoutDemo,
 	ListBoxDemo,

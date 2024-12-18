@@ -1,33 +1,108 @@
-import React, {
-	Suspense,
-	useDeferredValue,
-	useLayoutEffect,
-	useRef,
-	useState,
-	useTransition,
-} from "react"
+import React, { Suspense, useDeferredValue, useMemo, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
+import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
 import { useLoader } from "../../../hooks/useLoader"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
+import { HeaderCell, Table } from "../Table"
 import { TextInput } from "../TextInput"
 
-const GAP = 12
+// TODO:
+// - useListQuery elsewhere
+// - infinite loader demo just with numbers.
+// - default limit and desired screens of content.
+// - resizable table component entirely separate.
+// - put it all together in the OKV demo
+// - think about selection and the other GridDemo stuff we did.
+
+function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
+	const { api } = useClientEnvironment()
+
+	const loader = useLoader(JSON.stringify(query), async () => {
+		const response = await api.list(
+			query.reverse
+				? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
+				: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
+		)
+
+		if (response.status !== 200) throw new Error("Request failed: " + response.status)
+		if (query.reverse) return [...response.body].reverse()
+		return response.body
+	})
+	const list = loader.suspend()
+	return list
+}
+
+const gap = 12
+const minWidth = 150
+const defaultLimit = 50
 
 export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
-	const { router } = useClientEnvironment()
+	const { router, api } = useClientEnvironment()
 
 	const prefix = props.params.prefix || ""
 	const setPrefix = (prefix: string) => {
 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
+		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
 	}
 
-	const deferredPrefix = useDeferredValue(prefix)
-	const stalePrefix = deferredPrefix !== prefix
+	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
+		anchor: prefix,
+		limit: defaultLimit,
+		reverse: false,
+	})
+
+	const [count, rerender] = useCounter()
+	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
+
+	const deferredQuery = useDeferredValue(query)
+	const staleQuery = deferredQuery !== query
+
+	const list = useListQuery(deferredQuery)
+	const deferredListCount = useDeferredValue(list.length)
+
+	const scrollRef = useRef<HTMLDivElement>(null)
+	const firstRef = useRef<HTMLDivElement>(null)
+	const lastRef = useRef<HTMLDivElement>(null)
+
+	const { pendingUp, pendingDown } = useInfiniteLoader({
+		scrollRef,
+		firstRef,
+		lastRef,
+		query: deferredQuery,
+		resultCount: deferredListCount,
+		onLoadMore: (limit, dir) => {
+			if (dir === "up") {
+				const { key } = list[Math.ceil(list.length / 3)]
+				setCursor({ anchor: key, limit, reverse: true })
+			} else if (dir === "down") {
+				const { key } = list[Math.ceil((list.length * 2) / 3)]
+				setCursor({ anchor: key, limit, reverse: false })
+			} else {
+				setCursor((cursor) => ({ ...cursor, limit }))
+			}
+		},
+	})
+
+	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
+
+	const setWidth = (index: number) => (width: number) => {
+		const newWidths = [...columnWidths]
+		newWidths[index] = width
+		setColumnWidths(newWidths)
+	}
+
+	const backgroundColor = pendingUp
+		? "var(--red)"
+		: pendingDown
+		? "var(--green)"
+		: staleQuery
+		? "var(--blue)"
+		: "var(--background)"
 
 	return (
 		<div
@@ -40,361 +115,81 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 				// Column layout.
 				display: "flex",
 				flexDirection: "column",
-				gap: 12,
+				gap,
 			}}
 		>
 			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
 			<Suspense fallback={<div>Loading...</div>}>
-				<RenderTable prefix={deferredPrefix} stale={stalePrefix} />
-			</Suspense>
-		</div>
-	)
-}
-
-const debug = (...args: any[]) => {
-	// console.log(...args)
-}
-
-const DESIRED_SCREENS = 20
-const DEFAULT_LIMIT = 50
-
-function RenderTable(props: { prefix: string; stale: boolean }) {
-	// const { prefix } = props
-	const { api } = useClientEnvironment()
-
-	const [count, rerender] = useCounter()
-	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths", [320])
-
-	const [pendingSearch, startTransitionSearch] = useTransition()
-	const [pendingUp, startTransitionUp] = useTransition()
-	const [pendingDown, startTransitionDown] = useTransition()
-
-	// Update state with the prefix. We do this so that we persist the scroller element.
-	const { prefix } = props
-	useLayoutEffect(() => {
-		startTransitionSearch(() => {
-			setAnchor(({ limit }) => ({
-				key: prefix,
-				limit,
-				reverse: false,
-			}))
-		})
-	}, [prefix])
-
-	const [anchor, setAnchor] = useState<{ key: string; reverse: boolean; limit: number }>({
-		key: prefix,
-		// Inital request can use a small limit since we'll measure and adjust.
-		limit: DEFAULT_LIMIT,
-		reverse: false,
-	})
-
-	const loader = useLoader([prefix, anchor.key, anchor.reverse, anchor.limit, count], async () => {
-		const response = await api.list(
-			anchor.reverse
-				? { gte: prefix, lte: anchor.key, limit: anchor.limit, reverse: true }
-				: { gte: anchor.key, lt: incStr(prefix), limit: anchor.limit }
-		)
-
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		if (anchor.reverse) return [...response.body].reverse()
-		return response.body
-	})
-
-	const list = loader.suspend()
-
-	const scrollRef = useRef<HTMLDivElement>(null)
-
-	const computeDesiredLimit = () => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return anchor.limit
-		const avgHeight = scrollDiv.scrollHeight / anchor.limit
-		const limit = Math.ceil((scrollDiv.clientHeight / avgHeight) * DESIRED_SCREENS)
-		return limit
-	}
-
-	// Adjust the limit if its too small.
-	useLayoutEffect(() => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return
-		if (list.length < anchor.limit) return
-
-		const min = 2
-
-		const actualScreens = scrollDiv.scrollHeight / scrollDiv.clientHeight
-		if (actualScreens > min) return
-
-		const newLimit = computeDesiredLimit()
-		if (newLimit === anchor.limit) return
-
-		const startTransition = anchor.reverse ? startTransitionUp : startTransitionDown
-		startTransition(() => {
-			debug("NEW LIMIT", newLimit)
-			setAnchor((a) => ({ ...a, limit: newLimit }))
-		})
-	}, [list])
-
-	// The browser does a good job maintaining scroll position when scrolling down, but has issues
-	// when scrolling up, especially when hitting the top of the scroller.
-	const fixRef = useRef<{ element: HTMLElement; offset: number }>()
-
-	useLayoutEffect(() => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return
-
-		// On the render after we measure, fix the scroll position.
-		if (fixRef.current) {
-			const { element, offset } = fixRef.current
-			fixRef.current = undefined
-			const currentScrollTop = element.offsetTop - scrollDiv.scrollTop
-			debug("FIX", currentScrollTop - offset)
-			// scrollDiv.removeEventListener("scroll", onScroll)
-			scrollDiv.scrollTop = currentScrollTop - offset
-		}
-
-		if (!pendingUp) return
-		debug("LISTEN")
-
-		// When we hit the top of the scroller, keep track of where the top element is.
-		const onScroll = () => {
-			if (scrollDiv.scrollTop !== 0) return
-			const element = scrollDiv.querySelector(`[data-index="0"]`) as HTMLElement
-			if (!element) return
-			// Get the first visible element and its position before the update
-			const initialScrollTop = element.offsetTop - scrollDiv.scrollTop
-			debug("MEASURE", initialScrollTop)
-			fixRef.current = { element, offset: initialScrollTop }
-		}
-
-		scrollDiv.addEventListener("scroll", onScroll)
-		return () => scrollDiv.removeEventListener("scroll", onScroll)
-	}, [list, pendingUp])
-
-	// Adjust the anchor query based on scroll position.
-	useLayoutEffect(() => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return
-
-		const PAGE_SIZE = anchor.limit
-
-		let prev = scrollDiv.scrollTop
-		let dir: "up" | "down" | undefined = undefined
-
-		const onScroll = () => {
-			const { scrollTop, scrollHeight, clientHeight } = scrollDiv
-
-			if (scrollTop > prev) dir = "down"
-			else if (scrollTop < prev) dir = "up"
-			else dir === undefined
-			prev = scrollTop
-
-			const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-			const distanceFromTop = scrollTop
-
-			const isAtTop = anchor.key === prefix || (anchor.reverse && list.length < PAGE_SIZE)
-			const isAtBottom = !anchor.reverse && list.length < PAGE_SIZE
-
-			// const margin = clientHeight * 2
-			const margin = (scrollHeight - clientHeight * 2) * 0.15
-
-			if (dir === "down" && !pendingDown && !isAtBottom && distanceFromBottom < margin) {
-				const anchorIndex = Math.round((list.length * 2) / 3)
-				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
-				startTransitionDown(() => {
-					debug("DOWN")
-					setAnchor({
-						key: anchorItem.getAttribute("data-key")!,
-						limit: computeDesiredLimit(),
-						reverse: false,
-					})
-				})
-				return
-			}
-
-			// If we're within 2 viewport heights from the top
-			if (dir === "up" && !pendingUp && !isAtTop && distanceFromTop < margin) {
-				const anchorIndex = Math.round(list.length / 3)
-				const anchorItem = scrollDiv.querySelector(`[data-index="${anchorIndex}"]`)!
-
-				startTransitionUp(() => {
-					debug("UP", distanceFromTop)
-					setAnchor({
-						key: anchorItem.getAttribute("data-key")!,
-						limit: computeDesiredLimit(),
-						reverse: true,
-					})
-				})
-				return
-			}
-		}
-
-		scrollDiv.addEventListener("scroll", onScroll)
-		return () => scrollDiv.removeEventListener("scroll", onScroll)
-	}, [list, pendingUp, pendingDown])
-
-	return (
-		<React.Fragment>
-			{/* <div>{list.length} results</div> */}
-
-			<div
-				style={{
-					// Take up the rest of the space.
-					flex: 1,
-					overflow: "hidden",
-
-					// Relative for the gutter resizer.
-					position: "relative",
-					display: "flex",
-				}}
-			>
-				<div
+				<Table
 					ref={scrollRef}
-					style={{
-						// Overflow grid with relative for stick headers.
-						flex: 1,
-						overflowY: "auto",
-						position: "relative",
-					}}
+					gap={gap}
+					columnWidths={columnWidths}
+					setColumnWidths={setColumnWidths}
 				>
-					<div
+					<HeaderCell
+						gap={gap}
+						width={columnWidths[0]}
+						minWidth={minWidth}
+						setWidth={setWidth(0)}
 						style={{
-							display: "grid",
-							gridTemplateColumns: `${columnWidths[0]}px 1fr`,
-							gap: GAP,
+							backgroundColor,
+							fontWeight: "bold",
+							whiteSpace: "normal",
+							wordBreak: "break-all",
 						}}
 					>
-						<div
-							style={{
-								position: "sticky",
-								top: 0,
-								backgroundColor: pendingUp
-									? "var(--red)"
-									: pendingDown
-									? "var(--green)"
-									: pendingSearch || props.stale
-									? "var(--blue)"
-									: "var(--background)",
-								// backgroundColor: "var(--background)",
-								fontWeight: "bold",
-								whiteSpace: "normal",
-								wordBreak: "break-all",
-								zIndex: 1,
-							}}
-						>
-							key
-						</div>
-						<div
-							style={{
-								position: "sticky",
-								top: 0,
-								backgroundColor: "var(--background)",
-								fontWeight: "bold",
-								whiteSpace: "normal",
-								wordBreak: "break-all",
-								zIndex: 1,
-							}}
-						>
-							value
-						</div>
-						<>
-							<div key="up">{pendingUp ? "Loading..." : ""}</div>
-							<div key="up2" />
-						</>
-
-						{list.map(({ key, value }, index) => (
-							<React.Fragment key={key + count}>
-								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{key}</div> */}
-								{/* <div style={{ whiteSpace: "normal", wordBreak: "break-all" }}>{value}</div> */}
-								<TextInput
-									data-index={index}
-									data-key={key}
-									value={key}
-									onSubmit={async (newKey) => {
-										await api.write({
-											set: [{ key: newKey, value }],
-											delete: [key],
-										})
-										rerender()
-									}}
-								/>
-								<TextInput
-									value={value}
-									onSubmit={async (newValue) => {
-										await api.write({
-											set: [{ key, value: newValue }],
-										})
-										rerender()
-									}}
-									style={{ maxHeight: 300, overflowY: "auto" }}
-								/>
-							</React.Fragment>
-						))}
-						<>
-							<div key="down">{pendingDown ? "Loading..." : ""}</div>
-							<div key="down2" />
-						</>
-					</div>
-				</div>
-				<Resizer columnWidths={columnWidths} setColumnWidths={setColumnWidths} />
-			</div>
-		</React.Fragment>
-	)
-}
-
-function useHover() {
-	const [hover, setHover] = useState(false)
-
-	return [
-		hover,
-		{ onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false) },
-	] as const
-}
-
-function Resizer(props: { columnWidths: number[]; setColumnWidths: (value: number[]) => void }) {
-	const { columnWidths, setColumnWidths } = props
-
-	const lineWidth = Math.floor(GAP * 0.7)
-	const [hover, hoverProps] = useHover()
-	return (
-		<div
-			style={{
-				position: "absolute",
-				top: 0,
-				left: `${columnWidths[0] + GAP / 2 - lineWidth / 2}px`,
-				width: lineWidth,
-				bottom: 0,
-				cursor: "col-resize",
-				userSelect: "none",
-				display: "flex",
-				justifyContent: "center",
-			}}
-			onMouseDown={(e) => {
-				const startX = e.clientX
-				const startWidth = columnWidths[0]
-
-				const onMouseMove = (e: MouseEvent) => {
-					const delta = e.clientX - startX
-					setColumnWidths([Math.max(50, startWidth + delta)])
-				}
-
-				const onMouseUp = () => {
-					document.removeEventListener("mousemove", onMouseMove)
-					document.removeEventListener("mouseup", onMouseUp)
-				}
-
-				document.addEventListener("mousemove", onMouseMove)
-				document.addEventListener("mouseup", onMouseUp)
-			}}
-			{...hoverProps}
-		>
-			<div
-				style={{
-					width: 1,
-					height: "100%",
-					backgroundColor: "var(--text-color)",
-					boxShadow: hover ? `0 0 3px 1px var(--text-color)` : "none",
-					transition: "box-shadow 0.2s ease-in-out",
-				}}
-			/>
+						Key
+					</HeaderCell>
+					<HeaderCell
+						gap={gap}
+						width={columnWidths[1]}
+						minWidth={minWidth}
+						setWidth={setWidth(1)}
+						style={{
+							backgroundColor,
+							fontWeight: "bold",
+							whiteSpace: "normal",
+							wordBreak: "break-all",
+						}}
+					>
+						Value
+					</HeaderCell>
+					<>
+						<div key="up">{pendingUp ? "Loading..." : ""}</div>
+						<div key="up2" />
+					</>
+					{list.map(({ key, value }, index) => (
+						<React.Fragment key={key}>
+							<TextInput
+								ref={index === 0 ? firstRef : index === list.length - 1 ? lastRef : undefined}
+								data-key={key}
+								value={key}
+								onSubmit={async (newKey) => {
+									await api.write({
+										set: [{ key: newKey, value }],
+										delete: [key],
+									})
+									rerender()
+								}}
+							/>
+							<TextInput
+								value={value}
+								onSubmit={async (newValue) => {
+									await api.write({
+										set: [{ key, value: newValue }],
+									})
+									rerender()
+								}}
+								style={{ maxHeight: 300, overflowY: "auto" }}
+							/>
+						</React.Fragment>
+					))}
+					<>
+						<div key="down">{pendingDown ? "Loading..." : ""}</div>
+						<div key="down2" />
+					</>
+				</Table>
+			</Suspense>
 		</div>
 	)
 }

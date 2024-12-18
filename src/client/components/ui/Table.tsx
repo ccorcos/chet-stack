@@ -19,7 +19,6 @@ function _Table(props: {
 			ref={props.ref}
 			style={{
 				overflow: "auto",
-				flex: 1,
 				position: "relative",
 				display: "grid",
 				gridTemplateColumns: columnWidths.map((w) => `${w}px`).join(" "),
