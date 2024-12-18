@@ -62,7 +62,7 @@ export function useInfiniteLoader(args: {
 	// const logScrollPositions = () => {
 	// 	return scrollPositionRef.current
 	// 		.map(({ element, offset }) => {
-	// 			const key = element.getAttribute("data-key")
+	// 			const key = element.textContent
 	// 			return [key, offset]
 	// 		})
 	// 		.join(", ")
