@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react"
+import { useLayoutEffect, useMemo } from "react"
 
 import { useRef, useTransition } from "react"
 
@@ -90,7 +90,7 @@ export function useInfiniteLoader(args: {
 	}, [query])
 
 	// Take measurement of the previous render when the query changes.
-	useLayoutEffect(() => {
+	useMemo(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
 		scrollPositionRef.current = [firstRef.current, lastRef.current].filter(Boolean).map((div) => {
