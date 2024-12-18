@@ -16,6 +16,7 @@ import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
+import * as OldTableDemo from "./OldTableDemo"
 import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
@@ -41,6 +42,7 @@ export {
 	LayoutDemo,
 	ListBoxDemo,
 	OKVDatabaseDemo,
+	OldTableDemo,
 	PlantDatabaseDemo,
 	PlaygroundDemo,
 	PopupDemo,
