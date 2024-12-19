@@ -14,7 +14,9 @@ import * as InfiniteLoaderDemo from "./InfiniteLoaderDemo"
 import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
+import * as MasterDetailDemo from "./MasterDetailDemo"
 import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
+import * as OKVListDemo from "./OKVListDemo"
 import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
@@ -39,7 +41,9 @@ export {
 	InputDemo,
 	LayoutDemo,
 	ListBoxDemo,
+	MasterDetailDemo,
 	OKVDatabaseDemo,
+	OKVListDemo,
 	PlantDatabaseDemo,
 	PlaygroundDemo,
 	PopupDemo,

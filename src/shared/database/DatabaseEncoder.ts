@@ -1,4 +1,4 @@
-import { OrderedKeyValueApi } from "./types"
+import { ListArgs, OrderedKeyValueApi, WriteArgs } from "./types"
 
 type KeyValueEncoder<K, V> = {
 	encodeKey: (key: K) => string
@@ -21,6 +21,40 @@ export function Subspace(prefix: string, db: OrderedKeyValueApi<string, any>) {
 	})
 }
 
+export function SubspaceEncoder(prefix: string): Encoder<string, string> {
+	return {
+		encode: (key) => prefix + key,
+		decode: (key) => key.slice(prefix.length),
+	}
+}
+
+export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O>): ListArgs<O> {
+	return {
+		...args,
+		gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),
+		gte: args?.gte === undefined ? undefined : encoder.encode(args.gte),
+		lt: args?.lt === undefined ? undefined : encoder.encode(args.lt),
+		lte: args?.lte === undefined ? undefined : encoder.encode(args.lte),
+	}
+}
+
+export function KeyDecodeListResults<K, V, O>(
+	results: { key: O; value: V }[],
+	encoder: Encoder<K, O>
+): { key: K; value: V }[] {
+	return results.map(({ key, value }) => ({ key: encoder.decode(key), value }))
+}
+
+export function KeyEncodeWrite<K, V, O>(
+	args: WriteArgs<K, V>,
+	encoder: Encoder<K, O>
+): WriteArgs<O, V> {
+	return {
+		set: args.set?.map(({ key, value }) => ({ key: encoder.encode(key), value })),
+		delete: args.delete?.map((key) => encoder.encode(key)),
+	}
+}
+
 export function KeyEncoder<K, V>(
 	db: OrderedKeyValueApi<string, V>,
 	encoder: Encoder<K, string>
@@ -31,15 +65,9 @@ export function KeyEncoder<K, V>(
 		},
 
 		list(args) {
-			return db
-				.list({
-					...args,
-					gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),
-					gte: args?.gte === undefined ? undefined : encoder.encode(args.gte),
-					lt: args?.lt === undefined ? undefined : encoder.encode(args.lt),
-					lte: args?.lte === undefined ? undefined : encoder.encode(args.lte),
-				})
-				.map(({ key, value }) => ({ key: encoder.decode(key), value }))
+			const newArgs = KeyEncodeListArgs(args || {}, encoder)
+			const results = db.list(newArgs)
+			return KeyDecodeListResults(results, encoder)
 		},
 
 		set(key: K, value: V) {
@@ -50,11 +78,9 @@ export function KeyEncoder<K, V>(
 			return db.delete(encoder.encode(key))
 		},
 
-		write(tx: { set?: { key: K; value: V }[]; delete?: K[] }) {
-			return db.write({
-				set: tx.set?.map(({ key, value }) => ({ key: encoder.encode(key), value })),
-				delete: tx.delete?.map((key) => encoder.encode(key)),
-			})
+		write(args) {
+			const newArgs = KeyEncodeWrite(args, encoder)
+			return db.write(newArgs)
 		},
 	}
 }

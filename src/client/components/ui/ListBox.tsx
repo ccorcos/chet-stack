@@ -1,5 +1,6 @@
 import React, { useRef } from "react"
 import { nextFocusable, prevFocusable } from "../../helpers/focusHelpers"
+import { passthroughRef } from "../../helpers/passthroughRef"
 import { isShortcut } from "../../hooks/useShortcut"
 
 export function ListBox<T>(props: {
@@ -54,7 +55,7 @@ export function ListBoxKeyed<T, K extends string | number>(props: {
 	getKey: (item: T) => K
 
 	autoFocus?: boolean
-	children: (item: T, props: ListItemProps) => JSX.Element
+	children: (item: T, props: ListItemProps, index: number) => JSX.Element
 }) {
 	const list = useRef<HTMLDivElement>(null)
 
@@ -78,12 +79,16 @@ export function ListBoxKeyed<T, K extends string | number>(props: {
 		<div ref={list} style={props.style} role="listbox" tabIndex={0} onKeyDown={handleKeyDown}>
 			{props.items.map((item, i) => {
 				const key = props.getKey(item)
-				return props.children(item, {
-					key,
-					selected: key === props.selectedKey,
-					onClick: () => props.onSelectKey(key),
-					onKeyDown: (e) => isShortcut("enter", e.nativeEvent) && props.onSelectKey(key),
-				})
+				return props.children(
+					item,
+					{
+						key,
+						selected: key === props.selectedKey,
+						onClick: () => props.onSelectKey(key),
+						onKeyDown: (e) => isShortcut("enter", e.nativeEvent) && props.onSelectKey(key),
+					},
+					i
+				)
 			})}
 		</div>
 	)
@@ -93,18 +98,19 @@ type ListItemProps = Omit<Parameters<typeof ListItem>[0], "children" | "style"> 
 	key: string | number
 }
 
-export function ListItem(props: {
+export const ListItem = passthroughRef(_ListItem)
+
+function _ListItem(props: {
+	ref?: React.Ref<HTMLDivElement>
 	children: React.ReactNode
 	style?: React.CSSProperties
 	selected?: boolean
 	onClick: React.MouseEventHandler
 	onKeyDown: React.KeyboardEventHandler
 }) {
-	const div = useRef<HTMLDivElement>(null)
-
 	return (
 		<div
-			ref={div}
+			ref={props.ref}
 			role="listitem"
 			tabIndex={-1}
 			className="feedback"

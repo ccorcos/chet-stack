@@ -108,6 +108,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 				display: "flex",
 				flexDirection: "column",
 				gap,
+				padding: 12,
 			}}
 		>
 			<Input placeholder="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
