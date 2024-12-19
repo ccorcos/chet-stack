@@ -1,6 +1,6 @@
 import { Suspense, startTransition } from "react"
 
-import React, { useDeferredValue, useMemo, useRef, useState } from "react"
+import React, { useDeferredValue, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
@@ -30,7 +30,8 @@ export function OKVListDemo(props: { params: Record<string, string | undefined> 
 
 function OKVDetails(props: { selected: string | undefined }) {
 	if (!props.selected) return <div>No selection.</div>
-	return <OKVSelectedDetails selected={props.selected} />
+	// return <OKVSelectedDetails selected={props.selected} />
+	return <div>{props.selected}</div>
 }
 
 function useOKV(key: string) {
@@ -45,25 +46,27 @@ function useOKV(key: string) {
 }
 
 function OKVSelectedDetails(props: { selected: string }) {
-	// const deferredSelected = useDeferredValue(props.selected)
-	// const stale = deferredSelected !== props.selected
-	const value = useOKV(props.selected)
-	const stale = false
-	// console.log("stale", stale)
+	const deferredSelected = useDeferredValue(props.selected)
+	const stale = deferredSelected !== props.selected
+	const value = useOKV(deferredSelected)
+	console.log("stale", stale)
 	return <div style={{ color: stale ? "var(--text-color2)" : "inherit" }}>{value}</div>
 }
 
 export function OKVList(props: { params: Record<string, string | undefined> }) {
 	const { router } = useClientEnvironment()
 
-	const prefix = props.params.prefix || ""
+	const prefix = useDeferredValue(props.params.prefix || "")
+
+	console.log("prefix", prefix)
+
 	const setPrefix = (prefix: string) => {
 		startTransition(() => {
 			router.replace(setParam(router.state.url, "prefix", prefix))
 		})
 	}
 
-	const selected = props.params.selected || ""
+	const selected = props.params.selected
 	const setSelected = (selected: string) => {
 		startTransition(() => {
 			console.log("setSelected", selected)
@@ -130,22 +133,33 @@ const defaultLimit = 50
 export function useOKVList(props: { prefix: string; renderCount: number }) {
 	const { prefix } = props
 
-	let [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
+	const count = props.renderCount
+
+	let [query, setQuery] = useState({
+		prefix: prefix,
+		count: props.renderCount,
 		anchor: prefix,
 		limit: defaultLimit,
 		reverse: false,
 	})
+
 	// Reset the cursor when the prefix changes
-	if (cursor.anchor !== prefix) {
-		cursor = {
+	if (query.prefix !== prefix) {
+		query = {
+			prefix: prefix,
+			count: count,
 			anchor: prefix,
 			limit: defaultLimit,
 			reverse: false,
 		}
 	}
-
-	const count = props.renderCount
-	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
+	// Update the cursor when the renderCount changes.
+	if (query.count !== count) {
+		query = {
+			...query,
+			count: count,
+		}
+	}
 
 	const deferredQuery = useDeferredValue(query)
 	const staleQuery = deferredQuery !== query
@@ -166,12 +180,12 @@ export function useOKVList(props: { prefix: string; renderCount: number }) {
 		onLoadMore: (limit, dir) => {
 			if (dir === "up") {
 				const { key } = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor: key, limit, reverse: true })
+				setQuery({ ...query, anchor: key, limit, reverse: true })
 			} else if (dir === "down") {
 				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor: key, limit, reverse: false })
+				setQuery({ ...query, anchor: key, limit, reverse: false })
 			} else {
-				setCursor({ ...cursor, limit })
+				setQuery({ ...query, limit })
 			}
 		},
 	})
