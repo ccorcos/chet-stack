@@ -1,4 +1,5 @@
 import type * as apis from "../../server/apis/autoindex"
+import { proxyObj } from "../../shared/proxyHelpers"
 import { sleep } from "../../shared/sleep"
 
 type InputOutput<T extends (...any: any[]) => any> = {
@@ -39,16 +40,7 @@ export type ClientApi = {
 }
 
 export function createApi() {
-	return new Proxy(
-		{},
-		{
-			get(target, key: any, reciever) {
-				return (args: any) => {
-					return apiRequest(key, args)
-				}
-			},
-		}
-	) as ClientApi
+	return proxyObj((key, args) => apiRequest(key, args)) as ClientApi
 }
 
 export function formatResponseError(response: ErrorResponse) {

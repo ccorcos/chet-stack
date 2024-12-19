@@ -1,26 +1,25 @@
-import React, { Suspense, useDeferredValue, useMemo, useTransition } from "react"
+import React, { Suspense, useDeferredValue, useMemo } from "react"
 import {
 	KeyDecodeListResults,
 	KeyEncodeListArgs,
 	KeyEncodeWrite,
 	SubspaceEncoder,
 } from "../../../../shared/database/DatabaseEncoder"
-import { incStr } from "../../../../shared/incStr"
+import { proxyObj } from "../../../../shared/proxyHelpers"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useAction } from "../../../hooks/useAction"
 import { useDeferredCounter } from "../../../hooks/useCounter"
-import { useLoader } from "../../../hooks/useLoader"
+import { useOKV } from "../../../hooks/useOKV"
+import { useOKVList } from "../../../hooks/useOKVList"
 import {
 	ClientEnvironmentProvider,
 	useClientEnvironment,
 } from "../../../services/ClientEnvironment"
-import { ClientApi } from "../../../services/api"
 import { Button } from "../Button"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBoxKeyed, ListItem } from "../ListBox"
-import { TextInput } from "../TextInput"
 
 function Subspace(props: { subspace: string; children: React.ReactNode }) {
 	const environment = useClientEnvironment()
@@ -29,9 +28,9 @@ function Subspace(props: { subspace: string; children: React.ReactNode }) {
 
 	const newEnvironment = useMemo(() => {
 		const encoder = SubspaceEncoder(props.subspace)
-		const newApi: ClientApi = {
-			...api,
-			list: async (args) => {
+
+		const newApi = proxyObj(async (key, args) => {
+			if (key === "list") {
 				const response = await api.list(KeyEncodeListArgs(args, encoder))
 				if (response.status === 200) {
 					return {
@@ -39,12 +38,16 @@ function Subspace(props: { subspace: string; children: React.ReactNode }) {
 						body: KeyDecodeListResults(response.body, encoder),
 					}
 				}
+
 				return response
-			},
-			write: (args) => {
+			}
+			if (key === "write") {
 				return api.write(KeyEncodeWrite(args, encoder))
-			},
-		}
+			}
+
+			return api[key](args)
+		})
+
 		return { ...environment, api: newApi }
 	}, [props.subspace])
 
@@ -54,180 +57,93 @@ function Subspace(props: { subspace: string; children: React.ReactNode }) {
 }
 
 export function MasterDetailDemo(props: { params: Record<string, string | undefined> }) {
-	const { router } = useClientEnvironment()
 	const selected = props.params.selected
-	const setSelected = (selected: string | undefined) => {
-		router.replace(setParam(router.state.url, "selected", selected))
-	}
-	const prefix = props.params.prefix
-	const setPrefix = (prefix: string | undefined) => {
-		router.replace(setParam(router.state.url, "prefix", prefix))
-	}
-
 	return (
-		<Subspace subspace={"docs:"}>
+		<Subspace subspace={"docs"}>
 			<Layout
 				LeftPanel={
-					<ListPanel
-						prefix={prefix}
-						setPrefix={setPrefix}
-						selected={selected}
-						setSelected={setSelected}
-					/>
+					<LeftPanelLayout show={true} style={{ padding: 12 }}>
+						<OKVList {...props} />
+					</LeftPanelLayout>
 				}
 			>
-				<Details selected={selected} setSelected={setSelected} />
+				<ContentLayout style={{ padding: 12 }}>
+					<OKVDetails selected={selected} />
+				</ContentLayout>
 			</Layout>
 		</Subspace>
 	)
 }
 
-function ListPanel(props: {
-	selected: string | undefined
-	setSelected: (selected: string | undefined) => void
-	prefix: string | undefined
-	setPrefix: (prefix: string | undefined) => void
-}) {
-	const { api, router } = useClientEnvironment()
+function OKVDetails(props: { selected: string | undefined }) {
+	if (!props.selected) return <div>No selection.</div>
+	return <OKVSelectedDetails selected={props.selected} />
+}
 
-	const [count, stale, rerender] = useDeferredCounter()
-	const [pending, startTransition] = useTransition()
+function OKVSelectedDetails(props: { selected: string }) {
+	const deferredSelected = useDeferredValue(props.selected)
+	const stale = deferredSelected !== props.selected
+	const value = useOKV(deferredSelected)
+	return <div style={{ color: stale ? "var(--text-color2)" : "inherit" }}>{value}</div>
+}
 
-	const onNewSchema = useAction("newSchema", async (key: string) => {
-		await api.write({ set: [{ key, value: "hello" }] })
-		router.replace(setParam(router.state.url, "schema", key))
-		rerender()
-	})
+function OKVList(props: { params: Record<string, string | undefined> }) {
+	const { router } = useClientEnvironment()
 
-	const onSelectKey = (key: string) => {
-		router.replace(setParam(router.state.url, "schema", key))
+	const prefix = props.params.prefix || ""
+	const deferredPrefix = useDeferredValue(prefix)
+	const stalePrefix = deferredPrefix !== prefix
+
+	const setPrefix = (prefix: string) => {
+		router.replace(setParam(router.state.url, "prefix", prefix))
 	}
 
-	// TODO: eventually useInfiniteLoader
+	const selected = props.params.selected
+	const setSelected = (selected: string) => {
+		router.replace(setParam(router.state.url, "selected", selected))
+	}
 
-	const loading = pending || stale
+	const [count, refetching, rerender] = useDeferredCounter()
 
-	return (
-		<LeftPanelLayout show={true} style={{ padding: 12 }}>
-			<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
-				<Input
-					placeholder="Search"
-					value={props.prefix}
-					onChange={(e) => props.setPrefix(e.target.value)}
-				/>
-
-				<Suspense fallback={<div>Loading...</div>}>
-					<div style={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
-						<SchemaList
-							renderCount={count}
-							stale={loading}
-							selected={props.selected}
-							onSelectKey={onSelectKey}
-						/>
-					</div>
-					<Button
-						onClick={() => {
-							startTransition(() => onNewSchema(`schema:${randomId()}`))
-						}}
-					>
-						New Schema
-					</Button>
-				</Suspense>
-			</div>
-		</LeftPanelLayout>
-	)
-}
-
-function SchemaList(props: {
-	renderCount: number
-	stale: boolean
-	selected: string | undefined
-	onSelectKey: (key: string) => void
-}) {
-	const { api } = useClientEnvironment()
-
-	const loader = useLoader(["schemas", props.renderCount], async () => {
-		const response = await api.list({
-			gt: "schema:",
-			lt: incStr("schema:"),
-		})
-
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		return response.body
+	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useOKVList({
+		prefix: deferredPrefix,
+		renderCount: count,
 	})
 
-	const schemas = loader.suspend()
-
-	return (
-		<>
-			<ListBoxKeyed
-				items={schemas}
-				getKey={({ key }) => key}
-				selectedKey={props.selected}
-				onSelectKey={props.onSelectKey}
-				autoFocus={true}
-				style={{ color: props.stale ? "var(--text-color2)" : "inherit" }}
-			>
-				{(item, props) => <ListItem {...props}>{item.key}</ListItem>}
-			</ListBoxKeyed>
-		</>
-	)
-}
-
-function Details(props: {
-	selected: string | undefined
-	setSelected: (selected: string | undefined) => void
-}) {
-	const selected = useDeferredValue(props.selected)
-	const stale = selected !== props.selected
-
-	return (
-		<ContentLayout>
-			<Suspense fallback={<div>Loading...</div>}>
-				{selected ? (
-					<SchemaEditor key={selected} selected={selected} stale={stale} />
-				) : (
-					<div>No schema selected</div>
-				)}
-			</Suspense>
-		</ContentLayout>
-	)
-}
-
-function SchemaEditor(props: { selected: string; stale: boolean }) {
 	const { api } = useClientEnvironment()
-
-	const { selected } = props
-	const [count, stale, rerender] = useDeferredCounter()
-	const [pending, startTransition] = useTransition()
-
-	const loader = useLoader(["schema", selected, count], async () => {
-		const response = await api.get(selected)
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		return response.body
-	})
-	const onSubmit = useAction("submitSchema", async (key: string, value: string) => {
-		await api.write({ set: [{ key, value }] })
+	const onNewRecord = useAction("newRecord", async (key: string) => {
+		await api.write({ set: [{ key, value: "hello" }] })
+		setSelected(key)
 		rerender()
 	})
 
-	const schema = loader.suspend()
-	if (!schema) return <div>No schema found</div>
-
-	const loading = props.stale || pending || stale
-
 	return (
-		<>
-			{!schema && <div style={{ color: "var(--red)" }}>No schema found</div>}
-			<TextInput
-				style={{ color: loading ? "var(--text-color2)" : "inherit" }}
-				value={schema || ""}
-				onSubmit={async (value) => {
-					startTransition(() => {
-						onSubmit(props.selected, value)
-					})
-				}}
-			/>
-		</>
+		<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
+			<Input placeholder="Search" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+			<div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
+				<Suspense fallback={<div>Loading...</div>}>
+					{pendingUp && <div>Loading...</div>}
+					<ListBoxKeyed
+						items={list}
+						getKey={({ key }) => key}
+						selectedKey={selected}
+						onSelectKey={setSelected}
+						autoFocus={true}
+						style={{ color: staleQuery || stalePrefix ? "var(--text-color2)" : "inherit" }}
+					>
+						{(item, props, i) => (
+							<ListItem
+								ref={i === 0 ? firstRef : i === list.length - 1 ? lastRef : undefined}
+								{...props}
+							>
+								{item.key}
+							</ListItem>
+						)}
+					</ListBoxKeyed>
+					{pendingDown && <div>Loading...</div>}
+				</Suspense>
+			</div>
+			<Button onClick={() => onNewRecord(randomId())}>New Record</Button>
+		</div>
 	)
 }

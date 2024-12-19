@@ -39,7 +39,7 @@ function OKVSelectedDetails(props: { selected: string }) {
 	return <div style={{ color: stale ? "var(--text-color2)" : "inherit" }}>{value}</div>
 }
 
-export function OKVList(props: { params: Record<string, string | undefined> }) {
+function OKVList(props: { params: Record<string, string | undefined> }) {
 	const { router } = useClientEnvironment()
 
 	const prefix = props.params.prefix || ""
