@@ -1,4 +1,4 @@
-import React, { Suspense, useDeferredValue, useMemo } from "react"
+import React, { Suspense, useDeferredValue, useMemo, useTransition } from "react"
 import {
 	KeyDecodeListResults,
 	KeyEncodeListArgs,
@@ -12,6 +12,7 @@ import { useAction } from "../../../hooks/useAction"
 import { useDeferredCounter } from "../../../hooks/useCounter"
 import { useOKV } from "../../../hooks/useOKV"
 import { useOKVList } from "../../../hooks/useOKVList"
+import { isShortcut } from "../../../hooks/useShortcut"
 import {
 	ClientEnvironmentProvider,
 	useClientEnvironment,
@@ -44,6 +45,9 @@ function Subspace(props: { subspace: string; children: React.ReactNode }) {
 			if (key === "write") {
 				return api.write(KeyEncodeWrite(args, encoder))
 			}
+			if (key === "get") {
+				return api.get(encoder.encode(args))
+			}
 
 			return api[key](args)
 		})
@@ -68,7 +72,9 @@ export function MasterDetailDemo(props: { params: Record<string, string | undefi
 				}
 			>
 				<ContentLayout style={{ padding: 12 }}>
-					<OKVDetails selected={selected} />
+					<Suspense fallback={<div>Loading...</div>}>
+						<OKVDetails selected={selected} />
+					</Suspense>
 				</ContentLayout>
 			</Layout>
 		</Subspace>
@@ -99,7 +105,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 	}
 
 	const selected = props.params.selected
-	const setSelected = (selected: string) => {
+	const setSelected = (selected: string | undefined) => {
 		router.replace(setParam(router.state.url, "selected", selected))
 	}
 
@@ -110,12 +116,22 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 		renderCount: count,
 	})
 
+	const [newRecordPending, startTransition] = useTransition()
+
 	const { api } = useClientEnvironment()
 	const onNewRecord = useAction("newRecord", async (key: string) => {
-		await api.write({ set: [{ key, value: "hello" }] })
+		await api.write({ set: [{ key, value: `${key}\n\n` }] })
 		setSelected(key)
 		rerender()
 	})
+
+	const onDeleteRecord = useAction("deleteRecord", async (key: string) => {
+		await api.write({ delete: [key] })
+		setSelected(undefined)
+		rerender()
+	})
+
+	const loading = newRecordPending || staleQuery || stalePrefix
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
@@ -129,12 +145,18 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 						selectedKey={selected}
 						onSelectKey={setSelected}
 						autoFocus={true}
-						style={{ color: staleQuery || stalePrefix ? "var(--text-color2)" : "inherit" }}
+						style={{ color: loading ? "var(--text-color2)" : "inherit" }}
 					>
 						{(item, props, i) => (
 							<ListItem
 								ref={i === 0 ? firstRef : i === list.length - 1 ? lastRef : undefined}
 								{...props}
+								onKeyDown={(e) => {
+									props.onKeyDown(e)
+									if (isShortcut("delete", e.nativeEvent)) {
+										startTransition(() => onDeleteRecord(item.key))
+									}
+								}}
 							>
 								{item.key}
 							</ListItem>
@@ -143,7 +165,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 					{pendingDown && <div>Loading...</div>}
 				</Suspense>
 			</div>
-			<Button onClick={() => onNewRecord(randomId())}>New Record</Button>
+			<Button onClick={() => startTransition(() => onNewRecord(randomId()))}>New Record</Button>
 		</div>
 	)
 }
