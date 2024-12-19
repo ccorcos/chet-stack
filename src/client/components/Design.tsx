@@ -1,5 +1,5 @@
 import { compact } from "lodash"
-import React, { useCallback, useMemo, useRef, useState } from "react"
+import React, { Suspense, useCallback, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "../../shared/fuzzyMatch"
 import { isShortcut, useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -26,13 +26,15 @@ export function Design(props: { params: Record<string, string> }) {
 
 	return (
 		<Layout LeftPanel={<Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />}>
-			<ContentLayout>
-				{demos[currentPage] ? (
-					React.createElement(demos[currentPage][currentPage], { params })
-				) : (
-					<div>Select a page</div>
-				)}
-			</ContentLayout>
+			<Suspense fallback={<div>Loading...</div>}>
+				<ContentLayout>
+					{demos[currentPage] ? (
+						React.createElement(demos[currentPage][currentPage], { params })
+					) : (
+						<div>Select a page</div>
+					)}
+				</ContentLayout>
+			</Suspense>
 		</Layout>
 	)
 }

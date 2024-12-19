@@ -4,11 +4,6 @@ import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
 import { useLoader } from "../../../hooks/useLoader"
 import { Input } from "../Input"
 
-// TODO:
-// - resizable table component entirely separate.
-// - put it all together in the OKV demo
-// - think about selection and the other GridDemo stuff we did.
-
 export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	const [cursor, setCursor] = useState<{ anchor: number; limit: number; reverse: boolean }>({
 		anchor: 0,

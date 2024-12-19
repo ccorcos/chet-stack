@@ -27,7 +27,7 @@ function SchemaListPanel(props: { selected: string | undefined }) {
 	const [count, stale, rerender] = useDeferredCounter()
 	const [pending, startTransition] = useTransition()
 
-	const onNewSchema = useAction(async (key: string) => {
+	const onNewSchema = useAction("newSchema", async (key: string) => {
 		await api.write({ set: [{ key, value: "hello" }] })
 		router.replace(setParam(router.state.url, "schema", key))
 		rerender()
@@ -132,7 +132,7 @@ function SchemaEditor(props: { selected: string; stale: boolean }) {
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		return response.body
 	})
-	const onSubmit = useAction(async (key: string, value: string) => {
+	const onSubmit = useAction("submitSchema", async (key: string, value: string) => {
 		await api.write({ set: [{ key, value }] })
 		rerender()
 	})

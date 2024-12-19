@@ -13,6 +13,7 @@ export function ComboBoxSelect(props: {
 	placeholder: string
 	value: string | undefined
 	onChange: (value: string) => void
+	style?: React.CSSProperties
 	Input?: React.FC<JSX.IntrinsicElements["input"]>
 	Button?: React.FC<JSX.IntrinsicElements["button"]>
 }) {
@@ -47,7 +48,11 @@ export function ComboBoxSelect(props: {
 	} else {
 		const ComboButton = props.Button ?? Button
 		return (
-			<ComboButton ref={buttonRef} onClick={() => setOpen(true)} style={{ textAlign: "left" }}>
+			<ComboButton
+				ref={buttonRef}
+				onClick={() => setOpen(true)}
+				style={{ textAlign: "left", ...props.style }}
+			>
 				{props.value || <span style={{ color: "var(--text-color2" }}>{props.placeholder} </span>}{" "}
 				<span style={{ fontSize: "0.7rem", verticalAlign: "middle" }}>▼</span>
 			</ComboButton>

@@ -7,7 +7,7 @@ type KeyValueEncoder<K, V> = {
 	decodeValue: (value: string) => V
 }
 
-type Encoder<I, O> = {
+export type Encoder<I, O> = {
 	encode: (key: I) => O
 	decode: (key: O) => I
 }

@@ -15,13 +15,13 @@ import * as InputDemo from "./InputDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
-import * as OldTableDemo from "./OldTableDemo"
 import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
+import * as TableViewDemo from "./TableViewDemo"
 import * as TokenInputDemo from "./TokenInputDemo"
 
 export {
@@ -40,12 +40,12 @@ export {
 	LayoutDemo,
 	ListBoxDemo,
 	OKVDatabaseDemo,
-	OldTableDemo,
 	PlantDatabaseDemo,
 	PlaygroundDemo,
 	PopupDemo,
 	RawDatabaseDemo,
 	SpinnerDemo,
 	TableDemo,
+	TableViewDemo,
 	TokenInputDemo,
 }

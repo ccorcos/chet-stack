@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo } from "react"
 import { useRef, useTransition } from "react"
 
 const debug = (...args: any[]) => {
-	// console.log(...args)
+	console.log(...args)
 }
 
 export function useInfiniteLoader(args: {
@@ -56,6 +56,7 @@ export function useInfiniteLoader(args: {
 			startTransitionDown(() => onLoadMore(newLimit))
 		}
 	}, [query])
+
 	// Measure scroll position before loading new data
 	const scrollPositionRef = useRef<{ element: HTMLElement; offset: number }[]>([])
 
