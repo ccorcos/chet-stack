@@ -13,7 +13,7 @@ const debug = (...args: any[]) => {
 }
 
 /** `id` must uniquly identify the loader. */
-export function useLoader<T>(id: JSONValue, fn: () => Promise<T>): LoaderPromise<T> {
+export function useLoader<T>(id: JSONValue, fn: () => Promise<T> | T): LoaderPromise<T> {
 	const key = JSON.stringify(id)
 
 	let loader = loaders[key]

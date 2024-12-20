@@ -10,7 +10,7 @@ export function useAction<T extends any[]>(name: string, fn: (...args: T) => Pro
 		setArgs(undefined)
 	})
 
-	if (args) loader.suspend()
+	loader.suspend()
 
 	return (...args: T) => setArgs(args)
 }

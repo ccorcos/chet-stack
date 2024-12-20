@@ -5,18 +5,24 @@ export class LoaderPromise<T = any> {
 	public rejected = false
 	public error?: any
 
-	constructor(promise: Promise<T>) {
-		this.promise = promise
-			.then((value) => {
-				this.resolved = true
-				this.value = value
-				return value
-			})
-			.catch((error) => {
-				this.rejected = true
-				this.error = error
-				throw error
-			})
+	constructor(promise: Promise<T> | T) {
+		if (promise instanceof Promise) {
+			this.promise = promise
+				.then((value) => {
+					this.resolved = true
+					this.value = value
+					return value
+				})
+				.catch((error) => {
+					this.rejected = true
+					this.error = error
+					throw error
+				})
+		} else {
+			this.resolved = true
+			this.value = promise
+			this.promise = Promise.resolve(promise)
+		}
 	}
 
 	suspend() {
