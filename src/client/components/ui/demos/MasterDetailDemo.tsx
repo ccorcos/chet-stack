@@ -21,6 +21,7 @@ import { Button } from "../Button"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBoxKeyed, ListItem } from "../ListBox"
+import { TextInput } from "../TextInput"
 
 function Subspace(props: { subspace: string; children: React.ReactNode }) {
 	const environment = useClientEnvironment()
@@ -86,11 +87,105 @@ function OKVDetails(props: { selected: string | undefined }) {
 	return <OKVSelectedDetails selected={props.selected} />
 }
 
+function parseText(text: string) {
+	const lines = text.split("\n")
+	if (lines.length === 0) return { title: "", body: "", properties: {} }
+
+	const title = lines[0].trim()
+	const body = lines.slice(1).join("\n").trim()
+
+	const properties: Record<string, string | number | (string | number)[]> = {}
+
+	for (const line of body.split("\n")) {
+		const match = line.match(/^([^:]+):\s*(.+)$/)
+		if (!match) continue
+
+		const [_, label, value] = match
+		const trimmedLabel = label.trim()
+		const trimmedValue = value.trim()
+
+		// Parse value
+		let parsedValue: string | number | (string | number)[]
+
+		// Check if comma-separated
+		if (trimmedValue.includes(",")) {
+			parsedValue = trimmedValue.split(",").map((v) => {
+				const num = Number(v.trim())
+				return isNaN(num) ? v.trim() : num
+			})
+		} else {
+			const num = Number(trimmedValue)
+			parsedValue = isNaN(num) ? trimmedValue : num
+		}
+
+		// Add to properties
+		if (trimmedLabel in properties) {
+			const existing = properties[trimmedLabel]
+			if (Array.isArray(existing)) {
+				// @ts-ignore
+				existing.push(parsedValue)
+			} else {
+				// @ts-ignore
+				properties[trimmedLabel] = [existing, parsedValue]
+			}
+		} else {
+			properties[trimmedLabel] = parsedValue
+		}
+	}
+
+	return { title, body, properties }
+}
+
 function OKVSelectedDetails(props: { selected: string }) {
 	const deferredSelected = useDeferredValue(props.selected)
 	const stale = deferredSelected !== props.selected
 	const value = useOKV(deferredSelected)
-	return <div style={{ color: stale ? "var(--text-color2)" : "inherit" }}>{value}</div>
+
+	const { api, router } = useClientEnvironment()
+
+	const onUpdate = useAction("update", async (value: string) => {
+		const key = deferredSelected
+		let { title, body, properties } = parseText(value)
+		if (!title) title = key
+
+		const content = [title, body].join("\n\n")
+		if (title === key) {
+			await api.write({ set: [{ key, value: content }] })
+		} else {
+			await api.write({ set: [{ key: title, value: content }], delete: [key] })
+			router.replace(setParam(router.state.url, "selected", title))
+		}
+	})
+
+	const [updatePending, startTransition] = useTransition()
+
+	if (!value) return <div>Loading...</div>
+
+	const properties = useMemo(() => {
+		const { title, body, properties } = parseText(value)
+		return Object.entries(properties).map(([key, value]) => {
+			return (
+				<div key={key}>
+					{key}: {Array.isArray(value) ? value.join(", ") : value}
+				</div>
+			)
+		})
+	}, [value])
+
+	return (
+		<>
+			<div>{properties}</div>
+			<TextInput
+				key={deferredSelected}
+				multiline={true}
+				style={{ color: stale || updatePending ? "var(--text-color2)" : "inherit" }}
+				value={value}
+				onSubmit={(value) => {
+					startTransition(() => onUpdate(value))
+				}}
+			/>
+		</>
+	)
 }
 
 function OKVList(props: { params: Record<string, string | undefined> }) {
