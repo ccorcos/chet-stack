@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react"
-import { InMemoryDatabase } from "../../shared/database/InMemoryDatabase"
+import { ReactiveDatabase } from "../../shared/database/ReactiveDatabase"
 import type { ClientConfig } from "./ClientConfig"
 import { LocalPreferences } from "./LocalPreferences"
 import { Router } from "./Router"
@@ -11,7 +11,7 @@ export type ClientEnvironment = {
 	router: Router
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
-	db: InMemoryDatabase
+	db: ReactiveDatabase
 	prefs: LocalPreferences
 }
 

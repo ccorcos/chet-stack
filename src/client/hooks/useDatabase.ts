@@ -15,13 +15,14 @@ At a high level...
 
 */
 
-import { useEffect } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { LoaderPromise } from "../../shared/LoaderPromise"
-import { InMemoryDatabase } from "../../shared/database/InMemoryDatabase"
 import { InMemoryIntervalTree } from "../../shared/database/InMemoryIntervalTree"
 import { ListArgs } from "../../shared/database/types"
 import { randomId } from "../../shared/randomId"
 import { useClientEnvironment } from "../services/ClientEnvironment"
+import { useCounter } from "./useCounter"
+import { useDeepMemo } from "./useDeepMemo"
 
 // ==============================
 // STATE
@@ -30,9 +31,7 @@ import { useClientEnvironment } from "../services/ClientEnvironment"
 type Loaders = { [key: string]: { refs: number; loader: LoaderPromise } }
 const loaders: Loaders = {}
 
-const cache = new InMemoryDatabase<string, string>()
 const cachedRanges = new InMemoryIntervalTree<[string, string, string], undefined>()
-const listeners = new InMemoryIntervalTree<[string, string, string], () => void>()
 
 // ==============================
 // useLoader
@@ -76,15 +75,13 @@ function useLoader<T>(key: string, fn: () => Promise<T> | T): LoaderPromise<T> {
 // ==============================
 
 export function useGet(key: string) {
-	const { api } = useClientEnvironment()
+	const { api, db: cache } = useClientEnvironment()
+
+	const requestId = useMemo(() => randomId(), [key])
 
 	const loader = useLoader("get:" + key, () => {
 		const ranges = cachedRanges.intersects(key)
-		if (ranges.length > 0) {
-			debug("CACHED", key)
-			const cached = cache.get(key)
-			return cached
-		}
+		if (ranges.length > 0) return debug("CACHED", key)
 
 		return (async () => {
 			debug("FETCH", key)
@@ -93,24 +90,38 @@ export function useGet(key: string) {
 			if (response.body === undefined) cache.delete(key)
 			else cache.set(key, response.body)
 			cachedRanges.set([key, key, key], undefined)
-			return response.body
 		})()
 	})
 
-	const value = loader.suspend()
-	return value
+	loader.suspend()
+
+	const valueRef = useRef<any>()
+
+	useMemo(() => {
+		valueRef.current = cache.get(key)
+	}, [requestId])
+
+	const [_, rerender] = useCounter()
+	const update = () => {
+		valueRef.current = cache.get(key)
+		rerender()
+	}
+
+	useEffect(() => {
+		return cache.subscribe({ gte: key, lte: key }, update)
+	}, [requestId])
+
+	return valueRef.current as string
 }
 
 export function useList(args: ListArgs<string>) {
-	const { api } = useClientEnvironment()
+	const { api, db: cache } = useClientEnvironment()
+
+	const requestId = useDeepMemo(() => randomId(), [args])
 
 	const loader = useLoader("list:" + JSON.stringify(args), () => {
 		const covered = cachedRanges.covers(args)
-		if (covered) {
-			debug("CACHED", args)
-			const result = cache.list(args)
-			return result
-		}
+		if (covered) return debug("CACHED", args)
 
 		return (async () => {
 			debug("FETCH", args)
@@ -123,10 +134,26 @@ export function useList(args: ListArgs<string>) {
 
 			const requestId = randomId()
 			cachedRanges.set([start, end, requestId], undefined)
-			return response.body
 		})()
 	})
 
-	const value = loader.suspend()
-	return value
+	loader.suspend()
+
+	const valueRef = useRef<any>()
+
+	useMemo(() => {
+		valueRef.current = cache.list(args)
+	}, [requestId])
+
+	const [_, rerender] = useCounter()
+	const update = () => {
+		valueRef.current = cache.list(args)
+		rerender()
+	}
+
+	useEffect(() => {
+		return cache.subscribe(args, update)
+	}, [requestId])
+
+	return valueRef.current as { key: string; value: string }[]
 }
