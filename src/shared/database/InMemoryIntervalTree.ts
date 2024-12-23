@@ -76,6 +76,7 @@ export class InMemoryIntervalTree<
 		return true
 	}
 
+	// TODO: include limit and reverse.
 	covers(args: { gt?: B; gte?: B; lt?: B; lte?: B }) {
 		// TODO: this could be optimized
 

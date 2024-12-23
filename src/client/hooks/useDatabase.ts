@@ -1,20 +1,3 @@
-// We're going to do everything in here.
-// useKeyValue
-// useOKV
-// useOKVList
-// useLoader
-
-/*
-
-At a high level...
-- useLoader is just for the async requests. There's no optimmistic updates here so lets not save them around.
-- the result goes into the cache
-- we need to keep track of what ranges we've put into the cache.
-- we can subscribe to the cache and when refs goes to zero, we delay evict.
--
-
-*/
-
 import { useEffect, useMemo, useRef } from "react"
 import { LoaderPromise } from "../../shared/LoaderPromise"
 import { InMemoryIntervalTree } from "../../shared/database/InMemoryIntervalTree"
@@ -38,7 +21,7 @@ const cachedRanges = new InMemoryIntervalTree<[string, string, string], undefine
 // ==============================
 
 const debug = (...args: any[]) => {
-	// console.log(...args)
+	console.log(...args)
 }
 
 /** `id` must uniquly identify the loader. */
@@ -128,10 +111,10 @@ export function useList(args: ListArgs<string>) {
 			const response = await api.list(args)
 			if (response.status !== 200) throw new Error("Request failed: " + response.status)
 			cache.write({ set: response.body })
+			if (response.body.length === 0) return
 
-			const start = args.gte || args.gt || ""
-			const end = args.lte || args.lt || "\xff"
-
+			const start = response.body[0].key
+			const end = response.body[response.body.length - 1].key
 			const requestId = randomId()
 			cachedRanges.set([start, end, requestId], undefined)
 		})()

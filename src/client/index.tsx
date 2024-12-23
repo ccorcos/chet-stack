@@ -1,7 +1,7 @@
 import React from "react"
 import { createRoot } from "react-dom/client"
 // import ReactDOM from "react-dom/profiling"
-import { InMemoryDatabase } from "../shared/database/InMemoryDatabase"
+import { ReactiveDatabase } from "../shared/database/ReactiveDatabase"
 import { Root } from "./components/Root"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
@@ -19,7 +19,7 @@ const pubsub = new WebsocketPubsubClient({
 	onChange(key, value) {},
 })
 
-const db = new InMemoryDatabase()
+const db = new ReactiveDatabase()
 const prefs = new LocalPreferences()
 
 const environment: ClientEnvironment = {
