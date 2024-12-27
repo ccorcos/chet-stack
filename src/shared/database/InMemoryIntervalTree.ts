@@ -77,24 +77,24 @@ export class InMemoryIntervalTree<
 	}
 
 	// TODO: include limit and reverse.
-	covers(args: { gt?: B; gte?: B; lt?: B; lte?: B }) {
-		// TODO: this could be optimized
+	// covers(args: { gt?: B; gte?: B; lt?: B; lte?: B }) {
+	// 	// TODO: this could be optimized
 
-		const ranges = this.overlaps(args)
-		if (ranges.length === 0) return false
+	// 	const ranges = this.overlaps(args)
+	// 	if (ranges.length === 0) return false
 
-		let [start, end] = ranges[0].key
-		if (this.boundsCover(args, [start, end])) return true
+	// 	let [start, end] = ranges[0].key
+	// 	if (this.boundsCover(args, [start, end])) return true
 
-		for (const range of ranges.slice(1)) {
-			const [startI, endI] = range.key
-			if (this.compareBound(startI, start) < 0) start = startI
-			if (this.compareBound(endI, end) > 0) end = endI
-			if (this.boundsCover(args, [start, end])) return true
-		}
+	// 	for (const range of ranges.slice(1)) {
+	// 		const [startI, endI] = range.key
+	// 		if (this.compareBound(startI, start) < 0) start = startI
+	// 		if (this.compareBound(endI, end) > 0) end = endI
+	// 		if (this.boundsCover(args, [start, end])) return true
+	// 	}
 
-		return false
-	}
+	// 	return false
+	// }
 
 	intersects(bound: B) {
 		// TODO: this could be optimized.
