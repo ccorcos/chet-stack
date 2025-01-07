@@ -103,21 +103,19 @@ export function useList(args: ListArgs<string>) {
 	const requestId = useDeepMemo(() => randomId(), [args])
 
 	const loader = useLoader("list:" + JSON.stringify(args), () => {
-		const covered = cachedRanges.covers(args)
-		if (covered) return debug("CACHED", args)
-
-		return (async () => {
-			debug("FETCH", args)
-			const response = await api.list(args)
-			if (response.status !== 200) throw new Error("Request failed: " + response.status)
-			cache.write({ set: response.body })
-			if (response.body.length === 0) return
-
-			const start = response.body[0].key
-			const end = response.body[response.body.length - 1].key
-			const requestId = randomId()
-			cachedRanges.set([start, end, requestId], undefined)
-		})()
+		// const covered = cachedRanges.covers(args)
+		// if (covered) return debug("CACHED", args)
+		// return (async () => {
+		// 	debug("FETCH", args)
+		// 	const response = await api.list(args)
+		// 	if (response.status !== 200) throw new Error("Request failed: " + response.status)
+		// 	cache.write({ set: response.body })
+		// 	if (response.body.length === 0) return
+		// 	const start = response.body[0].key
+		// 	const end = response.body[response.body.length - 1].key
+		// 	const requestId = randomId()
+		// 	cachedRanges.set([start, end, requestId], undefined)
+		// })()
 	})
 
 	loader.suspend()

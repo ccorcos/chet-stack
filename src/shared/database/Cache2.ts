@@ -112,6 +112,16 @@ export function decodeRange([start, end]: [string, string]): Range {
 	return { ...decodeStartRange(start), ...decodeEndRange(end) }
 }
 
+const compact = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+	const result: Partial<T> = {}
+	for (const [key, value] of Object.entries(obj)) {
+		if (value !== undefined) {
+			result[key as keyof T] = value as T[keyof T]
+		}
+	}
+	return result
+}
+
 export function computeCachedRange(
 	args: ListArgs<string>,
 	result: { key: string; value: string }[]
@@ -120,21 +130,21 @@ export function computeCachedRange(
 
 	if (limit === undefined) {
 		// No limit so the cached result is the entire range requested.
-		return { gt, gte, lt, lte }
+		return compact({ gt, gte, lt, lte })
 	}
 
 	if (result.length < limit) {
 		// The limit doesnt matter and we have complete results.
-		return { gt, gte, lt, lte }
+		return compact({ gt, gte, lt, lte })
 	}
 
 	if (reverse) {
 		// Last time is the start of the range.
-		return { gte: result[result.length - 1].key, lt, lte }
+		return compact({ gte: result[result.length - 1].key, lt, lte })
 	}
 
 	// Last item is the end of the range.
-	return { gt, gte, lte: result[result.length - 1].key }
+	return compact({ gt, gte, lte: result[result.length - 1].key })
 }
 
 // TODO: track versions and don't clobber optimistic writes.
