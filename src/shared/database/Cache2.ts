@@ -8,41 +8,60 @@ https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 
 import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
+import { compactObj } from "../compactObj"
 import { compoundCompare } from "../compare"
 import { randomId } from "../randomId"
 import { reverse } from "../reverse"
 import { InMemoryDatabase } from "./InMemoryDatabase"
-import { InMemoryIntervalTree } from "./InMemoryIntervalTree"
 import { ListArgs, WriteArgs } from "./types"
 
 // This is where we store the data for the cache.
-export const data = new InMemoryDatabase<string, string>()
+export const localData = new InMemoryDatabase<string, string>()
+
+// TODO: optimize this with an interval tree.
+type Listener = { range: Range; id: string; fn: () => void }
+const listeners: Listener[] = []
+// Technically this comparison is possible without encoding, but its got a lot of if-else logic.
+const compareListener = (a: Listener, b: Listener) => {
+	const aKey = [...encodeRange(a.range), a.id]
+	const bKey = [...encodeRange(b.range), b.id]
+	return compoundCompare(aKey, bKey)
+}
+const sortedListeners = orderedArray<Listener>(identity, compareListener)
 
 // This is where we store the listeners for data changes in the cache.
-const listeners = new InMemoryIntervalTree<[string, string, string], () => void>()
+// const listeners = new InMemoryIntervalTree<[string, string, string], () => void>()
 
-export function subscribe(key: [string, string], listener: () => void) {
-	const [start, end] = key
-	const id = randomId()
-	listeners.set([start, end, id], listener)
-	return () => listeners.delete([start, end, id])
+export function localSubscribe(range: Range, fn: () => void) {
+	const listener = { range, id: randomId(), fn }
+	sortedListeners.insert(listeners, listener)
+	return () => sortedListeners.remove(listeners, listener)
 }
 
-export function emitters(keys: string[]) {
+function overlaps(range: Range, key: string) {
+	if (range.gt !== undefined && key <= range.gt) return false
+	if (range.gte !== undefined && key < range.gte) return false
+	if (range.lt !== undefined && key >= range.lt) return false
+	if (range.lte !== undefined && key > range.lte) return false
+	return true
+}
+
+function emitters(keys: string[]) {
 	const fns = new Set<() => void>()
 	for (const key of keys) {
-		for (const { value: listener } of listeners.intersects(key)) {
-			fns.add(listener)
+		for (const { range, fn } of listeners) {
+			if (overlaps(range, key)) fns.add(fn)
 		}
 	}
 	return fns
 }
 
-export function emit(keys: string[]) {
+export function localEmit(keys: string[]) {
 	for (const fn of emitters(keys)) fn()
 }
 
 // Caching logic.
+// TODO: could just store ranges and do the encoding in the comparison.
 const cachedRanges: [string, string][] = []
 const sortedRanges = orderedArray<[string, string]>(identity, compoundCompare)
 
@@ -112,16 +131,6 @@ export function decodeRange([start, end]: [string, string]): Range {
 	return { ...decodeStartRange(start), ...decodeEndRange(end) }
 }
 
-const compact = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
-	const result: Partial<T> = {}
-	for (const [key, value] of Object.entries(obj)) {
-		if (value !== undefined) {
-			result[key as keyof T] = value as T[keyof T]
-		}
-	}
-	return result
-}
-
 export function computeCachedRange(
 	args: ListArgs<string>,
 	result: { key: string; value: string }[]
@@ -130,21 +139,21 @@ export function computeCachedRange(
 
 	if (limit === undefined) {
 		// No limit so the cached result is the entire range requested.
-		return compact({ gt, gte, lt, lte })
+		return compactObj({ gt, gte, lt, lte })
 	}
 
 	if (result.length < limit) {
 		// The limit doesnt matter and we have complete results.
-		return compact({ gt, gte, lt, lte })
+		return compactObj({ gt, gte, lt, lte })
 	}
 
 	if (reverse) {
 		// Last time is the start of the range.
-		return compact({ gte: result[result.length - 1].key, lt, lte })
+		return compactObj({ gte: result[result.length - 1].key, lt, lte })
 	}
 
 	// Last item is the end of the range.
-	return compact({ gt, gte, lte: result[result.length - 1].key })
+	return compactObj({ gt, gte, lte: result[result.length - 1].key })
 }
 
 // TODO: track versions and don't clobber optimistic writes.
@@ -156,10 +165,10 @@ export function insertCache(args: ListArgs<string>, result: { key: string; value
 	const setKeys = new Set<string>()
 	for (const { key } of result) setKeys.add(key)
 	const deleteKeys = new Set<string>()
-	const existing = data.list(range)
+	const existing = localData.list(range)
 	for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.add(key)
 
-	data.write({ set: result, delete: Array.from(deleteKeys) })
+	localData.write({ set: result, delete: Array.from(deleteKeys) })
 }
 
 type LocalListResult = {
@@ -193,7 +202,7 @@ export function localList(args: ListArgs<string>): LocalListResult {
 		// PREFIX
 		if (cursor > range[0]) {
 			const { gt, gte } = decodeStartRange(cursor)
-			const result = data.list({ ...args, gt, gte })
+			const result = localData.list({ ...args, gt, gte })
 
 			if (args.limit !== undefined && result.length === args.limit) {
 				// COVERED
@@ -204,7 +213,7 @@ export function localList(args: ListArgs<string>): LocalListResult {
 		}
 
 		// HIT
-		return { hit: data.list(args) }
+		return { hit: localData.list(args) }
 	}
 
 	// FORWARD
@@ -223,7 +232,7 @@ export function localList(args: ListArgs<string>): LocalListResult {
 	// PREFIX
 	if (cursor < range[1]) {
 		const { lt, lte } = decodeEndRange(cursor)
-		const result = data.list({ ...args, lt, lte })
+		const result = localData.list({ ...args, lt, lte })
 
 		if (args.limit !== undefined && result.length === args.limit) {
 			// COVERED
@@ -234,7 +243,7 @@ export function localList(args: ListArgs<string>): LocalListResult {
 	}
 
 	// HIT
-	return { hit: data.list(args) }
+	return { hit: localData.list(args) }
 }
 
 type LocalGetResult = { hit?: string; miss?: true }
@@ -244,17 +253,35 @@ export function localGet(key: string): LocalGetResult {
 	for (const [start, end] of cachedRanges) {
 		if (start > range[1]) break
 		if (start <= range[0] && end >= range[1]) {
-			return { hit: data.get(key) }
+			return { hit: localData.get(key) }
 		}
 	}
 	return { miss: true }
 }
 
 export function localWrite(args: WriteArgs<string, string>) {
-	// write data, write ranges, emit
+	// Optimistic write
+	localData.write(args)
+
+	const keys = new Set<string>()
+	for (const { key } of args.set ?? []) keys.add(key)
+	for (const key of args.delete ?? []) keys.add(key)
+
+	// Write cache ranges so we can read our writes.
+	for (const key of keys) {
+		const range = encodeRange({ gte: key, lte: key })
+		sortedRanges.insert(cachedRanges, range)
+	}
+
+	// Emit
+	localEmit(Array.from(keys))
 }
 
 // TODO:
+// - better subscribe with encoded ranges.
+// - how to track caches ranges for deleted items?
+// - how to reference count and evict?
+
 // - tests
 // - hooks to try it out
 // - eviction on unsubscribe

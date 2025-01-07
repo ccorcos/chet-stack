@@ -7,8 +7,10 @@ import {
 	decodeRange,
 	encodeRange,
 	insertCache,
+	localEmit,
 	localGet,
 	localList,
+	localSubscribe,
 } from "./Cache2"
 import { ListArgs } from "./types"
 
@@ -209,5 +211,54 @@ describe("cache", () => {
 		assert.deepEqual(localList({ gte: "05", lte: "10" }), { prefix: v(5, 9) })
 		assert.deepEqual(localList({ gt: "05", lte: "10" }), { prefix: v(6, 9) })
 		assert.deepEqual(localList({ gt: "05", lt: "10" }), { hit: v(6, 9) })
+	})
+})
+
+interface Func {
+	(...args: any[]): any
+	called: number
+}
+
+function func(): Func {
+	const f = () => {
+		f.called++
+	}
+	f.called = 0
+	return f
+}
+
+describe("subscribe / emit", () => {
+	it("works", () => {
+		const cb1 = func()
+		const cb2 = func()
+		const unsub1 = localSubscribe({ gte: "05", lt: "10" }, cb1)
+		const unsub2 = localSubscribe({ gt: "08", lte: "20" }, cb2)
+
+		localEmit(["05"])
+		assert.equal(cb1.called, 1)
+		cb1.called = 0
+		assert.equal(cb2.called, 0)
+
+		localEmit(["06", "08"])
+		assert.equal(cb1.called, 1)
+		cb1.called = 0
+		assert.equal(cb2.called, 0)
+
+		localEmit(["09"])
+		assert.equal(cb1.called, 1)
+		cb1.called = 0
+		assert.equal(cb2.called, 1)
+		cb2.called = 0
+
+		localEmit(["10", "11"])
+		assert.equal(cb1.called, 0)
+		assert.equal(cb2.called, 1)
+		cb2.called = 0
+
+		localEmit(["15"])
+		assert.equal(cb2.called, 1)
+
+		unsub1()
+		unsub2()
 	})
 })
