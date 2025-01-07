@@ -16,7 +16,7 @@ import { InMemoryIntervalTree } from "./InMemoryIntervalTree"
 import { ListArgs, WriteArgs } from "./types"
 
 // This is where we store the data for the cache.
-const data = new InMemoryDatabase<string, string>()
+export const data = new InMemoryDatabase<string, string>()
 
 // This is where we store the listeners for data changes in the cache.
 const listeners = new InMemoryIntervalTree<[string, string, string], () => void>()

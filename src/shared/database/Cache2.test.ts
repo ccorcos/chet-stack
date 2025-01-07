@@ -1,7 +1,15 @@
 import { strict as assert } from "assert"
 import { omit } from "lodash"
 import { describe, it } from "mocha"
-import { Range, computeCachedRange, decodeRange, encodeRange } from "./Cache2"
+import {
+	Range,
+	computeCachedRange,
+	decodeRange,
+	encodeRange,
+	insertCache,
+	localGet,
+	localList,
+} from "./Cache2"
 import { ListArgs } from "./types"
 
 /** Helper for visualizing ranges. */
@@ -143,7 +151,63 @@ describe("computeCachedRange", () => {
 		works({ gte: "00", lte: "04", limit: 100 }, v(0, 4))
 	})
 
-	it("reverse", () => {
+	it("reverse / limited", () => {
 		// TODO: more exhaustive tests here
+
+		// All
+		works({ limit: 2, reverse: true }, v(9, 10).reverse(), { gte: "09" })
+
+		// One sided
+		works({ gt: "00", limit: 2, reverse: true }, v(9, 10).reverse(), { gte: "09" })
+		works({ gte: "00", limit: 2, reverse: true }, v(9, 10).reverse(), { gte: "09" })
+		works({ lt: "04", limit: 2, reverse: true }, v(2, 3).reverse(), { gte: "02", lt: "04" })
+		works({ lte: "04", limit: 2, reverse: true }, v(3, 4).reverse(), { gte: "03", lte: "04" })
+
+		// Two sides
+		works({ gt: "00", lt: "04", limit: 2, reverse: true }, v(2, 3).reverse(), {
+			gte: "02",
+			lt: "04",
+		})
+		works({ gte: "00", lt: "04", limit: 2, reverse: true }, v(2, 3).reverse(), {
+			gte: "02",
+			lt: "04",
+		})
+		works({ gt: "00", lte: "04", limit: 2, reverse: true }, v(3, 4).reverse(), {
+			gte: "03",
+			lte: "04",
+		})
+		works({ gte: "00", lte: "04", limit: 2, reverse: true }, v(3, 4).reverse(), {
+			gte: "03",
+			lte: "04",
+		})
+	})
+})
+
+describe("cache", () => {
+	it("works", () => {
+		insertCache({ gte: "05", lt: "10" }, v(5, 9))
+		insertCache({ gt: "15", lte: "20" }, v(6, 20))
+
+		assert.deepEqual(localGet("00"), { miss: true })
+		assert.deepEqual(localGet("05"), { hit: "05" })
+		assert.deepEqual(localGet("06"), { hit: "06" })
+		assert.deepEqual(localGet("10"), { miss: true })
+		assert.deepEqual(localGet("15"), { miss: true })
+		assert.deepEqual(localGet("16"), { hit: "16" })
+		assert.deepEqual(localGet("20"), { hit: "20" })
+		assert.deepEqual(localGet("21"), { miss: true })
+
+		assert.deepEqual(localList({ gt: "00", lt: "04" }), { miss: true })
+		// No suffix support, so this is a miss.
+		assert.deepEqual(localList({ gt: "01", lt: "08" }), { miss: true })
+
+		// Inside
+		assert.deepEqual(localList({ gte: "05", lt: "08" }), { hit: v(5, 7) })
+
+		// Bounds
+		assert.deepEqual(localList({ gte: "05", lt: "10" }), { hit: v(5, 9) })
+		assert.deepEqual(localList({ gte: "05", lte: "10" }), { prefix: v(5, 9) })
+		assert.deepEqual(localList({ gt: "05", lte: "10" }), { prefix: v(6, 9) })
+		assert.deepEqual(localList({ gt: "05", lt: "10" }), { hit: v(6, 9) })
 	})
 })
