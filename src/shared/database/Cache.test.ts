@@ -11,7 +11,7 @@ import {
 	localGet,
 	localList,
 	localSubscribe,
-} from "./Cache2"
+} from "./Cache"
 import { ListArgs } from "./types"
 
 /** Helper for visualizing ranges. */
