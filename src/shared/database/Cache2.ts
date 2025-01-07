@@ -10,9 +10,10 @@ import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compoundCompare } from "../compare"
 import { randomId } from "../randomId"
+import { reverse } from "../reverse"
 import { InMemoryDatabase } from "./InMemoryDatabase"
 import { InMemoryIntervalTree } from "./InMemoryIntervalTree"
-import { ListArgs } from "./types"
+import { ListArgs, WriteArgs } from "./types"
 
 // This is where we store the data for the cache.
 const data = new InMemoryDatabase<string, string>()
@@ -20,14 +21,14 @@ const data = new InMemoryDatabase<string, string>()
 // This is where we store the listeners for data changes in the cache.
 const listeners = new InMemoryIntervalTree<[string, string, string], () => void>()
 
-function subscribe(key: [string, string], listener: () => void) {
+export function subscribe(key: [string, string], listener: () => void) {
 	const [start, end] = key
 	const id = randomId()
 	listeners.set([start, end, id], listener)
 	return () => listeners.delete([start, end, id])
 }
 
-function emitters(keys: string[]) {
+export function emitters(keys: string[]) {
 	const fns = new Set<() => void>()
 	for (const key of keys) {
 		for (const { value: listener } of listeners.intersects(key)) {
@@ -37,18 +38,17 @@ function emitters(keys: string[]) {
 	return fns
 }
 
-function emit(keys: string[]) {
+export function emit(keys: string[]) {
 	for (const fn of emitters(keys)) fn()
 }
 
 // Caching logic.
-
 const cachedRanges: [string, string][] = []
 const sortedRanges = orderedArray<[string, string]>(identity, compoundCompare)
 
-type Range = { gt?: string; gte?: string; lt?: string; lte?: string }
+export type Range = { gt?: string; gte?: string; lt?: string; lte?: string }
 
-function encodeStartBound(args: { gt?: string; gte?: string }) {
+export function encodeStartBound(args: { gt?: string; gte?: string }) {
 	const { gt, gte } = args
 	// Inclusive start
 	if (gte !== undefined) return "0" + gte + "0"
@@ -58,7 +58,7 @@ function encodeStartBound(args: { gt?: string; gte?: string }) {
 	else return "0"
 }
 
-function encodeEndBound(args: { lt?: string; lte?: string }) {
+export function encodeEndBound(args: { lt?: string; lte?: string }) {
 	const { lt, lte } = args
 	// Exclusive end
 	if (lt !== undefined) return "0" + lt + "0"
@@ -68,49 +68,51 @@ function encodeEndBound(args: { lt?: string; lte?: string }) {
 	else return "1"
 }
 
-function encodeRange(args: Range): [string, string] {
+export function encodeRange(args: Range): [string, string] {
 	return [encodeStartBound(args), encodeEndBound(args)]
 }
 
-function decodeStartRange(start: string): { gt?: string; gte?: string } {
-	let gt: string | undefined
-	let gte: string | undefined
+export function decodeStartRange(start: string): { gt?: string; gte?: string } {
+	const range: { gt?: string; gte?: string } = {}
 
 	const prefix = start[0]
 	if (prefix !== "0") throw new Error("Invalid start range")
-	if (start.length === 1) return { gt, gte }
+	if (start.length === 1) return range
 
 	// Remove prefix and suffix
 	const value = start.slice(1, -1)
 	if (start[start.length - 1] === "0") {
-		gte = value
+		range.gte = value
 	} else {
-		gt = value
+		range.gt = value
 	}
 
-	return { gt, gte }
+	return range
 }
 
-function decodeEndRange(end: string): { lt?: string; lte?: string } {
-	let lt: string | undefined
-	let lte: string | undefined
+export function decodeEndRange(end: string): { lt?: string; lte?: string } {
+	const range: { lt?: string; lte?: string } = {}
 
 	const prefix = end[0]
-	if (prefix === "1") return { lt, lte }
+	if (prefix === "1") return range
 	if (prefix !== "0") throw new Error("Invalid end range")
 
 	// Remove prefix and suffix
 	const value = end.slice(1, -1)
 	if (end[end.length - 1] === "0") {
-		lt = value
+		range.lt = value
 	} else {
-		lte = value
+		range.lte = value
 	}
 
-	return { lt, lte }
+	return range
 }
 
-function computeCachedRange(
+export function decodeRange([start, end]: [string, string]): Range {
+	return { ...decodeStartRange(start), ...decodeEndRange(end) }
+}
+
+export function computeCachedRange(
 	args: ListArgs<string>,
 	result: { key: string; value: string }[]
 ): Range {
@@ -136,7 +138,7 @@ function computeCachedRange(
 }
 
 // TODO: track versions and don't clobber optimistic writes.
-function insertCache(args: ListArgs<string>, result: { key: string; value: string }[]) {
+export function insertCache(args: ListArgs<string>, result: { key: string; value: string }[]) {
 	const range = computeCachedRange(args, result)
 	sortedRanges.insert(cachedRanges, encodeRange(range))
 
@@ -156,11 +158,8 @@ type LocalListResult = {
 	prefix?: { key: string; value: string }[]
 }
 
-function* reverse<T>(list: T[]) {
-	for (let i = list.length - 1; i >= 0; i--) yield list[i]
-}
-
-function localList(args: ListArgs<string>): LocalListResult {
+// TODO someday. Partial result, suffix result.
+export function localList(args: ListArgs<string>): LocalListResult {
 	const range = encodeRange(args)
 
 	// NOTE: this doesn't for using List as a Get.
@@ -230,7 +229,7 @@ function localList(args: ListArgs<string>): LocalListResult {
 
 type LocalGetResult = { hit?: string; miss?: true }
 
-function localGet(key: string): LocalGetResult {
+export function localGet(key: string): LocalGetResult {
 	const range = encodeRange({ gte: key, lte: key })
 	for (const [start, end] of cachedRanges) {
 		if (start > range[1]) break
@@ -240,3 +239,35 @@ function localGet(key: string): LocalGetResult {
 	}
 	return { miss: true }
 }
+
+export function localWrite(args: WriteArgs<string, string>) {
+	// write data, write ranges, emit
+}
+
+// TODO:
+// - tests
+// - hooks to try it out
+// - eviction on unsubscribe
+// - think more about optimistic writes...
+// - realtime sync...
+
+/*
+
+Challenges ahead...
+
+subscribe can use the range encoded bounds logic.
+on unsubscribe, we can figure out what ranges to evict.
+
+for optimistic writes, we can just YOLO for now.
+when optimisitc writing, we also kind of need to tell the cached ranges what now exists though.
+I can imagine a situation where want to add an item to a list and we know it will be a prefix result
+to another query but since we haven't actually recieved the result from the server, all we know is
+that it's a partial result from the middle.
+
+We don't need to worry as much about clobbering optimistic writes because we aren't re-fetching based
+on a server subscription yet.
+
+
+
+
+*/
