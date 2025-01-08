@@ -7,10 +7,12 @@ import {
 	decodeRange,
 	encodeRange,
 	insertCache,
+	keyToRange,
 	localEmit,
 	localGet,
 	localList,
 	localSubscribe,
+	overlaps,
 } from "./Cache"
 import { ListArgs } from "./types"
 
@@ -234,31 +236,116 @@ describe("subscribe / emit", () => {
 		const unsub1 = localSubscribe({ gte: "05", lt: "10" }, cb1)
 		const unsub2 = localSubscribe({ gt: "08", lte: "20" }, cb2)
 
-		localEmit(["05"])
+		const emitKeys = (keys: string[]) => localEmit(keys.map(keyToRange))
+
+		emitKeys(["05"])
 		assert.equal(cb1.called, 1)
 		cb1.called = 0
 		assert.equal(cb2.called, 0)
 
-		localEmit(["06", "08"])
+		emitKeys(["06", "08"])
 		assert.equal(cb1.called, 1)
 		cb1.called = 0
 		assert.equal(cb2.called, 0)
 
-		localEmit(["09"])
+		emitKeys(["09"])
 		assert.equal(cb1.called, 1)
 		cb1.called = 0
 		assert.equal(cb2.called, 1)
 		cb2.called = 0
 
-		localEmit(["10", "11"])
+		emitKeys(["10", "11"])
 		assert.equal(cb1.called, 0)
 		assert.equal(cb2.called, 1)
 		cb2.called = 0
 
-		localEmit(["15"])
+		emitKeys(["15"])
 		assert.equal(cb2.called, 1)
 
 		unsub1()
 		unsub2()
+	})
+
+	// TODO: test emitting actual ranges.
+})
+
+describe("overlaps", () => {
+	it("works", () => {
+		const yes = (a: Range, b: Range, message?: string) => {
+			assert.ok(overlaps(a, b), message ?? JSON.stringify({ a, b }))
+			assert.ok(overlaps(b, a), message ?? JSON.stringify({ a, b }))
+		}
+
+		const no = (a: Range, b: Range, message?: string) => {
+			assert.ok(!overlaps(a, b), message ?? JSON.stringify({ a, b }))
+			assert.ok(!overlaps(b, a), message ?? JSON.stringify({ a, b }))
+		}
+
+		// Empty ranges
+		yes({}, {})
+		yes({}, { gt: "3" })
+		yes({}, { gte: "3" })
+		yes({}, { lt: "7" })
+		yes({}, { lte: "7" })
+		yes({}, { gt: "3", lt: "7" })
+		yes({}, { gt: "3", lte: "7" })
+		yes({}, { gte: "3", lt: "7" })
+		yes({}, { gte: "3", lte: "7" })
+
+		// Left overlap
+		yes({ lt: "4" }, { gt: "3" })
+		yes({ lt: "4" }, { gte: "3" })
+		yes({ lte: "4" }, { gt: "3" })
+		yes({ lte: "4" }, { gte: "3" })
+
+		// Left boundary case
+		yes({ lte: "3" }, { gte: "3" })
+		no({ lt: "3" }, { gte: "3" })
+		no({ lte: "3" }, { gt: "3" })
+		no({ lt: "3" }, { gt: "3" })
+
+		// Right overlap
+		yes({ gt: "3" }, { lt: "4" })
+		yes({ gt: "3" }, { lte: "4" })
+		yes({ gte: "3" }, { lt: "4" })
+		yes({ gte: "3" }, { lte: "4" })
+
+		// Right boundary case
+		yes({ gte: "3" }, { lte: "3" })
+		no({ gt: "3" }, { lt: "3" })
+		no({ gt: "3" }, { lte: "2" })
+		no({ gt: "3" }, { lt: "2" })
+
+		// Inside/outside
+		yes({ gt: "3", lt: "7" }, { gt: "4", lt: "6" })
+		no({ gt: "3", lt: "7" }, { gt: "1", lt: "2" })
+
+		// AI below this comment.
+		// Overlapping ranges
+		yes({ gt: "1", lt: "5" }, { gt: "3", lt: "7" })
+
+		// Adjacent ranges
+		yes({ lte: "5" }, { gte: "5" })
+
+		// Test non-overlapping cases
+		no({ lt: "5" }, { gt: "5" })
+
+		// Contained ranges
+		yes({ gt: "2", lt: "8" }, { gt: "4", lt: "6" })
+		yes({ gt: "4", lt: "6" }, { gt: "2", lt: "8" })
+
+		// Disjoint ranges
+		no({ lt: "2" }, { gt: "5" })
+		no({ gt: "5" }, { lt: "2" })
+
+		// Mixed inclusive/exclusive bounds
+		yes({ gte: "5" }, { lte: "5" })
+		yes({ gt: "2", lte: "5" }, { gte: "5", lt: "8" })
+		no({ gt: "2", lt: "5" }, { gt: "5", lt: "8" })
+
+		// One-sided ranges
+		yes({ gt: "5" }, { lt: "8" })
+		yes({ gte: "5" }, {})
+		yes({}, { lte: "5" })
 	})
 })

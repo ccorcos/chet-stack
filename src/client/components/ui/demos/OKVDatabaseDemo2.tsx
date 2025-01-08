@@ -1,8 +1,7 @@
 import React, { Suspense, useDeferredValue, useMemo, useRef, useState } from "react"
-import { WriteArgs } from "../../../../shared/database/types"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
-import { useList } from "../../../hooks/useDatabase"
+import { useList, useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
@@ -10,26 +9,27 @@ import { Input } from "../Input"
 import { HeaderCell, Table } from "../Table"
 import { TextInput } from "../TextInput"
 
-const gap = 12
-const minWidth = 150
-const defaultLimit = 50
-
-// TODO:
-// - the list query is able to fetch outside the range of the cached ranges.
-// - infinite scroll might be broken when the cached result returns synchronously.
-
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
-	const list = useList(
+	const { list, loadingMore } = useList(
 		query.reverse
 			? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
 			: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
 	)
 	if (query.reverse) list.reverse()
-	return list
+	return {
+		list,
+		loadingMoreUp: loadingMore && query.reverse,
+		loadingMoreDown: loadingMore && !query.reverse,
+	}
 }
 
+const gap = 12
+const minWidth = 150
+const defaultLimit = 50
+
 export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
-	const { router, api } = useClientEnvironment()
+	const { router } = useClientEnvironment()
+	const write = useWrite()
 
 	const prefix = props.params.prefix || ""
 	const setPrefix = (prefix: string) => {
@@ -49,14 +49,14 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 	const deferredQuery = useDeferredValue(query)
 	const staleQuery = deferredQuery !== query
 
-	const list = useListQuery(deferredQuery)
+	let { list, loadingMoreUp, loadingMoreDown } = useListQuery(deferredQuery)
 	const deferredListCount = useDeferredValue(list.length)
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	const { pendingUp, pendingDown } = useInfiniteLoader({
+	let { pendingUp, pendingDown } = useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
@@ -74,12 +74,8 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 			}
 		},
 	})
-
-	const { db: cache } = useClientEnvironment()
-	const write = (args: WriteArgs<string, string>) => {
-		cache.write(args)
-		return api.write(args)
-	}
+	pendingUp = loadingMoreUp || pendingUp
+	pendingDown = loadingMoreDown || pendingDown
 
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
 
@@ -168,9 +164,7 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 							<TextInput
 								value={value}
 								onSubmit={async (newValue) => {
-									write({
-										set: [{ key, value: newValue }],
-									})
+									write({ set: [{ key, value: newValue }] })
 								}}
 								style={{ maxHeight: 300, overflowY: "auto" }}
 							/>

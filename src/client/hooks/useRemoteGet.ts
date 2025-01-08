@@ -1,7 +1,7 @@
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useLoader } from "./useLoader"
 
-export function useOKV(key: string) {
+export function useRemoteGet(key: string) {
 	const { api } = useClientEnvironment()
 	const loader = useLoader(["okv:", key], async () => {
 		const response = await api.get(key)

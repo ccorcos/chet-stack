@@ -2,8 +2,8 @@ import { Suspense } from "react"
 
 import React, { useDeferredValue } from "react"
 import { setParam } from "../../../../shared/routeHelpers"
-import { useOKV } from "../../../hooks/useOKV"
-import { useOKVList } from "../../../hooks/useOKVList"
+import { useRemoteGet } from "../../../hooks/useRemoteGet"
+import { useRemoteList } from "../../../hooks/useRemoteList"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
@@ -35,7 +35,7 @@ function OKVDetails(props: { selected: string | undefined }) {
 function OKVSelectedDetails(props: { selected: string }) {
 	const deferredSelected = useDeferredValue(props.selected)
 	const stale = deferredSelected !== props.selected
-	const value = useOKV(deferredSelected)
+	const value = useRemoteGet(deferredSelected)
 	return <div style={{ color: stale ? "var(--text-color2)" : "inherit" }}>{value}</div>
 }
 
@@ -55,7 +55,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 		router.replace(setParam(router.state.url, "selected", selected))
 	}
 
-	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useOKVList({
+	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useRemoteList({
 		prefix: deferredPrefix,
 		renderCount: 0,
 	})

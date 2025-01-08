@@ -35,29 +35,64 @@ const sortedListeners = orderedArray<Listener>(identity, compareListener)
 export function localSubscribe(range: Range, fn: () => void) {
 	const listener = { range, id: randomId(), fn }
 	sortedListeners.insert(listeners, listener)
-	return () => sortedListeners.remove(listeners, listener)
+	return () => {
+		sortedListeners.remove(listeners, listener)
+	}
 }
 
-function overlaps(range: Range, key: string) {
-	if (range.gt !== undefined && key <= range.gt) return false
-	if (range.gte !== undefined && key < range.gte) return false
-	if (range.lt !== undefined && key >= range.lt) return false
-	if (range.lte !== undefined && key > range.lte) return false
+/** It's easier to enumerate cases where its false than true. */
+export function overlaps(r1: Range, r2: Range) {
+	const left1 = r1.gt ?? r1.gte
+	const right1 = r1.lt ?? r1.lte
+
+	const left2 = r2.gt ?? r2.gte
+	const right2 = r2.lt ?? r2.lte
+
+	//   (R1)
+	//            (L2)
+	if (right1 !== undefined && left2 !== undefined) {
+		if (right1 < left2) return false
+		// Handle equal bounds
+		if (r1.lte !== undefined) {
+			if (r1.lte === r2.gte) return true
+			if (r1.lte === r2.gt) return false
+		}
+		if (r1.lt !== undefined) {
+			if (r1.lt === r2.gte) return false
+			if (r1.lt === r2.gt) return false
+		}
+	}
+
+	//            (L1)
+	//    (R2)
+	if (right2 !== undefined && left1 !== undefined) {
+		if (right2 < left1) return false
+		// Handle equal bounds
+		if (r1.gte !== undefined) {
+			if (r1.gte === r2.lte) return true
+			if (r1.gte === r2.lt) return false
+		}
+		if (r1.gt !== undefined) {
+			if (r1.gt === r2.lte) return false
+			if (r1.gt === r2.lt) return false
+		}
+	}
+
 	return true
 }
 
-function emitters(keys: string[]) {
+export function localEmit(ranges: Range[]) {
 	const fns = new Set<() => void>()
-	for (const key of keys) {
+	for (const r of ranges) {
 		for (const { range, fn } of listeners) {
-			if (overlaps(range, key)) fns.add(fn)
+			if (overlaps(r, range)) fns.add(fn)
 		}
 	}
-	return fns
+	for (const fn of fns) fn()
 }
 
-export function localEmit(keys: string[]) {
-	for (const fn of emitters(keys)) fn()
+export function keyToRange(key: string) {
+	return { gte: key, lte: key }
 }
 
 // Caching logic.
@@ -169,15 +204,16 @@ export function insertCache(args: ListArgs<string>, result: { key: string; value
 	for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.add(key)
 
 	localData.write({ set: result, delete: Array.from(deleteKeys) })
+
+	localEmit([range])
 }
 
-type LocalListResult = {
+export type LocalListResult = {
 	miss?: true
 	hit?: { key: string; value: string }[]
 	prefix?: { key: string; value: string }[]
 }
 
-// TODO someday. Partial result, suffix result.
 export function localList(args: ListArgs<string>): LocalListResult {
 	const range = encodeRange(args)
 
@@ -246,7 +282,7 @@ export function localList(args: ListArgs<string>): LocalListResult {
 	return { hit: localData.list(args) }
 }
 
-type LocalGetResult = { hit?: string; miss?: true }
+export type LocalGetResult = { hit?: string; miss?: true }
 
 export function localGet(key: string): LocalGetResult {
 	const range = encodeRange({ gte: key, lte: key })
@@ -268,18 +304,17 @@ export function localWrite(args: WriteArgs<string, string>) {
 	for (const key of args.delete ?? []) keys.add(key)
 
 	// Write cache ranges so we can read our writes.
-	for (const key of keys) {
-		const range = encodeRange({ gte: key, lte: key })
-		sortedRanges.insert(cachedRanges, range)
+	const ranges = Array.from(keys).map(keyToRange)
+
+	for (const range of ranges) {
+		sortedRanges.insert(cachedRanges, encodeRange(range))
 	}
 
 	// Emit
-	localEmit(Array.from(keys))
+	localEmit(ranges)
 }
 
 // TODO:
-// - how to track caches ranges for deleted items?
-// - how to reference count and evict?
 
 // - hooks to try it out
 // - eviction on unsubscribe

@@ -1,5 +1,4 @@
 import React, { createContext, useContext } from "react"
-import { ReactiveDatabase } from "../../shared/database/ReactiveDatabase"
 import type { ClientConfig } from "./ClientConfig"
 import { LocalPreferences } from "./LocalPreferences"
 import { Router } from "./Router"
@@ -11,7 +10,6 @@ export type ClientEnvironment = {
 	router: Router
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
-	db: ReactiveDatabase
 	prefs: LocalPreferences
 }
 

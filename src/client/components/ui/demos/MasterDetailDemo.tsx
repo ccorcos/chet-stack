@@ -10,8 +10,8 @@ import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useAction } from "../../../hooks/useAction"
 import { useDeferredCounter } from "../../../hooks/useCounter"
-import { useOKV } from "../../../hooks/useOKV"
-import { useOKVList } from "../../../hooks/useOKVList"
+import { useRemoteGet } from "../../../hooks/useRemoteGet"
+import { useRemoteList } from "../../../hooks/useRemoteList"
 import { isShortcut } from "../../../hooks/useShortcut"
 import {
 	ClientEnvironmentProvider,
@@ -139,7 +139,7 @@ function parseText(text: string) {
 function OKVSelectedDetails(props: { selected: string }) {
 	const deferredSelected = useDeferredValue(props.selected)
 	const stale = deferredSelected !== props.selected
-	const value = useOKV(deferredSelected)
+	const value = useRemoteGet(deferredSelected)
 
 	const { api, router } = useClientEnvironment()
 
@@ -206,7 +206,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 
 	const [count, refetching, rerender] = useDeferredCounter()
 
-	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useOKVList({
+	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useRemoteList({
 		prefix: deferredPrefix,
 		renderCount: count,
 	})

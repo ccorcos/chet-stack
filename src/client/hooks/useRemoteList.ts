@@ -26,7 +26,7 @@ function useListQuery(query: { prefix: string; anchor: string; limit: number; re
 
 const defaultLimit = 50
 
-export function useOKVList(props: { prefix: string; renderCount: number }) {
+export function useRemoteList(props: { prefix: string; renderCount: number }) {
 	const { prefix } = props
 
 	const count = props.renderCount

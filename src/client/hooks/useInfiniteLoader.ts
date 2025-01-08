@@ -151,7 +151,10 @@ export function useInfiniteLoader(args: {
 
 		scrollDiv.addEventListener("scroll", onScroll)
 		return () => scrollDiv.removeEventListener("scroll", onScroll)
-	}, [query, pendingUp, pendingDown])
+
+		// It's important to have resultCount in the deps here because an optimistic cache prefix result
+		// may return a smaller number of results that the remote result.
+	}, [query, resultCount, pendingUp, pendingDown])
 
 	return { scrollRef, firstRef, lastRef, pendingUp, pendingDown }
 }
