@@ -55,7 +55,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 		router.replace(setParam(router.state.url, "selected", selected))
 	}
 
-	const { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef } = useRemoteList({
+	const { list, loadingUp, loadingDown, staleQuery, scrollRef, firstRef, lastRef } = useRemoteList({
 		prefix: deferredPrefix,
 		renderCount: 0,
 	})
@@ -65,7 +65,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 			<Input placeholder="Search" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
 			<div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
 				<Suspense fallback={<div>Loading...</div>}>
-					{pendingUp && <div>Loading...</div>}
+					{loadingUp && <div>Loading...</div>}
 					<ListBoxKeyed
 						items={list}
 						getKey={({ key }) => key}
@@ -83,7 +83,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 							</ListItem>
 						)}
 					</ListBoxKeyed>
-					{pendingDown && <div>Loading...</div>}
+					{loadingDown && <div>Loading...</div>}
 				</Suspense>
 			</div>
 			<div>Footer</div>

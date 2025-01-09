@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo } from "react"
 
-import { useRef, useTransition } from "react"
+import { useRef } from "react"
 
 const debug = (...args: any[]) => {
 	console.log(...args)
@@ -17,14 +17,15 @@ export function useInfiniteLoader(args: {
 	resultCount: number
 
 	/** When dir is undefined, we're just loading a different window size. */
+	loadingUp: boolean
+	loadingDown: boolean
 	onLoadMore: (limit: number, dir?: "up" | "down" | undefined) => void
 
 	/** The number of screens of content to load. */
 	desiredScreensOfContent?: number
 }) {
-	const [pendingUp, startTransitionUp] = useTransition()
-	const [pendingDown, startTransitionDown] = useTransition()
-	const { query, resultCount, onLoadMore, scrollRef, firstRef, lastRef } = args
+	const { query, resultCount, loadingDown, loadingUp, onLoadMore, scrollRef, firstRef, lastRef } =
+		args
 
 	const desiredScreens = args.desiredScreensOfContent ?? 20
 
@@ -51,9 +52,9 @@ export function useInfiniteLoader(args: {
 
 		debug("NEW LIMIT", newLimit)
 		if (query.reverse) {
-			startTransitionUp(() => onLoadMore(newLimit))
+			onLoadMore(newLimit)
 		} else {
-			startTransitionDown(() => onLoadMore(newLimit))
+			onLoadMore(newLimit)
 		}
 	}, [query])
 
@@ -128,23 +129,19 @@ export function useInfiniteLoader(args: {
 
 			if (
 				scrollingDir === "down" &&
-				!pendingDown &&
+				!loadingDown &&
 				!isAtBottom &&
 				distanceFromBottom < scrollMargin
 			) {
-				startTransitionDown(() => {
-					debug("DOWN")
-					onLoadMore(computeDesiredLimit(), "down")
-				})
+				debug("DOWN")
+				onLoadMore(computeDesiredLimit(), "down")
 				return
 			}
 
 			// If we're within 2 viewport heights from the top
-			if (scrollingDir === "up" && !pendingUp && !isAtTop && distanceFromTop < scrollMargin) {
-				startTransitionUp(() => {
-					debug("UP", distanceFromTop)
-					onLoadMore(computeDesiredLimit(), "up")
-				})
+			if (scrollingDir === "up" && !loadingUp && !isAtTop && distanceFromTop < scrollMargin) {
+				debug("UP", distanceFromTop)
+				onLoadMore(computeDesiredLimit(), "up")
 				return
 			}
 		}
@@ -154,7 +151,7 @@ export function useInfiniteLoader(args: {
 
 		// It's important to have resultCount in the deps here because an optimistic cache prefix result
 		// may return a smaller number of results that the remote result.
-	}, [query, resultCount, pendingUp, pendingDown])
+	}, [query, resultCount, loadingUp, loadingDown])
 
-	return { scrollRef, firstRef, lastRef, pendingUp, pendingDown }
+	return { scrollRef, firstRef, lastRef }
 }

@@ -36,22 +36,31 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	const { pendingUp, pendingDown } = useInfiniteLoader({
+	const [loadingUp, startTransitionUp] = useTransition()
+	const [loadingDown, startTransitionDown] = useTransition()
+
+	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
 		query,
 		resultCount: list.length,
+		loadingUp,
+		loadingDown,
 		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const anchor = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor, limit, reverse: true })
-			} else if (dir === "down") {
-				const anchor = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
+			const startTransition =
+				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+			startTransition(() => {
+				if (dir === "up") {
+					const anchor = list[Math.ceil(list.length / 3)]
+					setCursor({ anchor, limit, reverse: true })
+				} else if (dir === "down") {
+					const anchor = list[Math.ceil((list.length * 2) / 3)]
+					setCursor({ anchor, limit, reverse: false })
+				} else {
+					setCursor((cursor) => ({ ...cursor, limit }))
+				}
+			})
 		},
 	})
 
@@ -107,11 +116,11 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 						// Overflow grid with relative for stick headers.
 						flex: 1,
 						position: "relative",
-						color: loading || pendingUp || pendingDown ? "var(--gray)" : "var(--text-color)",
+						color: loading || loadingUp || loadingDown ? "var(--gray)" : "var(--text-color)",
 					}}
 				>
 					<>
-						<div key="up">{pendingUp ? "Loading..." : ""}</div>
+						<div key="up">{loadingUp ? "Loading..." : ""}</div>
 						<div key="up2" />
 					</>
 
@@ -124,7 +133,7 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 						</div>
 					))}
 					<>
-						<div key="down">{pendingDown ? "Loading..." : ""}</div>
+						<div key="down">{loadingDown ? "Loading..." : ""}</div>
 						<div key="down2" />
 					</>
 				</div>

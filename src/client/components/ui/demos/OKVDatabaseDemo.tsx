@@ -1,4 +1,4 @@
-import React, { Suspense, useDeferredValue, useMemo, useRef, useState } from "react"
+import React, { Suspense, useDeferredValue, useMemo, useRef, useState, useTransition } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useCounter } from "../../../hooks/useCounter"
@@ -61,22 +61,31 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	const { pendingUp, pendingDown } = useInfiniteLoader({
+	const [loadingUp, startTransitionUp] = useTransition()
+	const [loadingDown, startTransitionDown] = useTransition()
+
+	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
 		query: deferredQuery,
 		resultCount: deferredListCount,
+		loadingUp,
+		loadingDown,
 		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor: key, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
+			const startTransition =
+				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+			startTransition(() => {
+				if (dir === "up") {
+					const { key } = list[Math.ceil(list.length / 3)]
+					setCursor({ anchor: key, limit, reverse: true })
+				} else if (dir === "down") {
+					const { key } = list[Math.ceil((list.length * 2) / 3)]
+					setCursor({ anchor: key, limit, reverse: false })
+				} else {
+					setCursor((cursor) => ({ ...cursor, limit }))
+				}
+			})
 		},
 	})
 
@@ -88,9 +97,9 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		setColumnWidths(newWidths)
 	}
 
-	const backgroundColor = pendingUp
+	const backgroundColor = loadingUp
 		? "var(--red)"
-		: pendingDown
+		: loadingDown
 		? "var(--green)"
 		: staleQuery
 		? "var(--blue)"
@@ -148,7 +157,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 						Value
 					</HeaderCell>
 					<>
-						<div key="up">{pendingUp ? "Loading..." : ""}</div>
+						<div key="up">{loadingUp ? "Loading..." : ""}</div>
 						<div key="up2" />
 					</>
 					{list.map(({ key, value }, index) => (
@@ -178,7 +187,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 						</React.Fragment>
 					))}
 					<>
-						<div key="down">{pendingDown ? "Loading..." : ""}</div>
+						<div key="down">{loadingDown ? "Loading..." : ""}</div>
 						<div key="down2" />
 					</>
 				</Table>

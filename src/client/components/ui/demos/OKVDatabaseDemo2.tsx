@@ -1,4 +1,4 @@
-import React, { Suspense, useDeferredValue, useMemo, useRef, useState } from "react"
+import React, { Suspense, useDeferredValue, useMemo, useRef, useState, useTransition } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useList, useWrite } from "../../../hooks/useDatabase"
@@ -18,8 +18,8 @@ function useListQuery(query: { prefix: string; anchor: string; limit: number; re
 	if (query.reverse) list.reverse()
 	return {
 		list,
-		loadingMoreUp: loadingMore && query.reverse,
-		loadingMoreDown: loadingMore && !query.reverse,
+		loadingPartialUp: loadingMore && query.reverse,
+		loadingPartialDown: loadingMore && !query.reverse,
 	}
 }
 
@@ -49,33 +49,45 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 	const deferredQuery = useDeferredValue(query)
 	const staleQuery = deferredQuery !== query
 
-	let { list, loadingMoreUp, loadingMoreDown } = useListQuery(deferredQuery)
+	// Loading more while displaying partial result
+	let { list, loadingPartialUp, loadingPartialDown } = useListQuery(deferredQuery)
 	const deferredListCount = useDeferredValue(list.length)
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	let { pendingUp, pendingDown } = useInfiniteLoader({
+	// Suspense loading state
+	const [loadingSuspenseUp, startTransitionUp] = useTransition()
+	const [loadingSuspenseDown, startTransitionDown] = useTransition()
+
+	const loadingUp = loadingPartialUp || loadingSuspenseUp
+	const loadingDown = loadingPartialDown || loadingSuspenseDown
+
+	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
 		query: deferredQuery,
 		resultCount: deferredListCount,
+		loadingUp,
+		loadingDown,
 		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor: key, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
+			const startTransition =
+				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+			startTransition(() => {
+				if (dir === "up") {
+					const { key } = list[Math.ceil(list.length / 3)]
+					setCursor({ anchor: key, limit, reverse: true })
+				} else if (dir === "down") {
+					const { key } = list[Math.ceil((list.length * 2) / 3)]
+					setCursor({ anchor: key, limit, reverse: false })
+				} else {
+					setCursor((cursor) => ({ ...cursor, limit }))
+				}
+			})
 		},
 	})
-	pendingUp = loadingMoreUp || pendingUp
-	pendingDown = loadingMoreDown || pendingDown
 
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
 
@@ -85,9 +97,9 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 		setColumnWidths(newWidths)
 	}
 
-	const backgroundColor = pendingUp
+	const backgroundColor = loadingUp
 		? "var(--red)"
-		: pendingDown
+		: loadingDown
 		? "var(--green)"
 		: staleQuery
 		? "var(--blue)"
@@ -145,7 +157,7 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 						Value
 					</HeaderCell>
 					<>
-						<div key="up">{pendingUp ? "Loading..." : ""}</div>
+						<div key="up">{loadingUp ? "Loading..." : ""}</div>
 						<div key="up2" />
 					</>
 					{list.map(({ key, value }, index) => (
@@ -171,7 +183,7 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 						</React.Fragment>
 					))}
 					<>
-						<div key="down">{pendingDown ? "Loading..." : ""}</div>
+						<div key="down">{loadingDown ? "Loading..." : ""}</div>
 						<div key="down2" />
 					</>
 				</Table>

@@ -1,4 +1,11 @@
-import React, { startTransition, useDeferredValue, useMemo, useRef, useState } from "react"
+import React, {
+	startTransition,
+	useDeferredValue,
+	useMemo,
+	useRef,
+	useState,
+	useTransition,
+} from "react"
 import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { useAction } from "../../../hooks/useAction"
@@ -97,7 +104,7 @@ export function TableViewDemo() {
 		rerender()
 	})
 
-	const { list, scrollRef, firstRef, lastRef, staleQuery, pendingUp, pendingDown } =
+	const { list, scrollRef, firstRef, lastRef, staleQuery, loadingUp, loadingDown } =
 		useInfiniteListQuery({
 			prefix: subspace,
 			renderCount: count,
@@ -138,7 +145,7 @@ export function TableViewDemo() {
 				)
 			})}
 
-			<>{labelRow(pendingUp ? "Loading..." : "")}</>
+			<>{labelRow(loadingUp ? "Loading..." : "")}</>
 			<>{labelRow(list.length === 0 ? "No records." : "")}</>
 
 			{list.map(({ key, value }, i) => (
@@ -162,7 +169,7 @@ export function TableViewDemo() {
 					})}
 				</React.Fragment>
 			))}
-			<>{labelRow(pendingDown ? "Loading..." : "")}</>
+			<>{labelRow(loadingDown ? "Loading..." : "")}</>
 
 			<>
 				{PlantSchema.properties.map((props, i) => {
@@ -312,27 +319,35 @@ function useInfiniteListQuery(args: { prefix: string; renderCount: number }) {
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
+	const [loadingUp, startTransitionUp] = useTransition()
+	const [loadingDown, startTransitionDown] = useTransition()
 
-	const { pendingUp, pendingDown } = useInfiniteLoader({
+	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
 		query: deferredQuery,
 		resultCount: deferredListCount,
+		loadingUp,
+		loadingDown,
 		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor: key, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
+			const startTransition =
+				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+			startTransition(() => {
+				if (dir === "up") {
+					const { key } = list[Math.ceil(list.length / 3)]
+					setCursor({ anchor: key, limit, reverse: true })
+				} else if (dir === "down") {
+					const { key } = list[Math.ceil((list.length * 2) / 3)]
+					setCursor({ anchor: key, limit, reverse: false })
+				} else {
+					setCursor((cursor) => ({ ...cursor, limit }))
+				}
+			})
 		},
 	})
 
-	return { list, scrollRef, firstRef, lastRef, staleQuery, pendingUp, pendingDown }
+	return { list, scrollRef, firstRef, lastRef, staleQuery, loadingUp, loadingDown }
 }
 
 // export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
@@ -353,9 +368,9 @@ function useInfiniteListQuery(args: { prefix: string; renderCount: number }) {
 // 		setColumnWidths(newWidths)
 // 	}
 
-// 	const backgroundColor = pendingUp
+// 	const backgroundColor = loadingUp
 // 		? "var(--red)"
-// 		: pendingDown
+// 		: loadingDown
 // 		? "var(--green)"
 // 		: staleQuery
 // 		? "var(--blue)"

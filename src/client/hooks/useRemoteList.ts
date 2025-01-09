@@ -1,4 +1,4 @@
-import { useDeferredValue, useLayoutEffect, useRef } from "react"
+import { useDeferredValue, useLayoutEffect, useRef, useTransition } from "react"
 
 import { useState } from "react"
 import { incStr } from "../../shared/incStr"
@@ -70,24 +70,33 @@ export function useRemoteList(props: { prefix: string; renderCount: number }) {
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	const { pendingUp, pendingDown } = useInfiniteLoader({
+	const [loadingUp, startTransitionUp] = useTransition()
+	const [loadingDown, startTransitionDown] = useTransition()
+
+	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
+		loadingUp,
+		loadingDown,
 		query: deferredQuery,
 		resultCount: deferredListCount,
 		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
-				setQuery({ ...query, anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setQuery({ ...query, anchor: key, limit, reverse: false })
-			} else {
-				setQuery({ ...query, limit })
-			}
+			const startTransition =
+				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+			startTransition(() => {
+				if (dir === "up") {
+					const { key } = list[Math.ceil(list.length / 3)]
+					setQuery({ ...query, anchor: key, limit, reverse: true })
+				} else if (dir === "down") {
+					const { key } = list[Math.ceil((list.length * 2) / 3)]
+					setQuery({ ...query, anchor: key, limit, reverse: false })
+				} else {
+					setQuery({ ...query, limit })
+				}
+			})
 		},
 	})
 
-	return { list, pendingUp, pendingDown, staleQuery, scrollRef, firstRef, lastRef }
+	return { list, loadingUp, loadingDown, staleQuery, scrollRef, firstRef, lastRef }
 }

@@ -21,6 +21,7 @@ export const localData = new InMemoryDatabase<string, string>()
 // TODO: optimize this with an interval tree.
 type Listener = { range: Range; id: string; fn: () => void }
 const listeners: Listener[] = []
+
 // Technically this comparison is possible without encoding, but its got a lot of if-else logic.
 const compareListener = (a: Listener, b: Listener) => {
 	const aKey = [...encodeRange(a.range), a.id]
@@ -315,7 +316,6 @@ export function localWrite(args: WriteArgs<string, string>) {
 }
 
 // TODO:
-
 // - hooks to try it out
 // - eviction on unsubscribe
 // - think more about optimistic writes...
