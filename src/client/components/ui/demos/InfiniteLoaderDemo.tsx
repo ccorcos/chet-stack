@@ -12,22 +12,27 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	})
 
 	const [maxN, setMaxN] = useState(1000000)
-	const [delayMs, setDelayMs] = useState(1000)
+	const [delayMs, setDelayMs] = useState(0)
 
 	const [loading, startTransition] = useTransition()
 	const query = useMemo(() => ({ maxN, ...cursor }), [maxN, cursor])
 
-	const loader = useLoader("numberlist:" + JSON.stringify(query), async () => {
-		await sleep(delayMs)
-		const list: number[] = []
-		if (query.reverse) {
-			for (let i = query.anchor; i >= Math.max(query.anchor - query.limit, 0); i--) list.push(i)
-			list.reverse()
-		} else {
-			for (let i = query.anchor; i < Math.min(query.anchor + query.limit, query.maxN); i++)
-				list.push(i)
+	const loader = useLoader("numberlist:" + JSON.stringify(query), () => {
+		const fn = () => {
+			const list: number[] = []
+			if (query.reverse) {
+				for (let i = query.anchor; i >= Math.max(query.anchor - query.limit, 0); i--) list.push(i)
+				list.reverse()
+			} else {
+				for (let i = query.anchor; i < Math.min(query.anchor + query.limit, query.maxN); i++)
+					list.push(i)
+			}
+			return list
 		}
-		return list
+		if (delayMs > 0) {
+			return sleep(delayMs).then(fn)
+		}
+		return fn()
 	})
 
 	const list = loader.suspend()
@@ -44,12 +49,14 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 		firstRef,
 		lastRef,
 		query,
-		resultCount: list.length,
+		data: list,
 		loadingUp,
 		loadingDown,
 		onLoadMore: (limit, dir) => {
 			const startTransition =
-				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+				dir === "up" || (dir === undefined && query.reverse)
+					? startTransitionUp
+					: startTransitionDown
 			startTransition(() => {
 				if (dir === "up") {
 					const anchor = list[Math.ceil(list.length / 3)]

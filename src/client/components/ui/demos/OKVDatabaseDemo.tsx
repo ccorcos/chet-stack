@@ -1,9 +1,8 @@
-import React, { Suspense, useDeferredValue, useMemo, useRef, useState, useTransition } from "react"
+import React, { Suspense, useMemo, useRef, useState } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
-import { useCounter } from "../../../hooks/useCounter"
+import { useList, useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
-import { useLoader } from "../../../hooks/useLoader"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
@@ -11,29 +10,29 @@ import { HeaderCell, Table } from "../Table"
 import { TextInput } from "../TextInput"
 
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
-	const { api } = useClientEnvironment()
+	const { localResult, remoteResult } = useList(
+		query.reverse
+			? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
+			: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
+	)
 
-	const loader = useLoader(JSON.stringify(query), async () => {
-		const response = await api.list(
-			query.reverse
-				? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
-				: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
-		)
+	return { localResult, remoteResult }
 
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		if (query.reverse) return [...response.body].reverse()
-		return response.body
-	})
-	const list = loader.suspend()
-	return list
+	// if (localResult.miss || localResult.prefix) remoteResult.suspend()
+
+	// const list = localResult.hit!
+	// if (query.reverse) list.reverse()
+
+	// return list
 }
 
 const gap = 12
 const minWidth = 150
 const defaultLimit = 50
 
-export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
-	const { router, api } = useClientEnvironment()
+export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
+	const { router } = useClientEnvironment()
+	const write = useWrite()
 
 	const prefix = props.params.prefix || ""
 	const setPrefix = (prefix: string) => {
@@ -48,44 +47,38 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		reverse: false,
 	})
 
-	const [count, rerender] = useCounter()
-	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
+	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
+	const { localResult, remoteResult } = useListQuery(query)
 
-	const deferredQuery = useDeferredValue(query)
-	const staleQuery = deferredQuery !== query
+	const loading = !localResult.hit
+	const loadingUp = !localResult.hit && query.reverse
+	const loadingDown = !localResult.hit && !query.reverse
 
-	const list = useListQuery(deferredQuery)
-	const deferredListCount = useDeferredValue(list.length)
+	let list = localResult.hit || localResult.prefix || []
+	if (query.reverse) list = [...list].reverse()
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
 	const lastRef = useRef<HTMLDivElement>(null)
 
-	const [loadingUp, startTransitionUp] = useTransition()
-	const [loadingDown, startTransitionDown] = useTransition()
-
 	useInfiniteLoader({
 		scrollRef,
 		firstRef,
 		lastRef,
-		query: deferredQuery,
-		resultCount: deferredListCount,
+		query,
+		data: list,
 		loadingUp,
 		loadingDown,
 		onLoadMore: (limit, dir) => {
-			const startTransition =
-				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
-			startTransition(() => {
-				if (dir === "up") {
-					const { key } = list[Math.ceil(list.length / 3)]
-					setCursor({ anchor: key, limit, reverse: true })
-				} else if (dir === "down") {
-					const { key } = list[Math.ceil((list.length * 2) / 3)]
-					setCursor({ anchor: key, limit, reverse: false })
-				} else {
-					setCursor((cursor) => ({ ...cursor, limit }))
-				}
-			})
+			if (dir === "up") {
+				const { key } = list[Math.ceil(list.length / 3)]
+				setCursor({ anchor: key, limit, reverse: true })
+			} else if (dir === "down") {
+				const { key } = list[Math.ceil((list.length * 2) / 3)]
+				setCursor({ anchor: key, limit, reverse: false })
+			} else {
+				setCursor((cursor) => ({ ...cursor, limit }))
+			}
 		},
 	})
 
@@ -101,7 +94,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		? "var(--red)"
 		: loadingDown
 		? "var(--green)"
-		: staleQuery
+		: localResult.miss
 		? "var(--blue)"
 		: "var(--background)"
 
@@ -167,20 +160,16 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 								data-key={key}
 								value={key}
 								onSubmit={async (newKey) => {
-									await api.write({
+									write({
 										set: [{ key: newKey, value }],
 										delete: [key],
 									})
-									rerender()
 								}}
 							/>
 							<TextInput
 								value={value}
 								onSubmit={async (newValue) => {
-									await api.write({
-										set: [{ key, value: newValue }],
-									})
-									rerender()
+									write({ set: [{ key, value: newValue }] })
 								}}
 								style={{ maxHeight: 300, overflowY: "auto" }}
 							/>

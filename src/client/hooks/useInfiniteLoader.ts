@@ -1,9 +1,8 @@
-import { useLayoutEffect, useMemo } from "react"
-
-import { useRef } from "react"
+import { useLayoutEffect, useMemo, useRef } from "react"
+import { useRefCurrent } from "./useRefCurrent"
 
 const debug = (...args: any[]) => {
-	console.log(...args)
+	//	console.log(...args)
 }
 
 export function useInfiniteLoader(args: {
@@ -14,61 +13,121 @@ export function useInfiniteLoader(args: {
 
 	/** The query can contain more data than just this */
 	query: { limit: number; reverse: boolean }
-	resultCount: number
+	data: any[]
 
-	/** When dir is undefined, we're just loading a different window size. */
 	loadingUp: boolean
 	loadingDown: boolean
+
+	/** When dir is undefined, we're just loading a different window size. */
 	onLoadMore: (limit: number, dir?: "up" | "down" | undefined) => void
-
-	/** The number of screens of content to load. */
-	desiredScreensOfContent?: number
 }) {
-	const { query, resultCount, loadingDown, loadingUp, onLoadMore, scrollRef, firstRef, lastRef } =
-		args
+	const { query, data, loadingDown, loadingUp, onLoadMore, scrollRef, firstRef, lastRef } = args
 
-	const desiredScreens = args.desiredScreensOfContent ?? 20
-
-	const computeDesiredLimit = () => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return query.limit
-		const avgHeight = scrollDiv.scrollHeight / resultCount
-		const desiredLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * desiredScreens)
-		return desiredLimit
-	}
+	const resultCount = data.length
+	const desiredScreens = 20
 
 	// Adjust the limit if its too big or too small.
+	useLimitAdjuster({
+		scrollRef,
+		currentLimit: query.limit,
+		resultCount,
+		desiredScreens,
+		onLoadMore,
+	})
+
+	usePreserveScrollPosition({
+		scrollRef,
+		firstRef,
+		lastRef,
+		data,
+	})
+
+	useScrollLoading({
+		scrollRef,
+		query,
+		resultCount,
+		desiredScreens,
+		loadingUp,
+		loadingDown,
+		onLoadMore,
+	})
+
+	return { scrollRef, firstRef, lastRef }
+}
+
+/**
+ * On the first render in particular, it's important that we load enough data so that we can
+ * scroll. This makes sure we have at least 2 screens of content. If elements vary in height
+ * as well, this can become relevant when scrolling from large items to smaller items.
+ */
+function useLimitAdjuster(args: {
+	scrollRef: React.RefObject<HTMLElement>
+	currentLimit: number
+	resultCount: number
+	desiredScreens: number
+	onLoadMore: (limit: number) => void
+}) {
+	const { scrollRef, currentLimit, resultCount, desiredScreens } = args
+
+	const onLoadMoreRef = useRefCurrent(args.onLoadMore)
+
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
-		if (resultCount < query.limit) return
 
+		// If we've hit the end of the list, then we don't need to adjust the limit.
+		if (resultCount < currentLimit) return
+
+		// We want to make sure there's at least 2 screens of content.
 		const minScreens = 2
 		const actualScreens = scrollDiv.scrollHeight / scrollDiv.clientHeight
 		if (actualScreens > minScreens) return
 
-		const newLimit = computeDesiredLimit()
-		if (newLimit === query.limit) return
+		// Otherwise we compute the desired limit.
+		const newLimit = computeDesiredLimit({ scrollDiv, resultCount, desiredScreens })
+		if (newLimit !== currentLimit) onLoadMoreRef.current(newLimit)
+	}, [currentLimit, resultCount])
+}
 
-		debug("NEW LIMIT", newLimit)
-		if (query.reverse) {
-			onLoadMore(newLimit)
-		} else {
-			onLoadMore(newLimit)
-		}
-	}, [query])
+function computeDesiredLimit(args: {
+	scrollDiv: HTMLElement
+	resultCount: number
+	desiredScreens: number
+}) {
+	const { scrollDiv, resultCount, desiredScreens } = args
+	const avgHeight = scrollDiv.scrollHeight / resultCount
+	const desiredLimit = Math.ceil((scrollDiv.clientHeight / avgHeight) * desiredScreens)
+	return desiredLimit
+}
 
-	// Measure scroll position before loading new data
+/**
+ * firstRef and lastRef are supposed to be the first and last elements in the list ensuring
+ * that one of those elements remains rendered when data changes.
+ * data is only used to trigger React effect deps.
+ */
+function usePreserveScrollPosition(args: {
+	scrollRef: React.RefObject<HTMLElement>
+	firstRef: React.RefObject<HTMLElement>
+	lastRef: React.RefObject<HTMLElement>
+	data: any
+}) {
+	const { scrollRef, firstRef, lastRef, data } = args
+
+	// Measure scroll position before loading new data.
 	const scrollPositionRef = useRef<{ element: HTMLElement; offset: number }[]>([])
 
-	// const logScrollPositions = () => {
-	// 	return scrollPositionRef.current
-	// 		.map(({ element, offset }) => {
-	// 			const key = element.textContent
-	// 			return [key, offset]
-	// 		})
-	// 		.join(", ")
-	// }
+	// Take measurement of the previous render when the query changes.
+	useMemo(() => {
+		const scrollDiv = scrollRef.current
+		if (!scrollDiv) return
+		debug("MEASURE SCROLL")
+		scrollPositionRef.current = [firstRef.current, lastRef.current].filter(Boolean).map((div) => {
+			const element = div!
+			// Measure distance from top of viewport to the element
+			const offset = element.offsetTop - scrollDiv.scrollTop
+			return { element, offset }
+		})
+	}, [data])
 
 	// Restore scroll position after new data renders.
 	useLayoutEffect(() => {
@@ -84,48 +143,58 @@ export function useInfiniteLoader(args: {
 		for (const { element, offset } of scrollPositions) {
 			if (!scrollDiv.contains(element)) continue
 			debug("RESTORE SCROLL")
-			// offset is the distance from top of viewport to the element
+			// The offset is the distance from top of viewport to the element
 			// we want to maintain that same distance after scroll
 			scrollDiv.scrollTop = element.offsetTop - offset
 			break
 		}
-	}, [query])
+	}, [data])
+}
 
-	// Take measurement of the previous render when the query changes.
-	useMemo(() => {
-		const scrollDiv = scrollRef.current
-		if (!scrollDiv) return
-		scrollPositionRef.current = [firstRef.current, lastRef.current].filter(Boolean).map((div) => {
-			const element = div!
-			// Measure distance from top of viewport to the element
-			const offset = element.offsetTop - scrollDiv.scrollTop
-			return { element, offset }
-		})
-		debug("MEASURE SCROLL")
-	}, [query])
+function useScrollLoading(args: {
+	scrollRef: React.RefObject<HTMLElement>
+	query: { limit: number; reverse: boolean }
+	resultCount: number
+	desiredScreens: number
+	loadingUp: boolean
+	loadingDown: boolean
+	onLoadMore: (limit: number, dir?: "up" | "down" | undefined) => void
+}) {
+	const { scrollRef } = args
+	const argsRef = useRefCurrent(args)
 
 	// Adjust the query based on scroll position.
 	useLayoutEffect(() => {
 		const scrollDiv = scrollRef.current
 		if (!scrollDiv) return
 
-		let prev = scrollDiv.scrollTop
+		// Keep track of scroll direction.
+		let prevScrollTop = scrollDiv.scrollTop
 		let scrollingDir: "up" | "down" | undefined = undefined
 
 		const onScroll = () => {
+			// Update scroll direction.
+			const { query, resultCount, desiredScreens, loadingUp, loadingDown, onLoadMore } =
+				argsRef.current
 			const { scrollTop, scrollHeight, clientHeight } = scrollDiv
 
-			if (scrollTop > prev) scrollingDir = "down"
-			else if (scrollTop < prev) scrollingDir = "up"
+			if (scrollTop > prevScrollTop) scrollingDir = "down"
+			else if (scrollTop < prevScrollTop) scrollingDir = "up"
 			else scrollingDir === undefined
-			prev = scrollTop
+			prevScrollTop = scrollTop
 
+			// Should we load more?
 			const distanceFromBottom = scrollHeight - scrollTop - clientHeight
 			const distanceFromTop = scrollTop
 
 			const isAtTop = query.reverse && resultCount < query.limit
 			const isAtBottom = !query.reverse && resultCount < query.limit
+
 			const scrollMargin = scrollHeight * 0.15
+
+			// Prevent issues where we optimistically show a subset of the new data which causes an
+			// oscilation between loading up and down.
+			if (loadingUp || loadingDown) return
 
 			if (
 				scrollingDir === "down" &&
@@ -133,25 +202,21 @@ export function useInfiniteLoader(args: {
 				!isAtBottom &&
 				distanceFromBottom < scrollMargin
 			) {
-				debug("DOWN")
-				onLoadMore(computeDesiredLimit(), "down")
+				debug("DOWN", distanceFromBottom)
+				const newLimit = computeDesiredLimit({ scrollDiv, resultCount, desiredScreens })
+				onLoadMore(newLimit, "down")
 				return
 			}
 
-			// If we're within 2 viewport heights from the top
 			if (scrollingDir === "up" && !loadingUp && !isAtTop && distanceFromTop < scrollMargin) {
 				debug("UP", distanceFromTop)
-				onLoadMore(computeDesiredLimit(), "up")
+				const newLimit = computeDesiredLimit({ scrollDiv, resultCount, desiredScreens })
+				onLoadMore(newLimit, "up")
 				return
 			}
 		}
 
 		scrollDiv.addEventListener("scroll", onScroll)
 		return () => scrollDiv.removeEventListener("scroll", onScroll)
-
-		// It's important to have resultCount in the deps here because an optimistic cache prefix result
-		// may return a smaller number of results that the remote result.
-	}, [query, resultCount, loadingUp, loadingDown])
-
-	return { scrollRef, firstRef, lastRef }
+	}, [scrollRef.current])
 }

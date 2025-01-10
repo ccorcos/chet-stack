@@ -314,7 +314,7 @@ function useInfiniteListQuery(args: { prefix: string; renderCount: number }) {
 	})
 
 	const list = loader.suspend()
-	const deferredListCount = useDeferredValue(list.length)
+	const deferredList = useDeferredValue(list)
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
@@ -327,12 +327,14 @@ function useInfiniteListQuery(args: { prefix: string; renderCount: number }) {
 		firstRef,
 		lastRef,
 		query: deferredQuery,
-		resultCount: deferredListCount,
+		data: deferredList,
 		loadingUp,
 		loadingDown,
 		onLoadMore: (limit, dir) => {
 			const startTransition =
-				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+				dir === "up" || (dir === undefined && deferredQuery.reverse)
+					? startTransitionUp
+					: startTransitionDown
 			startTransition(() => {
 				if (dir === "up") {
 					const { key } = list[Math.ceil(list.length / 3)]

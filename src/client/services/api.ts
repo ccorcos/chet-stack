@@ -28,7 +28,7 @@ export async function apiRequest<T extends keyof ApiSchema>(
 	const result = await httpRequest("/api/" + name, args)
 
 	// Control how much loading spinners we see during development.
-	await sleep(2000)
+	await sleep(500)
 
 	return result as ApiResponse<any>
 }

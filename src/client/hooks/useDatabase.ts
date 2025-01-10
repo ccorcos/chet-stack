@@ -41,9 +41,7 @@ export function useGet(key: string) {
 	})
 
 	const localResult = localResultRef.current
-	if (localResult.miss) remoteResult.suspend()
-
-	return localResultRef.current.hit
+	return { localResult, remoteResult }
 }
 
 export function useList(_args: ListArgs<string>) {
@@ -55,16 +53,17 @@ export function useList(_args: ListArgs<string>) {
 	const localResultRef = useRef<LocalListResult>({} as any)
 
 	useMemo(() => {
-		console.log("New Query", args)
 		localResultRef.current = localList(args)
 	}, [args])
 
 	useEffect(() => {
-		return localSubscribe(args, () => {
-			console.log("Update", args)
+		const unsub = localSubscribe(args, () => {
 			localResultRef.current = localList(args)
 			rerender()
 		})
+		return () => {
+			unsub()
+		}
 	}, [args])
 
 	const remoteResult = useLoader("list:" + JSON.stringify(args), async () => {
@@ -74,12 +73,7 @@ export function useList(_args: ListArgs<string>) {
 	})
 
 	const localResult = localResultRef.current
-	if (localResult.miss) remoteResult.suspend()
-
-	return {
-		list: localResultRef.current.hit || localResultRef.current.prefix!,
-		loadingMore: Boolean(localResultRef.current.prefix),
-	}
+	return { localResult, remoteResult }
 }
 
 export function useWrite() {

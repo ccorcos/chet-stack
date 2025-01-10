@@ -64,7 +64,7 @@ export function useRemoteList(props: { prefix: string; renderCount: number }) {
 	const staleQuery = deferredQuery !== query
 
 	const list = useListQuery(deferredQuery)
-	const deferredListCount = useDeferredValue(list.length)
+	const deferredList = useDeferredValue(list)
 
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const firstRef = useRef<HTMLDivElement>(null)
@@ -80,10 +80,12 @@ export function useRemoteList(props: { prefix: string; renderCount: number }) {
 		loadingUp,
 		loadingDown,
 		query: deferredQuery,
-		resultCount: deferredListCount,
+		data: deferredList,
 		onLoadMore: (limit, dir) => {
 			const startTransition =
-				dir === "up" || query.reverse ? startTransitionUp : startTransitionDown
+				dir === "up" || (dir === undefined && deferredQuery.reverse)
+					? startTransitionUp
+					: startTransitionDown
 			startTransition(() => {
 				if (dir === "up") {
 					const { key } = list[Math.ceil(list.length / 3)]
