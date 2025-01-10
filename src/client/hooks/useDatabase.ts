@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useRef } from "react"
-import {
-	LocalGetResult,
-	LocalListResult,
-	insertCache,
-	localGet,
-	localList,
-	localSubscribe,
-	localWrite,
-} from "../../shared/database/Cache"
+import { LocalGetResult, LocalListResult } from "../../shared/database/Cache"
 import { ListArgs, WriteArgs } from "../../shared/database/types"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useCounter } from "./useCounter"
@@ -16,18 +8,18 @@ import { useLoader } from "./useLoader"
 
 // Maybe we should get rid api.get() and just use list for everything.
 export function useGet(key: string) {
-	const { api } = useClientEnvironment()
+	const { api, cache } = useClientEnvironment()
 
 	const [_, rerender] = useCounter()
 	const localResultRef = useRef<LocalGetResult>({} as any)
 
 	useMemo(() => {
-		localResultRef.current = localGet(key)
+		localResultRef.current = cache.localGet(key)
 	}, [key])
 
 	useEffect(() => {
-		return localSubscribe({ gte: key, lte: key }, () => {
-			localResultRef.current = localGet(key)
+		return cache.localSubscribe({ gte: key, lte: key }, () => {
+			localResultRef.current = cache.localGet(key)
 			rerender()
 		})
 	}, [key])
@@ -36,8 +28,8 @@ export function useGet(key: string) {
 		const response = await api.get(key)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 
-		if (response.body === undefined) insertCache({ gte: key, lte: key }, [])
-		else insertCache({ gte: key, lte: key }, [{ key, value: response.body }])
+		if (response.body === undefined) cache.insertCache({ gte: key, lte: key }, [])
+		else cache.insertCache({ gte: key, lte: key }, [{ key, value: response.body }])
 	})
 
 	const localResult = localResultRef.current
@@ -45,7 +37,7 @@ export function useGet(key: string) {
 }
 
 export function useList(_args: ListArgs<string>) {
-	const { api } = useClientEnvironment()
+	const { api, cache } = useClientEnvironment()
 
 	const args = useDeepMemo(() => _args, [_args])
 
@@ -53,13 +45,13 @@ export function useList(_args: ListArgs<string>) {
 	const localResultRef = useRef<LocalListResult>({} as any)
 
 	useMemo(() => {
-		localResultRef.current = localList(args)
+		localResultRef.current = cache.localList(args)
 	}, [args])
 
 	const [fetchCount, refetch] = useCounter()
 	useEffect(() => {
-		const unsub = localSubscribe(args, () => {
-			localResultRef.current = localList(args)
+		const unsub = cache.localSubscribe(args, () => {
+			localResultRef.current = cache.localList(args)
 			rerender()
 			// If a use deletes a record leaving an incomplete list, then we need to refetch.
 			if (!localResultRef.current.hit) refetch()
@@ -72,7 +64,7 @@ export function useList(_args: ListArgs<string>) {
 	const remoteResult = useLoader("list:" + JSON.stringify(args) + fetchCount, async () => {
 		const response = await api.list(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		insertCache(args, response.body)
+		cache.insertCache(args, response.body)
 	})
 
 	const localResult = localResultRef.current
@@ -80,10 +72,10 @@ export function useList(_args: ListArgs<string>) {
 }
 
 export function useWrite() {
-	const { api } = useClientEnvironment()
+	const { api, cache } = useClientEnvironment()
 
 	return async (args: WriteArgs<string, string>) => {
-		localWrite(args)
+		cache.localWrite(args)
 		await api.write(args)
 	}
 }

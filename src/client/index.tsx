@@ -1,6 +1,7 @@
 import React from "react"
 import { createRoot } from "react-dom/client"
 // import ReactDOM from "react-dom/profiling"
+import { LocalCache } from "../shared/database/Cache"
 import { Root } from "./components/Root"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
@@ -19,6 +20,7 @@ const pubsub = new WebsocketPubsubClient({
 })
 
 const prefs = new LocalPreferences()
+const cache = new LocalCache()
 
 const environment: ClientEnvironment = {
 	config: clientConfig,
@@ -26,6 +28,7 @@ const environment: ClientEnvironment = {
 	api,
 	pubsub,
 	prefs,
+	cache,
 }
 
 // Render the app.
