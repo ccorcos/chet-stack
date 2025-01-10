@@ -56,17 +56,20 @@ export function useList(_args: ListArgs<string>) {
 		localResultRef.current = localList(args)
 	}, [args])
 
+	const [fetchCount, refetch] = useCounter()
 	useEffect(() => {
 		const unsub = localSubscribe(args, () => {
 			localResultRef.current = localList(args)
 			rerender()
+			// If a use deletes a record leaving an incomplete list, then we need to refetch.
+			if (!localResultRef.current.hit) refetch()
 		})
 		return () => {
 			unsub()
 		}
 	}, [args])
 
-	const remoteResult = useLoader("list:" + JSON.stringify(args), async () => {
+	const remoteResult = useLoader("list:" + JSON.stringify(args) + fetchCount, async () => {
 		const response = await api.list(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		insertCache(args, response.body)

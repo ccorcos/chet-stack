@@ -25,13 +25,12 @@ function _ContentEditableInput(
 			ref={mergeRefs([ref, props.ref])}
 			contentEditable
 			style={{
-				...style,
-				// whiteSpace: "pre-wrap",
 				whiteSpace: "normal",
 				wordBreak: "break-all",
 				cursor: "text",
 				userSelect: "text",
 				WebkitUserModify: "read-write-plaintext-only",
+				...style,
 			}}
 			onPaste={(e) => {
 				e.preventDefault()

@@ -30,7 +30,7 @@ const gap = 12
 const minWidth = 150
 const defaultLimit = 50
 
-export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
+export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()
 	const write = useWrite()
 
@@ -50,9 +50,11 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
 	const { localResult, remoteResult } = useListQuery(query)
 
+	console.log("localResult", { query, localResult })
+
 	const loading = !localResult.hit
-	const loadingUp = !localResult.hit && query.reverse
-	const loadingDown = !localResult.hit && !query.reverse
+	const loadingUp = loading && query.reverse
+	const loadingDown = loading && !query.reverse
 
 	let list = localResult.hit || localResult.prefix || []
 	if (query.reverse) list = [...list].reverse()
@@ -171,7 +173,7 @@ export function OKVDatabaseDemo2(props: { params: Record<string, string> }) {
 								onSubmit={async (newValue) => {
 									write({ set: [{ key, value: newValue }] })
 								}}
-								style={{ maxHeight: 300, overflowY: "auto" }}
+								style={{ whiteSpace: "pre-wrap" }}
 							/>
 						</React.Fragment>
 					))}
