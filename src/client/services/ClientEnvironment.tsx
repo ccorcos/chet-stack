@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react"
-import { LocalCache } from "../../shared/database/Cache"
+import { Cache } from "../../shared/database/Cache"
 import type { ClientConfig } from "./ClientConfig"
 import { LocalPreferences } from "./LocalPreferences"
 import { Router } from "./Router"
@@ -12,7 +12,7 @@ export type ClientEnvironment = {
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
 	prefs: LocalPreferences
-	cache: LocalCache
+	cache: Cache
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

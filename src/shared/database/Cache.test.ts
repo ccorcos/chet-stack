@@ -1,68 +1,9 @@
 import { strict as assert } from "assert"
 import { omit } from "lodash"
 import { describe, it } from "mocha"
-import {
-	LocalCache,
-	Range,
-	computeCachedRange,
-	decodeRange,
-	encodeRange,
-	keyToRange,
-	overlaps,
-} from "./Cache"
+import { Cache, computeCachedRange, keyToRange } from "./Cache"
+import { Range } from "./Range"
 import { ListArgs } from "./types"
-
-/** Helper for visualizing ranges. */
-function e(str: string) {
-	const gte = str.indexOf("[")
-	const gt = str.indexOf("(")
-	const lte = str.indexOf("]")
-	const lt = str.indexOf(")")
-
-	const range: Range = {}
-	if (gte !== -1) range.gte = gte.toString().padStart(2, "0")
-	if (gt !== -1) range.gt = gt.toString().padStart(2, "0")
-	if (lte !== -1) range.lte = lte.toString().padStart(2, "0")
-	if (lt !== -1) range.lt = lt.toString().padStart(2, "0")
-
-	return range
-}
-
-const rangeTypes = [
-	e("----------------------"),
-	e("----[-----------------"),
-	e("----(-----------------"),
-	e("----[----------)------"),
-	e("----[----------]------"),
-	e("----(----------)------"),
-	e("----(----------]------"),
-	e("---------------]------"),
-	e("---------------)------"),
-]
-
-describe("encodeRange", () => {
-	it("encode and decode work", () => {
-		const works = (r: Range) => {
-			const result = decodeRange(encodeRange(r))
-			assert.deepEqual(result, r)
-		}
-		for (const range of rangeTypes) {
-			works(range)
-		}
-	})
-
-	it("encodes with proper order", () => {
-		const [a] = encodeRange({ gte: "x" })
-		const [b] = encodeRange({ gt: "x" })
-		assert.ok(a < b, "gte < gt")
-
-		const [_1, c] = encodeRange({ lte: "x" })
-		const [_2, d] = encodeRange({ lt: "x" })
-		assert.ok(c > d, "lte > lt")
-	})
-
-	// Test that the bounds stuff works and cache ranges logic works.
-})
 
 /** Includes end value! */
 function v(start: number, end: number) {
@@ -185,7 +126,7 @@ describe("computeCachedRange", () => {
 
 describe("cache", () => {
 	it("works", () => {
-		const cache = new LocalCache()
+		const cache = new Cache()
 		cache.insertCache({ gte: "05", lt: "10" }, v(5, 9))
 		cache.insertCache({ gt: "15", lte: "20" }, v(6, 20))
 
@@ -228,7 +169,7 @@ function func(): Func {
 
 describe("subscribe / emit", () => {
 	it("works", () => {
-		const cache = new LocalCache()
+		const cache = new Cache()
 		const cb1 = func()
 		const cb2 = func()
 		const unsub1 = cache.localSubscribe({ gte: "05", lt: "10" }, cb1)
@@ -265,85 +206,4 @@ describe("subscribe / emit", () => {
 	})
 
 	// TODO: test emitting actual ranges.
-})
-
-describe("overlaps", () => {
-	it("works", () => {
-		const yes = (a: Range, b: Range, message?: string) => {
-			assert.ok(overlaps(a, b), message ?? JSON.stringify({ a, b }))
-			assert.ok(overlaps(b, a), message ?? JSON.stringify({ a, b }))
-		}
-
-		const no = (a: Range, b: Range, message?: string) => {
-			assert.ok(!overlaps(a, b), message ?? JSON.stringify({ a, b }))
-			assert.ok(!overlaps(b, a), message ?? JSON.stringify({ a, b }))
-		}
-
-		// Empty ranges
-		yes({}, {})
-		yes({}, { gt: "3" })
-		yes({}, { gte: "3" })
-		yes({}, { lt: "7" })
-		yes({}, { lte: "7" })
-		yes({}, { gt: "3", lt: "7" })
-		yes({}, { gt: "3", lte: "7" })
-		yes({}, { gte: "3", lt: "7" })
-		yes({}, { gte: "3", lte: "7" })
-
-		// Left overlap
-		yes({ lt: "4" }, { gt: "3" })
-		yes({ lt: "4" }, { gte: "3" })
-		yes({ lte: "4" }, { gt: "3" })
-		yes({ lte: "4" }, { gte: "3" })
-
-		// Left boundary case
-		yes({ lte: "3" }, { gte: "3" })
-		no({ lt: "3" }, { gte: "3" })
-		no({ lte: "3" }, { gt: "3" })
-		no({ lt: "3" }, { gt: "3" })
-
-		// Right overlap
-		yes({ gt: "3" }, { lt: "4" })
-		yes({ gt: "3" }, { lte: "4" })
-		yes({ gte: "3" }, { lt: "4" })
-		yes({ gte: "3" }, { lte: "4" })
-
-		// Right boundary case
-		yes({ gte: "3" }, { lte: "3" })
-		no({ gt: "3" }, { lt: "3" })
-		no({ gt: "3" }, { lte: "2" })
-		no({ gt: "3" }, { lt: "2" })
-
-		// Inside/outside
-		yes({ gt: "3", lt: "7" }, { gt: "4", lt: "6" })
-		no({ gt: "3", lt: "7" }, { gt: "1", lt: "2" })
-
-		// AI below this comment.
-		// Overlapping ranges
-		yes({ gt: "1", lt: "5" }, { gt: "3", lt: "7" })
-
-		// Adjacent ranges
-		yes({ lte: "5" }, { gte: "5" })
-
-		// Test non-overlapping cases
-		no({ lt: "5" }, { gt: "5" })
-
-		// Contained ranges
-		yes({ gt: "2", lt: "8" }, { gt: "4", lt: "6" })
-		yes({ gt: "4", lt: "6" }, { gt: "2", lt: "8" })
-
-		// Disjoint ranges
-		no({ lt: "2" }, { gt: "5" })
-		no({ gt: "5" }, { lt: "2" })
-
-		// Mixed inclusive/exclusive bounds
-		yes({ gte: "5" }, { lte: "5" })
-		yes({ gt: "2", lte: "5" }, { gte: "5", lt: "8" })
-		no({ gt: "2", lt: "5" }, { gt: "5", lt: "8" })
-
-		// One-sided ranges
-		yes({ gt: "5" }, { lt: "8" })
-		yes({ gte: "5" }, {})
-		yes({}, { lte: "5" })
-	})
 })
