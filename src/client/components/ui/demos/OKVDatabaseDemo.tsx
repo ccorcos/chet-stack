@@ -10,20 +10,11 @@ import { HeaderCell, Table } from "../Table"
 import { TextInput } from "../TextInput"
 
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
-	const { localResult, remoteResult } = useList(
+	return useList(
 		query.reverse
 			? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
 			: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
 	)
-
-	return { localResult, remoteResult }
-
-	// if (localResult.miss || localResult.prefix) remoteResult.suspend()
-
-	// const list = localResult.hit!
-	// if (query.reverse) list.reverse()
-
-	// return list
 }
 
 const gap = 12
@@ -48,9 +39,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	})
 
 	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
-	const { localResult, remoteResult } = useListQuery(query)
-
-	console.log("localResult", { query, localResult })
+	const { localResult } = useListQuery(query)
 
 	const loading = !localResult.hit
 	const loadingUp = loading && query.reverse

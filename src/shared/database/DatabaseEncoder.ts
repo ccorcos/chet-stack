@@ -38,11 +38,18 @@ export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O
 	}
 }
 
-export function KeyDecodeListResults<K, V, O>(
+export function KeyDecodeList<K, V, O>(
 	results: { key: O; value: V }[],
 	encoder: Encoder<K, O>
 ): { key: K; value: V }[] {
 	return results.map(({ key, value }) => ({ key: encoder.decode(key), value }))
+}
+
+export function KeyEncodeList<K, V, O>(
+	results: { key: K; value: V }[],
+	encoder: Encoder<K, O>
+): { key: O; value: V }[] {
+	return results.map(({ key, value }) => ({ key: encoder.encode(key), value }))
 }
 
 export function KeyEncodeWrite<K, V, O>(
@@ -50,7 +57,7 @@ export function KeyEncodeWrite<K, V, O>(
 	encoder: Encoder<K, O>
 ): WriteArgs<O, V> {
 	return {
-		set: args.set?.map(({ key, value }) => ({ key: encoder.encode(key), value })),
+		set: args.set ? KeyEncodeList(args.set, encoder) : undefined,
 		delete: args.delete?.map((key) => encoder.encode(key)),
 	}
 }
@@ -67,7 +74,7 @@ export function KeyEncoder<K, V>(
 		list(args) {
 			const newArgs = KeyEncodeListArgs(args || {}, encoder)
 			const results = db.list(newArgs)
-			return KeyDecodeListResults(results, encoder)
+			return KeyDecodeList(results, encoder)
 		},
 
 		set(key: K, value: V) {

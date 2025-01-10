@@ -5,6 +5,7 @@ import type { ServerEnvironment } from "../services/ServerEnvironment"
 // TODO: request validation.
 export const input = t.any
 
+// @deprecated
 export async function handler(
 	environment: ServerEnvironment,
 	args: string,

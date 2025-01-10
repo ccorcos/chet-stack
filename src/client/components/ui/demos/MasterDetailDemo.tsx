@@ -1,65 +1,17 @@
-import React, { Suspense, useDeferredValue, useMemo, useTransition } from "react"
-import {
-	KeyDecodeListResults,
-	KeyEncodeListArgs,
-	KeyEncodeWrite,
-	SubspaceEncoder,
-} from "../../../../shared/database/DatabaseEncoder"
-import { proxyObj } from "../../../../shared/proxyHelpers"
+import React, { Suspense, useMemo, useRef, useState } from "react"
+import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
-import { useAction } from "../../../hooks/useAction"
-import { useDeferredCounter } from "../../../hooks/useCounter"
-import { useRemoteGet } from "../../../hooks/useRemoteGet"
-import { useRemoteList } from "../../../hooks/useRemoteList"
+import { useGet, useList, useWrite } from "../../../hooks/useDatabase"
+import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
 import { isShortcut } from "../../../hooks/useShortcut"
-import {
-	ClientEnvironmentProvider,
-	useClientEnvironment,
-} from "../../../services/ClientEnvironment"
+import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { Subspace } from "../../Subspace"
 import { Button } from "../Button"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBoxKeyed, ListItem } from "../ListBox"
 import { TextInput } from "../TextInput"
-
-function Subspace(props: { subspace: string; children: React.ReactNode }) {
-	const environment = useClientEnvironment()
-
-	const { api } = environment
-
-	const newEnvironment = useMemo(() => {
-		const encoder = SubspaceEncoder(props.subspace)
-
-		const newApi = proxyObj(async (key, args) => {
-			if (key === "list") {
-				const response = await api.list(KeyEncodeListArgs(args, encoder))
-				if (response.status === 200) {
-					return {
-						...response,
-						body: KeyDecodeListResults(response.body, encoder),
-					}
-				}
-
-				return response
-			}
-			if (key === "write") {
-				return api.write(KeyEncodeWrite(args, encoder))
-			}
-			if (key === "get") {
-				return api.get(encoder.encode(args))
-			}
-
-			return api[key](args)
-		})
-
-		return { ...environment, api: newApi }
-	}, [props.subspace])
-
-	return (
-		<ClientEnvironmentProvider value={newEnvironment}>{props.children}</ClientEnvironmentProvider>
-	)
-}
 
 export function MasterDetailDemo(props: { params: Record<string, string | undefined> }) {
 	const selected = props.params.selected
@@ -137,32 +89,29 @@ function parseText(text: string) {
 }
 
 function OKVSelectedDetails(props: { selected: string }) {
-	const deferredSelected = useDeferredValue(props.selected)
-	const stale = deferredSelected !== props.selected
-	const value = useRemoteGet(deferredSelected)
-
 	const { api, router } = useClientEnvironment()
 
-	const onUpdate = useAction("update", async (value: string) => {
-		const key = deferredSelected
+	const key = props.selected
+
+	const write = useWrite()
+	const onUpdate = (value: string) => {
 		let { title, body, properties } = parseText(value)
 		if (!title) title = key
 
 		const content = [title, body].join("\n\n")
 		if (title === key) {
-			await api.write({ set: [{ key, value: content }] })
+			write({ set: [{ key, value: content }] })
 		} else {
-			await api.write({ set: [{ key: title, value: content }], delete: [key] })
+			write({ set: [{ key: title, value: content }], delete: [key] })
 			router.replace(setParam(router.state.url, "selected", title))
 		}
-	})
+	}
 
-	const [updatePending, startTransition] = useTransition()
-
-	if (!value) return <div>Loading...</div>
+	const value = useGet(key)
+	const text = value.localResult.hit
 
 	const properties = useMemo(() => {
-		const { title, body, properties } = parseText(value)
+		const { title, body, properties } = parseText(text || "")
 		return Object.entries(properties).map(([key, value]) => {
 			return (
 				<div key={key}>
@@ -170,63 +119,102 @@ function OKVSelectedDetails(props: { selected: string }) {
 				</div>
 			)
 		})
-	}, [value])
+	}, [text])
+
+	if (text === undefined) return <div>Loading...</div>
 
 	return (
 		<>
 			<div>{properties}</div>
 			<TextInput
-				key={deferredSelected}
+				key={key}
 				multiline={true}
-				style={{ color: stale || updatePending ? "var(--text-color2)" : "inherit" }}
-				value={value}
+				// style={{ color:  ? "var(--text-color2)" : "inherit" }}
+				value={text}
 				onSubmit={(value) => {
-					startTransition(() => onUpdate(value))
+					onUpdate(value)
 				}}
 			/>
 		</>
 	)
 }
 
+// TODO: consolidate this with OKVDatabaseDemo
+function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
+	return useList(
+		query.reverse
+			? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
+			: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
+	)
+}
+
 function OKVList(props: { params: Record<string, string | undefined> }) {
 	const { router } = useClientEnvironment()
-
-	const prefix = props.params.prefix || ""
-	const deferredPrefix = useDeferredValue(prefix)
-	const stalePrefix = deferredPrefix !== prefix
-
-	const setPrefix = (prefix: string) => {
-		router.replace(setParam(router.state.url, "prefix", prefix))
-	}
 
 	const selected = props.params.selected
 	const setSelected = (selected: string | undefined) => {
 		router.replace(setParam(router.state.url, "selected", selected))
 	}
 
-	const [count, refetching, rerender] = useDeferredCounter()
+	const prefix = props.params.prefix || ""
+	const setPrefix = (prefix: string) => {
+		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
+		router.replace(url)
+		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
+	}
 
-	const { list, loadingUp, loadingDown, staleQuery, scrollRef, firstRef, lastRef } = useRemoteList({
-		prefix: deferredPrefix,
-		renderCount: count,
+	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
+		anchor: prefix,
+		limit: 50,
+		reverse: false,
 	})
 
-	const [newRecordPending, startTransition] = useTransition()
+	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
+	const { localResult } = useListQuery(query)
 
-	const { api } = useClientEnvironment()
-	const onNewRecord = useAction("newRecord", async (key: string) => {
-		await api.write({ set: [{ key, value: `${key}\n\n` }] })
+	const loading = !localResult.hit
+	const loadingUp = loading && query.reverse
+	const loadingDown = loading && !query.reverse
+
+	let list = localResult.hit || localResult.prefix || []
+	if (query.reverse) list = [...list].reverse()
+
+	const scrollRef = useRef<HTMLDivElement>(null)
+	const firstRef = useRef<HTMLDivElement>(null)
+	const lastRef = useRef<HTMLDivElement>(null)
+
+	useInfiniteLoader({
+		scrollRef,
+		firstRef,
+		lastRef,
+		query: { limit: 100, reverse: false },
+		data: list,
+		loadingUp,
+		loadingDown,
+		onLoadMore: (limit, dir) => {
+			if (dir === "up") {
+				const { key } = list[Math.ceil(list.length / 3)]
+				setCursor({ anchor: key, limit, reverse: true })
+			} else if (dir === "down") {
+				const { key } = list[Math.ceil((list.length * 2) / 3)]
+				setCursor({ anchor: key, limit, reverse: false })
+			} else {
+				setCursor((cursor) => ({ ...cursor, limit }))
+			}
+		},
+	})
+
+	const write = useWrite()
+
+	const onNewRecord = (key: string) => {
+		write({ set: [{ key, value: `${key}\n\n` }] })
 		setSelected(key)
-		rerender()
-	})
+	}
 
-	const onDeleteRecord = useAction("deleteRecord", async (key: string) => {
-		await api.write({ delete: [key] })
+	const onDeleteRecord = (key: string) => {
+		write({ delete: [key] })
 		setSelected(undefined)
-		rerender()
-	})
-
-	const loading = newRecordPending || staleQuery || stalePrefix
+	}
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
@@ -249,7 +237,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 								onKeyDown={(e) => {
 									props.onKeyDown(e)
 									if (isShortcut("delete", e.nativeEvent)) {
-										startTransition(() => onDeleteRecord(item.key))
+										onDeleteRecord(item.key)
 									}
 								}}
 							>
@@ -260,7 +248,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 					{loadingDown && <div>Loading...</div>}
 				</Suspense>
 			</div>
-			<Button onClick={() => startTransition(() => onNewRecord(randomId()))}>New Record</Button>
+			<Button onClick={() => onNewRecord(randomId())}>New Record</Button>
 		</div>
 	)
 }
