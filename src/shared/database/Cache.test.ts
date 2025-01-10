@@ -127,30 +127,30 @@ describe("computeCachedRange", () => {
 describe("cache", () => {
 	it("works", () => {
 		const cache = new Cache()
-		cache.insertCache({ gte: "05", lt: "10" }, v(5, 9))
-		cache.insertCache({ gt: "15", lte: "20" }, v(6, 20))
+		cache.insert({ gte: "05", lt: "10" }, v(5, 9))
+		cache.insert({ gt: "15", lte: "20" }, v(6, 20))
 
-		assert.deepEqual(cache.localGet("00"), { miss: true })
-		assert.deepEqual(cache.localGet("05"), { hit: "05" })
-		assert.deepEqual(cache.localGet("06"), { hit: "06" })
-		assert.deepEqual(cache.localGet("10"), { miss: true })
-		assert.deepEqual(cache.localGet("15"), { miss: true })
-		assert.deepEqual(cache.localGet("16"), { hit: "16" })
-		assert.deepEqual(cache.localGet("20"), { hit: "20" })
-		assert.deepEqual(cache.localGet("21"), { miss: true })
+		assert.deepEqual(cache.get("00"), { miss: true })
+		assert.deepEqual(cache.get("05"), { hit: "05" })
+		assert.deepEqual(cache.get("06"), { hit: "06" })
+		assert.deepEqual(cache.get("10"), { miss: true })
+		assert.deepEqual(cache.get("15"), { miss: true })
+		assert.deepEqual(cache.get("16"), { hit: "16" })
+		assert.deepEqual(cache.get("20"), { hit: "20" })
+		assert.deepEqual(cache.get("21"), { miss: true })
 
-		assert.deepEqual(cache.localList({ gt: "00", lt: "04" }), { miss: true })
+		assert.deepEqual(cache.list({ gt: "00", lt: "04" }), { miss: true })
 		// No suffix support, so this is a miss.
-		assert.deepEqual(cache.localList({ gt: "01", lt: "08" }), { miss: true })
+		assert.deepEqual(cache.list({ gt: "01", lt: "08" }), { miss: true })
 
 		// Inside
-		assert.deepEqual(cache.localList({ gte: "05", lt: "08" }), { hit: v(5, 7) })
+		assert.deepEqual(cache.list({ gte: "05", lt: "08" }), { hit: v(5, 7) })
 
 		// Bounds
-		assert.deepEqual(cache.localList({ gte: "05", lt: "10" }), { hit: v(5, 9) })
-		assert.deepEqual(cache.localList({ gte: "05", lte: "10" }), { prefix: v(5, 9) })
-		assert.deepEqual(cache.localList({ gt: "05", lte: "10" }), { prefix: v(6, 9) })
-		assert.deepEqual(cache.localList({ gt: "05", lt: "10" }), { hit: v(6, 9) })
+		assert.deepEqual(cache.list({ gte: "05", lt: "10" }), { hit: v(5, 9) })
+		assert.deepEqual(cache.list({ gte: "05", lte: "10" }), { prefix: v(5, 9) })
+		assert.deepEqual(cache.list({ gt: "05", lte: "10" }), { prefix: v(6, 9) })
+		assert.deepEqual(cache.list({ gt: "05", lt: "10" }), { hit: v(6, 9) })
 	})
 })
 
@@ -172,10 +172,10 @@ describe("subscribe / emit", () => {
 		const cache = new Cache()
 		const cb1 = func()
 		const cb2 = func()
-		const unsub1 = cache.localSubscribe({ gte: "05", lt: "10" }, cb1)
-		const unsub2 = cache.localSubscribe({ gt: "08", lte: "20" }, cb2)
+		const unsub1 = cache.subscribe({ gte: "05", lt: "10" }, cb1)
+		const unsub2 = cache.subscribe({ gt: "08", lte: "20" }, cb2)
 
-		const emitKeys = (keys: string[]) => cache.localEmit(keys.map(keyToRange))
+		const emitKeys = (keys: string[]) => cache.emit(keys.map(keyToRange))
 
 		emitKeys(["05"])
 		assert.equal(cb1.called, 1)

@@ -42,7 +42,7 @@ const sortedListeners = orderedArray<Listener>(identity, (a: Listener, b: Listen
 const sortedRanges = orderedArray<Range>(identity, compareRange)
 
 export class Cache {
-	localData = new InMemoryDatabase<string, string>()
+	data = new InMemoryDatabase<string, string>()
 
 	// ==========================================================================
 	// Listeners
@@ -51,7 +51,7 @@ export class Cache {
 	// TODO: optimize this with an interval tree.
 	listeners: Listener[] = []
 
-	localSubscribe(range: Range, fn: () => void) {
+	subscribe(range: Range, fn: () => void) {
 		const listener = { range, id: randomId(), fn }
 		sortedListeners.insert(this.listeners, listener)
 		return () => {
@@ -59,7 +59,7 @@ export class Cache {
 		}
 	}
 
-	localEmit(ranges: Range[]) {
+	emit(ranges: Range[]) {
 		const fns = new Set<() => void>()
 		for (const r of ranges) {
 			for (const { range, fn } of this.listeners) {
@@ -77,7 +77,7 @@ export class Cache {
 	cachedRanges: Range[] = []
 
 	// TODO: track versions and don't clobber optimistic writes.
-	insertCache(args: ListArgs<string>, result: { key: string; value: string }[]) {
+	insert(args: ListArgs<string>, result: { key: string; value: string }[]) {
 		const range = computeCachedRange(args, result)
 		sortedRanges.insert(this.cachedRanges, range)
 
@@ -85,19 +85,19 @@ export class Cache {
 		const setKeys = new Set<string>()
 		for (const { key } of result) setKeys.add(key)
 		const deleteKeys = new Set<string>()
-		const existing = this.localData.list(range)
+		const existing = this.data.list(range)
 		for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.add(key)
 
-		this.localData.write({ set: result, delete: Array.from(deleteKeys) })
+		this.data.write({ set: result, delete: Array.from(deleteKeys) })
 
-		this.localEmit([range])
+		this.emit([range])
 	}
 
 	// ==========================================================================
 	// Data ranges
 	// ==========================================================================
 
-	localList(args: ListArgs<string>): LocalListResult {
+	list(args: ListArgs<string>): LocalListResult {
 		const range = encodeRange(args)
 
 		const eq = (a: any[], b: any[]) => compoundCompare(a, b) === 0
@@ -115,7 +115,7 @@ export class Cache {
 				const [left, right] = encodeRange(range)
 				if (gt(left, cursor)) return { miss: true }
 				if (lt(right, cursor)) continue
-				const result = this.localData.list(args)
+				const result = this.data.list(args)
 				return { hit: result }
 			}
 		}
@@ -140,7 +140,7 @@ export class Cache {
 			// PREFIX
 			if (gt(cursor, range[0])) {
 				const { gt, gte } = decodeStartBound(cursor)
-				const result = this.localData.list({ ...args, gt, gte })
+				const result = this.data.list({ ...args, gt, gte })
 
 				if (args.limit !== undefined && result.length === args.limit) {
 					// COVERED
@@ -151,7 +151,7 @@ export class Cache {
 			}
 
 			// HIT
-			return { hit: this.localData.list(args) }
+			return { hit: this.data.list(args) }
 		}
 
 		// FORWARD
@@ -176,7 +176,7 @@ export class Cache {
 		// PREFIX
 		if (lt(cursor, range[1])) {
 			const { lt, lte } = decodeEndBound(cursor)
-			const result = this.localData.list({ ...args, lt, lte })
+			const result = this.data.list({ ...args, lt, lte })
 
 			if (args.limit !== undefined && result.length === args.limit) {
 				// COVERED
@@ -187,18 +187,18 @@ export class Cache {
 		}
 
 		// HIT
-		return { hit: this.localData.list(args) }
+		return { hit: this.data.list(args) }
 	}
 
-	localGet(key: string): LocalGetResult {
-		const result = this.localList({ gte: key, lte: key })
+	get(key: string): LocalGetResult {
+		const result = this.list({ gte: key, lte: key })
 		if (result.hit) return { hit: result.hit[0]?.value }
 		else return { miss: true }
 	}
 
-	localWrite(args: WriteArgs<string, string>) {
+	write(args: WriteArgs<string, string>) {
 		// Optimistic write
-		this.localData.write(args)
+		this.data.write(args)
 
 		const keys = new Set<string>()
 		for (const { key } of args.set ?? []) keys.add(key)
@@ -212,7 +212,7 @@ export class Cache {
 		}
 
 		// Emit
-		this.localEmit(ranges)
+		this.emit(ranges)
 	}
 }
 
