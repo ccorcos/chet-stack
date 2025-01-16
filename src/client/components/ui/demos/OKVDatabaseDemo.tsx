@@ -41,6 +41,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
 	const { localResult } = useListQuery(query)
 
+	console.log("HERE", localResult)
 	const loading = !localResult.hit
 	const loadingUp = loading && query.reverse
 	const loadingDown = loading && !query.reverse

@@ -13,33 +13,6 @@ import { useLoader } from "./useLoader"
 
 // Maybe we should get rid api.get() and just use list for everything.
 export function useGet(key: string) {
-	// const { api, cache } = useClientEnvironment()
-
-	// const [_, rerender] = useCounter()
-	// const localResultRef = useRef<LocalGetResult>({} as any)
-
-	// useMemo(() => {
-	// 	localResultRef.current = cache.get(key)
-	// }, [key])
-
-	// useEffect(() => {
-	// 	return cache.subscribe({ gte: key, lte: key }, () => {
-	// 		localResultRef.current = cache.get(key)
-	// 		rerender()
-	// 	})
-	// }, [key])
-
-	// const remoteResult = useLoader("get:" + key, async () => {
-	// 	const response = await api.get(key)
-	// 	if (response.status !== 200) throw new Error("Request failed: " + response.status)
-
-	// 	if (response.body === undefined) cache.insert({ gte: key, lte: key }, [])
-	// 	else cache.insert({ gte: key, lte: key }, [{ key, value: response.body }])
-	// })
-
-	// const localResult = localResultRef.current
-	// return { localResult, remoteResult }
-
 	const { localResult, remoteResult } = useList({ gte: key, lte: key })
 	const localGetResult: LocalGetResult = localResult.miss
 		? { miss: true }
@@ -72,9 +45,11 @@ export function useList(_args: ListArgs<string>) {
 		}
 	}, [args])
 
-	const remoteResult = useLoader("list:" + JSON.stringify(args) + fetchCount, async () => {
+	const requestId = useMemo(() => randomId(), [args, fetchCount])
+
+	const remoteResult = useLoader("list:" + requestId, async () => {
 		// TODO: this doesn't seem to be necessary.
-		await pendingWritesSubmitted(args)
+		// await pendingWritesSubmitted(args)
 		const response = await api.list(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		cache.insert(args, response.body)
