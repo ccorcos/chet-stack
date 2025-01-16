@@ -71,7 +71,9 @@ export class InMemoryReducerTree<K = string | number, V = any, D = any> {
 		if (minSize > maxSize / 2) throw new Error("Invalid tree size.")
 	}
 
-	private leafValues = orderedArray((item: { key: K }) => item.key, this.compareKey)
+	private get leafValues() {
+		return orderedArray((item: { key: K }) => item.key, this.compareKey)
+	}
 
 	private compareBranchKey = (a: K | null, b: K | null) => {
 		if (a === null || b === null) {

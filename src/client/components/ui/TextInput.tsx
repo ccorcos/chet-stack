@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useState } from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
+import { useRefCurrent } from "../../hooks/useRefCurrent"
 import { ContentEditableInput } from "./ContentEditableInput"
 
 export const TextInput = passthroughRef(_TextInput)
@@ -14,20 +15,21 @@ function _TextInput(
 	const { value, onSubmit, multiline, ...rest } = props
 	const [draft, setDraft] = useState(value)
 
+	const draftRef = useRefCurrent(draft)
+	const valueRef = useRefCurrent(value)
+
 	const submit = () => {
-		if (draft === value) return
-		onSubmit(draft)
+		if (draftRef.current === valueRef.current) return
+		onSubmit(draftRef.current)
 	}
 
 	// Submit if we unrender as well as kind of blur.
-	const submitRef = useRef(submit)
-	submitRef.current = submit
-	useEffect(
-		() => () => {
-			submitRef.current()
-		},
-		[]
-	)
+	// useEffect(
+	// 	() => () => {
+	// 		submit()
+	// 	},
+	// 	[]
+	// )
 
 	return (
 		<ContentEditableInput

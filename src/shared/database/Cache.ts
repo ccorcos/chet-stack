@@ -159,8 +159,6 @@ export class Cache {
 		let cursor = range[0]
 		for (const r of this.cachedRanges) {
 			const [start, end] = encodeRange(r)
-
-			// TODO?
 			if (lte(start, cursor) && gte(end, cursor)) {
 				miss = false
 				cursor = end

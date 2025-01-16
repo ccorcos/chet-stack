@@ -89,11 +89,11 @@ function parseText(text: string) {
 }
 
 function OKVSelectedDetails(props: { selected: string }) {
-	const { api, router } = useClientEnvironment()
-
+	const { router } = useClientEnvironment()
 	const key = props.selected
 
 	const write = useWrite()
+
 	const onUpdate = (value: string) => {
 		let { title, body, properties } = parseText(value)
 		if (!title) title = key
