@@ -74,7 +74,7 @@ export function useList(_args: ListArgs<string>) {
 
 	const remoteResult = useLoader("list:" + JSON.stringify(args) + fetchCount, async () => {
 		// TODO: this doesn't seem to be necessary.
-		// await pendingWritesSubmitted(args)
+		await pendingWritesSubmitted(args)
 		const response = await api.list(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		cache.insert(args, response.body)

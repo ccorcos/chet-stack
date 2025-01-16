@@ -151,6 +151,17 @@ function usePreserveScrollPosition(args: {
 	}, [data])
 }
 
+export function pickAnchor<T>(list: T[], dir: "up" | "down", limit: number) {
+	const oneThird = list.length / 3
+	if (dir === "up") {
+		// if (list.length < limit / 3) return list[list.length - 1]
+		return list[Math.ceil(oneThird)]
+	} else {
+		// if (list.length < limit / 3) return list[0]
+		return list[Math.ceil(oneThird * 2)]
+	}
+}
+
 function useScrollLoading(args: {
 	scrollRef: React.RefObject<HTMLElement>
 	query: { limit: number; reverse: boolean }

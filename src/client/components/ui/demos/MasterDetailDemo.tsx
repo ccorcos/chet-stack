@@ -3,7 +3,7 @@ import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useGet, useList, useWrite } from "../../../hooks/useDatabase"
-import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
+import { pickAnchor, useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
 import { isShortcut } from "../../../hooks/useShortcut"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Subspace } from "../../Subspace"
@@ -193,10 +193,12 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 		loadingDown,
 		onLoadMore: (limit, dir) => {
 			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
+				// If we're already at the beginning.
+				if (!cursor.reverse && prefix === cursor.anchor) return
+				const { key } = pickAnchor(list, dir, limit)
 				setCursor({ anchor: key, limit, reverse: true })
 			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
+				const { key } = pickAnchor(list, dir, limit)
 				setCursor({ anchor: key, limit, reverse: false })
 			} else {
 				setCursor((cursor) => ({ ...cursor, limit }))
