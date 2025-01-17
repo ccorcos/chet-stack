@@ -234,8 +234,9 @@ function TableView() {
 									}
 									style={{
 										borderLeft: col !== 0 ? "1px solid var(--separator)" : undefined,
-										borderBottom:
-											row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
+										// borderBottom:
+										// 	row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
+										borderBottom: "1px solid var(--separator)",
 										padding: "2px 8px",
 									}}
 									record={record}
@@ -249,7 +250,7 @@ function TableView() {
 			</Table>
 			<NakedButton
 				style={{
-					borderTop: "1px solid var(--separator)",
+					// borderTop: "1px solid var(--separator)",
 					textAlign: "left",
 					padding: "2px 8px",
 					borderRadius: 0,
@@ -261,6 +262,17 @@ function TableView() {
 		</div>
 	)
 }
+
+// TODO:
+// - autofocus input so and save the result
+// - checkbox should just click
+// - dropdown view more similar to Notion
+// - cell selection
+// - persist schema
+// ---
+// - row selection
+// - column reorder
+// - row reorder
 
 const TableCell = passthroughRef(
 	(props: {
@@ -277,6 +289,14 @@ const TableCell = passthroughRef(
 			setEditing(elm)
 		}
 
+		const write = useWrite()
+		const onUpdate = (value: any) => {
+			// TODO: don't change until blur for text inputs?
+			// TODO: enter and escape should submit/dismiss
+			write({
+				set: [{ key: record.id, value: JSON.stringify({ ...record, [property.id]: value }) }],
+			})
+		}
 		return (
 			<>
 				<div ref={ref} style={style} onClick={onClick}>
@@ -291,9 +311,7 @@ const TableCell = passthroughRef(
 								borderRadius: 4,
 							}}
 						>
-							{PropertyRenderers[property.type].edit(record, property as any, (value) => {
-								console.log("update", value)
-							})}
+							{PropertyRenderers[property.type].edit(record, property as any, onUpdate)}
 						</div>
 					</Overlay>
 				)}
