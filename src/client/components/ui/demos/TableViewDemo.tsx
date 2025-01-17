@@ -170,7 +170,6 @@ function TableView() {
 		prefix: "",
 	})
 
-	const gap = 12
 	const minWidth = 100
 
 	const labelRow = (children: React.ReactNode) => {
@@ -189,7 +188,6 @@ function TableView() {
 				return (
 					<HeaderCell
 						key={prop.id}
-						gap={gap}
 						width={columnWidths[index]}
 						minWidth={minWidth}
 						setWidth={setWidth(index)}

@@ -36,14 +36,13 @@ export const HeaderCell = passthroughRef(_HeaderCell)
 
 function _HeaderCell(props: {
 	ref?: React.RefObject<HTMLDivElement>
-	gap: number
 	width: number
 	minWidth: number
 	setWidth: (value: number) => void
 	style?: React.CSSProperties
 	children: React.ReactNode
 }) {
-	const { gap, width, minWidth, setWidth } = props
+	const { width, minWidth, setWidth } = props
 
 	return (
 		<div
@@ -57,20 +56,15 @@ function _HeaderCell(props: {
 			}}
 		>
 			{props.children}
-			<Resizer gap={gap} width={width} minWidth={minWidth} setWidth={setWidth} />
+			<Resizer width={width} minWidth={minWidth} setWidth={setWidth} />
 		</div>
 	)
 }
 
-function Resizer(props: {
-	gap: number
-	width: number
-	minWidth: number
-	setWidth: (value: number) => void
-}) {
-	const { gap, width, minWidth, setWidth } = props
+function Resizer(props: { width: number; minWidth: number; setWidth: (value: number) => void }) {
+	const { width, minWidth, setWidth } = props
 
-	const lineWidth = Math.floor(gap * 0.7)
+	const lineWidth = 8
 	const [hover, hoverProps] = useHover()
 	const right = -lineWidth / 2 - 0.5
 
@@ -89,6 +83,7 @@ function Resizer(props: {
 				userSelect: "none",
 				display: "flex",
 				justifyContent: "center",
+				zIndex: 2,
 			}}
 			onMouseDown={(e) => {
 				setDragging(true)

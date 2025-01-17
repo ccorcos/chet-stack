@@ -18,7 +18,6 @@ export function TableDemo() {
 		<div style={{ height: "100%", display: "flex", padding: 12 }}>
 			<Table gap={gap} columnWidths={columnWidths} setColumnWidths={setColumnWidths}>
 				<HeaderCell
-					gap={gap}
 					width={columnWidths[0]}
 					minWidth={minWidth}
 					setWidth={setWidth(0)}
@@ -27,7 +26,6 @@ export function TableDemo() {
 					Col 1
 				</HeaderCell>
 				<HeaderCell
-					gap={gap}
 					width={columnWidths[1]}
 					minWidth={minWidth}
 					setWidth={setWidth(1)}
@@ -36,7 +34,6 @@ export function TableDemo() {
 					Col 2
 				</HeaderCell>
 				<HeaderCell
-					gap={gap}
 					width={columnWidths[2]}
 					minWidth={minWidth}
 					setWidth={setWidth(2)}

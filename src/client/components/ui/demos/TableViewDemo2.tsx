@@ -170,7 +170,6 @@ function TableView() {
 		prefix: "",
 	})
 
-	const gap = 12
 	const minWidth = 100
 
 	const labelRow = (children: React.ReactNode) => {
@@ -178,19 +177,20 @@ function TableView() {
 	}
 
 	return (
-		<div style={{ height: "100%", display: "flex" }}>
+		<div style={{ height: "100%", display: "flex", flexDirection: "column", padding: 12 }}>
 			<Table
 				ref={scrollRef}
-				gap={12}
+				gap={0}
 				columnWidths={columnWidths}
 				setColumnWidths={setColumnWidths}
-				style={{ padding: 12 }}
+				style={{
+					paddingRight: 12, // space for scrollbar
+				}}
 			>
 				{PlantSchema.properties.map((prop, index) => {
 					return (
 						<HeaderCell
 							key={prop.id}
-							gap={gap}
 							width={columnWidths[index]}
 							minWidth={minWidth}
 							setWidth={setWidth(index)}
@@ -198,12 +198,17 @@ function TableView() {
 								display: "flex",
 								alignItems: "center",
 								gap: 4,
-								border: "1px solid black",
-								borderRadius: 3,
+								borderLeft: index !== 0 ? "1px solid var(--separator)" : undefined,
+								borderBottom: "1px solid var(--separator)",
 								padding: "2px 8px",
+								backgroundColor: "var(--background)",
+								// make the resizers above the cells.
+								zIndex: PlantSchema.properties.length - index + 10,
 							}}
 						>
-							{prop.name}
+							<div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+								{prop.name}
+							</div>
 							<PropertyTypeIcon type={prop.type} style={{ flex: 1, textAlign: "right" }} />
 						</HeaderCell>
 					)
@@ -212,20 +217,26 @@ function TableView() {
 				{loadingUp && <>{labelRow("Loading...")}</>}
 				{!loadingDown && !loadingUp && list.length === 0 && <>{labelRow("No records.")}</>}
 
-				{list.map(({ key, value }, i) => (
+				{list.map(({ key, value }, row) => (
 					<React.Fragment key={key}>
-						{PlantSchema.properties.map((prop, j) => {
+						{PlantSchema.properties.map((prop, col) => {
 							const record = JSON.parse(value)
 							return (
 								<div
 									key={record.id + prop.id}
 									ref={
-										i === 0 && j === 0
+										row === 0 && col === 0
 											? firstRef
-											: i === list.length - 1 && j === 0
+											: row === list.length - 1 && col === 0
 											? lastRef
 											: undefined
 									}
+									style={{
+										borderLeft: col !== 0 ? "1px solid var(--separator)" : undefined,
+										borderBottom:
+											row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
+										padding: "2px 8px",
+									}}
 								>
 									<PropertyValue obj={record} property={prop} />
 								</div>
@@ -234,22 +245,18 @@ function TableView() {
 					</React.Fragment>
 				))}
 				{loadingDown && <>{labelRow("Loading...")}</>}
-
-				<>
-					{PlantSchema.properties.map((props, i) => {
-						if (i !== 0) return <div key={i} style={{ position: "sticky", bottom: 0 }}></div>
-						return (
-							<NakedButton
-								key={i}
-								style={{ position: "sticky", bottom: 0 }}
-								onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
-							>
-								New Record
-							</NakedButton>
-						)
-					})}
-				</>
 			</Table>
+			<NakedButton
+				style={{
+					borderTop: "1px solid var(--separator)",
+					textAlign: "left",
+					padding: "2px 8px",
+					borderRadius: 0,
+				}}
+				onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
+			>
+				New Record
+			</NakedButton>
 		</div>
 	)
 }
