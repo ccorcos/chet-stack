@@ -1,9 +1,9 @@
-import React, { Suspense, useMemo, useRef, useState } from "react"
+import React, { Suspense, useMemo } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useGet, useList, useWrite } from "../../../hooks/useDatabase"
-import { pickAnchor, useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
+import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { isShortcut } from "../../../hooks/useShortcut"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Subspace } from "../../Subspace"
@@ -16,7 +16,7 @@ import { TextInput } from "../TextInput"
 export function MasterDetailDemo(props: { params: Record<string, string | undefined> }) {
 	const selected = props.params.selected
 	return (
-		<Subspace subspace={"docs"}>
+		<Subspace prefix={"docs"}>
 			<Layout
 				LeftPanel={
 					<LeftPanelLayout show={true} style={{ padding: 12 }}>
@@ -139,7 +139,6 @@ function OKVSelectedDetails(props: { selected: string }) {
 	)
 }
 
-// TODO: consolidate this with OKVDatabaseDemo
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
 	return useList(
 		query.reverse
@@ -160,50 +159,10 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 	const setPrefix = (prefix: string) => {
 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
-		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
 	}
 
-	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
-		anchor: prefix,
-		limit: 50,
-		reverse: false,
-	})
-
-	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
-	const { localResult } = useListQuery(query)
-
-	const loading = !localResult.hit
-	const loadingUp = loading && query.reverse
-	const loadingDown = loading && !query.reverse
-
-	let list = localResult.hit || localResult.prefix || []
-	if (query.reverse) list = [...list].reverse()
-
-	const scrollRef = useRef<HTMLDivElement>(null)
-	const firstRef = useRef<HTMLDivElement>(null)
-	const lastRef = useRef<HTMLDivElement>(null)
-
-	useInfiniteLoader({
-		scrollRef,
-		firstRef,
-		lastRef,
-		query: { limit: 100, reverse: false },
-		data: list,
-		loadingUp,
-		loadingDown,
-		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				// If we're already at the beginning.
-				if (!cursor.reverse && prefix === cursor.anchor) return
-				const { key } = pickAnchor(list, dir, limit)
-				setCursor({ anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = pickAnchor(list, dir, limit)
-				setCursor({ anchor: key, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
-		},
+	const { list, loading, loadingUp, loadingDown, scrollRef, firstRef, lastRef } = useInfiniteList({
+		prefix,
 	})
 
 	const write = useWrite()

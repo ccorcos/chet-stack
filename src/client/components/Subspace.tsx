@@ -10,13 +10,13 @@ import {
 import { proxyObj } from "../../shared/proxyHelpers"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 
-export function Subspace(props: { subspace: string; children: React.ReactNode }) {
+export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 	const environment = useClientEnvironment()
 
 	const { api } = environment
 
 	const newEnvironment = useMemo(() => {
-		const encoder = SubspaceEncoder(props.subspace)
+		const encoder = SubspaceEncoder(props.prefix)
 
 		const newApi = proxyObj(async (key, args) => {
 			if (key === "list") {
@@ -62,7 +62,7 @@ export function Subspace(props: { subspace: string; children: React.ReactNode })
 		}
 
 		return { ...environment, api: newApi, cache: newCache }
-	}, [props.subspace])
+	}, [props.prefix])
 
 	return (
 		<ClientEnvironmentProvider value={newEnvironment}>{props.children}</ClientEnvironmentProvider>

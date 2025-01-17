@@ -1,19 +1,9 @@
-import React, {
-	startTransition,
-	useDeferredValue,
-	useMemo,
-	useRef,
-	useState,
-	useTransition,
-} from "react"
-import { incStr } from "../../../../shared/incStr"
+import React from "react"
 import { randomId } from "../../../../shared/randomId"
-import { useAction } from "../../../hooks/useAction"
-import { useCounter } from "../../../hooks/useCounter"
-import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
-import { useLoader } from "../../../hooks/useLoader"
+import { useWrite } from "../../../hooks/useDatabase"
+import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
-import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { NakedInput } from "../Input"
@@ -43,7 +33,7 @@ type TableView = {
 
 type Record = {
 	id: `record:${string}`
-	// schemaId: `schema:${string}`
+	// TODO: flatten out
 	properties: {
 		[propertyId: string]: string | number | boolean | undefined
 	}
@@ -52,6 +42,7 @@ type Record = {
 const PlantSchema: Schema = {
 	id: "schema:plants",
 	name: "Plants",
+	// TODO: use a record?
 	properties: [
 		// { id: "id", type: "string" },
 		{ id: "name", name: "Name", type: "string" },
@@ -78,37 +69,107 @@ const PlantView: TableView = {
 	],
 }
 
-const subspace = "TableViewDemo:"
+function PropertyTypeIcon(props: { type: PropertyType } & React.HTMLAttributes<HTMLDivElement>) {
+	const { type, ...rest } = props
+	if (type === "string") return <div {...rest}>"</div>
+	if (type === "number") return <div {...rest}>#</div>
+	if (type === "boolean") return <div {...rest}>✓</div>
+	if (type === "select") return <div {...rest}>⏷</div>
+	return <div {...rest}>?</div>
+}
+
+function PropertyValue(props: { obj: Record; property: Property }) {
+	const { obj, property } = props
+
+	const update = (value: any) => {
+		// db.commit({
+		// 	set: [{ key: [obj.id], value: { ...obj, [property.id]: value } }],
+		// })
+	}
+
+	let value = obj[property.id]
+
+	if (property.type === "string") {
+		if (value === undefined) value = ""
+		value = value.toString()
+		return (
+			<NakedInput
+				value={value}
+				onChange={(e) => update(e.target.value)}
+				style={{ width: "100%" }}
+			/>
+		)
+	}
+
+	if (property.type === "number") {
+		if (typeof value === "string") value = parseFloat(value)
+		if (typeof value === "boolean") value = value === true ? 1 : 0
+		if (value === undefined || isNaN(value)) value = ""
+		return (
+			<NakedInput
+				type="number"
+				value={value}
+				onChange={(e) => update(e.target.value)}
+				style={{ width: "100%" }}
+			/>
+		)
+	}
+
+	if (property.type === "boolean") {
+		if (value === undefined || value === "") value = false
+		if (typeof value === "string") value = true
+		if (typeof value === "number") value = value > 0
+		return <NakedInput type="checkbox" checked={value} onChange={(e) => update(e.target.checked)} />
+	}
+
+	if (property.type === "select") {
+		const options = property.options || []
+		if (!options.includes(value as any)) value = undefined
+
+		return (
+			<ComboBoxSelect
+				items={property.options || []}
+				placeholder="Select"
+				value={value as any}
+				onChange={update}
+				Button={NakedButton}
+			/>
+		)
+	}
+
+	return <>?</>
+}
 
 export function TableViewDemo() {
-	const { api } = useClientEnvironment()
+	return (
+		<Subspace prefix="TableViewDemo:">
+			<TableView />
+		</Subspace>
+	)
+}
 
+function TableView() {
 	const [columnWidths, setColumnWidths] = usePref(
-		"TableViewDemo:columnWidths",
+		"TableView:columnWidths",
 		PlantSchema.properties.map(() => 200)
 	)
-
-	const gap = 12
-	const minWidth = 100
-
 	const setWidth = (index: number) => (width: number) => {
 		const newWidths = [...columnWidths]
 		newWidths[index] = width
 		setColumnWidths(newWidths)
 	}
 
-	const [count, rerender] = useCounter()
+	const write = useWrite()
+	const newRecord = (record: Record) => {
+		write({ set: [{ key: record.id, value: JSON.stringify(record) }] })
+	}
 
-	const newRecord = useAction("newRecord", async (record: Record) => {
-		await api.write({ set: [{ key: subspace + record.id, value: JSON.stringify(record) }] })
-		rerender()
+	const { list, scrollRef, firstRef, lastRef, loadingUp, loadingDown } = useInfiniteList({
+		prefix: "",
 	})
 
-	const { list, scrollRef, firstRef, lastRef, staleQuery, loadingUp, loadingDown } =
-		useInfiniteListQuery({
-			prefix: subspace,
-			renderCount: count,
-		})
+	const gap = 12
+	const minWidth = 100
 
 	const labelRow = (children: React.ReactNode) => {
 		return PlantSchema.properties.map((props, i) => <div key={i}>{i === 0 ? children : ""}</div>)
@@ -178,9 +239,7 @@ export function TableViewDemo() {
 						<NakedButton
 							key={i}
 							style={{ position: "sticky", bottom: 0 }}
-							onClick={() =>
-								startTransition(() => newRecord({ id: `record:${randomId()}`, properties: {} }))
-							}
+							onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
 						>
 							New Record
 						</NakedButton>
@@ -189,79 +248,6 @@ export function TableViewDemo() {
 			</>
 		</Table>
 	)
-}
-
-function PropertyTypeIcon(props: { type: PropertyType } & React.HTMLAttributes<HTMLDivElement>) {
-	const { type, ...rest } = props
-
-	if (type === "string") return <div {...rest}>"</div>
-	if (type === "number") return <div {...rest}>#</div>
-	if (type === "boolean") return <div {...rest}>✓</div>
-	if (type === "select") return <div {...rest}>⏷</div>
-
-	return <div {...rest}>?</div>
-}
-
-function PropertyValue(props: { obj: Record; property: Property }) {
-	const { obj, property } = props
-
-	const update = (value: any) => {
-		// db.commit({
-		// 	set: [{ key: [obj.id], value: { ...obj, [property.id]: value } }],
-		// })
-	}
-
-	let value = obj[property.id]
-
-	if (property.type === "string") {
-		if (value === undefined) value = ""
-		value = value.toString()
-		return (
-			<NakedInput
-				value={value}
-				onChange={(e) => update(e.target.value)}
-				style={{ width: "100%" }}
-			/>
-		)
-	}
-
-	if (property.type === "number") {
-		if (typeof value === "string") value = parseFloat(value)
-		if (typeof value === "boolean") value = value === true ? 1 : 0
-		if (value === undefined || isNaN(value)) value = ""
-		return (
-			<NakedInput
-				type="number"
-				value={value}
-				onChange={(e) => update(e.target.value)}
-				style={{ width: "100%" }}
-			/>
-		)
-	}
-
-	if (property.type === "boolean") {
-		if (value === undefined || value === "") value = false
-		if (typeof value === "string") value = true
-		if (typeof value === "number") value = value > 0
-		return <NakedInput type="checkbox" checked={value} onChange={(e) => update(e.target.checked)} />
-	}
-
-	if (property.type === "select") {
-		const options = property.options || []
-		if (!options.includes(value as any)) value = undefined
-
-		return (
-			<ComboBoxSelect
-				items={property.options || []}
-				placeholder="Select"
-				value={value as any}
-				onChange={update}
-				Button={NakedButton}
-			/>
-		)
-	}
-
-	return <>?</>
 }
 
 // TODO:
@@ -273,108 +259,3 @@ function PropertyValue(props: { obj: Record; property: Property }) {
 // - row selection
 // - selection and moving
 // - edit the schema
-
-const defaultLimit = 50
-
-function useInfiniteListQuery(args: { prefix: string; renderCount: number }) {
-	const { api } = useClientEnvironment()
-
-	const { prefix, renderCount: count } = args
-
-	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
-		anchor: prefix,
-		limit: defaultLimit,
-		reverse: false,
-	})
-
-	const query = useMemo(() => ({ prefix, count, ...cursor }), [prefix, count, cursor])
-	const deferredQuery = useDeferredValue(query)
-	const staleQuery = deferredQuery !== query
-
-	// We use the deferred query so we can render the old list while the new one loads.
-	const loader = useLoader("list:" + JSON.stringify(deferredQuery), async () => {
-		const response = await api.list(
-			deferredQuery.reverse
-				? {
-						gte: deferredQuery.prefix,
-						lte: deferredQuery.anchor,
-						limit: deferredQuery.limit,
-						reverse: true,
-				  }
-				: {
-						gte: deferredQuery.anchor,
-						lt: incStr(deferredQuery.prefix),
-						limit: deferredQuery.limit,
-				  }
-		)
-
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		if (query.reverse) return [...response.body].reverse()
-		return response.body
-	})
-
-	const list = loader.suspend()
-	const deferredList = useDeferredValue(list)
-
-	const scrollRef = useRef<HTMLDivElement>(null)
-	const firstRef = useRef<HTMLDivElement>(null)
-	const lastRef = useRef<HTMLDivElement>(null)
-	const [loadingUp, startTransitionUp] = useTransition()
-	const [loadingDown, startTransitionDown] = useTransition()
-
-	useInfiniteLoader({
-		scrollRef,
-		firstRef,
-		lastRef,
-		query: deferredQuery,
-		data: deferredList,
-		loadingUp,
-		loadingDown,
-		onLoadMore: (limit, dir) => {
-			const startTransition =
-				dir === "up" || (dir === undefined && deferredQuery.reverse)
-					? startTransitionUp
-					: startTransitionDown
-			startTransition(() => {
-				if (dir === "up") {
-					const { key } = list[Math.ceil(list.length / 3)]
-					setCursor({ anchor: key, limit, reverse: true })
-				} else if (dir === "down") {
-					const { key } = list[Math.ceil((list.length * 2) / 3)]
-					setCursor({ anchor: key, limit, reverse: false })
-				} else {
-					setCursor((cursor) => ({ ...cursor, limit }))
-				}
-			})
-		},
-	})
-
-	return { list, scrollRef, firstRef, lastRef, staleQuery, loadingUp, loadingDown }
-}
-
-// export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
-// 	const { router, api } = useClientEnvironment()
-
-// 	const prefix = props.params.prefix || ""
-// 	const setPrefix = (prefix: string) => {
-// 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
-// 		router.replace(url)
-// 		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
-// 	}
-
-// 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
-
-// 	const setWidth = (index: number) => (width: number) => {
-// 		const newWidths = [...columnWidths]
-// 		newWidths[index] = width
-// 		setColumnWidths(newWidths)
-// 	}
-
-// 	const backgroundColor = loadingUp
-// 		? "var(--red)"
-// 		: loadingDown
-// 		? "var(--green)"
-// 		: staleQuery
-// 		? "var(--blue)"
-// 		: "var(--background)"
-// }

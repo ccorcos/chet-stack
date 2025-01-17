@@ -187,6 +187,6 @@ button {
 button:focus,
 input:focus,
 div:focus {
-	outline: 2px solid var(--orange);
-	outline-offset: 0px;
+	outline: 1px solid var(--orange);
+	outline-offset: -1px;
 }

@@ -1,8 +1,8 @@
-import React, { Suspense, useMemo, useRef, useState } from "react"
+import React, { Suspense } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
 import { useList, useWrite } from "../../../hooks/useDatabase"
-import { useInfiniteLoader } from "../../../hooks/useInfiniteLoader"
+import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Input } from "../Input"
@@ -29,49 +29,10 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const setPrefix = (prefix: string) => {
 		const url = setParam(router.state.url, "prefix", prefix === "" ? undefined : prefix)
 		router.replace(url)
-		setCursor(({ limit }) => ({ anchor: prefix, limit, reverse: false }))
 	}
 
-	const [cursor, setCursor] = useState<{ anchor: string; limit: number; reverse: boolean }>({
-		anchor: prefix,
-		limit: defaultLimit,
-		reverse: false,
-	})
-
-	const query = useMemo(() => ({ prefix, ...cursor }), [prefix, cursor])
-	const { localResult } = useListQuery(query)
-
-	console.log("HERE", localResult)
-	const loading = !localResult.hit
-	const loadingUp = loading && query.reverse
-	const loadingDown = loading && !query.reverse
-
-	let list = localResult.hit || localResult.prefix || []
-	if (query.reverse) list = [...list].reverse()
-
-	const scrollRef = useRef<HTMLDivElement>(null)
-	const firstRef = useRef<HTMLDivElement>(null)
-	const lastRef = useRef<HTMLDivElement>(null)
-
-	useInfiniteLoader({
-		scrollRef,
-		firstRef,
-		lastRef,
-		query,
-		data: list,
-		loadingUp,
-		loadingDown,
-		onLoadMore: (limit, dir) => {
-			if (dir === "up") {
-				const { key } = list[Math.ceil(list.length / 3)]
-				setCursor({ anchor: key, limit, reverse: true })
-			} else if (dir === "down") {
-				const { key } = list[Math.ceil((list.length * 2) / 3)]
-				setCursor({ anchor: key, limit, reverse: false })
-			} else {
-				setCursor((cursor) => ({ ...cursor, limit }))
-			}
-		},
+	const { list, loading, loadingUp, loadingDown, scrollRef, firstRef, lastRef } = useInfiniteList({
+		prefix,
 	})
 
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
@@ -86,7 +47,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		? "var(--red)"
 		: loadingDown
 		? "var(--green)"
-		: localResult.miss
+		: loading
 		? "var(--blue)"
 		: "var(--background)"
 
