@@ -23,6 +23,7 @@ function _Table(props: {
 				display: "grid",
 				gridTemplateColumns: columnWidths.map((w) => `${w}px`).join(" "),
 				gap: gap,
+				alignContent: "start",
 				...props.style,
 			}}
 		>

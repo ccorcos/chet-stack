@@ -142,7 +142,7 @@ function PropertyValue(props: { obj: Record; property: Property }) {
 	return <>?</>
 }
 
-export function TableViewDemo() {
+export function TableViewDemo2() {
 	return (
 		<Subspace prefix="TableViewDemo:">
 			<TableView />
@@ -178,77 +178,79 @@ function TableView() {
 	}
 
 	return (
-		<Table
-			ref={scrollRef}
-			gap={12}
-			columnWidths={columnWidths}
-			setColumnWidths={setColumnWidths}
-			style={{ padding: 12 }}
-		>
-			{PlantSchema.properties.map((prop, index) => {
-				return (
-					<HeaderCell
-						key={prop.id}
-						gap={gap}
-						width={columnWidths[index]}
-						minWidth={minWidth}
-						setWidth={setWidth(index)}
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: 4,
-							border: "1px solid black",
-							borderRadius: 3,
-							padding: "2px 8px",
-						}}
-					>
-						{prop.name}
-						<PropertyTypeIcon type={prop.type} style={{ flex: 1, textAlign: "right" }} />
-					</HeaderCell>
-				)
-			})}
-
-			{loadingUp && <>{labelRow("Loading...")}</>}
-			{!loadingDown && !loadingUp && list.length === 0 && <>{labelRow("No records.")}</>}
-
-			{list.map(({ key, value }, i) => (
-				<React.Fragment key={key}>
-					{PlantSchema.properties.map((prop, j) => {
-						const record = JSON.parse(value)
-						return (
-							<div
-								key={record.id + prop.id}
-								ref={
-									i === 0 && j === 0
-										? firstRef
-										: i === list.length - 1 && j === 0
-										? lastRef
-										: undefined
-								}
-							>
-								<PropertyValue obj={record} property={prop} />
-							</div>
-						)
-					})}
-				</React.Fragment>
-			))}
-			{loadingDown && <>{labelRow("Loading...")}</>}
-
-			<>
-				{PlantSchema.properties.map((props, i) => {
-					if (i !== 0) return <div key={i} style={{ position: "sticky", bottom: 0 }}></div>
+		<div style={{ height: "100%", display: "flex" }}>
+			<Table
+				ref={scrollRef}
+				gap={12}
+				columnWidths={columnWidths}
+				setColumnWidths={setColumnWidths}
+				style={{ padding: 12 }}
+			>
+				{PlantSchema.properties.map((prop, index) => {
 					return (
-						<NakedButton
-							key={i}
-							style={{ position: "sticky", bottom: 0 }}
-							onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
+						<HeaderCell
+							key={prop.id}
+							gap={gap}
+							width={columnWidths[index]}
+							minWidth={minWidth}
+							setWidth={setWidth(index)}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: 4,
+								border: "1px solid black",
+								borderRadius: 3,
+								padding: "2px 8px",
+							}}
 						>
-							New Record
-						</NakedButton>
+							{prop.name}
+							<PropertyTypeIcon type={prop.type} style={{ flex: 1, textAlign: "right" }} />
+						</HeaderCell>
 					)
 				})}
-			</>
-		</Table>
+
+				{loadingUp && <>{labelRow("Loading...")}</>}
+				{!loadingDown && !loadingUp && list.length === 0 && <>{labelRow("No records.")}</>}
+
+				{list.map(({ key, value }, i) => (
+					<React.Fragment key={key}>
+						{PlantSchema.properties.map((prop, j) => {
+							const record = JSON.parse(value)
+							return (
+								<div
+									key={record.id + prop.id}
+									ref={
+										i === 0 && j === 0
+											? firstRef
+											: i === list.length - 1 && j === 0
+											? lastRef
+											: undefined
+									}
+								>
+									<PropertyValue obj={record} property={prop} />
+								</div>
+							)
+						})}
+					</React.Fragment>
+				))}
+				{loadingDown && <>{labelRow("Loading...")}</>}
+
+				<>
+					{PlantSchema.properties.map((props, i) => {
+						if (i !== 0) return <div key={i} style={{ position: "sticky", bottom: 0 }}></div>
+						return (
+							<NakedButton
+								key={i}
+								style={{ position: "sticky", bottom: 0 }}
+								onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
+							>
+								New Record
+							</NakedButton>
+						)
+					})}
+				</>
+			</Table>
+		</div>
 	)
 }
 
@@ -256,9 +258,13 @@ function TableView() {
 
 TODO:
 
-
-
 Notion UX:
+- table lines.
+- click to edit
+- select cells
+- select rows
+
+
 - Cells
 	- mousedown -- could be select
 	- mouseup -- click to edit
