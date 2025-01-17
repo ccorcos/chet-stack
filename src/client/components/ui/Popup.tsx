@@ -49,6 +49,7 @@ export function Popup(props: {
 				},
 			],
 		})
+
 		return () => {
 			popper.destroy()
 		}

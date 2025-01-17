@@ -1,5 +1,6 @@
-import React from "react"
+import React, { useState } from "react"
 import { randomId } from "../../../../shared/randomId"
+import { passthroughRef } from "../../../helpers/passthroughRef"
 import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
@@ -7,14 +8,15 @@ import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { NakedInput } from "../Input"
+import { Overlay } from "../Overlay"
 import { HeaderCell, Table } from "../Table"
 
-type Property =
-	| { id: string; name?: string; type: "string" }
-	| { id: string; name?: string; type: "number" }
-	| { id: string; name?: string; type: "boolean" }
-	| { id: string; name?: string; type: "select"; options?: string[] }
+type StringPropertyType = { id: string; name?: string; type: "string" }
+type NumberPropertyType = { id: string; name?: string; type: "number" }
+type BooleanPropertyType = { id: string; name?: string; type: "boolean" }
+type SelectPropertyType = { id: string; name?: string; type: "select"; options?: string[] }
 
+type Property = StringPropertyType | NumberPropertyType | BooleanPropertyType | SelectPropertyType
 type PropertyType = Property["type"]
 
 type Schema = {
@@ -71,10 +73,9 @@ const PlantView: TableView = {
 
 function PropertyTypeIcon(props: { type: PropertyType } & React.HTMLAttributes<HTMLDivElement>) {
 	const { type, ...rest } = props
-	if (type === "string") return <div {...rest}>"</div>
-	if (type === "number") return <div {...rest}>#</div>
-	if (type === "boolean") return <div {...rest}>✓</div>
-	if (type === "select") return <div {...rest}>⏷</div>
+	const renderer = PropertyRenderers[type]
+	if (renderer) return renderer.icon(rest)
+	console.warn("Unknown property type", type)
 	return <div {...rest}>?</div>
 }
 
@@ -222,7 +223,7 @@ function TableView() {
 						{PlantSchema.properties.map((prop, col) => {
 							const record = JSON.parse(value)
 							return (
-								<div
+								<TableCell
 									key={record.id + prop.id}
 									ref={
 										row === 0 && col === 0
@@ -237,9 +238,9 @@ function TableView() {
 											row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
 										padding: "2px 8px",
 									}}
-								>
-									<PropertyValue obj={record} property={prop} />
-								</div>
+									record={record}
+									property={prop}
+								/>
 							)
 						})}
 					</React.Fragment>
@@ -261,12 +262,166 @@ function TableView() {
 	)
 }
 
+const TableCell = passthroughRef(
+	(props: {
+		ref?: React.RefObject<HTMLDivElement>
+		style?: React.CSSProperties
+		record: Record
+		property: Property
+	}) => {
+		const { ref, style, record, property } = props
+
+		const [editing, setEditing] = useState<HTMLDivElement | null>(null)
+		const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+			const elm = e.target as HTMLDivElement
+			setEditing(elm)
+		}
+
+		return (
+			<>
+				<div ref={ref} style={style} onClick={onClick}>
+					{PropertyRenderers[property.type].view(record, property as any)}
+				</div>
+				{editing && (
+					<Overlay anchor={editing} onDismiss={() => setEditing(null)}>
+						<div
+							style={{
+								background: "var(--popup-background)",
+								boxShadow: "var(--shadow)",
+								borderRadius: 4,
+							}}
+						>
+							{PropertyRenderers[property.type].edit(record, property as any, (value) => {
+								console.log("update", value)
+							})}
+						</div>
+					</Overlay>
+				)}
+			</>
+		)
+	}
+)
+
+type DivProps = React.HTMLAttributes<HTMLDivElement>
+
+const StringPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>"</div>,
+	parse: (obj: Record, property: StringPropertyType) => {
+		let value = obj[property.id]
+		if (value === undefined) return undefined
+		value = value.toString()
+		return value as string
+	},
+	view: (obj: Record, property: StringPropertyType) => {
+		return StringPropertyRenderer.parse(obj, property) || ""
+	},
+	edit: (obj: Record, property: StringPropertyType, onUpdate: (value: string) => void) => {
+		const value = StringPropertyRenderer.parse(obj, property) || ""
+		return (
+			<NakedInput
+				value={value}
+				onChange={(e) => onUpdate(e.target.value)}
+				style={{ width: "100%" }}
+			/>
+		)
+	},
+}
+
+const NumberPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>#</div>,
+	parse: (obj: Record, property: NumberPropertyType) => {
+		let value = obj[property.id]
+		if (typeof value === "string") value = parseFloat(value)
+		if (typeof value === "boolean") value = value === true ? 1 : 0
+		if (value === undefined || isNaN(value)) return undefined
+		return value as number
+	},
+	view(obj: Record, property: NumberPropertyType) {
+		const value = NumberPropertyRenderer.parse(obj, property)
+		if (value === undefined) return ""
+		return value.toString()
+	},
+	edit: (obj: Record, property: NumberPropertyType, onUpdate: (value: string) => void) => {
+		const value = NumberPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput
+				type="number"
+				value={value}
+				onChange={(e) => onUpdate(e.target.value)}
+				style={{ width: "100%" }}
+			/>
+		)
+	},
+}
+
+const BooleanPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>✓</div>,
+	parse: (obj: Record, property: BooleanPropertyType) => {
+		let value = obj[property.id]
+		if (value === undefined) return false
+		if (typeof value === "string") return value.length > 0
+		if (typeof value === "number") return value > 0
+		return value
+	},
+	view: (obj: Record, property: BooleanPropertyType) => {
+		const value = BooleanPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput
+				type="checkbox"
+				checked={value}
+				style={{ pointerEvents: "none" }}
+				onChange={() => {}}
+			/>
+		)
+	},
+	edit: (obj: Record, property: BooleanPropertyType, onUpdate: (value: boolean) => void) => {
+		const value = BooleanPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput type="checkbox" checked={value} onChange={(e) => onUpdate(e.target.checked)} />
+		)
+	},
+}
+
+const SelectPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>⏷</div>,
+	parse: (obj: Record, property: SelectPropertyType) => {
+		const value = obj[property.id]
+		if (value === undefined) return undefined
+		// NOTE: we can be more forgiving here at some point.
+		if (!property.options?.includes(value)) return undefined
+		return value as string
+	},
+	view: (obj: Record, property: SelectPropertyType) => {
+		const value = SelectPropertyRenderer.parse(obj, property)
+		if (value === undefined) return ""
+		return value
+	},
+	edit: (obj: Record, property: SelectPropertyType, onUpdate: (value: string) => void) => {
+		const value = SelectPropertyRenderer.parse(obj, property)
+		return (
+			<ComboBoxSelect
+				items={property.options || []}
+				placeholder="Select"
+				value={value as any}
+				onChange={onUpdate}
+				Button={NakedButton}
+			/>
+		)
+	},
+}
+
+const PropertyRenderers = {
+	string: StringPropertyRenderer,
+	number: NumberPropertyRenderer,
+	boolean: BooleanPropertyRenderer,
+	select: SelectPropertyRenderer,
+}
+
 /*
 
 TODO:
 
 Notion UX:
-- table lines.
 - click to edit
 - select cells
 - select rows
