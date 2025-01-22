@@ -1,5 +1,6 @@
 import React from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
+import { withStyle } from "../../helpers/withStyle"
 
 function _Input(props: JSX.IntrinsicElements["input"]) {
 	return (
@@ -21,12 +22,16 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 
 export const Input = passthroughRef(_Input)
 
-export const NakedInput = passthroughRef((props: JSX.IntrinsicElements["input"]) => {
-	return _Input({
-		...props,
-		style: {
-			borderColor: "transparent",
-			...props.style,
-		},
-	})
+// export const NakedInput = passthroughRef((props: JSX.IntrinsicElements["input"]) => {
+// 	return _Input({
+// 		...props,
+// 		style: {
+// 			borderColor: "transparent",
+// 			...props.style,
+// 		},
+// 	})
+// })
+
+export const NakedInput = withStyle(Input, {
+	borderColor: "transparent",
 })

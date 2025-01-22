@@ -1,13 +1,14 @@
 import React, { useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { passthroughRef } from "../../../helpers/passthroughRef"
+import { withStyle } from "../../../helpers/withStyle"
 import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBox, ComboBoxSelect } from "../ComboBox"
-import { NakedInput } from "../Input"
+import { Input, NakedInput } from "../Input"
 import { Overlay } from "../Overlay"
 import { HeaderCell, Table } from "../Table"
 
@@ -347,7 +348,12 @@ function borderPadding(elm: HTMLDivElement): React.CSSProperties {
 	}
 }
 
-type DivProps = React.HTMLAttributes<HTMLDivElement>
+const CellInput = withStyle(Input, {
+	width: "100%",
+	borderRadius: 0,
+	borderWidth: 0,
+	padding: "2px 8px",
+})
 
 const StringPropertyRenderer: PropertyRenderer<StringPropertyType> = {
 	icon: (props) => <div {...props}>"</div>,
@@ -364,12 +370,7 @@ const StringPropertyRenderer: PropertyRenderer<StringPropertyType> = {
 	edit: (args) => {
 		const value = StringPropertyRenderer.parse(args) || ""
 		return (
-			<NakedInput
-				value={value}
-				autoFocus={true}
-				onChange={(e) => args.onUpdate(e.target.value)}
-				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
-			/>
+			<CellInput value={value} autoFocus={true} onChange={(e) => args.onUpdate(e.target.value)} />
 		)
 	},
 }
@@ -392,12 +393,11 @@ const NumberPropertyRenderer: PropertyRenderer<NumberPropertyType> = {
 	edit: (args) => {
 		const value = NumberPropertyRenderer.parse(args)
 		return (
-			<NakedInput
+			<CellInput
 				type="number"
 				autoFocus={true}
 				value={value || ""}
 				onChange={(e) => args.onUpdate(e.target.value)}
-				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
 			/>
 		)
 	},
@@ -416,18 +416,19 @@ const BooleanPropertyRenderer: PropertyRenderer<BooleanPropertyType> = {
 	view: (args) => {
 		const value = BooleanPropertyRenderer.parse(args)
 		return (
-			<NakedInput
+			<CellInput
 				type="checkbox"
 				checked={value}
-				style={{ pointerEvents: "none" }}
+				style={{ pointerEvents: "none", width: "auto" }}
 				onChange={() => {}}
 			/>
 		)
 	},
 	edit: (args) => {
+		throw new Error("This never gets called.")
 		const value = BooleanPropertyRenderer.parse(args)
 		return (
-			<NakedInput
+			<CellInput
 				type="checkbox"
 				checked={value}
 				onChange={(e) => args.onUpdate(e.target.checked)}
@@ -464,6 +465,7 @@ const SelectPropertyRenderer: PropertyRenderer<SelectPropertyType> = {
 				}}
 				onDismiss={args.onDismiss}
 				autoFocus={true}
+				Input={CellInput}
 			/>
 		)
 	},
