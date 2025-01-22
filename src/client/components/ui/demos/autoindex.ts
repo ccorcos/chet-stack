@@ -23,7 +23,6 @@ import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 import * as TableViewDemo from "./TableViewDemo"
-import * as TableViewDemo2 from "./TableViewDemo2"
 import * as TokenInputDemo from "./TokenInputDemo"
 
 export {
@@ -50,6 +49,5 @@ export {
 	SpinnerDemo,
 	TableDemo,
 	TableViewDemo,
-	TableViewDemo2,
 	TokenInputDemo,
 }

@@ -7,6 +7,7 @@ import { useShortcut } from "../../hooks/useShortcut"
 export function Popup(props: {
 	open: boolean
 	anchor: HTMLElement | undefined | null
+	offset?: [number, number]
 	placement?: Placement
 	children?: React.ReactNode
 	onDismiss?: () => void
@@ -44,7 +45,7 @@ export function Popup(props: {
 				{
 					name: "offset",
 					options: {
-						offset: [0, 8],
+						offset: props.offset || [0, 2],
 					},
 				},
 			],

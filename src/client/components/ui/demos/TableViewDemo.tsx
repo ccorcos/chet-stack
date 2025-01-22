@@ -1,20 +1,22 @@
-import React from "react"
+import React, { useState } from "react"
 import { randomId } from "../../../../shared/randomId"
+import { passthroughRef } from "../../../helpers/passthroughRef"
 import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
-import { ComboBoxSelect } from "../ComboBox"
+import { ComboBox, ComboBoxSelect } from "../ComboBox"
 import { NakedInput } from "../Input"
+import { Overlay } from "../Overlay"
 import { HeaderCell, Table } from "../Table"
 
-type Property =
-	| { id: string; name?: string; type: "string" }
-	| { id: string; name?: string; type: "number" }
-	| { id: string; name?: string; type: "boolean" }
-	| { id: string; name?: string; type: "select"; options?: string[] }
+type StringPropertyType = { id: string; name?: string; type: "string" }
+type NumberPropertyType = { id: string; name?: string; type: "number" }
+type BooleanPropertyType = { id: string; name?: string; type: "boolean" }
+type SelectPropertyType = { id: string; name?: string; type: "select"; options?: string[] }
 
+type Property = StringPropertyType | NumberPropertyType | BooleanPropertyType | SelectPropertyType
 type PropertyType = Property["type"]
 
 type Schema = {
@@ -71,10 +73,9 @@ const PlantView: TableView = {
 
 function PropertyTypeIcon(props: { type: PropertyType } & React.HTMLAttributes<HTMLDivElement>) {
 	const { type, ...rest } = props
-	if (type === "string") return <div {...rest}>"</div>
-	if (type === "number") return <div {...rest}>#</div>
-	if (type === "boolean") return <div {...rest}>✓</div>
-	if (type === "select") return <div {...rest}>⏷</div>
+	const renderer = PropertyRenderers[type]
+	if (renderer) return renderer.icon(rest)
+	console.warn("Unknown property type", type)
 	return <div {...rest}>?</div>
 }
 
@@ -177,86 +178,296 @@ function TableView() {
 	}
 
 	return (
-		<Table
-			ref={scrollRef}
-			gap={12}
-			columnWidths={columnWidths}
-			setColumnWidths={setColumnWidths}
-			style={{ padding: 12 }}
-		>
-			{PlantSchema.properties.map((prop, index) => {
-				return (
-					<HeaderCell
-						key={prop.id}
-						width={columnWidths[index]}
-						minWidth={minWidth}
-						setWidth={setWidth(index)}
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: 4,
-							border: "1px solid black",
-							borderRadius: 3,
-							padding: "2px 8px",
-						}}
-					>
-						{prop.name}
-						<PropertyTypeIcon type={prop.type} style={{ flex: 1, textAlign: "right" }} />
-					</HeaderCell>
-				)
-			})}
-
-			{loadingUp && <>{labelRow("Loading...")}</>}
-			{!loadingDown && !loadingUp && list.length === 0 && <>{labelRow("No records.")}</>}
-
-			{list.map(({ key, value }, i) => (
-				<React.Fragment key={key}>
-					{PlantSchema.properties.map((prop, j) => {
-						const record = JSON.parse(value)
-						return (
-							<div
-								key={record.id + prop.id}
-								ref={
-									i === 0 && j === 0
-										? firstRef
-										: i === list.length - 1 && j === 0
-										? lastRef
-										: undefined
-								}
-							>
-								<PropertyValue obj={record} property={prop} />
-							</div>
-						)
-					})}
-				</React.Fragment>
-			))}
-			{loadingDown && <>{labelRow("Loading...")}</>}
-
-			<>
-				{PlantSchema.properties.map((props, i) => {
-					if (i !== 0) return <div key={i} style={{ position: "sticky", bottom: 0 }}></div>
+		<div style={{ height: "100%", display: "flex", flexDirection: "column", padding: 12 }}>
+			<Table
+				ref={scrollRef}
+				gap={0}
+				columnWidths={columnWidths}
+				setColumnWidths={setColumnWidths}
+				style={{
+					paddingRight: 12, // space for scrollbar
+				}}
+			>
+				{PlantSchema.properties.map((prop, index) => {
 					return (
-						<NakedButton
-							key={i}
-							style={{ position: "sticky", bottom: 0 }}
-							onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
+						<HeaderCell
+							key={prop.id}
+							width={columnWidths[index]}
+							minWidth={minWidth}
+							setWidth={setWidth(index)}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: 4,
+								borderLeft: index !== 0 ? "1px solid var(--separator)" : undefined,
+								borderBottom: "1px solid var(--separator)",
+								padding: "2px 8px",
+								backgroundColor: "var(--background)",
+								// make the resizers above the cells.
+								zIndex: PlantSchema.properties.length - index + 10,
+							}}
 						>
-							New Record
-						</NakedButton>
+							<div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+								{prop.name}
+							</div>
+							<PropertyTypeIcon type={prop.type} style={{ flex: 1, textAlign: "right" }} />
+						</HeaderCell>
 					)
 				})}
-			</>
-		</Table>
+
+				{loadingUp && <>{labelRow("Loading...")}</>}
+				{!loadingDown && !loadingUp && list.length === 0 && <>{labelRow("No records.")}</>}
+
+				{list.map(({ key, value }, row) => (
+					<React.Fragment key={key}>
+						{PlantSchema.properties.map((prop, col) => {
+							const record = JSON.parse(value)
+							return (
+								<TableCell
+									key={record.id + prop.id}
+									ref={
+										row === 0 && col === 0
+											? firstRef
+											: row === list.length - 1 && col === 0
+											? lastRef
+											: undefined
+									}
+									style={{
+										borderLeft: col !== 0 ? "1px solid var(--separator)" : undefined,
+										// borderBottom:
+										// 	row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
+										borderBottom: "1px solid var(--separator)",
+										padding: "2px 8px",
+									}}
+									record={record}
+									property={prop}
+								/>
+							)
+						})}
+					</React.Fragment>
+				))}
+				{loadingDown && <>{labelRow("Loading...")}</>}
+			</Table>
+			<NakedButton
+				style={{
+					// borderTop: "1px solid var(--separator)",
+					textAlign: "left",
+					padding: "2px 8px",
+					borderRadius: 0,
+				}}
+				onClick={() => newRecord({ id: `record:${randomId()}`, properties: {} })}
+			>
+				New Record
+			</NakedButton>
+		</div>
 	)
+}
+
+// HERE
+// TODO:
+// - autofocus input so and save the result
+// - checkbox should just click
+// - dropdown view more similar to Notion
+// - cell selection
+// - persist schema
+// ---
+// - row selection
+// - column reorder
+// - row reorder
+
+const TableCell = passthroughRef(
+	(props: {
+		ref?: React.RefObject<HTMLDivElement>
+		style?: React.CSSProperties
+		record: Record
+		property: Property
+	}) => {
+		const { ref, style, record, property } = props
+
+		const renderer = PropertyRenderers[property.type]
+
+		const [editing, setEditing] = useState<HTMLDivElement | null>(null)
+		const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+			if (property.type === "boolean") {
+				onUpdate(!record[property.id])
+				return
+			}
+			const elm = e.target as HTMLDivElement
+			setEditing(elm)
+		}
+
+		const write = useWrite()
+		const onUpdate = (value: any) => {
+			// TODO: don't change until blur for text inputs?
+			// TODO: enter and escape should submit/dismiss
+			write({
+				set: [{ key: record.id, value: JSON.stringify({ ...record, [property.id]: value }) }],
+			})
+		}
+		return (
+			<>
+				<div ref={ref} style={style} onClick={onClick}>
+					{renderer.view(record, property as any)}
+				</div>
+				{editing && (
+					<Overlay anchor={editing} onDismiss={() => setEditing(null)}>
+						<div
+							style={{
+								background: "var(--popup-background)",
+								boxShadow: "var(--shadow)",
+								...borderPadding(editing),
+							}}
+						>
+							{renderer.edit(record, property as any, onUpdate)}
+						</div>
+					</Overlay>
+				)}
+			</>
+		)
+	}
+)
+
+function parsePxValue(str: string): number {
+	const match = str.match(/(\d+)px/)
+	return match ? parseInt(match[1]) : 0
+}
+
+function borderPadding(elm: HTMLDivElement): React.CSSProperties {
+	const style = window.getComputedStyle(elm)
+	return {
+		marginLeft: parsePxValue(style.borderLeft),
+		marginRight: parsePxValue(style.borderRight),
+		marginTop: parsePxValue(style.borderTop),
+		marginBottom: parsePxValue(style.borderBottom),
+	}
+}
+
+type DivProps = React.HTMLAttributes<HTMLDivElement>
+
+const StringPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>"</div>,
+	parse: (obj: Record, property: StringPropertyType) => {
+		let value = obj[property.id]
+		if (value === undefined) return undefined
+		value = value.toString()
+		return value as string
+	},
+	view: (obj: Record, property: StringPropertyType) => {
+		return StringPropertyRenderer.parse(obj, property) || ""
+	},
+	edit: (obj: Record, property: StringPropertyType, onUpdate: (value: string) => void) => {
+		const value = StringPropertyRenderer.parse(obj, property) || ""
+		return (
+			<NakedInput
+				value={value}
+				autoFocus={true}
+				onChange={(e) => onUpdate(e.target.value)}
+				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
+			/>
+		)
+	},
+}
+
+const NumberPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>#</div>,
+	parse: (obj: Record, property: NumberPropertyType) => {
+		let value = obj[property.id]
+		if (typeof value === "string") value = parseFloat(value)
+		if (typeof value === "boolean") value = value === true ? 1 : 0
+		if (value === undefined || isNaN(value)) return undefined
+		return value as number
+	},
+	view(obj: Record, property: NumberPropertyType) {
+		const value = NumberPropertyRenderer.parse(obj, property)
+		if (value === undefined) return ""
+		return value.toString()
+	},
+	edit: (obj: Record, property: NumberPropertyType, onUpdate: (value: string) => void) => {
+		const value = NumberPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput
+				type="number"
+				autoFocus={true}
+				value={value || ""}
+				onChange={(e) => onUpdate(e.target.value)}
+				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
+			/>
+		)
+	},
+}
+
+const BooleanPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>✓</div>,
+	parse: (obj: Record, property: BooleanPropertyType) => {
+		let value = obj[property.id]
+		if (value === undefined) return false
+		if (typeof value === "string") return value.length > 0
+		if (typeof value === "number") return value > 0
+		return value
+	},
+	view: (obj: Record, property: BooleanPropertyType) => {
+		const value = BooleanPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput
+				type="checkbox"
+				checked={value}
+				style={{ pointerEvents: "none" }}
+				onChange={() => {}}
+			/>
+		)
+	},
+	edit: (obj: Record, property: BooleanPropertyType, onUpdate: (value: boolean) => void) => {
+		const value = BooleanPropertyRenderer.parse(obj, property)
+		return (
+			<NakedInput type="checkbox" checked={value} onChange={(e) => onUpdate(e.target.checked)} />
+		)
+	},
+}
+
+const SelectPropertyRenderer = {
+	icon: (props: DivProps) => <div {...props}>⏷</div>,
+	parse: (obj: Record, property: SelectPropertyType) => {
+		const value = obj[property.id]
+		if (value === undefined) return undefined
+		// NOTE: we can be more forgiving here at some point.
+		if (!property.options?.includes(value)) return undefined
+		return value as string
+	},
+	view: (obj: Record, property: SelectPropertyType) => {
+		const value = SelectPropertyRenderer.parse(obj, property)
+		if (value === undefined) return ""
+		return value
+	},
+	edit: (obj: Record, property: SelectPropertyType, onUpdate: (value: string) => void) => {
+		const value = SelectPropertyRenderer.parse(obj, property)
+		return (
+			<ComboBox
+				items={property.options || []}
+				value={value as any}
+				onChange={onUpdate}
+				autoFocus={true}
+			/>
+		)
+	},
+}
+
+const PropertyRenderers = {
+	string: StringPropertyRenderer,
+	number: NumberPropertyRenderer,
+	boolean: BooleanPropertyRenderer,
+	select: SelectPropertyRenderer,
 }
 
 /*
 
 TODO:
 
-
-
 Notion UX:
+- click to edit
+- select cells
+- select rows
+
+
 - Cells
 	- mousedown -- could be select
 	- mouseup -- click to edit

@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "../../../shared/fuzzyMatch"
-import { useRefPrevious } from "../../hooks/useRefPrevious"
 import { isShortcut } from "../../hooks/useShortcut"
 import { Button } from "./Button"
 import { FuzzyString } from "./FuzzyString"
@@ -21,17 +20,17 @@ export function ComboBoxSelect(props: {
 
 	const buttonRef = useRef<HTMLButtonElement>(null)
 
-	const prevOpen = useRefPrevious(open)
-	useLayoutEffect(() => {
-		if (prevOpen.current && !open) {
-			buttonRef.current?.focus()
-		}
-	}, [open])
+	// const prevOpen = useRefPrevious(open)
+	// useLayoutEffect(() => {
+	// 	if (prevOpen.current && !open) {
+	// 		buttonRef.current?.focus()
+	// 	}
+	// }, [open])
 
 	if (open) {
 		return (
 			<ComboBox
-				autoFocus
+				autoFocus={true}
 				items={props.items}
 				value={props.value}
 				onChange={(newValue) => {
@@ -149,9 +148,9 @@ export function ComboBox(props: {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const args = useComboBox(props)
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (props.autoFocus) inputRef.current?.focus()
-	}, [props.autoFocus])
+	}, [])
 
 	const ComboInput = props.Input ?? Input
 	return (
