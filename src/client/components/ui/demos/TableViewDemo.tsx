@@ -264,18 +264,6 @@ function TableView() {
 	)
 }
 
-// HERE
-// TODO:
-// - autofocus input so and save the result
-// - checkbox should just click
-// - dropdown view more similar to Notion
-// - cell selection
-// - persist schema
-// ---
-// - row selection
-// - column reorder
-// - row reorder
-
 const TableCell = passthroughRef(
 	(props: {
 		ref?: React.RefObject<HTMLDivElement>
@@ -494,7 +482,13 @@ const PropertyRenderers: {
 
 /*
 
-TODO:
+- TokenInput for multi-select and better select UX.
+- Save edit on blur instead of while typing.
+
+- Row selection + reorder rows.
+- Cell selection
+- Persisted schema editing
+
 
 Notion UX:
 - click to edit

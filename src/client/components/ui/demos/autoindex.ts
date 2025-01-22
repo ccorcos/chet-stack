@@ -20,6 +20,7 @@ import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as RawDatabaseDemo from "./RawDatabaseDemo"
+import * as SelectInputDemo from "./SelectInputDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 import * as TableViewDemo from "./TableViewDemo"
@@ -46,6 +47,7 @@ export {
 	PlaygroundDemo,
 	PopupDemo,
 	RawDatabaseDemo,
+	SelectInputDemo,
 	SpinnerDemo,
 	TableDemo,
 	TableViewDemo,
