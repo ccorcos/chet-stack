@@ -284,7 +284,7 @@ const TableCell = passthroughRef(
 	}) => {
 		const { ref, style, record, property } = props
 
-		const renderer = PropertyRenderers[property.type]
+		const renderer = PropertyRenderers[property.type] as PropertyRenderer<Property>
 
 		const [editing, setEditing] = useState<HTMLDivElement | null>(null)
 		const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -304,13 +304,18 @@ const TableCell = passthroughRef(
 				set: [{ key: record.id, value: JSON.stringify({ ...record, [property.id]: value }) }],
 			})
 		}
+
+		const onDismiss = () => {
+			setEditing(null)
+		}
+
 		return (
 			<>
 				<div ref={ref} style={style} onClick={onClick}>
-					{renderer.view(record, property as any)}
+					{renderer.view({ record, property })}
 				</div>
 				{editing && (
-					<Overlay anchor={editing} onDismiss={() => setEditing(null)}>
+					<Overlay anchor={editing} onDismiss={onDismiss}>
 						<div
 							style={{
 								background: "var(--popup-background)",
@@ -318,7 +323,7 @@ const TableCell = passthroughRef(
 								...borderPadding(editing),
 							}}
 						>
-							{renderer.edit(record, property as any, onUpdate)}
+							{renderer.edit({ record, property, onUpdate, onDismiss })}
 						</div>
 					</Overlay>
 				)}
@@ -344,69 +349,72 @@ function borderPadding(elm: HTMLDivElement): React.CSSProperties {
 
 type DivProps = React.HTMLAttributes<HTMLDivElement>
 
-const StringPropertyRenderer = {
-	icon: (props: DivProps) => <div {...props}>"</div>,
-	parse: (obj: Record, property: StringPropertyType) => {
-		let value = obj[property.id]
+const StringPropertyRenderer: PropertyRenderer<StringPropertyType> = {
+	icon: (props) => <div {...props}>"</div>,
+	parse: (args) => {
+		const { record, property } = args
+		let value = record[property.id]
 		if (value === undefined) return undefined
 		value = value.toString()
 		return value as string
 	},
-	view: (obj: Record, property: StringPropertyType) => {
-		return StringPropertyRenderer.parse(obj, property) || ""
+	view: (args) => {
+		return StringPropertyRenderer.parse(args) || ""
 	},
-	edit: (obj: Record, property: StringPropertyType, onUpdate: (value: string) => void) => {
-		const value = StringPropertyRenderer.parse(obj, property) || ""
+	edit: (args) => {
+		const value = StringPropertyRenderer.parse(args) || ""
 		return (
 			<NakedInput
 				value={value}
 				autoFocus={true}
-				onChange={(e) => onUpdate(e.target.value)}
+				onChange={(e) => args.onUpdate(e.target.value)}
 				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
 			/>
 		)
 	},
 }
 
-const NumberPropertyRenderer = {
-	icon: (props: DivProps) => <div {...props}>#</div>,
-	parse: (obj: Record, property: NumberPropertyType) => {
-		let value = obj[property.id]
+const NumberPropertyRenderer: PropertyRenderer<NumberPropertyType> = {
+	icon: (props) => <div {...props}>#</div>,
+	parse: (args) => {
+		const { record, property } = args
+		let value = record[property.id]
 		if (typeof value === "string") value = parseFloat(value)
 		if (typeof value === "boolean") value = value === true ? 1 : 0
 		if (value === undefined || isNaN(value)) return undefined
 		return value as number
 	},
-	view(obj: Record, property: NumberPropertyType) {
-		const value = NumberPropertyRenderer.parse(obj, property)
+	view: (args) => {
+		const value = NumberPropertyRenderer.parse(args)
 		if (value === undefined) return ""
 		return value.toString()
 	},
-	edit: (obj: Record, property: NumberPropertyType, onUpdate: (value: string) => void) => {
-		const value = NumberPropertyRenderer.parse(obj, property)
+	edit: (args) => {
+		const value = NumberPropertyRenderer.parse(args)
 		return (
 			<NakedInput
 				type="number"
 				autoFocus={true}
 				value={value || ""}
-				onChange={(e) => onUpdate(e.target.value)}
+				onChange={(e) => args.onUpdate(e.target.value)}
 				style={{ width: "100%", borderRadius: 0, borderWidth: 0, padding: "2px 8px" }}
 			/>
 		)
 	},
 }
 
-const BooleanPropertyRenderer = {
-	icon: (props: DivProps) => <div {...props}>✓</div>,
-	parse: (obj: Record, property: BooleanPropertyType) => {
-		let value = obj[property.id]
+const BooleanPropertyRenderer: PropertyRenderer<BooleanPropertyType> = {
+	icon: (props) => <div {...props}>✓</div>,
+	parse: (args) => {
+		const { record, property } = args
+		let value = record[property.id]
 		if (value === undefined) return false
 		if (typeof value === "string") return value.length > 0
 		if (typeof value === "number") return value > 0
 		return value
 	},
-	view: (obj: Record, property: BooleanPropertyType) => {
-		const value = BooleanPropertyRenderer.parse(obj, property)
+	view: (args) => {
+		const value = BooleanPropertyRenderer.parse(args)
 		return (
 			<NakedInput
 				type="checkbox"
@@ -416,42 +424,66 @@ const BooleanPropertyRenderer = {
 			/>
 		)
 	},
-	edit: (obj: Record, property: BooleanPropertyType, onUpdate: (value: boolean) => void) => {
-		const value = BooleanPropertyRenderer.parse(obj, property)
+	edit: (args) => {
+		const value = BooleanPropertyRenderer.parse(args)
 		return (
-			<NakedInput type="checkbox" checked={value} onChange={(e) => onUpdate(e.target.checked)} />
+			<NakedInput
+				type="checkbox"
+				checked={value}
+				onChange={(e) => args.onUpdate(e.target.checked)}
+			/>
 		)
 	},
 }
 
-const SelectPropertyRenderer = {
-	icon: (props: DivProps) => <div {...props}>⏷</div>,
-	parse: (obj: Record, property: SelectPropertyType) => {
-		const value = obj[property.id]
+const SelectPropertyRenderer: PropertyRenderer<SelectPropertyType> = {
+	icon: (props) => <div {...props}>⏷</div>,
+	parse: (args) => {
+		const { record, property } = args
+		const value = record[property.id]
 		if (value === undefined) return undefined
 		// NOTE: we can be more forgiving here at some point.
 		if (!property.options?.includes(value)) return undefined
 		return value as string
 	},
-	view: (obj: Record, property: SelectPropertyType) => {
-		const value = SelectPropertyRenderer.parse(obj, property)
+	view: (args) => {
+		const value = SelectPropertyRenderer.parse(args)
 		if (value === undefined) return ""
 		return value
 	},
-	edit: (obj: Record, property: SelectPropertyType, onUpdate: (value: string) => void) => {
-		const value = SelectPropertyRenderer.parse(obj, property)
+	edit: (args) => {
+		const { property } = args
+		const value = SelectPropertyRenderer.parse(args)
 		return (
 			<ComboBox
 				items={property.options || []}
 				value={value as any}
-				onChange={onUpdate}
+				onChange={(value) => {
+					args.onUpdate(value)
+					args.onDismiss()
+				}}
+				onDismiss={args.onDismiss}
 				autoFocus={true}
 			/>
 		)
 	},
 }
 
-const PropertyRenderers = {
+type PropertyRenderer<T extends Property> = {
+	icon: (props: React.HTMLProps<HTMLDivElement>) => React.ReactNode
+	parse: (args: { record: Record; property: T }) => any
+	view: (args: { record: Record; property: T }) => React.ReactNode
+	edit: (args: {
+		record: Record
+		property: T
+		onUpdate: (value: any) => void
+		onDismiss: () => void
+	}) => React.ReactNode
+}
+
+const PropertyRenderers: {
+	[key in PropertyType]: PropertyRenderer<Extract<Property, { type: key }>>
+} = {
 	string: StringPropertyRenderer,
 	number: NumberPropertyRenderer,
 	boolean: BooleanPropertyRenderer,
