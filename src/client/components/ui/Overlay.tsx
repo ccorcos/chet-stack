@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
+import { dismissZIndex, overlayZIndex } from "../../helpers/zIndexHelpers"
 import { useShortcut } from "../../hooks/useShortcut"
 
 export function Overlay(props: {
@@ -33,7 +34,7 @@ export function Overlay(props: {
 		<>
 			{onDismiss && (
 				<div
-					style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+					style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: dismissZIndex }}
 					onClick={() => onDismiss()}
 				/>
 			)}
@@ -44,6 +45,7 @@ export function Overlay(props: {
 					left: rect.left,
 					width: rect.width,
 					height: rect.height,
+					zIndex: overlayZIndex,
 				}}
 			>
 				{children}

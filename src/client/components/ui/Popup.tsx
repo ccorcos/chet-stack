@@ -2,6 +2,7 @@ import { Placement, createPopper } from "@popperjs/core"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { passthroughRef } from "../../helpers/passthroughRef"
+import { dismissZIndex, overlayZIndex } from "../../helpers/zIndexHelpers"
 import { useShortcut } from "../../hooks/useShortcut"
 
 export function Popup(props: {
@@ -67,7 +68,14 @@ export function Popup(props: {
 			<>
 				{onDismiss && (
 					<div
-						style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+						style={{
+							position: "fixed",
+							top: 0,
+							left: 0,
+							right: 0,
+							bottom: 0,
+							zIndex: dismissZIndex,
+						}}
 						onClick={() => onDismiss()}
 					/>
 				)}
@@ -87,6 +95,7 @@ export const PopupFrame = passthroughRef((props: React.HTMLProps<HTMLDivElement>
 				boxShadow: "var(--shadow)",
 				padding: 4,
 				borderRadius: 4,
+				zIndex: overlayZIndex,
 				...props.style,
 			}}
 		/>
