@@ -50,10 +50,12 @@ export function ComboBoxSelect(props: {
 			<ComboButton
 				ref={buttonRef}
 				onClick={() => setOpen(true)}
-				style={{ textAlign: "left", ...props.style }}
+				style={{ textAlign: "left", display: "flex", alignItems: "center", ...props.style }}
 			>
 				{props.value || <span style={{ color: "var(--text-color2" }}>{props.placeholder} </span>}{" "}
-				<span style={{ fontSize: "0.7rem", verticalAlign: "middle" }}>▼</span>
+				<span style={{ fontSize: "0.7rem", verticalAlign: "middle", flex: 1, textAlign: "right" }}>
+					▼
+				</span>
 			</ComboButton>
 		)
 	}

@@ -3,7 +3,6 @@
 import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
-import * as ComboBoxDemo from "./ComboBoxDemo"
 import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
 import * as DropdownDemo from "./DropdownDemo"
 import * as FileUploadDemo from "./FileUploadDemo"
@@ -20,17 +19,14 @@ import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as RawDatabaseDemo from "./RawDatabaseDemo"
-import * as SelectInputDemo from "./SelectInputDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 import * as TableViewDemo from "./TableViewDemo"
-import * as TokenInputDemo from "./TokenInputDemo"
 
 export {
 	BadgeDemo,
 	ButtonDemo,
 	CalendarDemo,
-	ComboBoxDemo,
 	CustomDatabaseDemo,
 	DropdownDemo,
 	FileUploadDemo,
@@ -47,9 +43,7 @@ export {
 	PlaygroundDemo,
 	PopupDemo,
 	RawDatabaseDemo,
-	SelectInputDemo,
 	SpinnerDemo,
 	TableDemo,
 	TableViewDemo,
-	TokenInputDemo,
 }

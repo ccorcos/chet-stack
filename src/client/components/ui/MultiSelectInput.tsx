@@ -10,6 +10,28 @@ import { PopupFrame } from "./Popup"
 
 export function SelectInput(props: {
 	items: string[]
+	value: string | undefined
+	onChange: (value: string | undefined) => void
+	onDismiss?: () => void
+	autoFocus?: boolean
+	notice?: React.ReactNode
+}) {
+	return (
+		<MultiSelectInput
+			{...props}
+			value={props.value === undefined ? [] : [props.value]}
+			onChange={(value) => {
+				if (value.length === 0) return props.onChange(undefined)
+				if (value.length === 1) return props.onChange(value[0])
+				const newValue = value.filter((v) => v !== props.value)[0]
+				props.onChange(newValue)
+			}}
+		/>
+	)
+}
+
+export function MultiSelectInput(props: {
+	items: string[]
 	value: string[]
 	onChange: (value: string[]) => void
 	onDismiss?: () => void
