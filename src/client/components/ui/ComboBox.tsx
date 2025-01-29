@@ -59,7 +59,7 @@ export function ComboBoxSelect(props: {
 	}
 }
 
-export function useComboBox(props: {
+function useComboBox(props: {
 	items: string[]
 	value: string | undefined
 	onChange: (value: string) => void

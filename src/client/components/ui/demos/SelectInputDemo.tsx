@@ -54,8 +54,10 @@ const fruits: string[] = [
 	"Avocado",
 ]
 
+// TODO: display in a menu like Notion.
+
 export function SelectInputDemo() {
-	const [value, setValue] = useState<string | undefined>()
+	const [value, setValue] = useState<string[]>([])
 	return (
 		<div style={{ padding: 12 }}>
 			<SelectInput items={fruits} value={value} onChange={setValue} />

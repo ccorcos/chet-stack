@@ -34,4 +34,5 @@ export const Input = passthroughRef(_Input)
 
 export const NakedInput = withStyle(Input, {
 	borderColor: "transparent",
+	backgroundColor: "transparent",
 })

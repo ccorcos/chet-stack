@@ -484,10 +484,10 @@ const PropertyRenderers: {
 
 - TokenInput for multi-select and better select UX.
 - Save edit on blur instead of while typing.
+- Persisted schema editing
 
 - Row selection + reorder rows.
 - Cell selection
-- Persisted schema editing
 
 
 Notion UX:
