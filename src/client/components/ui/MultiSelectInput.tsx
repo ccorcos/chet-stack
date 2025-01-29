@@ -81,7 +81,7 @@ export function MultiSelectInput(props: {
 	)
 }
 
-const tokenStyle: React.CSSProperties = {
+export const tokenStyle: React.CSSProperties = {
 	display: "inline-block",
 	fontSize: "12px",
 	padding: "2px 4px",
@@ -202,7 +202,7 @@ function useSelectInput(props: {
 			onFocus: () => setFocused(true),
 			onBlur: () => {
 				setFocused(false)
-				props.onDismiss?.()
+				// props.onDismiss?.()
 			},
 			onKeyDown: handleKeydown,
 		},

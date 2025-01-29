@@ -7,8 +7,10 @@ import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
-import { ComboBox, ComboBoxSelect } from "../ComboBox"
+import { ComboBoxSelect } from "../ComboBox"
 import { Input, NakedInput } from "../Input"
+import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
+import { SelectInput, tokenStyle } from "../MultiSelectInput"
 import { Overlay } from "../Overlay"
 import { HeaderCell, Table } from "../Table"
 
@@ -147,7 +149,11 @@ function PropertyValue(props: { obj: Record; property: Property }) {
 export function TableViewDemo() {
 	return (
 		<Subspace prefix="TableViewDemo:">
-			<TableView />
+			<Layout LeftPanel={<LeftPanelLayout show={true}>Left</LeftPanelLayout>}>
+				<ContentLayout>
+					<TableView />
+				</ContentLayout>
+			</Layout>
 		</Subspace>
 	)
 }
@@ -234,6 +240,8 @@ function TableView() {
 											: undefined
 									}
 									style={{
+										display: "flex",
+										alignItems: "center",
 										borderLeft: col !== 0 ? "1px solid var(--separator)" : undefined,
 										// borderBottom:
 										// 	row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
@@ -309,6 +317,7 @@ const TableCell = passthroughRef(
 							style={{
 								background: "var(--popup-background)",
 								boxShadow: "var(--shadow)",
+								height: "100%",
 								...borderPadding(editing),
 							}}
 						>
@@ -338,6 +347,7 @@ function borderPadding(elm: HTMLDivElement): React.CSSProperties {
 
 const CellInput = withStyle(Input, {
 	width: "100%",
+	height: "100%",
 	borderRadius: 0,
 	borderWidth: 0,
 	padding: "2px 8px",
@@ -438,13 +448,13 @@ const SelectPropertyRenderer: PropertyRenderer<SelectPropertyType> = {
 	view: (args) => {
 		const value = SelectPropertyRenderer.parse(args)
 		if (value === undefined) return ""
-		return value
+		return <div style={tokenStyle}>{value}</div>
 	},
 	edit: (args) => {
 		const { property } = args
 		const value = SelectPropertyRenderer.parse(args)
 		return (
-			<ComboBox
+			<SelectInput
 				items={property.options || []}
 				value={value as any}
 				onChange={(value) => {
@@ -453,7 +463,6 @@ const SelectPropertyRenderer: PropertyRenderer<SelectPropertyType> = {
 				}}
 				onDismiss={args.onDismiss}
 				autoFocus={true}
-				Input={CellInput}
 			/>
 		)
 	},

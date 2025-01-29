@@ -11,7 +11,6 @@ import { useCounter } from "./useCounter"
 import { useDeepMemo } from "./useDeepMemo"
 import { useLoader } from "./useLoader"
 
-// Maybe we should get rid api.get() and just use list for everything.
 export function useGet(key: string) {
 	const { localResult, remoteResult } = useList({ gte: key, lte: key })
 	const localGetResult: LocalGetResult = localResult.miss
