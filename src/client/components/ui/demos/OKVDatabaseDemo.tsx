@@ -75,7 +75,6 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 					setColumnWidths={setColumnWidths}
 				>
 					<HeaderCell
-						gap={gap}
 						width={columnWidths[0]}
 						minWidth={minWidth}
 						setWidth={setWidth(0)}
@@ -89,7 +88,6 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 						Key
 					</HeaderCell>
 					<HeaderCell
-						gap={gap}
 						width={columnWidths[1]}
 						minWidth={minWidth}
 						setWidth={setWidth(1)}

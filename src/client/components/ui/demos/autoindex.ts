@@ -5,6 +5,8 @@ import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
 import * as DataListDemo from "./DataListDemo"
+import * as DraggableDemo from "./DraggableDemo"
+import * as DraggableListDemo from "./DraggableListDemo"
 import * as DropdownDemo from "./DropdownDemo"
 import * as FileUploadDemo from "./FileUploadDemo"
 import * as FormDemo from "./FormDemo"
@@ -30,6 +32,8 @@ export {
 	CalendarDemo,
 	CustomDatabaseDemo,
 	DataListDemo,
+	DraggableDemo,
+	DraggableListDemo,
 	DropdownDemo,
 	FileUploadDemo,
 	FormDemo,

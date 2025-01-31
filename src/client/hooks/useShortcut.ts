@@ -234,15 +234,15 @@ export function displayShortcut(shortcut: string) {
 type KeyboardEventHandler = (event: KeyboardEvent) => void
 
 /** Use with care. Prefer to put listeners on DOM elements to work better with focus. */
-export function useShortcut(shortcut: string, fn: () => void) {
+export function useShortcut(shortcut: string, fn: () => void | false) {
 	const fnRef = useRefCurrent(fn)
 	const shortcutRef = useRefCurrent(shortcut)
 
 	useEffect(() => {
 		const onKeydown: KeyboardEventHandler = (event) => {
 			if (isShortcut(shortcutRef.current, event)) {
-				event.preventDefault()
-				fnRef.current()
+				const response = fnRef.current()
+				if (response !== false) event.preventDefault()
 			}
 		}
 		window.addEventListener("keydown", onKeydown)
