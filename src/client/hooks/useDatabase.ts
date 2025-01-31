@@ -44,7 +44,7 @@ export function useList(_args: ListArgs<string>) {
 		}
 	}, [args])
 
-	const requestId = useMemo(() => randomId(), [args, fetchCount])
+	const requestId = useMemo(() => JSON.stringify([args, fetchCount]), [args, fetchCount])
 
 	const remoteResult = useLoader("list:" + requestId, async () => {
 		// TODO: this doesn't seem to be necessary.

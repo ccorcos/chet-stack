@@ -125,6 +125,7 @@ export function useDraggableList(args: {
 		return () => window.removeEventListener("mousemove", onMouseMove)
 	}, [])
 
+	const argsRef = useRefCurrent(args)
 	useEffect(() => {
 		const onMouseUp = (event: MouseEvent) => {
 			const dragState = dragStateRef.current
@@ -148,7 +149,7 @@ export function useDraggableList(args: {
 			if (!closest) throw new Error("No closest.")
 			const toIndex = closest.index
 
-			args.onDragEnd({ fromIndex, toIndex })
+			argsRef.current.onDragEnd({ fromIndex, toIndex })
 
 			// Clear all the transforms.
 			for (const { element } of rects) element.style.transform = ""

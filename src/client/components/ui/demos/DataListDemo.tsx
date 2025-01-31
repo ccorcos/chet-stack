@@ -1,5 +1,6 @@
-import React, { useState } from "react"
+import React from "react"
 import { useGet, useWrite } from "../../../hooks/useDatabase"
+import { useDraggableList } from "../../../hooks/useDraggableList"
 import { Button } from "../Button"
 
 // 1. Fractional indexing
@@ -17,13 +18,10 @@ export function DataListDemo() {
 
 function JSONArrayDemo() {
 	const result = useGet("JSONArrayDemo")
-
-	const write = useWrite()
-	const events = useDraggableList()
-
-	if (result.localResult.miss) return <div>Loading...</div>
+	result.remoteResult.suspend()
 	const data = JSON.parse(result.localResult.hit || "[]")
 
+	const write = useWrite()
 	const add = () => {
 		if (data.length === 0) {
 			write({ set: [{ key: "JSONArrayDemo", value: JSON.stringify([0]) }] })
@@ -33,15 +31,32 @@ function JSONArrayDemo() {
 		}
 	}
 
+	const { onMouseDown, dragState } = useDraggableList({
+		direction: "vertical",
+		onDragEnd: ({ fromIndex, toIndex }) => {
+			const newData = data.slice()
+			newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
+			write({ set: [{ key: "JSONArrayDemo", value: JSON.stringify(newData) }] })
+		},
+	})
+
 	// select and delete
-	// drag to reorder
 
 	return (
 		<div>
 			<div>JSONArray</div>
-			<div {...events} style={{ userSelect: "none" }}>
+			<div style={{ userSelect: "none" }} onMouseDown={onMouseDown}>
 				{data.map((item, index) => (
-					<div key={index} className="draggable-handle draggable-item">
+					<div
+						key={index}
+						data-drag-index={index}
+						style={{
+							width: 100,
+							cursor: dragState.dragging ? "grabbing" : "grab",
+							boxShadow:
+								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
+						}}
+					>
 						{item}
 					</div>
 				))}
@@ -49,60 +64,6 @@ function JSONArrayDemo() {
 			</div>
 		</div>
 	)
-}
-
-type DragState =
-	| {
-			dragging: false
-	  }
-	| {
-			dragging: true
-			offset: { x: number; y: number }
-			item: HTMLElement
-	  }
-
-function useDraggableList() {
-	// .draggable-handle
-	// .draggable-item
-
-	const [dragState, setDragState] = useState<DragState>({ dragging: false })
-
-	const onMouseDown = (event: React.MouseEvent) => {
-		const elm = event.target as HTMLElement
-		const handle = elm.closest(".draggable-handle")
-		if (!handle) return
-
-		const item = handle.closest(".draggable-item") as HTMLElement | null
-		if (!item) return
-
-		setDragState({
-			dragging: true,
-			offset: {
-				x: event.clientX,
-				y: event.clientY,
-			},
-			item,
-		})
-	}
-
-	const onMouseMove = (event: React.MouseEvent) => {
-		if (!dragState.dragging) return
-
-		const item = dragState.item
-		const x = 0 // event.clientX - dragState.offset.x
-		const y = event.clientY - dragState.offset.y
-		item.style.transform = `translate(${x}px, ${y}px)`
-	}
-
-	const onMouseUp = (event: React.MouseEvent) => {
-		if (!dragState.dragging) return
-
-		const item = dragState.item
-		item.style.transform = ""
-		setDragState({ dragging: false })
-	}
-
-	return { onMouseDown, onMouseUp, onMouseMove }
 }
 
 function FractionalIndexingDemo() {
