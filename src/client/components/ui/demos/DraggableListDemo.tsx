@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { toast } from "../../../helpers/toast"
 import { useDraggableList } from "../../../hooks/useDraggableList"
 
 const initialList = [...Array(12)].map((_, i) => `Item ${i + 1} ` + "-".repeat(i))
@@ -54,6 +55,9 @@ function DraggableList(props: { direction: "vertical" | "horizontal" }) {
 							backgroundColor: "var(--background)",
 							boxShadow:
 								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
+						}}
+						onClick={() => {
+							toast("Clicked " + item)
 						}}
 					>
 						{item}

@@ -23,26 +23,70 @@ type Bounds = { top: number; left: number; right: number; bottom: number }
 
 export type DraggableListState =
 	| {
+			mousedown: false
 			dragging: false
 	  }
 	| {
-			dragging: true
-			list: HTMLElement
-			rects: { index: number; rect: Rect; element: HTMLElement }[]
-			bounds: Bounds
+			mousedown: true
+			dragging: false
+			point: { x: number; y: number }
 
 			fromIndex: number
-			elementRect: Rect
 			element: HTMLElement
-			offset: { x: number; y: number }
+			list: HTMLElement
 	  }
+	| {
+			mousedown: true
+			dragging: true
+			point: { x: number; y: number }
+
+			fromIndex: number
+			element: HTMLElement
+			list: HTMLElement
+
+			rects: { index: number; rect: Rect; element: HTMLElement }[]
+			bounds: Bounds
+			elementRect: Rect
+	  }
+
+function measureRects(list: HTMLElement) {
+	// Expensive measurement.
+	const rects: { index: number; rect: Rect; element: HTMLElement }[] = []
+	const children = Array.from(list.querySelectorAll("[data-drag-index]"))
+	for (const child of children) {
+		const rect = child.getBoundingClientRect()
+		const index = Number(child.getAttribute("data-drag-index"))
+		rects.push({ index, rect, element: child as HTMLElement })
+	}
+	return rects
+}
+
+function computeBounds(rects: Rect[]) {
+	// Bounds so that we can't drag the element outside of the list.
+	const bounds = {
+		top: rects[0].top,
+		left: rects[0].left,
+		right: rects[0].left + rects[0].width,
+		bottom: rects[0].top + rects[0].height,
+	}
+	for (const rect of rects) {
+		bounds.top = Math.min(bounds.top, rect.top)
+		bounds.left = Math.min(bounds.left, rect.left)
+		bounds.right = Math.max(bounds.right, rect.left + rect.width)
+		bounds.bottom = Math.max(bounds.bottom, rect.top + rect.height)
+	}
+	return bounds
+}
 
 // onMouseDown attaches to the list container.
 export function useDraggableList(args: {
 	direction: "horizontal" | "vertical"
 	onDragEnd: (args: { fromIndex: number; toIndex: number }) => void
 }) {
-	const [dragState, setDragState] = useState<DraggableListState>({ dragging: false })
+	const [dragState, setDragState] = useState<DraggableListState>({
+		mousedown: false,
+		dragging: false,
+	})
 	const dragStateRef = useRefCurrent(dragState)
 
 	const onMouseDown = useCallback((event: React.MouseEvent) => {
@@ -51,50 +95,62 @@ export function useDraggableList(args: {
 		const fromIndex = Number(element.getAttribute("data-drag-index"))
 		const list = event.currentTarget as HTMLElement
 
-		// Expensive measurement.
-		const rects: { index: number; rect: Rect; element: HTMLElement }[] = []
-		const children = Array.from(list.querySelectorAll("[data-drag-index]"))
-		for (const child of children) {
-			const rect = child.getBoundingClientRect()
-			const index = Number(child.getAttribute("data-drag-index"))
-			rects.push({ index, rect, element: child as HTMLElement })
-		}
-		const elementRect = element.getBoundingClientRect()
-
-		// Bounds so that we can't drag the element outside of the list.
-		const bounds = {
-			top: rects[0].rect.top,
-			left: rects[0].rect.left,
-			right: rects[0].rect.left + rects[0].rect.width,
-			bottom: rects[0].rect.top + rects[0].rect.height,
-		}
-		for (const { rect } of rects) {
-			bounds.top = Math.min(bounds.top, rect.top)
-			bounds.left = Math.min(bounds.left, rect.left)
-			bounds.right = Math.max(bounds.right, rect.left + rect.width)
-			bounds.bottom = Math.max(bounds.bottom, rect.top + rect.height)
-		}
-
 		setDragState({
-			dragging: true,
-			list,
-			rects,
-			bounds,
+			dragging: false,
+			mousedown: true,
 			fromIndex,
-			elementRect,
 			element,
-			offset: {
-				x: event.clientX,
-				y: event.clientY,
-			},
+			list,
+			point: { x: event.clientX, y: event.clientY },
 		})
+
+		// const rects = measureRects(list)
+		// const elementRect = element.getBoundingClientRect()
+		// const bounds = computeBounds(rects.map(({ rect }) => rect))
+
+		// setDragState({
+		// 	dragging: true,
+		// 	mousedown: true,
+		// 	list,
+		// 	rects,
+		// 	bounds,
+		// 	fromIndex,
+		// 	elementRect,
+		// 	element,
+		// 	point: {
+		// 		x: event.clientX,
+		// 		y: event.clientY,
+		// 	},
+		// })
 	}, [])
 
 	useEffect(() => {
 		const onMouseMove = (event: MouseEvent) => {
-			const dragState = dragStateRef.current
-			if (!dragState.dragging) return
-			const { element, elementRect, fromIndex, offset, rects, bounds } = dragState
+			let dragState = dragStateRef.current
+			if (!dragState.mousedown) return
+
+			if (!dragState.dragging) {
+				const point = { x: event.clientX, y: event.clientY }
+				const moved = distance(point, dragState.point)
+				if (moved < 8) return
+
+				const { element, list } = dragState
+				const rects = measureRects(list)
+				const elementRect = element.getBoundingClientRect()
+				const bounds = computeBounds(rects.map(({ rect }) => rect))
+
+				dragState = {
+					...dragState,
+					dragging: true,
+					rects,
+					bounds,
+					elementRect,
+				}
+
+				setDragState(dragState)
+			}
+
+			const { element, elementRect, fromIndex, point, rects, bounds } = dragState
 
 			// Drag the element
 			// const x = event.clientX - offset.x
@@ -102,12 +158,12 @@ export function useDraggableList(args: {
 
 			// Drag the element within the bounds.
 			const y = clamp(
-				event.clientY - offset.y,
+				event.clientY - point.y,
 				bounds.top - elementRect.top,
 				bounds.bottom - elementRect.top - elementRect.height
 			)
 			const x = clamp(
-				event.clientX - offset.x,
+				event.clientX - point.x,
 				bounds.left - elementRect.left,
 				bounds.right - elementRect.left - elementRect.width
 			)
@@ -162,12 +218,18 @@ export function useDraggableList(args: {
 	useEffect(() => {
 		const onMouseUp = (event: MouseEvent) => {
 			const dragState = dragStateRef.current
-			if (!dragState.dragging) return
-			const { elementRect, fromIndex, offset, rects } = dragState
 
+			if (!dragState.mousedown) return
+
+			if (!dragState.dragging) {
+				setDragState({ dragging: false, mousedown: false })
+				return
+			}
+
+			const { element, elementRect, fromIndex, point, rects } = dragState
 			// Find the closest drop position.
-			const x = event.clientX - offset.x
-			const y = event.clientY - offset.y
+			const x = event.clientX - point.x
+			const y = event.clientY - point.y
 			const hoverRect: Rect = {
 				top: elementRect.top + y,
 				left: elementRect.left + x,
@@ -181,13 +243,13 @@ export function useDraggableList(args: {
 
 			if (!closest) throw new Error("No closest.")
 			const toIndex = closest.index
-
 			argsRef.current.onDragEnd({ fromIndex, toIndex })
 
+			element.style.zIndex = ""
 			// Clear all the transforms.
 			for (const { element } of rects) element.style.transform = ""
 
-			setDragState({ dragging: false })
+			setDragState({ dragging: false, mousedown: false })
 		}
 
 		window.addEventListener("mouseup", onMouseUp)
@@ -196,9 +258,13 @@ export function useDraggableList(args: {
 
 	useShortcut("escape", () => {
 		const dragState = dragStateRef.current
-		if (!dragState.dragging) return false
-		for (const { element } of dragState.rects) element.style.transform = ""
-		setDragState({ dragging: false })
+		if (!dragState.mousedown) return false
+
+		if (dragState.dragging) {
+			for (const { element } of dragState.rects) element.style.transform = ""
+		}
+
+		setDragState({ dragging: false, mousedown: false })
 	})
 
 	return { onMouseDown, dragState }
