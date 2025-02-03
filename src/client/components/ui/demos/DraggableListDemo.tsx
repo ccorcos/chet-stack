@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { useDraggableList } from "../../../hooks/useDraggableList"
 
-const initialList = [...Array(12)].map((_, i) => `Item ${i + 1}`)
+const initialList = [...Array(12)].map((_, i) => `Item ${i + 1} ` + "-".repeat(i))
 
 export function DraggableListDemo() {
 	return (
@@ -9,6 +9,10 @@ export function DraggableListDemo() {
 			<div>DraggableListDemo</div>
 			<DraggableList direction="vertical" />
 			<DraggableList direction="horizontal" />
+			{/* Wrapped list doesn't work yet. */}
+			{/* <div style={{ width: 400 }}>
+				<DraggableList direction="horizontal" />
+			</div> */}
 		</div>
 	)
 }
@@ -34,7 +38,9 @@ function DraggableList(props: { direction: "vertical" | "horizontal" }) {
 				onMouseDown={onMouseDown}
 				style={{
 					display: "flex",
+					flexWrap: "wrap",
 					flexDirection: props.direction === "horizontal" ? "row" : "column",
+					gap: 8,
 				}}
 			>
 				{list.map((item, index) => (
@@ -42,9 +48,10 @@ function DraggableList(props: { direction: "vertical" | "horizontal" }) {
 						key={index}
 						data-drag-index={index}
 						style={{
-							width: 100,
+							width: props.direction === "horizontal" ? "auto" : 100,
 							userSelect: "none",
 							cursor: dragState.dragging ? "grabbing" : "grab",
+							backgroundColor: "var(--background)",
 							boxShadow:
 								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
 						}}
