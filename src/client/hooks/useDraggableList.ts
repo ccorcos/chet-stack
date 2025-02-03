@@ -148,6 +148,7 @@ export function useDraggableList(args: {
 				}
 
 				setDragState(dragState)
+				event.preventDefault()
 			}
 
 			const { element, elementRect, fromIndex, point, rects, bounds } = dragState
