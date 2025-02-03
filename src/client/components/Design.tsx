@@ -1,5 +1,5 @@
 import { compact } from "lodash"
-import React, { Suspense, useCallback, useMemo, useRef, useState } from "react"
+import React, { Suspense, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "../../shared/fuzzyMatch"
 import { isShortcut, useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -16,8 +16,8 @@ export function Design(props: { params: Record<string, string> }) {
 	const { params } = props
 
 	const currentPage = params.page || Object.keys(demos)[0]
-	const setCurrentPage = (page: string) =>
-		router.navigate(formatRoute({ type: "design", params: { page } }))
+	const setCurrentPage = (page: string | undefined) =>
+		router.navigate(formatRoute({ type: "design", params: page ? { page } : {} }))
 
 	// Layout is a full-page demo.
 	if (currentPage === "LayoutDemo") {
@@ -39,7 +39,10 @@ export function Design(props: { params: Record<string, string> }) {
 	)
 }
 
-function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: string) => void }) {
+function Sidebar(props: {
+	currentPage: string
+	setCurrentPage: (currentPage: string | undefined) => void
+}) {
 	const pageNames = Object.keys(demos)
 
 	const [value, setValue] = useState("")
@@ -54,16 +57,8 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 		)
 	}, [value])
 
-	const selected = useMemo(() => {
-		return new Set([props.currentPage])
-	}, [results, props.currentPage, value])
-
-	const setSelected = useCallback(
-		(keys: Set<string>) => {
-			props.setCurrentPage(Array.from(keys)[0])
-		},
-		[props.setCurrentPage]
-	)
+	const selected = props.currentPage
+	const setSelected = props.setCurrentPage
 
 	const input = useRef<HTMLInputElement>(null)
 

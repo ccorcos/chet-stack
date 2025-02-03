@@ -4,12 +4,21 @@ import { useKeyboardArrowFocus } from "../../hooks/useKeyboardArrowFocus"
 import { useMergeCallbacks } from "../../hooks/useMergeCallbacks"
 import { useSelectableList } from "../../hooks/useSelectableList"
 
-export function useListBox(args: {
-	list: string[]
-	selected: Set<string>
-	setSelected: (keys: Set<string>) => void
-	multiselect?: boolean
-}) {
+export function useListBox(
+	args:
+		| {
+				list: string[]
+				selected: string | undefined
+				setSelected: (key: string | undefined) => void
+				multiselect?: false
+		  }
+		| {
+				list: string[]
+				selected: Set<string>
+				setSelected: (keys: Set<string>) => void
+				multiselect: true
+		  }
+) {
 	const { onKeyDown: onKeyDown1 } = useKeyboardArrowFocus()
 	const { onClick, onKeyDown: onKeyDown2 } = useSelectableList(args)
 	const onKeyDown = useMergeCallbacks(onKeyDown1, onKeyDown2)

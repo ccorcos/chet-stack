@@ -150,15 +150,9 @@ function useListQuery(query: { prefix: string; anchor: string; limit: number; re
 function OKVList(props: { params: Record<string, string | undefined> }) {
 	const { router } = useClientEnvironment()
 
-	const selected = useMemo(() => new Set(props.params.selected), [props.params.selected])
+	const selected = props.params.selected
 
-	const setSelected = useCallback((keys: Set<string> | string | undefined) => {
-		let selected: string | undefined
-		if (keys instanceof Set) {
-			selected = Array.from(keys)[0]
-		} else {
-			selected = keys
-		}
+	const setSelected = useCallback((selected: string | undefined) => {
 		router.replace(setParam(router.state.url, "selected", selected))
 	}, [])
 
@@ -208,7 +202,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 						{items.map((key, i) => (
 							<ListItem
 								item={key}
-								selected={selected.has(key)}
+								selected={selected === key}
 								ref={i === 0 ? firstRef : i === list.length - 1 ? lastRef : undefined}
 								onKeyDown={(e) => {
 									if (isShortcut("delete", e.nativeEvent)) {

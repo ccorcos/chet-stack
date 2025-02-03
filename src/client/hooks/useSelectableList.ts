@@ -2,22 +2,32 @@ import { useCallback, useRef } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 import { isShortcut } from "./useShortcut"
 
-export function useSelectableList(args: {
-	list: string[]
-	selected: Set<string>
-	setSelected: (keys: Set<string>) => void
-	multiselect?: boolean
-}) {
+export function useSelectableList(
+	args:
+		| {
+				list: string[]
+				selected: string | undefined
+				setSelected: (key: string | undefined) => void
+				multiselect?: false
+		  }
+		| {
+				list: string[]
+				selected: Set<string>
+				setSelected: (keys: Set<string>) => void
+				multiselect: true
+		  }
+) {
 	// Assumes data-key="element" on each element.
 	// const [selected, setSelected] = useState(new Set<string>())
 
 	const listRef = useRefCurrent(args.list)
 	const selectedRef = useRefCurrent(args.selected)
-	const setSelected = args.setSelected
-
 	const prevClickRef = useRef<string | undefined>()
 
 	const shiftSelect = (key: string) => {
+		if (!args.multiselect) return
+		const setSelected = args.setSelected
+
 		const selected = selectedRef.current
 		const list = listRef.current
 		const index = list.indexOf(key)
@@ -38,6 +48,9 @@ export function useSelectableList(args: {
 	}
 
 	const metaSelect = (key: string) => {
+		if (!args.multiselect) return
+		const setSelected = args.setSelected
+
 		const selected = selectedRef.current
 		const newSelected = new Set<string>(selected)
 		if (newSelected.has(key)) {
@@ -50,10 +63,17 @@ export function useSelectableList(args: {
 	}
 
 	const normalSelect = (key: string) => {
-		const newSelected = new Set<string>()
-		newSelected.add(key)
-		setSelected(newSelected)
-		prevClickRef.current = key
+		if (args.multiselect) {
+			const setSelected = args.setSelected
+			const newSelected = new Set<string>()
+			newSelected.add(key)
+			setSelected(newSelected)
+			prevClickRef.current = key
+		} else {
+			const setSelected = args.setSelected
+			setSelected(key)
+			prevClickRef.current = key
+		}
 	}
 
 	const onClick = useCallback((event: React.MouseEvent) => {
@@ -88,7 +108,11 @@ export function useSelectableList(args: {
 
 		if (isShortcut("escape", event.nativeEvent)) {
 			event.preventDefault()
-			return setSelected(new Set<string>())
+			if (args.multiselect) {
+				return args.setSelected(new Set<string>())
+			} else {
+				return args.setSelected(undefined)
+			}
 		}
 	}, [])
 

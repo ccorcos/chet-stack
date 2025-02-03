@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useDeferredValue, useMemo, useTransition } from "react"
+import React, { Suspense, useDeferredValue, useTransition } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
@@ -33,7 +33,7 @@ function SchemaListPanel(props: { selected: string | undefined }) {
 		rerender()
 	})
 
-	const onSelectKey = (key: string) => {
+	const onSelectKey = (key: string | undefined) => {
 		router.replace(setParam(router.state.url, "schema", key))
 	}
 
@@ -71,7 +71,7 @@ function SchemaList(props: {
 	renderCount: number
 	stale: boolean
 	selected: string | undefined
-	onSelectKey: (key: string) => void
+	onSelectKey: (key: string | undefined) => void
 }) {
 	const { api } = useClientEnvironment()
 
@@ -87,13 +87,8 @@ function SchemaList(props: {
 
 	const schemas = loader.suspend()
 
-	const selected = useMemo(() => new Set(props.selected), [props.selected])
-	const setSelected = useCallback(
-		(keys: Set<string>) => {
-			props.onSelectKey(Array.from(keys)[0])
-		},
-		[props.onSelectKey]
-	)
+	const selected = props.selected
+	const setSelected = props.onSelectKey
 
 	const keys = schemas.map(({ key }) => key)
 	const { onClick, onKeyDown } = useListBox({ list: keys, selected, setSelected: setSelected })
@@ -105,7 +100,7 @@ function SchemaList(props: {
 			style={{ color: props.stale ? "var(--text-color2)" : "inherit" }}
 		>
 			{keys.map((key) => (
-				<ListItem key={key} item={key} selected={selected.has(key)}>
+				<ListItem key={key} item={key} selected={selected === key}>
 					{key}
 				</ListItem>
 			))}
