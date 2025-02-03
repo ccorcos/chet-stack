@@ -5,7 +5,7 @@ import { isShortcut, useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { FuzzyString } from "./ui/FuzzyString"
 import { Input } from "./ui/Input"
-import { ListBox, ListItem } from "./ui/ListBox"
+import { ListBox, ListItem, useListBox } from "./ui/ListBox"
 
 import { formatRoute } from "../../shared/routeHelpers"
 import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
@@ -54,15 +54,15 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 		)
 	}, [value])
 
-	const selectedIndex = useMemo(() => {
-		return results.findIndex(({ pageName }) => pageName === props.currentPage)
+	const selected = useMemo(() => {
+		return new Set([props.currentPage])
 	}, [results, props.currentPage, value])
 
-	const setSelectedIndex = useCallback(
-		(index: number) => {
-			return props.setCurrentPage(results[index].pageName)
+	const setSelected = useCallback(
+		(keys: Set<string>) => {
+			props.setCurrentPage(Array.from(keys)[0])
 		},
-		[results]
+		[props.setCurrentPage]
 	)
 
 	const input = useRef<HTMLInputElement>(null)
@@ -70,6 +70,16 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 	useShortcut("cmd-p", () => {
 		input.current?.focus()
 	})
+
+	const items = results.map(({ pageName }) => pageName)
+	const { onClick, onKeyDown } = useListBox({
+		list: items,
+		selected,
+		setSelected,
+	})
+
+	// TODO: this input doesnt work correctly because it should really be a dropdown
+	// the focus is on the input, not the listbox...
 
 	return (
 		<LeftPanelLayout show={true}>
@@ -88,17 +98,17 @@ function Sidebar(props: { currentPage: string; setCurrentPage: (currentPage: str
 				}}
 			/>
 
-			<ListBox
-				items={results}
-				selectedIndex={selectedIndex}
-				onSelectIndex={setSelectedIndex}
-				autoFocus={true}
-			>
-				{(item, props) => (
-					<ListItem {...props} style={{ padding: "0.5em" }}>
-						{item.match ? <FuzzyString match={item.match} /> : item.pageName}
+			<ListBox onClick={onClick} onKeyDown={onKeyDown}>
+				{results.map(({ pageName, match }) => (
+					<ListItem
+						key={pageName}
+						item={pageName}
+						selected={pageName === props.currentPage}
+						style={{ padding: "0.5em" }}
+					>
+						{match ? <FuzzyString match={match} /> : pageName}
 					</ListItem>
-				)}
+				))}
 			</ListBox>
 		</LeftPanelLayout>
 	)

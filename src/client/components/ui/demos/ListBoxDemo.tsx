@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { ListBox, ListItem } from "../ListBox"
+import { ListBox, ListItem, useListBox } from "../ListBox"
 
 export function ListBoxDemo() {
 	return (
@@ -12,16 +12,22 @@ export function ListBoxDemo() {
 
 function MiniListbox() {
 	const items = ["apple", "orange", "lemon", "grapefruit", "cherry", "plum"]
-	const [selectedIndex, setSelectedIndex] = useState<number | undefined>()
+
+	const [selected, setSelected] = useState(new Set<string>())
+	const { onClick, onKeyDown } = useListBox({
+		list: items,
+		selected,
+		setSelected,
+		multiselect: true,
+	})
 
 	return (
-		<ListBox
-			items={items}
-			selectedIndex={selectedIndex}
-			onSelectIndex={setSelectedIndex}
-			autoFocus={true}
-		>
-			{(item, props) => <ListItem {...props}>{item}</ListItem>}
+		<ListBox onClick={onClick} onKeyDown={onKeyDown}>
+			{items.map((item) => (
+				<ListItem key={item} item={item} selected={selected.has(item)}>
+					{item}
+				</ListItem>
+			))}
 		</ListBox>
 	)
 }

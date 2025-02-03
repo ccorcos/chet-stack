@@ -1,4 +1,4 @@
-import React, { Suspense, useDeferredValue, useTransition } from "react"
+import React, { Suspense, useCallback, useDeferredValue, useMemo, useTransition } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
@@ -8,7 +8,7 @@ import { useLoader } from "../../../hooks/useLoader"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Button } from "../Button"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
-import { ListBoxKeyed, ListItem } from "../ListBox"
+import { ListBox, ListItem, useListBox } from "../ListBox"
 import { TextInput } from "../TextInput"
 
 export function CustomDatabaseDemo(props: { params: Record<string, string | undefined> }) {
@@ -87,19 +87,29 @@ function SchemaList(props: {
 
 	const schemas = loader.suspend()
 
+	const selected = useMemo(() => new Set(props.selected), [props.selected])
+	const setSelected = useCallback(
+		(keys: Set<string>) => {
+			props.onSelectKey(Array.from(keys)[0])
+		},
+		[props.onSelectKey]
+	)
+
+	const keys = schemas.map(({ key }) => key)
+	const { onClick, onKeyDown } = useListBox({ list: keys, selected, setSelected: setSelected })
+
 	return (
-		<>
-			<ListBoxKeyed
-				items={schemas}
-				getKey={({ key }) => key}
-				selectedKey={props.selected}
-				onSelectKey={props.onSelectKey}
-				autoFocus={true}
-				style={{ color: props.stale ? "var(--text-color2)" : "inherit" }}
-			>
-				{(item, props) => <ListItem {...props}>{item.key}</ListItem>}
-			</ListBoxKeyed>
-		</>
+		<ListBox
+			onClick={onClick}
+			onKeyDown={onKeyDown}
+			style={{ color: props.stale ? "var(--text-color2)" : "inherit" }}
+		>
+			{keys.map((key) => (
+				<ListItem key={key} item={key} selected={selected.has(key)}>
+					{key}
+				</ListItem>
+			))}
+		</ListBox>
 	)
 }
 

@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from "react"
+import React, { Suspense, useCallback, useMemo } from "react"
 import { incStr } from "../../../../shared/incStr"
 import { randomId } from "../../../../shared/randomId"
 import { setParam } from "../../../../shared/routeHelpers"
@@ -10,7 +10,7 @@ import { Subspace } from "../../Subspace"
 import { Button } from "../Button"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
-import { ListBoxKeyed, ListItem } from "../ListBox"
+import { ListBox, ListItem, useListBox } from "../ListBox"
 import { TextInput } from "../TextInput"
 
 export function MasterDetailDemo(props: { params: Record<string, string | undefined> }) {
@@ -150,10 +150,17 @@ function useListQuery(query: { prefix: string; anchor: string; limit: number; re
 function OKVList(props: { params: Record<string, string | undefined> }) {
 	const { router } = useClientEnvironment()
 
-	const selected = props.params.selected
-	const setSelected = (selected: string | undefined) => {
+	const selected = useMemo(() => new Set(props.params.selected), [props.params.selected])
+
+	const setSelected = useCallback((keys: Set<string> | string | undefined) => {
+		let selected: string | undefined
+		if (keys instanceof Set) {
+			selected = Array.from(keys)[0]
+		} else {
+			selected = keys
+		}
 		router.replace(setParam(router.state.url, "selected", selected))
-	}
+	}, [])
 
 	const prefix = props.params.prefix || ""
 	const setPrefix = (prefix: string) => {
@@ -177,35 +184,42 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 		setSelected(undefined)
 	}
 
+	// const keys = schemas.map(({ key }) => key)
+	// const { onClick, onKeyDown } = useListBox({ list: keys, selected, setSelected: setSelected })
+
+	const items = list.map(({ key }) => key)
+	const { onClick, onKeyDown } = useListBox({
+		list: items,
+		selected,
+		setSelected,
+	})
+
 	return (
 		<div style={{ display: "flex", flexDirection: "column", maxHeight: "100%", gap: 8 }}>
 			<Input placeholder="Search" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
 			<div ref={scrollRef} style={{ flexGrow: 1, minHeight: 0, overflowY: "auto" }}>
 				<Suspense fallback={<div>Loading...</div>}>
 					{loadingUp && <div>Loading...</div>}
-					<ListBoxKeyed
-						items={list}
-						getKey={({ key }) => key}
-						selectedKey={selected}
-						onSelectKey={setSelected}
-						autoFocus={true}
+					<ListBox
+						onClick={onClick}
+						onKeyDown={onKeyDown}
 						style={{ color: loading ? "var(--text-color2)" : "inherit" }}
 					>
-						{(item, props, i) => (
+						{items.map((key, i) => (
 							<ListItem
+								item={key}
+								selected={selected.has(key)}
 								ref={i === 0 ? firstRef : i === list.length - 1 ? lastRef : undefined}
-								{...props}
 								onKeyDown={(e) => {
-									props.onKeyDown(e)
 									if (isShortcut("delete", e.nativeEvent)) {
-										onDeleteRecord(item.key)
+										onDeleteRecord(key)
 									}
 								}}
 							>
-								{item.key}
+								{key}
 							</ListItem>
-						)}
-					</ListBoxKeyed>
+						))}
+					</ListBox>
 					{loadingDown && <div>Loading...</div>}
 				</Suspense>
 			</div>
