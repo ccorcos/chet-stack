@@ -1,13 +1,13 @@
 import React, { useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { passthroughRef } from "../../../helpers/passthroughRef"
-import { withStyle } from "../../../helpers/withStyle"
 import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { Input, NakedInput } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { SelectInput, tokenStyle } from "../MultiSelectInput"
@@ -317,7 +317,7 @@ const TableCell = passthroughRef(
 							style={{
 								background: "var(--popup-background)",
 								boxShadow: "var(--shadow)",
-								height: "100%",
+								minHeight: "100%",
 								...borderPadding(editing),
 							}}
 						>
@@ -345,13 +345,13 @@ function borderPadding(elm: HTMLDivElement): React.CSSProperties {
 	}
 }
 
-const CellInput = withStyle(Input, {
+const cellInputStyle = {
 	width: "100%",
 	height: "100%",
 	borderRadius: 0,
 	borderWidth: 0,
 	padding: "2px 8px",
-})
+}
 
 const StringPropertyRenderer: PropertyRenderer<StringPropertyType> = {
 	icon: (props) => <div {...props}>"</div>,
@@ -368,7 +368,19 @@ const StringPropertyRenderer: PropertyRenderer<StringPropertyType> = {
 	edit: (args) => {
 		const value = StringPropertyRenderer.parse(args) || ""
 		return (
-			<CellInput value={value} autoFocus={true} onChange={(e) => args.onUpdate(e.target.value)} />
+			<ContentEditableInput
+				value={value}
+				autoFocus={true}
+				style={{
+					width: "100%",
+					height: "100%",
+					borderRadius: 0,
+					borderWidth: 0,
+					padding: "2px 8px",
+				}}
+				onSubmit={(value) => args.onUpdate(value)}
+				onBlur={() => args.onDismiss()}
+			/>
 		)
 	},
 }
@@ -391,8 +403,9 @@ const NumberPropertyRenderer: PropertyRenderer<NumberPropertyType> = {
 	edit: (args) => {
 		const value = NumberPropertyRenderer.parse(args)
 		return (
-			<CellInput
+			<Input
 				type="number"
+				style={cellInputStyle}
 				autoFocus={true}
 				value={value || ""}
 				onChange={(e) => args.onUpdate(e.target.value)}
@@ -414,10 +427,10 @@ const BooleanPropertyRenderer: PropertyRenderer<BooleanPropertyType> = {
 	view: (args) => {
 		const value = BooleanPropertyRenderer.parse(args)
 		return (
-			<CellInput
+			<Input
 				type="checkbox"
 				checked={value}
-				style={{ pointerEvents: "none", width: "auto" }}
+				style={{ ...cellInputStyle, pointerEvents: "none", width: "auto" }}
 				onChange={() => {}}
 			/>
 		)
@@ -426,8 +439,9 @@ const BooleanPropertyRenderer: PropertyRenderer<BooleanPropertyType> = {
 		throw new Error("This never gets called.")
 		const value = BooleanPropertyRenderer.parse(args)
 		return (
-			<CellInput
+			<Input
 				type="checkbox"
+				style={cellInputStyle}
 				checked={value}
 				onChange={(e) => args.onUpdate(e.target.checked)}
 			/>

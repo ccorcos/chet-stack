@@ -90,7 +90,10 @@ const stopNextClick = (element: HTMLElement) => {
 	element.addEventListener("click", onClick)
 }
 
-// onMouseDown attaches to the list container.
+/**
+ * onMouseDown attaches to the list container.
+ * Important that items have a data-drag-index attribute.
+ */
 export function useDraggableList(args: {
 	direction: "horizontal" | "vertical"
 	onDragEnd: (args: { fromIndex: number; toIndex: number }) => void
