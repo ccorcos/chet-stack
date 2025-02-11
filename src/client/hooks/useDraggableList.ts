@@ -78,6 +78,18 @@ function computeBounds(rects: Rect[]) {
 	return bounds
 }
 
+const stopNextClick = (element: HTMLElement) => {
+	const onClick = (event: Event) => {
+		event.stopPropagation()
+		element.removeEventListener("click", onClick)
+	}
+	setTimeout(() => {
+		// Cleanup in case the click event never happened.
+		element.removeEventListener("click", onClick)
+	}, 0)
+	element.addEventListener("click", onClick)
+}
+
 // onMouseDown attaches to the list container.
 export function useDraggableList(args: {
 	direction: "horizontal" | "vertical"
@@ -251,10 +263,13 @@ export function useDraggableList(args: {
 			for (const { element } of rects) element.style.transform = ""
 
 			setDragState({ dragging: false, mousedown: false })
+
+			// We don't want to click on drop.
+			stopNextClick(event.target as HTMLElement)
 		}
 
-		window.addEventListener("mouseup", onMouseUp)
-		return () => window.removeEventListener("mouseup", onMouseUp)
+		window.addEventListener("pointerup", onMouseUp)
+		return () => window.removeEventListener("pointerup", onMouseUp)
 	}, [])
 
 	useShortcut("escape", () => {
