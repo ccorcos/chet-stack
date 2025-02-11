@@ -1,13 +1,15 @@
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { passthroughRef } from "../../../helpers/passthroughRef"
-import { useWrite } from "../../../hooks/useDatabase"
+import { useGet, useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
+import { useWriteJsonList } from "../../../hooks/useWriteJsonList"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { ContentEditableInput } from "../ContentEditableInput"
+import { DataList } from "../DataList"
 import { Input, NakedInput } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { SelectInput, tokenStyle } from "../MultiSelectInput"
@@ -149,12 +151,45 @@ function PropertyValue(props: { obj: Record; property: Property }) {
 export function TableViewDemo() {
 	return (
 		<Subspace prefix="TableViewDemo:">
-			<Layout LeftPanel={<LeftPanelLayout show={true}>Left</LeftPanelLayout>}>
+			<Layout
+				LeftPanel={
+					<LeftPanelLayout show={true}>
+						<Suspense fallback={<div>Loading...</div>}>
+							<SchemaList />
+						</Suspense>
+					</LeftPanelLayout>
+				}
+			>
 				<ContentLayout>
 					<TableView />
 				</ContentLayout>
 			</Layout>
 		</Subspace>
+	)
+}
+
+function SchemaList() {
+	const schemaListKey = "SchemaList"
+	const result = useGet(schemaListKey)
+	result.remoteResult.suspend()
+	const list: string[] = JSON.parse(result.localResult.hit || "[]")
+
+	const { onInsert, onReorder, onDelete } = useWriteJsonList({
+		key: schemaListKey,
+		value: list,
+		onNewItem: () => randomId(),
+	})
+
+	const [selected, setSelected] = useState(new Set<string>())
+	return (
+		<DataList
+			list={list}
+			selected={selected}
+			setSelected={setSelected}
+			onInsert={onInsert}
+			onDelete={onDelete}
+			onReorder={onReorder}
+		/>
 	)
 }
 

@@ -23,7 +23,16 @@ function JSONArrayDemo() {
 	result.remoteResult.suspend()
 	const list: string[] = JSON.parse(result.localResult.hit || "[]")
 
-	const { onInsert, onReorder, onDelete } = useWriteJsonList(JSONArrayDemoKey, list)
+	const { onInsert, onReorder, onDelete } = useWriteJsonList({
+		key: JSONArrayDemoKey,
+		value: list,
+		onNewItem: () => {
+			if (list.length === 0) return "0"
+			const last = Math.max(...list.map((i) => parseInt(i))) || 0
+			const newItem = (last + 1).toString()
+			return newItem
+		},
+	})
 
 	const [selected, setSelected] = useState(new Set<string>())
 	return (

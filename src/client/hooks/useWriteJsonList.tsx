@@ -1,15 +1,16 @@
 import { useWrite } from "./useDatabase"
 
-export function useWriteJsonList(key: string, value: string[]) {
+export function useWriteJsonList(args: { key: string; value: string[]; onNewItem: () => string }) {
+	const { key, value, onNewItem } = args
+
 	const write = useWrite()
 
 	const onInsert = () => {
 		if (value.length === 0) {
-			write({ set: [{ key: key, value: JSON.stringify([0]) }] })
+			write({ set: [{ key: key, value: JSON.stringify([onNewItem()]) }] })
 		} else {
-			const last = Math.max(...value.map((i) => parseInt(i))) || 0
 			write({
-				set: [{ key: key, value: JSON.stringify([...value, (last + 1).toString()]) }],
+				set: [{ key: key, value: JSON.stringify([...value, onNewItem()]) }],
 			})
 		}
 	}
