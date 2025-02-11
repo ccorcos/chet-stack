@@ -8,10 +8,10 @@ import { isShortcut } from "../../../hooks/useShortcut"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Subspace } from "../../Subspace"
 import { Button } from "../Button"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBox, ListItem, useListBox } from "../ListBox"
-import { TextInput } from "../TextInput"
 
 export function MasterDetailDemo(props: { params: Record<string, string | undefined> }) {
 	const selected = props.params.selected
@@ -126,7 +126,7 @@ function OKVSelectedDetails(props: { selected: string }) {
 	return (
 		<>
 			<div>{properties}</div>
-			<TextInput
+			<ContentEditableInput
 				key={key}
 				multiline={true}
 				// style={{ color:  ? "var(--text-color2)" : "inherit" }}

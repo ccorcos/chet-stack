@@ -5,9 +5,9 @@ import { useList, useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { Input } from "../Input"
 import { HeaderCell, Table } from "../Table"
-import { TextInput } from "../TextInput"
 
 function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
 	return useList(
@@ -106,7 +106,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 					</>
 					{list.map(({ key, value }, index) => (
 						<React.Fragment key={key}>
-							<TextInput
+							<ContentEditableInput
 								ref={index === 0 ? firstRef : index === list.length - 1 ? lastRef : undefined}
 								data-key={key}
 								value={key}
@@ -117,7 +117,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 									})
 								}}
 							/>
-							<TextInput
+							<ContentEditableInput
 								value={value}
 								onSubmit={async (newValue) => {
 									write({ set: [{ key, value: newValue }] })

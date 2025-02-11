@@ -7,9 +7,9 @@ import { useDeferredCounter } from "../../../hooks/useCounter"
 import { useLoader } from "../../../hooks/useLoader"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { Button } from "../Button"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBox, ListItem, useListBox } from "../ListBox"
-import { TextInput } from "../TextInput"
 
 export function CustomDatabaseDemo(props: { params: Record<string, string | undefined> }) {
 	const selected = props.params.schema
@@ -150,7 +150,7 @@ function SchemaEditor(props: { selected: string; stale: boolean }) {
 	return (
 		<>
 			{!schema && <div style={{ color: "var(--red)" }}>No schema found</div>}
-			<TextInput
+			<ContentEditableInput
 				style={{ color: loading ? "var(--text-color2)" : "inherit" }}
 				value={schema || ""}
 				onSubmit={async (value) => {

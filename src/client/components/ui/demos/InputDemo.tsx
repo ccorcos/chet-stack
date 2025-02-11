@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { ComboBoxSelect } from "../ComboBox"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { Input, NakedInput } from "../Input"
 import { MultiSelectInput, SelectInput } from "../MultiSelectInput"
 
@@ -18,6 +19,8 @@ export function InputDemo() {
 			<Input type="text" placeholder="Hello" />
 			<div>Disabled Input</div>
 			<Input type="text" placeholder="Hello" disabled />
+			<div>ContentEditableInput</div>
+			<ContentEditableInput value="Hello" style={{ padding: "0.2em 0.4em" }} />
 			<div>Number Input</div>
 			<Input type="number" placeholder="123" />
 			<div>Date Input</div>
