@@ -158,6 +158,10 @@ input.feedback:focus {
 	background-color: var(--background);
 }
 
+.feedback:hover {
+	background-color: var(--gray6);
+}
+
 input,
 button {
 	background: transparent;

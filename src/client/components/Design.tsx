@@ -1,15 +1,16 @@
-import { compact } from "lodash"
-import React, { Suspense, useMemo, useRef, useState } from "react"
-import { FuzzyMatch, fuzzyMatch } from "../../shared/fuzzyMatch"
-import { isShortcut, useShortcut } from "../hooks/useShortcut"
+import React, { Suspense, useRef, useState } from "react"
+import { useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { FuzzyString } from "./ui/FuzzyString"
 import { Input } from "./ui/Input"
 import { ListBox, ListItem, useListBox } from "./ui/ListBox"
 
 import { formatRoute } from "../../shared/routeHelpers"
-import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
+import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
+import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
 import * as demos from "./ui/demos/autoindex"
+import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
+import { MenuItem } from "./ui/MenuItem"
 
 export function Design(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()
@@ -43,38 +44,34 @@ function Sidebar(props: {
 	currentPage: string
 	setCurrentPage: (currentPage: string | undefined) => void
 }) {
+	const { currentPage, setCurrentPage } = props
+
 	const pageNames = Object.keys(demos)
-
-	const [value, setValue] = useState("")
-
-	const results: { pageName: string; match?: FuzzyMatch }[] = useMemo(() => {
-		if (value === "") return pageNames.map((pageName) => ({ pageName }))
-		return compact(
-			pageNames.map((pageName) => {
-				const match = fuzzyMatch(value, pageName)
-				if (match) return { pageName, match }
-			})
-		)
-	}, [value])
-
-	const selected = props.currentPage
-	const setSelected = props.setCurrentPage
+	const [searchText, setSearchText] = useState("")
 
 	const input = useRef<HTMLInputElement>(null)
-
 	useShortcut("cmd-p", () => {
 		input.current?.focus()
 	})
 
-	const items = results.map(({ pageName }) => pageName)
-	const { onClick, onKeyDown } = useListBox({
-		list: items,
-		selected,
-		setSelected,
+	const filteredItems = useFuzzyMatch({
+		items: pageNames,
+		filter: searchText,
 	})
 
-	// TODO: this input doesnt work correctly because it should really be a dropdown
-	// the focus is on the input, not the listbox...
+	const onSubmit = (value: string) => {
+		setCurrentPage(value)
+		setSearchText("")
+	}
+
+	const [selectedIndex, setSelectedIndex] = useState(0)
+
+	const { onKeyDown } = useInputAutocomplete({
+		selectedIndex,
+		setSelectedIndex,
+		items: filteredItems,
+		onSubmit: ({ value }) => onSubmit(value),
+	})
 
 	return (
 		<LeftPanelLayout show={true}>
@@ -83,28 +80,67 @@ function Sidebar(props: {
 				type="search"
 				style={{ width: "calc(100% - 1em)", margin: "0.5em" }}
 				placeholder="Search..."
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				onKeyDown={(e) => {
-					if (isShortcut("down", e.nativeEvent)) {
-					} else if (isShortcut("up", e.nativeEvent)) {
-					} else {
-					}
-				}}
+				value={searchText}
+				onChange={(e) => setSearchText(e.target.value)}
+				onKeyDown={onKeyDown}
 			/>
 
-			<ListBox onClick={onClick} onKeyDown={onKeyDown}>
-				{results.map(({ pageName, match }) => (
-					<ListItem
-						key={pageName}
-						item={pageName}
-						selected={pageName === props.currentPage}
-						style={{ padding: "0.5em" }}
-					>
-						{match ? <FuzzyString match={match} /> : pageName}
-					</ListItem>
-				))}
-			</ListBox>
+			{searchText === "" ? (
+				<PageListBox
+					pageNames={pageNames}
+					currentPage={currentPage}
+					setCurrentPage={setCurrentPage}
+				/>
+			) : (
+				<div>
+					{filteredItems.map(({ value: pageName, match }, i) => (
+						<MenuItem
+							key={pageName}
+							className="feedback"
+							selected={selectedIndex === i}
+							onClick={() => onSubmit(pageName)}
+							onMouseDown={(e) => e.preventDefault()}
+							onMouseEnter={() => setSelectedIndex(i)}
+							style={{
+								padding: "0.5em",
+								backgroundColor: selectedIndex === i ? "var(--gray6)" : undefined,
+							}}
+						>
+							<FuzzyString match={match} />
+						</MenuItem>
+					))}
+				</div>
+			)}
 		</LeftPanelLayout>
+	)
+}
+
+function PageListBox(props: {
+	pageNames: string[]
+	currentPage: string
+	setCurrentPage: (currentPage: string | undefined) => void
+}) {
+	const { pageNames, currentPage, setCurrentPage } = props
+
+	const { onClick, onKeyDown } = useListBox({
+		list: pageNames,
+		selected: currentPage,
+		setSelected: setCurrentPage,
+	})
+
+	return (
+		<ListBox onClick={onClick} onKeyDown={onKeyDown}>
+			{pageNames.map((pageName) => (
+				<ListItem
+					key={pageName}
+					item={pageName}
+					selected={pageName === props.currentPage}
+					style={{ padding: "0.5em" }}
+					className="feedback"
+				>
+					{pageName}
+				</ListItem>
+			))}
+		</ListBox>
 	)
 }

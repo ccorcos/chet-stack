@@ -1,7 +1,8 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { fuzzyMatch, FuzzyMatch } from "../../../shared/fuzzyMatch"
+import React, { useLayoutEffect, useRef, useState } from "react"
+import { FuzzyMatch } from "../../../shared/fuzzyMatch"
 
-import { isShortcut } from "../../hooks/useShortcut"
+import { useFuzzyMatch } from "../../hooks/useFuzzyMatch"
+import { useInputAutocomplete } from "../../hooks/useInputAutocomplete"
 import { NakedButton } from "./Button"
 import { FuzzyString } from "./FuzzyString"
 import { NakedInput } from "./Input"
@@ -39,7 +40,15 @@ export function MultiSelectInput(props: {
 	notice?: React.ReactNode
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
-	const args = useSelectInput(props)
+
+	const args = useSelectInput({
+		...props,
+		onChange: (value) => {
+			props.onChange(value)
+			// Refocus the input after clicking an item.
+			inputRef.current?.focus()
+		},
+	})
 
 	useLayoutEffect(() => {
 		if (props.autoFocus) inputRef.current?.focus()
@@ -126,71 +135,27 @@ function useSelectInput(props: {
 	onDismiss?: () => void
 }) {
 	const [text, setText] = useState("")
-	const [focused, setFocused] = useState(false)
 	const [selectedIndex, setSelectedIndex] = useState(0)
 
-	const filteredItems = useMemo(() => {
-		let items = props.items
-
-		// Remove items that are already selected.
-		items = items.filter((str) => !props.value.includes(str))
-
-		// If the text is empty, show all items.
-		if (text === "") return items.map((str) => ({ value: str, match: [{ skip: str }] }))
-
-		// Fuzzy match items.
-		return items
-			.map((str) => ({ value: str, match: fuzzyMatch(text, str)! }))
-			.filter(({ match }) => Boolean(match))
-	}, [text, props.items, props.value])
+	const filteredItems = useFuzzyMatch({
+		items: props.items,
+		without: props.value,
+		filter: text,
+	})
 
 	const onSubmit = (value: string) => {
 		props.onChange([...props.value, value])
 		setText("")
 	}
 
-	const handleKeydown = useCallback(
-		(event: React.KeyboardEvent) => {
-			if (isShortcut("down", event.nativeEvent)) {
-				event.preventDefault()
-				setSelectedIndex((i) => {
-					if (i >= filteredItems.length - 1) return filteredItems.length - 1
-					else return i + 1
-				})
-				return
-			}
-			if (isShortcut("up", event.nativeEvent)) {
-				event.preventDefault()
-				setSelectedIndex((i) => {
-					if (i === 0) return i
-					else return i - 1
-				})
-				return
-			}
-			if (isShortcut("enter", event.nativeEvent)) {
-				event.preventDefault()
-				if (filteredItems[selectedIndex]) {
-					onSubmit(filteredItems[selectedIndex].value)
-				}
-				return
-			}
-			if (isShortcut("escape", event.nativeEvent)) {
-				event.preventDefault()
-				props.onDismiss?.()
-				return
-			}
-			if (isShortcut("backspace", event.nativeEvent)) {
-				// Only delete a selected item if we're at the beginning of the input
-				const input = event.target as HTMLInputElement
-				if (input.selectionStart === 0 && input.selectionEnd === 0) {
-					event.preventDefault()
-					props.onChange(props.value.slice(0, -1))
-					return
-				}
-			}
-		},
-		[filteredItems, selectedIndex, props]
-	)
+	const { onKeyDown } = useInputAutocomplete({
+		selectedIndex,
+		setSelectedIndex,
+		items: filteredItems,
+		onSubmit: ({ value }) => onSubmit(value),
+		onBackspace: () => props.onChange(props.value.slice(0, -1)),
+		onDismiss: props.onDismiss,
+	})
 
 	return {
 		inputProps: {
@@ -199,12 +164,7 @@ function useSelectInput(props: {
 				setText(e.target.value)
 				setSelectedIndex(0)
 			},
-			onFocus: () => setFocused(true),
-			onBlur: () => {
-				setFocused(false)
-				// props.onDismiss?.()
-			},
-			onKeyDown: handleKeydown,
+			onKeyDown,
 		},
 		resultsProps: {
 			filteredItems,
@@ -213,6 +173,5 @@ function useSelectInput(props: {
 			onClick: onSubmit,
 			onDismiss: props.onDismiss,
 		},
-		focused,
 	}
 }
