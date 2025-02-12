@@ -4,7 +4,6 @@ import { passthroughRef } from "../../../helpers/passthroughRef"
 import { useGet, useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
-import { useWriteJsonList } from "../../../hooks/useWriteJsonList"
 import { Subspace } from "../../Subspace"
 import { NakedButton } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
@@ -173,14 +172,38 @@ function SchemaList() {
 	const result = useGet(schemaListKey)
 	result.remoteResult.suspend()
 	const list: string[] = JSON.parse(result.localResult.hit || "[]")
+	const key = schemaListKey
+	const onNewItem = () => randomId()
 
-	const { onInsert, onReorder, onDelete } = useWriteJsonList({
-		key: schemaListKey,
-		value: list,
-		onNewItem: () => randomId(),
-	})
+	const write = useWrite()
+	const onInsert = () => {
+		if (list.length === 0) {
+			write({ set: [{ key: key, value: JSON.stringify([onNewItem()]) }] })
+		} else {
+			write({
+				set: [{ key: key, value: JSON.stringify([...list, onNewItem()]) }],
+			})
+		}
+	}
 
-	const [selected, setSelected] = useState(new Set<string>())
+	const onReorder = ({ fromIndex, toIndex }: { fromIndex: number; toIndex: number }) => {
+		const newList = list.slice()
+		newList.splice(toIndex, 0, newList.splice(fromIndex, 1)[0])
+		write({ set: [{ key: key, value: JSON.stringify(newList) }] })
+	}
+
+	const onDelete = (x: string) => {
+		write({
+			set: [
+				{
+					key: key,
+					value: JSON.stringify(list.filter((item) => item !== x)),
+				},
+			],
+		})
+	}
+
+	const [selected, setSelected] = useState<string | undefined>(undefined)
 	return (
 		<DataList
 			list={list}

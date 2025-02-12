@@ -6,26 +6,40 @@ import { ListBox, ListItem, useListBox } from "./ListBox"
 
 /** Selectable and Draggable */
 
-export function DataList(props: {
-	selected: Set<string>
-	setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
-	list: string[]
-	onInsert: () => void
-	onDelete: (items: Set<string>) => void
-	/**
-	 * const newData = data.slice()
-	 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
-	 */
-	onReorder: (args: { fromIndex: number; toIndex: number }) => void
-}) {
-	const { selected, setSelected } = props
+export function DataList(
+	props:
+		| {
+				multiselect?: false
+				selected: string | undefined
+				setSelected: (key: string | undefined) => void
+				list: string[]
+				onInsert: () => void
+				onDelete: (items: string) => void
+				/**
+				 * const newData = data.slice()
+				 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
+				 */
+				onReorder: (args: { fromIndex: number; toIndex: number }) => void
+				children?: (item: string) => React.ReactNode
+		  }
+		| {
+				multiselect: true
+				selected: Set<string>
+				setSelected: (keys: Set<string>) => void
+				list: string[]
+				onInsert: () => void
+				onDelete: (items: Set<string>) => void
+				/**
+				 * const newData = data.slice()
+				 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
+				 */
+				onReorder: (args: { fromIndex: number; toIndex: number }) => void
+				children?: (item: string) => React.ReactNode
+		  }
+) {
+	const { selected } = props
 
-	const { onClick, onKeyDown } = useListBox({
-		list: props.list,
-		selected: selected,
-		setSelected: setSelected,
-		multiselect: true,
-	})
+	const { onClick, onKeyDown } = useListBox(props)
 
 	const { onMouseDown, dragState } = useDraggableList({
 		direction: "vertical",
@@ -49,20 +63,19 @@ export function DataList(props: {
 						item={item}
 						data-drag-index={index}
 						style={{
-							width: 100,
 							cursor: dragState.dragging ? "grabbing" : "grab",
 							boxShadow:
 								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
 						}}
-						selected={selected.has(item)}
+						selected={selected instanceof Set ? selected.has(item) : selected === item}
 						onKeyDown={(e) => {
 							if (isShortcut("delete", e.nativeEvent)) {
 								e.preventDefault()
-								props.onDelete(selected)
+								props.onDelete(selected as any)
 							}
 						}}
 					>
-						{item}
+						{props.children ? props.children(item) : item}
 					</ListItem>
 				))}
 			</ListBox>

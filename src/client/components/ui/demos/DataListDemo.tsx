@@ -36,9 +36,10 @@ function JSONArrayDemo() {
 
 	const [selected, setSelected] = useState(new Set<string>())
 	return (
-		<div>
+		<div style={{ width: 300 }}>
 			<div>JSONArray</div>
 			<DataList
+				multiselect={true}
 				list={list}
 				selected={selected}
 				setSelected={setSelected}
