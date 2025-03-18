@@ -73,8 +73,13 @@ function Sidebar(props: {
 		onSubmit: ({ value }) => onSubmit(value),
 	})
 
+	const [isOpen, setIsOpen] = useState(true)
+	useShortcut("cmd-\\", () => {
+		setIsOpen(!isOpen)
+	})
+
 	return (
-		<LeftPanelLayout show={true}>
+		<LeftPanelLayout show={isOpen}>
 			<Input
 				ref={input}
 				type="search"
