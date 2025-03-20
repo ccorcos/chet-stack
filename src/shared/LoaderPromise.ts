@@ -30,4 +30,11 @@ export class LoaderPromise<T = any> {
 		if (this.resolved) return this.value as T
 		throw this.promise
 	}
+
+	map<U>(fn: (value: T) => U) {
+		if (this.resolved) {
+			return new LoaderPromise(fn(this.value as T))
+		}
+		return new LoaderPromise(this.promise.then(fn))
+	}
 }

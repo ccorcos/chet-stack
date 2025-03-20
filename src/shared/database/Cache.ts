@@ -23,13 +23,13 @@ import {
 } from "./Range"
 import { ListArgs, WriteArgs } from "./types"
 
-export type LocalListResult = {
+export type LocalListResult<V = string> = {
 	miss?: true
-	hit?: { key: string; value: string }[]
-	prefix?: { key: string; value: string }[]
+	hit?: { key: string; value: V }[]
+	prefix?: { key: string; value: V }[]
 }
 
-export type LocalGetResult = { hit?: string; miss?: true }
+export type LocalGetResult<V = string> = { hit?: V; miss?: true }
 
 type Listener = { range: Range; id: string; fn: () => void }
 

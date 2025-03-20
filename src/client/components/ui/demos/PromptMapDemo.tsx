@@ -1,50 +1,76 @@
 import pLimit from "p-limit"
-import React, { Fragment, useMemo, useRef, useState } from "react"
-import { useCounter } from "../../../hooks/useCounter"
+import React, { Fragment, Suspense, useLayoutEffect, useMemo, useState } from "react"
+import { randomId } from "../../../../shared/randomId"
+import { useGetJSON, useWriteJSON } from "../../../hooks/useDatabase"
+import { useRefCurrent } from "../../../hooks/useRefCurrent"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { DataList } from "../DataList"
+import { Layout, LeftPanelLayout } from "../Layout"
 
-export function PromptMapDemo() {
-	const columnsRef = useRef<string[]>([])
-	const dataRef = useRef<string[][]>([])
-	const [_, rerender] = useCounter()
+export function Spreadsheet(props: { id: string }) {
+	const result = useGetJSON(props.id) || []
+	result.remoteResult.suspend()
+	const data: string[][] = result.localResult.hit || [["Name"]]
+
+	const write = useWriteJSON()
 
 	const [importText, setImportText] = useState("")
 	const onImport = () => {
-		const columns = columnsRef.current
-		const data = dataRef.current
-
+		const columns = data[0]
 		const lines = importText.split("\n").filter(Boolean)
-		data.push(...lines.map((line) => [line, ...columns.map(() => "")]))
+		write({
+			set: [
+				{
+					key: props.id,
+					value: [...data, ...lines.map((line) => [line, ...columns.slice(1).map(() => "")])],
+				},
+			],
+		})
 		setImportText("")
-		populate()
-		rerender()
 	}
 
 	const [columnText, setColumnText] = useState("")
 	const onNewColumn = () => {
-		const columns = columnsRef.current
-		const data = dataRef.current
-
-		columns.push(columnText)
+		if (columnText.trim() === "") return
+		const [columns, ...rest] = data
+		write({
+			set: [
+				{
+					key: props.id,
+					value: [[...columns, columnText], ...rest.map((row) => [...row, ""])],
+				},
+			],
+		})
 		setColumnText("")
-		for (const row of data) row.push("")
-		populate()
-		rerender()
+	}
+
+	const dataRef = useRefCurrent(data)
+	const writeCell = (i: number, j: number, value: string) => {
+		const data = dataRef.current
+		write({
+			set: [
+				{
+					key: props.id,
+					value: data.map((row, k) =>
+						k !== i ? row : row.map((cell, l) => (l !== j ? cell : value))
+					),
+				},
+			],
+		})
 	}
 
 	const { api } = useClientEnvironment()
-
 	const limit = useMemo(() => pLimit(10), [])
 
-	const populate = () => {
-		const columns = columnsRef.current
+	useLayoutEffect(() => {
 		const data = dataRef.current
+		const columns = data[0]
 
 		for (let i = 0; i < data.length; i++) {
 			for (let j = 0; j < columns.length; j++) {
-				if (data[i][j + 1] !== "") continue
+				if (data[i][j] !== "") continue
 
-				data[i][j + 1] = "loading..."
+				writeCell(i, j, "loading...")
 
 				const system = `
 					You are a helpful assistant populating cells in a spreadsheet so keep your answers concise.
@@ -72,16 +98,15 @@ export function PromptMapDemo() {
 					console.log("prompt", prompt)
 					const response = await api.prompt({ system, prompts: [prompt] })
 					if (response.status !== 200) {
-						data[i][j + 1] = "error..."
+						writeCell(i, j, "error...")
 						return
 					}
 					const value = response.body.reverse()[0].content
-					data[i][j + 1] = value
-					rerender()
+					writeCell(i, j, value)
 				})
 			}
 		}
-	}
+	}, [data])
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -107,18 +132,17 @@ export function PromptMapDemo() {
 				style={{
 					flex: 1,
 					display: "grid",
-					gridTemplateColumns: `repeat(${columnsRef.current.length + 1}, 1fr)`,
+					gridTemplateColumns: `repeat(${data[0].length}, 1fr)`,
 					gap: "8px",
 				}}
 			>
-				<div style={{ fontWeight: "bold" }}>input</div>
-				{columnsRef.current.map((column, i) => (
+				{data[0].map((column, i) => (
 					<div key={i} style={{ fontWeight: "bold" }}>
 						{column}
 					</div>
 				))}
 
-				{dataRef.current.map((row, i) => (
+				{data.slice(1).map((row, i) => (
 					<Fragment key={i}>
 						{row.map((cell, j) => (
 							<div key={`${i}-${j}`} style={{ padding: "4px", border: "1px solid #ddd" }}>
@@ -129,5 +153,62 @@ export function PromptMapDemo() {
 				))}
 			</div>
 		</div>
+	)
+}
+
+export function PromptMapDemo() {
+	const [selected, setSelected] = useState<string | undefined>(undefined)
+
+	return (
+		<Layout
+			LeftPanel={
+				<Suspense fallback={<div>Loading...</div>}>
+					<LeftPanelLayout show={true}>
+						<JSONObjectList id="promptList" selected={selected} setSelected={setSelected} />
+					</LeftPanelLayout>
+				</Suspense>
+			}
+		>
+			<Suspense fallback={<div>Loading...</div>}>
+				{selected && <Spreadsheet id={selected} />}
+			</Suspense>
+		</Layout>
+	)
+}
+
+function JSONObjectList(props: {
+	id: string
+	selected: string | undefined
+	setSelected: (key: string | undefined) => void
+}) {
+	const { id, ...rest } = props
+
+	const result = useGetJSON(id)
+	result.remoteResult.suspend()
+	const list: string[] = result.localResult.hit || []
+
+	const onNewItem = () => randomId()
+
+	const write = useWriteJSON()
+	const onInsert = () => {
+		if (list.length === 0) {
+			write({ set: [{ key: id, value: [onNewItem()] }] })
+		} else {
+			write({ set: [{ key: id, value: [...list, onNewItem()] }] })
+		}
+	}
+
+	const onReorder = ({ fromIndex, toIndex }: { fromIndex: number; toIndex: number }) => {
+		const newList = list.slice()
+		newList.splice(toIndex, 0, newList.splice(fromIndex, 1)[0])
+		write({ set: [{ key: id, value: newList }] })
+	}
+
+	const onDelete = (x: string) => {
+		write({ set: [{ key: id, value: list.filter((item) => item !== x) }] })
+	}
+
+	return (
+		<DataList list={list} {...rest} onInsert={onInsert} onDelete={onDelete} onReorder={onReorder} />
 	)
 }

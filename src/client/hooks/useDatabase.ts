@@ -19,6 +19,18 @@ export function useGet(key: string) {
 	return { localResult: localGetResult, remoteResult }
 }
 
+export function useGetJSON(key: string) {
+	const { localResult, remoteResult } = useGet(key)
+
+	const jsonLocalResult: LocalGetResult<any> = useMemo(() => {
+		if (localResult.miss) return { miss: true }
+		if (localResult.hit === undefined) return { hit: undefined }
+		return { hit: JSON.parse(localResult.hit) }
+	}, [localResult])
+
+	return { localResult: jsonLocalResult, remoteResult }
+}
+
 export function useList(_args: ListArgs<string>) {
 	const { api, cache } = useClientEnvironment()
 
@@ -52,10 +64,29 @@ export function useList(_args: ListArgs<string>) {
 		const response = await api.list(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		cache.insert(args, response.body)
+		// return response.body
 	})
 
 	const localResult = localResultRef.current
 	return { localResult, remoteResult }
+}
+
+export function useListJSON(args: ListArgs<string>) {
+	const { localResult, remoteResult } = useList(args)
+
+	const jsonLocalResult: LocalListResult<any> = useMemo(() => {
+		if (localResult.hit) {
+			return { hit: localResult.hit.map(({ key, value }) => ({ key, value: JSON.parse(value) })) }
+		}
+		if (localResult.prefix) {
+			return {
+				prefix: localResult.prefix.map(({ key, value }) => ({ key, value: JSON.parse(value) })),
+			}
+		}
+		return { miss: true }
+	}, [localResult])
+
+	return { localResult: jsonLocalResult, remoteResult }
 }
 
 type PendingWrite = { range: Range; id: string; promise: Promise<any> }
@@ -108,5 +139,16 @@ export function useWrite() {
 		trackPendingWrite(args, promise)
 
 		return await promise
+	}
+}
+
+export function useWriteJSON() {
+	const write = useWrite()
+
+	return async (args: WriteArgs<string, any>) => {
+		write({
+			...args,
+			set: args.set?.map(({ key, value }) => ({ key, value: JSON.stringify(value) })),
+		})
 	}
 }
