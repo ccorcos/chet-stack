@@ -1,6 +1,6 @@
 import * as t from "data-type-ts"
 import type { Request, Response } from "express"
-import { query } from "../../shared/database/Query"
+import { query } from "../../shared/database/QueryNodeJs"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // TODO: request validation.

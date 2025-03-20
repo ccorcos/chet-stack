@@ -1,4 +1,3 @@
-import vm from "vm"
 import { ValidationError } from "../errors"
 import { Cache } from "./Cache"
 import { ListArgs, OrderedKeyValueApi } from "./types"
@@ -17,31 +16,32 @@ export function query(
 		return result
 	}
 
+	const listJSON = (args: ListArgs<string>) => {
+		const result = list(args)
+		return result.map(({ key, value }) => ({ key, value: JSON.parse(value) }))
+	}
+
 	const get = (key: string) => {
 		const value = list({ gte: key, lte: key })
 		return value[0]?.value
 	}
 
-	const sandbox = {
-		require: undefined,
-		process: undefined,
-		global: undefined,
+	const getJSON = (key: string) => {
+		const value = get(key)
+		return JSON.parse(value)
+	}
+
+	const context = {
 		console: { log: (msg: string) => console.log("[Sandbox]", msg) },
-		list,
-		get,
+		db: { list, get, getJSON, listJSON },
 	}
 
 	const { query } = args
 
-	// Create a VM context
-	const context = vm.createContext(sandbox)
-
 	let result: any
 	try {
-		// Execute the script and capture the return value
-		result = vm.runInContext(["(function() {", query, "})();"].join("\n"), context, {
-			timeout: 1000,
-		})
+		const fn = new Function(...Object.keys(context), `return (function() { ${query} })();`)
+		result = fn(...Object.values(context))
 	} catch (err) {
 		console.error("Sandbox error:", err)
 		throw new ValidationError("Sandbox error")
