@@ -1,12 +1,12 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { InMemoryDatabase } from "./InMemoryDatabase"
-import { query as queryEval } from "./QueryEval"
-import { query as queryNodeJs } from "./QueryNodeJs"
+import { query as queryEval } from "./Query"
+import { queryNodeVm } from "./QueryNodeVm"
 
-describe("QueryNodeJs", () => {
+describe("Query", () => {
 	it("works", () => {
-		for (const query of [queryNodeJs, queryEval]) {
+		for (const query of [queryNodeVm, queryEval]) {
 			const db = new InMemoryDatabase<string, string>()
 
 			db.set("a", "1")
@@ -17,13 +17,11 @@ describe("QueryNodeJs", () => {
 
 			const { data, ranges, result } = query(
 				{ db },
-				{
-					query: `
+				`
 					const list = db.getJSON('list')
 					const items = list.map(item => db.getJSON(item));
 					return items.reduce((a, b) => a + b, 0)
-				`,
-				}
+				`
 			)
 
 			assert.equal(result, 3)

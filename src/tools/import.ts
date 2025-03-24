@@ -4,7 +4,7 @@ import { parse } from "csv-parse/sync"
 import { readFileSync } from "fs"
 import { Database } from "../server/services/Database"
 import { config } from "../server/services/ServerConfig"
-import { Subspace } from "../shared/database/DatabaseEncoder"
+import { KeyEncode, PrefixKeyEncoder } from "../shared/database/Encoder"
 
 const db = new Database(config.dbPath)
 
@@ -14,7 +14,7 @@ const db = new Database(config.dbPath)
 // sqlite3 db/database.sqlite
 // sqlite> select * from data;
 
-const plants = Subspace("plants", db)
+const plants = KeyEncode(db, PrefixKeyEncoder("plants"))
 
 const csvContent = readFileSync("/Users/chet/Desktop/Stock Files/plants.csv", "utf8")
 const records = parse(csvContent, {

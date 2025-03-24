@@ -1,31 +1,9 @@
+import { codec } from "./Codec"
 import { ListArgs, OrderedKeyValueApi, WriteArgs } from "./types"
-
-type KeyValueEncoder<K, V> = {
-	encodeKey: (key: K) => string
-	decodeKey: (key: string) => K
-	encodeValue: (value: V) => string
-	decodeValue: (value: string) => V
-}
 
 export type Encoder<I, O> = {
 	encode: (key: I) => O
 	decode: (key: O) => I
-}
-
-// This is the equivalent fo the "tuple-layer" from foundationdb.
-
-export function Subspace(prefix: string, db: OrderedKeyValueApi<string, any>) {
-	return KeyEncoder(db, {
-		encode: (key) => prefix + key,
-		decode: (key) => key.slice(prefix.length),
-	})
-}
-
-export function SubspaceEncoder(prefix: string): Encoder<string, string> {
-	return {
-		encode: (key) => prefix + key,
-		decode: (key) => key.slice(prefix.length),
-	}
 }
 
 export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O>): ListArgs<O> {
@@ -62,7 +40,7 @@ export function KeyEncodeWrite<K, V, O>(
 	}
 }
 
-export function KeyEncoder<K, V>(
+export function KeyEncode<K, V>(
 	db: OrderedKeyValueApi<string, V>,
 	encoder: Encoder<K, string>
 ): OrderedKeyValueApi<K, V> {
@@ -92,7 +70,7 @@ export function KeyEncoder<K, V>(
 	}
 }
 
-export function ValueEncoder<K, V>(
+export function ValueEncode<K, V>(
 	db: OrderedKeyValueApi<K, string>,
 	encoder: Encoder<V, string>
 ): OrderedKeyValueApi<K, V> {
@@ -120,4 +98,21 @@ export function ValueEncoder<K, V>(
 			})
 		},
 	}
+}
+
+export function PrefixKeyEncoder(prefix: string): Encoder<string, string> {
+	return {
+		encode: (key) => prefix + key,
+		decode: (key) => key.slice(prefix.length),
+	}
+}
+
+export const JSONValueEncoder: Encoder<string, any> = {
+	encode: (value) => JSON.stringify(value),
+	decode: (value) => JSON.parse(value),
+}
+
+export const TupleKeyEncoder: Encoder<string, any> = {
+	encode: (key) => codec.encode(key),
+	decode: (key) => codec.decode(key),
 }

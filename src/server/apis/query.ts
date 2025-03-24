@@ -1,6 +1,6 @@
 import * as t from "data-type-ts"
 import type { Request, Response } from "express"
-import { query } from "../../shared/database/QueryNodeJs"
+import { queryNodeVm } from "../../shared/database/QueryNodeVm"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // TODO: request validation.
@@ -12,5 +12,5 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	return query(environment, args)
+	return queryNodeVm(environment, args.query)
 }

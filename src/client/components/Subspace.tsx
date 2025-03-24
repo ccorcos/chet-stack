@@ -5,8 +5,8 @@ import {
 	KeyEncodeList,
 	KeyEncodeListArgs,
 	KeyEncodeWrite,
-	SubspaceEncoder,
-} from "../../shared/database/DatabaseEncoder"
+	PrefixKeyEncoder,
+} from "../../shared/database/Encoder"
 import { proxyObj } from "../../shared/proxyHelpers"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 
@@ -16,7 +16,7 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 	const { api } = environment
 
 	const newEnvironment = useMemo(() => {
-		const encoder = SubspaceEncoder(props.prefix)
+		const encoder = PrefixKeyEncoder(props.prefix)
 
 		const newApi = proxyObj(async (key, args) => {
 			if (key === "list") {
