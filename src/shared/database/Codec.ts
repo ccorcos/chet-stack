@@ -12,6 +12,7 @@ import {
 	ObjectEncoding,
 	StringEncoding,
 } from "lexicodec"
+import { ListArgs } from "./types"
 
 export { MAX, MIN }
 
@@ -34,3 +35,10 @@ export const codec = new Codec({
 	"~": DateEncoding,
 	"\xff": MaxEncoding,
 })
+
+export function prefixScan(prefix: any[]): ListArgs<any> {
+	return {
+		gt: [...prefix, MIN],
+		lt: [...prefix, MAX],
+	}
+}
