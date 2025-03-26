@@ -81,45 +81,40 @@ const example: Person[] = [
 
 type Index<K = any, V = any> = {
 	range: ListArgs<K>
-	update: (
-		db: OrderedKeyValueApi<K, V>,
-		inserted: { key: K; value: V }[],
-		removed: { key: K; value: V }[]
-	) => void
+	set: (db: OrderedKeyValueApi<K, V>, key: K, value: V) => void
+	delete: (db: OrderedKeyValueApi<K, V>, key: K) => void
 }
 
 describe("Indexing", () => {
 	it("seconary index", () => {
 		const lastFirstIndex: Index = {
 			range: { gt: ["person", MIN], lt: ["person", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					if (value.last === undefined || value.first === undefined) continue
-					db.delete(["lastfirst", value.last, value.first, value.id])
-				}
-				for (const { key, value } of inserted) {
-					if (value.last === undefined || value.first === undefined) continue
-					db.set(["lastfirst", value.last, value.first, value.id], key)
-				}
+			set: (db, key, value) => {
+				if (value.last === undefined || value.first === undefined) return
+				db.set(["lastfirst", value.last, value.first, value.id], null)
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				if (value.last === undefined || value.first === undefined) return
+				db.delete(["lastfirst", value.last, value.first, value.id])
 			},
 		}
 
 		const emailIndex: Index = {
 			range: { gt: ["email", MIN], lt: ["email", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					if (value.email === undefined || value.email.length === 0) continue
-					for (const { address } of value.email) {
-						if (address === undefined) continue
-						db.delete(["email", address, value.id])
-					}
+			set: (db, key, value) => {
+				if (value.email === undefined || value.email.length === 0) return
+				for (const { address } of value.email) {
+					if (address === undefined) continue
+					db.set(["email", address, value.id], key)
 				}
-				for (const { key, value } of inserted) {
-					if (value.email === undefined || value.email.length === 0) continue
-					for (const { address } of value.email) {
-						if (address === undefined) continue
-						db.set(["email", address, value.id], key)
-					}
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				if (value.email === undefined || value.email.length === 0) return
+				for (const { address } of value.email) {
+					if (address === undefined) continue
+					db.delete(["email", address, value.id])
 				}
 			},
 		}
@@ -128,15 +123,15 @@ describe("Indexing", () => {
 
 		// Running indexes manually here.
 		for (const person of example) {
+			lastFirstIndex.set(db, ["person", person.id], person)
+			emailIndex.set(db, ["person", person.id], person)
 			db.set(["person", person.id], person)
-			lastFirstIndex.update(db, [{ key: ["person", person.id], value: person }], [])
-			emailIndex.update(db, [{ key: ["person", person.id], value: person }], [])
 		}
 
 		const p1 = example[0]
+		lastFirstIndex.delete(db, ["person", p1.id])
+		emailIndex.delete(db, ["person", p1.id])
 		db.delete(["person", p1.id])
-		lastFirstIndex.update(db, [{ key: ["person", p1.id], value: p1 }], [])
-		emailIndex.update(db, [{ key: ["person", p1.id], value: p1 }], [])
 
 		console.log(db.list())
 	})
@@ -149,6 +144,8 @@ describe("Indexing", () => {
 
 		type Follow = {
 			id: [string, string]
+			from: string
+			to: string
 		}
 
 		type Post = {
@@ -161,65 +158,70 @@ describe("Indexing", () => {
 		// Secondary indexes
 		const userPostsIndex: Index<any, any> = {
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					db.delete(["userPosts", value.author_id, value.created_at, value.id])
-				}
-				for (const { key, value } of inserted) {
-					db.set(["userPosts", value.author_id, value.created_at, value.id], value.id)
-				}
+			set: (db, key, value) => {
+				if (value.author_id === undefined) return
+				db.set(["userPosts", value.author_id, value.created_at, value.id], null)
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				if (value.author_id === undefined) return
+				db.delete(["userPosts", value.author_id, value.created_at, value.id])
 			},
 		}
 
 		const followedByIndex: Index<any, any> = {
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					const [from, to] = value.id
-					db.delete(["followedBy", [to, from]])
-				}
-				for (const { key, value } of inserted) {
-					const [from, to] = value.id
-					db.set(["followedBy", [to, from]], from)
-				}
+			set: (db, key, value) => {
+				const { from, to } = value
+				db.set(["followedBy", to, from], value)
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				const { from, to } = value
+				db.delete(["followedBy", to, from])
 			},
 		}
 
-		// Tertiary indexes
+		// Tertiary indexes AKA fanout indexdes.
 		const followToTimlineIndex: Index<any, any> = {
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					const [from, to] = value.id
-					// Delete all posts from the user into the timeline.
-					db.list(prefixScan(["userPosts", to])).map(({ key: [_0, _1, createdAt, postId] }) => {
-						db.delete(["timeline", from, createdAt, postId])
-					})
+
+			set: (db, key, value) => {
+				const { from, to } = value
+				// Insert all posts from the user into the timeline.
+				for (const { key } of db.list(prefixScan(["userPosts", to]))) {
+					const [_indexName, _authorId, createdAt, postId] = key
+					db.set(["timeline", from, createdAt, postId], null)
 				}
-				for (const { key, value } of inserted) {
-					const [from, to] = value.id
-					// Insert all posts from the user into the timeline.
-					db.list(prefixScan(["userPosts", to])).map(({ key: [_0, _1, createdAt, postId] }) => {
-						db.set(["timeline", from, createdAt, postId], to)
-					})
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				const { from, to } = value
+				// Delete all posts from the user into the timeline.
+				for (const { key } of db.list(prefixScan(["userPosts", to]))) {
+					const [_indexName, _authorId, createdAt, postId] = key
+					db.delete(["timeline", from, createdAt, postId])
 				}
 			},
 		}
 
 		const postToTimelineIndex: Index<any, any> = {
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
-			update: (db, inserted, removed) => {
-				for (const { key, value } of removed) {
-					// Delete post from all followees' timelines.
-					db.list(prefixScan(["followedBy", value.author_id])).map(({ value: from }) => {
-						db.delete(["timeline", from, value.created_at, value.id])
-					})
+			set: (db, key, value) => {
+				// Insert post into all followees' timelines.
+				const { author_id, created_at, id } = value
+				for (const { key } of db.list(prefixScan(["followedBy", author_id]))) {
+					const [_indexName, _to, from] = key
+					db.set(["timeline", from, created_at, id], null)
 				}
-				for (const { key, value } of inserted) {
-					// Insert post into all followees' timelines.
-					db.list(prefixScan(["followedBy", value.author_id])).map(({ value: from }) => {
-						db.set(["timeline", from, value.created_at, value.id], value.id)
-					})
+			},
+			delete: (db, key) => {
+				const value = db.get(key)
+				// Delete post from all followees' timelines.
+				const { author_id, created_at, id } = value
+				for (const { key } of db.list(prefixScan(["followedBy", author_id]))) {
+					const [_indexName, _to, from] = key
+					db.delete(["timeline", from, created_at, id])
 				}
 			},
 		}
@@ -248,10 +250,10 @@ describe("Indexing", () => {
 
 		for (const user of users) db.set(["person", user.id], user)
 		for (const post of posts) {
-			db.set(["post", post.id], post)
 			// Manually running indexes.
-			userPostsIndex.update(db, [{ key: ["post", post.id], value: post }], [])
-			postToTimelineIndex.update(db, [{ key: ["post", post.id], value: post }], [])
+			userPostsIndex.set(db, ["post", post.id], post)
+			postToTimelineIndex.set(db, ["post", post.id], post)
+			db.set(["post", post.id], post)
 		}
 
 		for (const { id } of users) {
@@ -262,34 +264,24 @@ describe("Indexing", () => {
 		}
 
 		// Create a follow should add to the timeline index.
-		db.set(["follow", ["u1", "u2"]], "u1")
-		followedByIndex.update(db, [{ key: ["follow", ["u1", "u2"]], value: { id: ["u1", "u2"] } }], [])
-		followToTimlineIndex.update(
-			db,
-			[{ key: ["follow", ["u1", "u2"]], value: { id: ["u1", "u2"] } }],
-			[]
-		)
+		const follow12: Follow = { id: ["u1", "u2"], from: "u1", to: "u2" }
+		followedByIndex.set(db, ["follow", follow12.id], follow12)
+		followToTimlineIndex.set(db, ["follow", follow12.id], follow12)
+		db.set(["follow", follow12.id], follow12)
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
 
 		// Create another follow
-		db.set(["follow", ["u1", "u3"]], "u1")
-		followedByIndex.update(db, [{ key: ["follow", ["u1", "u3"]], value: { id: ["u1", "u3"] } }], [])
-		followToTimlineIndex.update(
-			db,
-			[{ key: ["follow", ["u1", "u3"]], value: { id: ["u1", "u3"] } }],
-			[]
-		)
+		const follow13: Follow = { id: ["u1", "u3"], from: "u1", to: "u3" }
+		followedByIndex.set(db, ["follow", follow13.id], follow13)
+		followToTimlineIndex.set(db, ["follow", follow13.id], follow13)
+		db.set(["follow", follow13.id], follow13)
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 4)
 
 		// Remove that first follow.
-		db.delete(["follow", ["u1", "u2"]])
-		// IMPORTANT: need to run tertiary index updates before secondary updates.
-		followToTimlineIndex.update(
-			db,
-			[],
-			[{ key: ["follow", ["u1", "u2"]], value: { id: ["u1", "u2"] } }]
-		)
-		followedByIndex.update(db, [], [{ key: ["follow", ["u1", "u2"]], value: { id: ["u1", "u2"] } }])
+		// IMPORTANT: need to run tertiary index updates before secondary updates before primary updates.
+		followToTimlineIndex.delete(db, ["follow", follow12.id])
+		followedByIndex.delete(db, ["follow", follow12.id])
+		db.delete(["follow", follow12.id])
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
 	})
 })
