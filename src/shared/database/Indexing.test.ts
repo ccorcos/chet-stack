@@ -16,8 +16,8 @@ examples...
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { codec, MAX, MIN, prefixScan } from "./Codec"
+import { Indexable } from "./Indexing"
 import { InMemoryDatabase } from "./InMemoryDatabase"
-import { ListArgs, OrderedKeyValueApi } from "./types"
 
 type Person = {
 	id: string
@@ -79,15 +79,13 @@ const example: Person[] = [
 	},
 ]
 
-type Index<K = any, V = any> = {
-	range: ListArgs<K>
-	set: (db: OrderedKeyValueApi<K, V>, key: K, value: V) => void
-	delete: (db: OrderedKeyValueApi<K, V>, key: K) => void
-}
-
 describe("Indexing", () => {
 	it("seconary index", () => {
-		const lastFirstIndex: Index = {
+		const db = Indexable(new InMemoryDatabase(codec.compare))
+
+		db.createIndex({
+			id: "lastfirst",
+			order: 0,
 			range: { gt: ["person", MIN], lt: ["person", MAX] },
 			set: (db, key, value) => {
 				if (value.last === undefined || value.first === undefined) return
@@ -98,9 +96,11 @@ describe("Indexing", () => {
 				if (value.last === undefined || value.first === undefined) return
 				db.delete(["lastfirst", value.last, value.first, value.id])
 			},
-		}
+		})
 
-		const emailIndex: Index = {
+		db.createIndex({
+			id: "email",
+			order: 0,
 			range: { gt: ["email", MIN], lt: ["email", MAX] },
 			set: (db, key, value) => {
 				if (value.email === undefined || value.email.length === 0) return
@@ -117,20 +117,14 @@ describe("Indexing", () => {
 					db.delete(["email", address, value.id])
 				}
 			},
-		}
-
-		const db = new InMemoryDatabase(codec.compare)
+		})
 
 		// Running indexes manually here.
 		for (const person of example) {
-			lastFirstIndex.set(db, ["person", person.id], person)
-			emailIndex.set(db, ["person", person.id], person)
 			db.set(["person", person.id], person)
 		}
 
 		const p1 = example[0]
-		lastFirstIndex.delete(db, ["person", p1.id])
-		emailIndex.delete(db, ["person", p1.id])
 		db.delete(["person", p1.id])
 
 		console.log(db.list())
@@ -155,8 +149,13 @@ describe("Indexing", () => {
 			content: string
 		}
 
+		const db = Indexable(new InMemoryDatabase(codec.compare))
+
 		// Secondary indexes
-		const userPostsIndex: Index<any, any> = {
+
+		db.createIndex({
+			id: "userPosts",
+			order: 0,
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
 			set: (db, key, value) => {
 				if (value.author_id === undefined) return
@@ -167,9 +166,11 @@ describe("Indexing", () => {
 				if (value.author_id === undefined) return
 				db.delete(["userPosts", value.author_id, value.created_at, value.id])
 			},
-		}
+		})
 
-		const followedByIndex: Index<any, any> = {
+		db.createIndex({
+			id: "followedBy",
+			order: 0,
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
 			set: (db, key, value) => {
 				const { from, to } = value
@@ -180,12 +181,13 @@ describe("Indexing", () => {
 				const { from, to } = value
 				db.delete(["followedBy", to, from])
 			},
-		}
+		})
 
 		// Tertiary indexes AKA fanout indexdes.
-		const followToTimlineIndex: Index<any, any> = {
+		db.createIndex({
+			id: "followToTimline",
+			order: 1,
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
-
 			set: (db, key, value) => {
 				const { from, to } = value
 				// Insert all posts from the user into the timeline.
@@ -203,9 +205,11 @@ describe("Indexing", () => {
 					db.delete(["timeline", from, createdAt, postId])
 				}
 			},
-		}
+		})
 
-		const postToTimelineIndex: Index<any, any> = {
+		db.createIndex({
+			id: "postToTimeline",
+			order: 1,
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
 			set: (db, key, value) => {
 				// Insert post into all followees' timelines.
@@ -224,9 +228,7 @@ describe("Indexing", () => {
 					db.delete(["timeline", from, created_at, id])
 				}
 			},
-		}
-
-		const db = new InMemoryDatabase(codec.compare)
+		})
 
 		// Create three users
 		const users: User[] = [
@@ -250,9 +252,6 @@ describe("Indexing", () => {
 
 		for (const user of users) db.set(["person", user.id], user)
 		for (const post of posts) {
-			// Manually running indexes.
-			userPostsIndex.set(db, ["post", post.id], post)
-			postToTimelineIndex.set(db, ["post", post.id], post)
 			db.set(["post", post.id], post)
 		}
 
@@ -265,22 +264,16 @@ describe("Indexing", () => {
 
 		// Create a follow should add to the timeline index.
 		const follow12: Follow = { id: ["u1", "u2"], from: "u1", to: "u2" }
-		followedByIndex.set(db, ["follow", follow12.id], follow12)
-		followToTimlineIndex.set(db, ["follow", follow12.id], follow12)
 		db.set(["follow", follow12.id], follow12)
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
 
 		// Create another follow
 		const follow13: Follow = { id: ["u1", "u3"], from: "u1", to: "u3" }
-		followedByIndex.set(db, ["follow", follow13.id], follow13)
-		followToTimlineIndex.set(db, ["follow", follow13.id], follow13)
 		db.set(["follow", follow13.id], follow13)
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 4)
 
 		// Remove that first follow.
 		// IMPORTANT: need to run tertiary index updates before secondary updates before primary updates.
-		followToTimlineIndex.delete(db, ["follow", follow12.id])
-		followedByIndex.delete(db, ["follow", follow12.id])
 		db.delete(["follow", follow12.id])
 		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
 	})

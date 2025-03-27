@@ -40,12 +40,12 @@ export function KeyEncodeWrite<K, V, O>(
 	}
 }
 
-export function KeyEncode<K, V>(
-	db: OrderedKeyValueApi<string, V>,
-	encoder: Encoder<K, string>
-): OrderedKeyValueApi<K, V> {
+export function KeyEncode<I, O, V>(
+	db: OrderedKeyValueApi<O, V>,
+	encoder: Encoder<I, O>
+): OrderedKeyValueApi<I, V> {
 	return {
-		get(key: K) {
+		get(key: I) {
 			return db.get(encoder.encode(key))
 		},
 
@@ -55,11 +55,11 @@ export function KeyEncode<K, V>(
 			return KeyDecodeList(results, encoder)
 		},
 
-		set(key: K, value: V) {
+		set(key: I, value: V) {
 			return db.set(encoder.encode(key), value)
 		},
 
-		delete(key: K) {
+		delete(key: I) {
 			return db.delete(encoder.encode(key))
 		},
 
@@ -70,10 +70,10 @@ export function KeyEncode<K, V>(
 	}
 }
 
-export function ValueEncode<K, V>(
-	db: OrderedKeyValueApi<K, string>,
-	encoder: Encoder<V, string>
-): OrderedKeyValueApi<K, V> {
+export function ValueEncode<K, I, O>(
+	db: OrderedKeyValueApi<K, O>,
+	encoder: Encoder<I, O>
+): OrderedKeyValueApi<K, I> {
 	return {
 		get(key: K) {
 			const value = db.get(key)
@@ -85,13 +85,13 @@ export function ValueEncode<K, V>(
 			return db.list(args).map(({ key, value }) => ({ key, value: encoder.decode(value) }))
 		},
 
-		set(key: K, value: V) {
+		set(key: K, value: I) {
 			return db.set(key, encoder.encode(value))
 		},
 
 		delete: db.delete,
 
-		write(tx: { set?: { key: K; value: V }[]; delete?: K[] }) {
+		write(tx: { set?: { key: K; value: I }[]; delete?: K[] }) {
 			return db.write({
 				set: tx.set?.map(({ key, value }) => ({ key, value: encoder.encode(value) })),
 				delete: tx.delete,
@@ -104,6 +104,13 @@ export function PrefixKeyEncoder(prefix: string): Encoder<string, string> {
 	return {
 		encode: (key) => prefix + key,
 		decode: (key) => key.slice(prefix.length),
+	}
+}
+
+export function PrefixTupleEncoder(prefix: string): Encoder<string[], string[]> {
+	return {
+		encode: (key) => [prefix, ...key],
+		decode: (key) => key.slice(1),
 	}
 }
 

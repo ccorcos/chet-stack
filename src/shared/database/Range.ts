@@ -40,27 +40,27 @@ export function encodeRange(args: Range) {
 	return [encodeStartBound(args), encodeEndBound(args)]
 }
 
-export function overlaps(a: Range, b: Range) {
+export function overlaps(a: Range, b: Range, compare = compoundCompare) {
 	const [startA, endA] = encodeRange(a)
 	const [startB, endB] = encodeRange(b)
-	if (compoundCompare(endA, startB) === -1) return false
-	if (compoundCompare(endB, startA) === -1) return false
+	if (compare(endA, startB) === -1) return false
+	if (compare(endB, startA) === -1) return false
 	return true
 }
 
-export function containsValue(a: Range, value: string) {
+export function containsValue(a: Range, value: string, compare = compoundCompare) {
 	const [startA, endA] = encodeRange(a)
-	if (compoundCompare(startA, [0, value, 0]) === 1) return false
-	if (compoundCompare(endA, [0, value, 0]) === -1) return false
+	if (compare(startA, [0, value, 0]) === 1) return false
+	if (compare(endA, [0, value, 0]) === -1) return false
 	return true
 }
 
-export function compareRange(a: Range, b: Range) {
+export function compareRange(a: Range, b: Range, compare = compoundCompare) {
 	const [startA, endA] = encodeRange(a)
 	const [startB, endB] = encodeRange(b)
 
-	const dir = compoundCompare(startA, startB)
+	const dir = compare(startA, startB)
 	if (dir !== 0) return dir
 
-	return compoundCompare(endA, endB)
+	return compare(endA, endB)
 }

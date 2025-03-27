@@ -24,6 +24,13 @@ const DateEncoding: Encoding<Date> = {
 	compare: (a, b) => (a > b ? 1 : b > a ? -1 : 0),
 }
 
+const FunctionEncoding: Encoding<(...args: any[]) => any> = {
+	match: (value: unknown) => typeof value === "function",
+	encode: (value) => value.toString(),
+	decode: (value) => new Function("return " + value)(),
+	compare: (a, b, cmp) => cmp(a.toString(), b.toString()),
+}
+
 export const codec = new Codec({
 	"\x00": MinEncoding,
 	_: NullEncoding,
@@ -33,6 +40,7 @@ export const codec = new Codec({
 	"[": ArrayEncoding,
 	"{": ObjectEncoding,
 	"~": DateEncoding,
+	f: FunctionEncoding,
 	"\xff": MaxEncoding,
 })
 

@@ -1,3 +1,69 @@
+import { codec, prefixScan } from "./Codec"
+import { containsValue } from "./Range"
+import { ListArgs, OrderedKeyValueApi, WriteArgs } from "./types"
+
+export type Index<K = any, V = any> = {
+	id: string
+	order: number // secondary indexes are 0, tertiary indexes are 1.
+	range: ListArgs<K>
+	set: (db: OrderedKeyValueApi<K, V>, key: K, value: V) => void
+	delete: (db: OrderedKeyValueApi<K, V>, key: K) => void
+}
+
+export type IndexableOrderedKeyValueApi<K, V> = OrderedKeyValueApi<K, V> & {
+	createIndex(index: Index<any, any>): void
+	deleteIndex(id: string): void
+}
+
+export function Indexable(db: OrderedKeyValueApi<any, any>) {
+	const write = (args: WriteArgs<any, any>) => {
+		const indexes = db.list(prefixScan(["_index"])).map(({ value }) => value as Index)
+		indexes.sort((a, b) => a.order - b.order)
+
+		// Remove from top down.
+		indexes.reverse()
+		for (const index of indexes) {
+			for (const { key } of args.delete ?? []) {
+				if (containsValue(index.range, key, codec.compare)) index.delete(db, key)
+			}
+		}
+		for (const { key } of args.delete ?? []) {
+			db.delete(key)
+		}
+
+		// Add from bottom up.
+		for (const { key, value } of args.set ?? []) {
+			db.set(key, value)
+		}
+		for (const index of indexes) {
+			for (const { key, value } of args.set ?? []) {
+				// TODO: need the codec for Max symbol, etc.
+				if (containsValue(index.range, key, codec.compare)) index.set(db, key, value)
+			}
+		}
+	}
+
+	const idb: IndexableOrderedKeyValueApi<any, any> = {
+		get: db.get.bind(db),
+		list: db.list.bind(db),
+		write: write,
+		set: (key, value) => write({ set: [{ key, value }] }),
+		delete: (key) => write({ delete: [{ key }] }),
+
+		createIndex(index: Index<any, any>) {
+			for (const { key, value } of db.list(index.range)) index.set(db, key, value)
+			db.set(["_index", index.id], index)
+		},
+
+		deleteIndex(id: string) {
+			const index = db.get(["_index", id])
+			db.delete(["_index", id])
+			for (const { key, value } of db.list(index.range)) index.delete(db, key, value)
+		},
+	}
+	return idb
+}
+
 /*
 
 Goals:
@@ -73,76 +139,6 @@ The other thing to consider here is just fetching a set of objects in one networ
 
 list[*] = $item
 [list, $item.id]
-*/
-
-type JSONValue = string | number | boolean | JSONValue[] | { [key: string]: JSONValue }
-
-// type Expression = { left: Left; comparator: Comparator; right: Right }
-
-// type Entity = Variable | { id: string }
-// type Selector = { path: string }
-
-// type Left = [Entity, Selector]
-// type Comparator = "="
-// type Right = any
-
-// type Left = { id: Variable | string }
-
-// type Right = { id: Variable | string }
-
-// type Selector = { id: JSONValue | Variable; path: string }
-
-// type Comparator = { type: "="; value: Selector }
-
-import { strict as assert } from "assert"
-import { describe, it } from "mocha"
-
-describe("Query Language", () => {
-	it("works", () => {
-		assert.ok(true)
-		assert.equal(1 + 1, 2)
-		assert.deepEqual({}, {})
-	})
-})
-
-function parseQuery(query: string) {
-	const lines = query.split("\n")
-
-	// Lift all variable.selectors from the sort into filters.
-	const lastLine = lines[lines.length - 1]
-	if (!lastLine.startsWith("[")) throw new Error("Missing return.")
-}
-
-function flattenSort(str: string) {
-	const elements = str.slice(1, -1).split(", ")
-
-	const filters: string[] = []
-	const sort: string[] = []
-
-	for (const element of elements) {
-		const [entity, selector] = element.split(".")
-
-		if (selector) {
-			filters.push(`${entity}.${selector}`)
-		}
-	}
-
-	function parseLine(line: string) {
-		if (line.startsWith("[")) {
-			// This is a sort return line.
-			const elements = line.slice(1, -1).split(", ")
-			const sort = elements.map((element) => {
-				const [entity, selector] = element.split(".")
-				return { entity, selector }
-			})
-		}
-
-		const [entity, selector, comparator, right] = line.split(" ")
-		return { entity, selector, comparator, right }
-	}
-}
-
-/*
 
 Example:
 [$.last, $.first, $]
