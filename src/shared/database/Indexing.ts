@@ -10,14 +10,35 @@ export type Index<K = any, V = any> = {
 	delete: (db: OrderedKeyValueApi<K, V>, key: K) => void
 }
 
+export type SerializedIndex<K = any, V = any> = {
+	id: string
+	order: number // secondary indexes are 0, tertiary indexes are 1.
+	range: ListArgs<K>
+	set: string
+	delete: string
+}
+
 export type IndexableOrderedKeyValueApi<K, V> = OrderedKeyValueApi<K, V> & {
 	createIndex(index: Index<any, any>): void
 	deleteIndex(id: string): void
 }
 
+function reifyFn(fn: string) {
+	return new Function("return " + fn)()
+}
+
 export function Indexable(db: OrderedKeyValueApi<any, any>) {
 	const write = (args: WriteArgs<any, any>) => {
-		const indexes = db.list(prefixScan(["_index"])).map(({ value }) => value as Index)
+		const indexes = db
+			.list(prefixScan(["_index"]))
+			.map(({ value }) => value as SerializedIndex)
+			.map((index) => {
+				return {
+					...index,
+					set: reifyFn(index.set),
+					delete: reifyFn(index.delete),
+				} as Index
+			})
 		indexes.sort((a, b) => a.order - b.order)
 
 		// Remove from top down.
@@ -52,7 +73,13 @@ export function Indexable(db: OrderedKeyValueApi<any, any>) {
 
 		createIndex(index: Index<any, any>) {
 			for (const { key, value } of db.list(index.range)) index.set(db, key, value)
-			db.set(["_index", index.id], index)
+			db.set(["_index", index.id], {
+				id: index.id,
+				order: index.order,
+				range: index.range,
+				set: index.set.toString(),
+				delete: index.delete.toString(),
+			})
 		},
 
 		deleteIndex(id: string) {
