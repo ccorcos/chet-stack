@@ -20,7 +20,7 @@ import {
 	decodeStartBound,
 	encodeRange,
 	Range,
-} from "./range"
+} from "./Range"
 import { ListArgs, WriteArgs } from "./types"
 
 export type CacheListResult<K = any, V = any> = {

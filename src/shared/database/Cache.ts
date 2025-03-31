@@ -12,13 +12,13 @@ import { compactObj } from "../compactObj"
 import { compare, compoundCompare } from "../compare"
 import { randomId } from "../randomId"
 import { reverse } from "../reverse"
-import { InMemoryDatabase } from "./InMemoryDatabase"
+import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
 	compareRange,
 	decodeEndBound,
 	decodeStartBound,
 	encodeRange,
-	overlaps,
+	overlapsRange,
 	Range,
 } from "./Range"
 import { ListArgs, WriteArgs } from "./types"
@@ -42,7 +42,7 @@ const sortedListeners = orderedArray<Listener>(identity, (a: Listener, b: Listen
 const sortedRanges = orderedArray<Range>(identity, compareRange)
 
 export class Cache {
-	data = new InMemoryDatabase<string, string>()
+	data = new InMemoryBaseOKV<string, string>()
 
 	// ==========================================================================
 	// Listeners
@@ -63,7 +63,7 @@ export class Cache {
 		const fns = new Set<() => void>()
 		for (const r of ranges) {
 			for (const { range, fn } of this.listeners) {
-				if (overlaps(r, range)) fns.add(fn)
+				if (overlapsRange(r, range)) fns.add(fn)
 			}
 		}
 		for (const fn of fns) fn()

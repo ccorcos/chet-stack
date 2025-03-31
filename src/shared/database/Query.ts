@@ -1,49 +1,65 @@
 import { ValidationError } from "../errors"
-import { Cache } from "./Cache"
-import { ListArgs, OrderedKeyValueApi } from "./types"
+import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { okv } from "./okv"
+import { Range } from "./Range"
+import { BaseOKV, ListArgs, OKV, WriteArgs } from "./types"
 
-export function query(environment: { db: OrderedKeyValueApi<string, string> }, query: string) {
-	const { db } = environment
+export class Transaction<K, V> implements BaseOKV<K, V> {
+	data: InMemoryBaseOKV<K, V>
+	reads: Range<K>[] = []
+	// writes: WriteArgs<K, V> = { set: [], delete: [] }
 
-	const cache = new Cache()
-
-	const list = (args: ListArgs<string>) => {
-		const result = db.list(args)
-		cache.insert(args, result)
-		return result
+	constructor(public db: BaseOKV<K, V>) {
+		this.data = new InMemoryBaseOKV<K, V>(this.db.compare)
 	}
 
-	const listJSON = (args: ListArgs<string>) => {
-		const result = list(args)
-		return result.map(({ key, value }) => ({ key, value: JSON.parse(value) }))
+	compare = (a: K, b: K) => this.db.compare(a, b)
+
+	list(args: ListArgs<K> = {}): { key: K; value: V }[] {
+		this.reads.push(args)
+		const data = this.db.list(args)
+		this.data.write({ set: data })
+		return data
 	}
 
-	const get = (key: string) => {
-		const value = list({ gte: key, lte: key })
-		return value[0]?.value
+	write(args: WriteArgs<K, V>) {
+		throw new Error("Not implemented")
+		// this.writes = {
+		// 	set: [...this.writes.set!, ...(args.set ?? [])],
+		// 	delete: [...this.writes.delete!, ...(args.delete ?? [])],
+		// }
 	}
 
-	const getJSON = (key: string) => {
-		const value = get(key)
-		return JSON.parse(value)
+	commit = () => {
+		throw new Error("Not implemented")
+		// this.db.write(this.writes)
 	}
+}
+
+type Query = <V>(db: OKV<string, V>) => any
+
+export function query<V>(db: BaseOKV<string, V>, query: string) {
+	const tx = new Transaction(db)
 
 	const context = {
 		console: { log: (msg: string) => console.log("[Sandbox]", msg) },
-		db: { list, get, getJSON, listJSON },
 	}
 
 	let result: any
 	try {
-		const fn = new Function(...Object.keys(context), `return (function() { ${query} })();`)
-		result = fn(...Object.values(context))
+		const fn = new Function(
+			...Object.keys(context),
+			`return (function() { return ${query.trim()} })();`
+		)(...Object.values(context))
+
+		result = fn(okv(tx))
 	} catch (err) {
 		console.error("Sandbox error:", err)
 		throw new ValidationError("Sandbox error")
 	}
 
-	const data = cache.data.data
-	const ranges = cache.cachedRanges
+	const data = tx.data.data
+	const ranges = tx.reads
 
 	return { data, ranges, result }
 }

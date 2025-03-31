@@ -1,5 +1,5 @@
-import { codec, MAX, MIN } from "./codec"
-import { KeyEncode, ValueEncode } from "./encoder"
+import { codec, MAX, MIN } from "./Codec"
+import { KeyEncode, ValueEncode } from "./Encoder"
 import { BaseOKV, OKV } from "./types"
 
 function stringSubspace<V>(base: BaseOKV<string, V>, prefix: string): BaseOKV<string, V> {

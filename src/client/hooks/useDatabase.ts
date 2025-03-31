@@ -3,7 +3,7 @@ import { identity } from "lodash"
 import { useEffect, useMemo, useRef } from "react"
 import { compare } from "../../shared/compare"
 import { keyToRange, LocalGetResult, LocalListResult } from "../../shared/database/Cache"
-import { compareRange, overlaps, Range } from "../../shared/database/Range"
+import { compareRange, overlapsRange, Range } from "../../shared/database/Range"
 import { ListArgs, WriteArgs } from "../../shared/database/types"
 import { randomId } from "../../shared/randomId"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -115,7 +115,7 @@ async function pendingWritesSubmitted(args: Range) {
 		// We can be greedy here because we will call this again once the promise is resolved waiting
 		// for all pending writes to be cleared.
 		for (const pendingWrite of pendingWrites) {
-			if (overlaps(pendingWrite.range, args)) {
+			if (overlapsRange(pendingWrite.range, args)) {
 				return pendingWrite.promise
 			}
 		}

@@ -1,17 +1,17 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { Range, compareRange, overlaps } from "./Range"
+import { Range, compareRange, overlapsRange } from "./Range"
 
-describe("Range", () => {
+describe("range", () => {
 	it("overlaps", () => {
 		const yes = (a: Range, b: Range, message?: string) => {
-			assert.ok(overlaps(a, b), message ?? JSON.stringify({ a, b }))
-			assert.ok(overlaps(b, a), message ?? JSON.stringify({ a, b }))
+			assert.ok(overlapsRange(a, b), message ?? JSON.stringify({ a, b }))
+			assert.ok(overlapsRange(b, a), message ?? JSON.stringify({ a, b }))
 		}
 
 		const no = (a: Range, b: Range, message?: string) => {
-			assert.ok(!overlaps(a, b), message ?? JSON.stringify({ a, b }))
-			assert.ok(!overlaps(b, a), message ?? JSON.stringify({ a, b }))
+			assert.ok(!overlapsRange(a, b), message ?? JSON.stringify({ a, b }))
+			assert.ok(!overlapsRange(b, a), message ?? JSON.stringify({ a, b }))
 		}
 
 		// Empty ranges

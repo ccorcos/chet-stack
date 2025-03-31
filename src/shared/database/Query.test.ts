@@ -1,42 +1,47 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { InMemoryDatabase } from "./InMemoryDatabase"
-import { query as queryEval } from "./Query"
-import { queryNodeVm } from "./QueryNodeVm"
+import { ValueEncode } from "./Encoder"
+import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { okv } from "./okv"
+import { query } from "./Query"
+import { OKV } from "./types"
 
-describe("Query", () => {
+describe("query", () => {
 	it("works", () => {
-		for (const query of [queryNodeVm, queryEval]) {
-			const db = new InMemoryDatabase<string, string>()
+		const base = new InMemoryBaseOKV<string, string>()
+		const json = ValueEncode(base, {
+			encode: (value: any) => JSON.stringify(value),
+			decode: (value) => JSON.parse(value),
+		})
+		const db = okv(json)
 
-			db.set("a", "1")
-			db.set("b", "2")
-			db.set("c", "3")
+		db.set("a", 1)
+		db.set("b", 2)
+		db.set("c", 3)
 
-			db.set("list", JSON.stringify(["a", "b"]))
+		db.set("list", ["a", "b"])
 
-			const { data, ranges, result } = query(
-				{ db },
-				`
-					const list = db.getJSON('list')
-					const items = list.map(item => db.getJSON(item));
-					return items.reduce((a, b) => a + b, 0)
-				`
-			)
+		const { data, ranges, result } = query(
+			db,
+			((db: OKV<string, any>) => {
+				const list = db.get("list")
+				const items = list.map((item) => db.get(item))
+				return items.reduce((a, b) => a + b, 0)
+			}).toString()
+		)
 
-			assert.equal(result, 3)
+		assert.equal(result, 3)
 
-			assert.deepEqual(data, [
-				{ key: "a", value: "1" },
-				{ key: "b", value: "2" },
-				{ key: "list", value: '["a","b"]' },
-			])
+		assert.deepEqual(data, [
+			{ key: "a", value: 1 },
+			{ key: "b", value: 2 },
+			{ key: "list", value: ["a", "b"] },
+		])
 
-			assert.deepEqual(ranges, [
-				{ gte: "a", lte: "a" },
-				{ gte: "b", lte: "b" },
-				{ gte: "list", lte: "list" },
-			])
-		}
+		assert.deepEqual(ranges, [
+			{ gte: "list", lte: "list" },
+			{ gte: "a", lte: "a" },
+			{ gte: "b", lte: "b" },
+		])
 	})
 })

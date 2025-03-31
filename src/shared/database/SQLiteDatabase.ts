@@ -1,10 +1,11 @@
-import { Database, Statement, Transaction } from "better-sqlite3"
-import { OrderedKeyValueApi } from "./types"
+import { Database, Transaction } from "better-sqlite3"
+import { compare } from "../compare"
+import { BaseOKV } from "./types"
 
 type K = string
 type V = string
 
-export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
+export class SQLiteDatabase implements BaseOKV<string, string> {
 	/**
 	 * import sqlite from "better-sqlite3"
 	 * new SQLiteDatabase(sqlite("path/to.db"))
@@ -16,8 +17,6 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 
 		// Make sure the table exists.
 		createTableQuery.run()
-
-		this.getQuery = db.prepare(`select * from data where key = $key`)
 
 		const insertQuery = db.prepare(`insert or replace into data values ($key, $value)`)
 		const deleteQuery = db.prepare(`delete from data where key = $key`)
@@ -34,12 +33,9 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 		)
 	}
 
-	private getQuery: Statement
-	private writeFactsQuery: Transaction
+	compare = compare
 
-	get(key: K) {
-		return this.getQuery.all({ key: key }).map((row: any) => row.value)[0] as V | undefined
-	}
+	private writeFactsQuery: Transaction
 
 	list(
 		args: {
@@ -96,14 +92,6 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 		return results
 	}
 
-	set(key: K, value: V) {
-		this.write({ set: [{ key, value }] })
-	}
-
-	delete(key: K) {
-		this.write({ delete: [key] })
-	}
-
 	write(tx: { set?: { key: K; value: V }[]; delete?: K[] }) {
 		this.writeFactsQuery(tx)
 	}
@@ -111,4 +99,18 @@ export class SQLiteDatabase implements OrderedKeyValueApi<string, string> {
 	close() {
 		this.db.close()
 	}
+
+	// this.getQuery = db.prepare(`select * from data where key = $key`)
+	// private getQuery: Statement
+	// get(key: K) {
+	// 	return this.getQuery.all({ key: key }).map((row: any) => row.value)[0] as V | undefined
+	// }
+
+	// set(key: K, value: V) {
+	// 	this.write({ set: [{ key, value }] })
+	// }
+
+	// delete(key: K) {
+	// 	this.write({ delete: [key] })
+	// }
 }

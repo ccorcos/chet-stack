@@ -1,12 +1,5 @@
 export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
 
-export type KeyValueApi<K = any, V = any> = {
-	get: (key: K) => V | undefined
-	set: (key: K, value: V) => void
-	delete: (key: K) => void
-	write: (tx: WriteArgs<K, V>) => void
-}
-
 export type ListArgs<K = any> = {
 	gt?: K
 	gte?: K
@@ -17,22 +10,48 @@ export type ListArgs<K = any> = {
 	reverse?: boolean
 }
 
-export type OrderedKeyValueApi<K = any, V = any> = KeyValueApi<K, V> & {
+export type BaseOKV<K = any, V = any> = {
+	// Primitives
 	list(args?: ListArgs<K>): { key: K; value: V }[]
+	write: (tx: WriteArgs<K, V>) => void
+	compare: (a: K, b: K) => number
 }
 
-// TODO: count, aggregations
-export type IntervalTreeApi<
-	B = (string | number)[],
-	K = (string | number)[],
-	V = any,
-> = KeyValueApi<[B, B, K], V> & {
-	overlaps: (args?: ListArgs<B>) => { key: [B, B, K]; value: V }[]
+export type OKV<K = any, V = any> = BaseOKV<K, V> & {
+	// Sugar
+	get: (key: K) => V | undefined
+	prefix: (prefix: K) => { key: K; value: V }[]
+	subspace(prefix: K): OKV<K, V>
+	set: (key: K, value: V) => void
+	delete: (key: K) => void
 }
 
-function itree<B, K, V>(okv: OrderedKeyValueApi<any, any>) {
-	return {
-		set: (b1: B, b2: B, k: K, v: V) => okv.set([b1, b2, k], v),
-		overlaps: (b1: B, b2: B) => okv.list({ gt: [b1, b1, undefined], lt: [b2, b2, undefined] }),
-	}
+export type Index<K = any, V = any> = {
+	id: string
+	// secondary indexes are 0, tertiary indexes are 1.
+	order: number
+	range: ListArgs<K>
+	set: (db: OKV<K, V>, key: K, value: V) => void
+	delete: (db: OKV<K, V>, key: K) => void
 }
+
+export type IndexableOKV<K = any, V = any> = OKV<K, V> & {
+	createIndex(index: Index<K, V>): void
+	deleteIndex(id: string): void
+}
+
+// // TODO: count, aggregations
+// export type IntervalTreeApi<
+// 	B = (string | number)[],
+// 	K = (string | number)[],
+// 	V = any,
+// > = KeyValueApi<[B, B, K], V> & {
+// 	overlaps: (args?: ListArgs<B>) => { key: [B, B, K]; value: V }[]
+// }
+
+// function itree<B, K, V>(okv: OrderedKeyValueApi<any, any>) {
+// 	return {
+// 		set: (b1: B, b2: B, k: K, v: V) => okv.set([b1, b2, k], v),
+// 		overlaps: (b1: B, b2: B) => okv.list({ gt: [b1, b1, undefined], lt: [b2, b2, undefined] }),
+// 	}
+// }

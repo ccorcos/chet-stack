@@ -2,7 +2,7 @@ import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compare } from "../compare"
 import { randomId } from "../randomId"
-import { compareRange, overlapsRange, Range } from "./range"
+import { compareRange, overlapsRange, Range } from "./Range"
 
 export type RangeListener<K> = { range: Range<K>; id: string; fn: () => void }
 

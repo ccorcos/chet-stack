@@ -1,13 +1,13 @@
-import { codec, prefixScan } from "./Codec"
-import { containsValue } from "./Range"
-import { ListArgs, OrderedKeyValueApi, WriteArgs } from "./types"
+import { codec } from "./Codec"
+import { rangeContains } from "./Range"
+import { BaseOKV, ListArgs, OKV, WriteArgs } from "./types"
 
 export type Index<K = any, V = any> = {
 	id: string
 	order: number // secondary indexes are 0, tertiary indexes are 1.
 	range: ListArgs<K>
-	set: (db: OrderedKeyValueApi<K, V>, key: K, value: V) => void
-	delete: (db: OrderedKeyValueApi<K, V>, key: K) => void
+	set: (db: BaseOKV<K, V>, key: K, value: V) => void
+	delete: (db: BaseOKV<K, V>, key: K) => void
 }
 
 export type SerializedIndex<K = any, V = any> = {
@@ -18,7 +18,7 @@ export type SerializedIndex<K = any, V = any> = {
 	delete: string
 }
 
-export type IndexableOrderedKeyValueApi<K, V> = OrderedKeyValueApi<K, V> & {
+export type IndexableBaseOKV<K, V> = BaseOKV<K, V> & {
 	createIndex(index: Index<any, any>): void
 	deleteIndex(id: string): void
 }
@@ -27,10 +27,10 @@ function reifyFn(fn: string) {
 	return new Function("return " + fn)()
 }
 
-export function Indexable(db: OrderedKeyValueApi<any, any>) {
+export function Indexable(db: OKV<any, any>) {
 	const write = (args: WriteArgs<any, any>) => {
 		const indexes = db
-			.list(prefixScan(["_index"]))
+			.prefix(["_index"])
 			.map(({ value }) => value as SerializedIndex)
 			.map((index) => {
 				return {
@@ -45,7 +45,7 @@ export function Indexable(db: OrderedKeyValueApi<any, any>) {
 		indexes.reverse()
 		for (const index of indexes) {
 			for (const { key } of args.delete ?? []) {
-				if (containsValue(index.range, key, codec.compare)) index.delete(db, key)
+				if (rangeContains(index.range, key, codec.compare)) index.delete(db, key)
 			}
 		}
 		for (const { key } of args.delete ?? []) {
@@ -59,17 +59,15 @@ export function Indexable(db: OrderedKeyValueApi<any, any>) {
 		for (const index of indexes) {
 			for (const { key, value } of args.set ?? []) {
 				// TODO: need the codec for Max symbol, etc.
-				if (containsValue(index.range, key, codec.compare)) index.set(db, key, value)
+				if (rangeContains(index.range, key, codec.compare)) index.set(db, key, value)
 			}
 		}
 	}
 
-	const idb: IndexableOrderedKeyValueApi<any, any> = {
-		get: db.get.bind(db),
-		list: db.list.bind(db),
+	const idb: IndexableBaseOKV<any, any> = {
+		compare: db.compare,
+		list: db.list,
 		write: write,
-		set: (key, value) => write({ set: [{ key, value }] }),
-		delete: (key) => write({ delete: [{ key }] }),
 
 		createIndex(index: Index<any, any>) {
 			for (const { key, value } of db.list(index.range)) index.set(db, key, value)

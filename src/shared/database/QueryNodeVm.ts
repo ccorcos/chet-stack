@@ -1,12 +1,9 @@
 import vm from "vm"
 import { ValidationError } from "../errors"
 import { Cache } from "./Cache"
-import { ListArgs, OrderedKeyValueApi } from "./types"
+import { BaseOKV, ListArgs } from "./types"
 
-export function queryNodeVm(
-	environment: { db: OrderedKeyValueApi<string, string> },
-	query: string
-) {
+export function queryNodeVm(environment: { db: BaseOKV<string, string> }, query: string) {
 	const { db } = environment
 
 	const cache = new Cache()

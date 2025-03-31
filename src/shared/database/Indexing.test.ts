@@ -15,9 +15,10 @@ examples...
 
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { codec, MAX, MIN, prefixScan } from "./Codec"
+import { codec, MAX, MIN } from "./Codec"
 import { Indexable } from "./Indexing"
-import { InMemoryDatabase } from "./InMemoryDatabase"
+import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { okv } from "./okv"
 
 type Person = {
 	id: string
@@ -81,7 +82,7 @@ const example: Person[] = [
 
 describe("Indexing", () => {
 	it("seconary index", () => {
-		const db = Indexable(new InMemoryDatabase(codec.compare))
+		const db = Indexable(okv(new InMemoryBaseOKV(codec.compare)))
 
 		db.createIndex({
 			id: "lastfirst",
@@ -149,7 +150,7 @@ describe("Indexing", () => {
 			content: string
 		}
 
-		const db = Indexable(new InMemoryDatabase(codec.compare))
+		const db = Indexable(new InMemoryBaseOKV(codec.compare))
 
 		// Secondary indexes
 
