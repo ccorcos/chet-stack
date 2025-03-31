@@ -14,6 +14,7 @@ export type BaseOKV<K = any, V = any> = {
 	// Primitives
 	list(args?: ListArgs<K>): { key: K; value: V }[]
 	write: (tx: WriteArgs<K, V>) => void
+	compare: (a: K, b: K) => number
 }
 
 export type OKV<K = any, V = any> = BaseOKV<K, V> & {

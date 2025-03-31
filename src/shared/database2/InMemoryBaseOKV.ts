@@ -1,11 +1,11 @@
 import { insert, remove, search } from "@ccorcos/ordered-array"
-import { compare } from "../compare"
+import { compare as cmp } from "../compare"
 import { BaseOKV } from "./types"
 
 export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 	data: { key: K; value: V }[] = []
 
-	constructor(public compareKey: (a: K, b: K) => number = compare) {}
+	constructor(public compare: (a: K, b: K) => number = cmp) {}
 
 	list = (
 		args: {
@@ -26,11 +26,11 @@ export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 		if (
 			args.gte !== undefined &&
 			args.lte !== undefined &&
-			this.compareKey(args.gte, args.lte) === 0
+			this.compare(args.gte, args.lte) === 0
 		) {
 			// Performance optimization: special case "get" a single key.
 			const key = args.gte
-			const result = search(this.data, key, ({ key }) => key, this.compareKey)
+			const result = search(this.data, key, ({ key }) => key, this.compare)
 			if (result.found === undefined) return []
 			return [this.data[result.found]]
 		}
@@ -41,7 +41,7 @@ export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 		const endOpen = args.lt !== undefined
 
 		if (start !== undefined && end !== undefined) {
-			const comp = this.compareKey(start, end)
+			const comp = this.compare(start, end)
 			if (comp > 0) {
 				console.warn("Invalid bounds.", args)
 				return []
@@ -56,7 +56,7 @@ export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 
 		let startIndex = 0
 		if (start !== undefined) {
-			const result = search(this.data, start, ({ key }) => key, this.compareKey)
+			const result = search(this.data, start, ({ key }) => key, this.compare)
 			if (result.found !== undefined) {
 				if (startOpen) startIndex = result.found + 1
 				else startIndex = result.found
@@ -65,7 +65,7 @@ export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 
 		let endIndex = this.data.length
 		if (end !== undefined) {
-			const result = search(this.data, end, ({ key }) => key, this.compareKey)
+			const result = search(this.data, end, ({ key }) => key, this.compare)
 			if (result.found !== undefined) {
 				if (endOpen) endIndex = result.found
 				else endIndex = result.found + 1
@@ -81,10 +81,10 @@ export class InMemoryBaseOKV<K = any, V = any> implements BaseOKV<K, V> {
 
 	write = (tx: { set?: { key: K; value: V }[]; delete?: K[] }) => {
 		for (const key of tx.delete || []) {
-			remove(this.data, key, ({ key }) => key, this.compareKey)
+			remove(this.data, key, ({ key }) => key, this.compare)
 		}
 		for (const { key, value } of tx.set || []) {
-			insert(this.data, { key, value }, ({ key }) => key, this.compareKey)
+			insert(this.data, { key, value }, ({ key }) => key, this.compare)
 		}
 	}
 }

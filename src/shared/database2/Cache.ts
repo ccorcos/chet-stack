@@ -21,7 +21,6 @@ import {
 	encodeRange,
 	Range,
 } from "./range"
-import { RangeEmitter } from "./RangeEmitter"
 import { ListArgs, WriteArgs } from "./types"
 
 export type CacheListResult<K = any, V = any> = {
@@ -32,13 +31,13 @@ export type CacheListResult<K = any, V = any> = {
 
 export class Cache<K, V> {
 	data: InMemoryBaseOKV<K, V>
-	listeners: RangeEmitter<K>
-	sortedRanges: ReturnType<typeof orderedArray<Range<K>>>
+
+	private sortedRanges: ReturnType<typeof orderedArray<Range<K>>>
 	cachedRanges: Range<K>[] = []
 
 	constructor(public compareKey: (a: K, b: K) => number = compare) {
 		this.data = new InMemoryBaseOKV<K, V>(this.compareKey)
-		this.listeners = new RangeEmitter<K>(this.compareKey)
+		// this.listeners = new RangeEmitter<K>(this.compareKey)
 		this.sortedRanges = orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, compareKey))
 	}
 
@@ -56,7 +55,7 @@ export class Cache<K, V> {
 		}
 
 		this.data.write({ set: result, delete: deleteKeys })
-		this.listeners.emit([range])
+		// this.listeners.emit([range])
 	}
 
 	list(args: ListArgs<K>): CacheListResult<K, V> {
@@ -166,7 +165,7 @@ export class Cache<K, V> {
 		}
 
 		// Emit
-		this.listeners.emit(ranges)
+		// this.listeners.emit(ranges)
 	}
 }
 

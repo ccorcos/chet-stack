@@ -1,5 +1,11 @@
 import { BaseOKV, ListArgs, WriteArgs } from "./types"
 
+export type KeyEncoder<I, O> = {
+	compare: (a: I, b: I) => number
+	encode: (key: I) => O
+	decode: (key: O) => I
+}
+
 export type Encoder<I, O> = {
 	encode: (key: I) => O
 	decode: (key: O) => I
@@ -39,8 +45,9 @@ export function KeyEncodeWrite<K, V, O>(
 	}
 }
 
-export function KeyEncode<I, O, V>(db: BaseOKV<O, V>, encoder: Encoder<I, O>): BaseOKV<I, V> {
+export function KeyEncode<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>): BaseOKV<I, V> {
 	return {
+		compare: encoder.compare,
 		list(args) {
 			const newArgs = KeyEncodeListArgs(args || {}, encoder)
 			const results = db.list(newArgs)
@@ -55,6 +62,7 @@ export function KeyEncode<I, O, V>(db: BaseOKV<O, V>, encoder: Encoder<I, O>): B
 
 export function ValueEncode<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>): BaseOKV<K, I> {
 	return {
+		compare: db.compare,
 		list(args) {
 			return db.list(args).map(({ key, value }) => ({ key, value: encoder.decode(value) }))
 		},
