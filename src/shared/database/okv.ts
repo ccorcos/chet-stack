@@ -1,8 +1,9 @@
 import { codec, MAX, MIN } from "./Codec"
 import { KeyEncode, ValueEncode } from "./Encoder"
-import { BaseOKV, OKV } from "./types"
+import { RangeEmitter } from "./RangeEmitter"
+import { BaseOKV, OKV, ReactiveOKV, WriteArgs } from "./types"
 
-function stringSubspace<V>(base: BaseOKV<string, V>, prefix: string): BaseOKV<string, V> {
+export function stringSubspace<V>(base: BaseOKV<string, V>, prefix: string): BaseOKV<string, V> {
 	return KeyEncode(base, {
 		compare: base.compare,
 		encode: (key) => prefix + key,
@@ -45,9 +46,11 @@ export function tupleSugar(okv: BaseOKV<any[], any>): TupleDb {
 		compare: okv.compare,
 		list: (args) => okv.list(args),
 		write: (tx) => okv.write(tx),
+
 		get: (key) => okv.list({ gte: key, lt: key }).at(0)?.value,
 		prefix: (prefix) => okv.list({ gte: [...prefix, MIN], lte: [...prefix, MAX] }),
 		subspace: (prefix) => tupleSugar(tupleSubspace(okv, prefix)),
+
 		set: (key, value) => okv.write({ set: [{ key, value }] }),
 		delete: (key) => okv.write({ delete: [key] }),
 	}
@@ -57,17 +60,21 @@ type TupleDb = OKV<any[], any>
 
 export const tupleOkv = (base: BaseOKV<string, string>): TupleDb => tupleSugar(tuplejson(base))
 
-// function reactive<K, V>(base: BaseOKV<K, V>, emitter: RangeEmitter<K>): any {
-// 	return {
-// 		subscribe: emitter.subscribe,
-// 		list: base.list,
-// 		write: (args: WriteArgs<K, V>) => {
-// 			base.write(args)
-// 			const keys: K[] = []
-// 			for (const { key } of args.set ?? []) keys.push(key)
-// 			for (const key of args.delete ?? []) keys.push(key)
-// 			const ranges = Array.from(keys).map((key) => ({ gte: key, lte: key }))
-// 			emitter.emit(ranges)
-// 		},
-// 	}
-// }
+export function reactiveOkv<K, V>(
+	base: BaseOKV<K, V>,
+	emitter: RangeEmitter<K>
+): ReactiveOKV<K, V> {
+	return {
+		compare: base.compare,
+		subscribe: emitter.subscribe,
+		list: base.list,
+		write: (args: WriteArgs<K, V>) => {
+			base.write(args)
+			const keys: K[] = []
+			for (const { key } of args.set ?? []) keys.push(key)
+			for (const key of args.delete ?? []) keys.push(key)
+			const ranges = Array.from(keys).map((key) => ({ gte: key, lte: key }))
+			emitter.emit(ranges)
+		},
+	}
+}

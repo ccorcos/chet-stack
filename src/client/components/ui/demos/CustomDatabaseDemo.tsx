@@ -133,9 +133,9 @@ function SchemaEditor(props: { selected: string; stale: boolean }) {
 	const [pending, startTransition] = useTransition()
 
 	const loader = useLoader(["schema", selected, count], async () => {
-		const response = await api.get(selected)
+		const response = await api.list({ gt: selected, lt: incStr(selected) })
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		return response.body
+		return response.body.at(0)?.value
 	})
 	const onSubmit = useAction("submitSchema", async (key: string, value: string) => {
 		await api.write({ set: [{ key, value }] })

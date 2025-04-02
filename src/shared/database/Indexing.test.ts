@@ -18,7 +18,7 @@ import { describe, it } from "mocha"
 import { codec, MAX, MIN } from "./Codec"
 import { Indexable } from "./Indexing"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { okv } from "./okv"
+import { tupleSugar } from "./okv"
 
 type Person = {
 	id: string
@@ -82,9 +82,10 @@ const example: Person[] = [
 
 describe("Indexing", () => {
 	it("seconary index", () => {
-		const db = Indexable(okv(new InMemoryBaseOKV(codec.compare)))
+		const db = tupleSugar(new InMemoryBaseOKV(codec.compare))
+		const { createIndex } = Indexable(db)
 
-		db.createIndex({
+		createIndex({
 			id: "lastfirst",
 			order: 0,
 			range: { gt: ["person", MIN], lt: ["person", MAX] },
@@ -99,7 +100,7 @@ describe("Indexing", () => {
 			},
 		})
 
-		db.createIndex({
+		createIndex({
 			id: "email",
 			order: 0,
 			range: { gt: ["email", MIN], lt: ["email", MAX] },
@@ -150,11 +151,12 @@ describe("Indexing", () => {
 			content: string
 		}
 
-		const db = Indexable(new InMemoryBaseOKV(codec.compare))
+		const db = tupleSugar(new InMemoryBaseOKV(codec.compare))
+		const { createIndex } = Indexable(db)
 
 		// Secondary indexes
 
-		db.createIndex({
+		createIndex({
 			id: "userPosts",
 			order: 0,
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
@@ -169,7 +171,7 @@ describe("Indexing", () => {
 			},
 		})
 
-		db.createIndex({
+		createIndex({
 			id: "followedBy",
 			order: 0,
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
@@ -185,14 +187,14 @@ describe("Indexing", () => {
 		})
 
 		// Tertiary indexes AKA fanout indexdes.
-		db.createIndex({
+		createIndex({
 			id: "followToTimline",
 			order: 1,
 			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
 			set: (db, key, value) => {
 				const { from, to } = value
 				// Insert all posts from the user into the timeline.
-				for (const { key } of db.list(prefixScan(["userPosts", to]))) {
+				for (const { key } of db.prefix(["userPosts", to])) {
 					const [_indexName, _authorId, createdAt, postId] = key
 					db.set(["timeline", from, createdAt, postId], null)
 				}
@@ -201,21 +203,21 @@ describe("Indexing", () => {
 				const value = db.get(key)
 				const { from, to } = value
 				// Delete all posts from the user into the timeline.
-				for (const { key } of db.list(prefixScan(["userPosts", to]))) {
+				for (const { key } of db.prefix(["userPosts", to])) {
 					const [_indexName, _authorId, createdAt, postId] = key
 					db.delete(["timeline", from, createdAt, postId])
 				}
 			},
 		})
 
-		db.createIndex({
+		createIndex({
 			id: "postToTimeline",
 			order: 1,
 			range: { gt: ["post", MIN], lt: ["post", MAX] },
 			set: (db, key, value) => {
 				// Insert post into all followees' timelines.
 				const { author_id, created_at, id } = value
-				for (const { key } of db.list(prefixScan(["followedBy", author_id]))) {
+				for (const { key } of db.prefix(["followedBy", author_id])) {
 					const [_indexName, _to, from] = key
 					db.set(["timeline", from, created_at, id], null)
 				}
@@ -224,7 +226,7 @@ describe("Indexing", () => {
 				const value = db.get(key)
 				// Delete post from all followees' timelines.
 				const { author_id, created_at, id } = value
-				for (const { key } of db.list(prefixScan(["followedBy", author_id]))) {
+				for (const { key } of db.prefix(["followedBy", author_id])) {
 					const [_indexName, _to, from] = key
 					db.delete(["timeline", from, created_at, id])
 				}
@@ -258,24 +260,24 @@ describe("Indexing", () => {
 
 		for (const { id } of users) {
 			// Two posts per user.
-			assert.equal(db.list(prefixScan(["userPosts", id])).length, 2)
+			assert.equal(db.prefix(["userPosts", id]).length, 2)
 			// No follows so empty timelines.
-			assert.equal(db.list(prefixScan(["timeline", id])).length, 0)
+			assert.equal(db.prefix(["timeline", id]).length, 0)
 		}
 
 		// Create a follow should add to the timeline index.
 		const follow12: Follow = { id: ["u1", "u2"], from: "u1", to: "u2" }
 		db.set(["follow", follow12.id], follow12)
-		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
+		assert.equal(db.prefix(["timeline", "u1"]).length, 2)
 
 		// Create another follow
 		const follow13: Follow = { id: ["u1", "u3"], from: "u1", to: "u3" }
 		db.set(["follow", follow13.id], follow13)
-		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 4)
+		assert.equal(db.prefix(["timeline", "u1"]).length, 4)
 
 		// Remove that first follow.
 		// IMPORTANT: need to run tertiary index updates before secondary updates before primary updates.
 		db.delete(["follow", follow12.id])
-		assert.equal(db.list(prefixScan(["timeline", "u1"])).length, 2)
+		assert.equal(db.prefix(["timeline", "u1"]).length, 2)
 	})
 })

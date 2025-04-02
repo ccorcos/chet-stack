@@ -1,11 +1,12 @@
 import React, { useMemo } from "react"
+import { compare } from "../../shared/compare"
 import { Cache } from "../../shared/database/Cache"
 import {
 	KeyDecodeList,
 	KeyEncodeList,
 	KeyEncodeListArgs,
+	KeyEncoder,
 	KeyEncodeWrite,
-	PrefixKeyEncoder,
 } from "../../shared/database/Encoder"
 import { proxyObj } from "../../shared/proxyHelpers"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
@@ -16,7 +17,11 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 	const { api } = environment
 
 	const newEnvironment = useMemo(() => {
-		const encoder = PrefixKeyEncoder(props.prefix)
+		const encoder: KeyEncoder<string, string> = {
+			compare: compare,
+			encode: (key) => props.prefix + key,
+			decode: (key) => key.slice(props.prefix.length),
+		}
 
 		const newApi = proxyObj(async (key, args) => {
 			if (key === "list") {
@@ -32,9 +37,6 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 			}
 			if (key === "write") {
 				return api.write(KeyEncodeWrite(args, encoder))
-			}
-			if (key === "get") {
-				return api.get(encoder.encode(args))
 			}
 
 			return api[key](args)

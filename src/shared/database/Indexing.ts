@@ -1,13 +1,14 @@
 import { codec } from "./Codec"
+import { tupleSugar } from "./okv"
 import { rangeContains } from "./Range"
 import { BaseOKV, ListArgs, OKV, WriteArgs } from "./types"
 
-export type Index<K = any, V = any> = {
+export type Index<K = any[], V = any> = {
 	id: string
 	order: number // secondary indexes are 0, tertiary indexes are 1.
 	range: ListArgs<K>
-	set: (db: BaseOKV<K, V>, key: K, value: V) => void
-	delete: (db: BaseOKV<K, V>, key: K) => void
+	set: (db: OKV<K, V>, key: K, value: V) => void
+	delete: (db: OKV<K, V>, key: K) => void
 }
 
 export type SerializedIndex<K = any, V = any> = {
@@ -27,7 +28,9 @@ function reifyFn(fn: string) {
 	return new Function("return " + fn)()
 }
 
-export function Indexable(db: OKV<any, any>) {
+export function Indexable(base: BaseOKV<any[], any>) {
+	const db = tupleSugar(base)
+
 	const write = (args: WriteArgs<any, any>) => {
 		const indexes = db
 			.prefix(["_index"])

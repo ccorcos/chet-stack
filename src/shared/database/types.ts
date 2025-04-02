@@ -1,3 +1,5 @@
+import { Range } from "./Range"
+
 export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
 
 export type ListArgs<K = any> = {
@@ -11,19 +13,13 @@ export type ListArgs<K = any> = {
 }
 
 export type BaseOKV<K = any, V = any> = {
-	// Primitives
+	compare: (a: K, b: K) => number
 	list(args?: ListArgs<K>): { key: K; value: V }[]
 	write: (tx: WriteArgs<K, V>) => void
-	compare: (a: K, b: K) => number
 }
 
-export type OKV<K = any, V = any> = BaseOKV<K, V> & {
-	// Sugar
-	get: (key: K) => V | undefined
-	prefix: (prefix: K) => { key: K; value: V }[]
-	subspace(prefix: K): OKV<K, V>
-	set: (key: K, value: V) => void
-	delete: (key: K) => void
+export type ReactiveOKV<K = any, V = any> = BaseOKV<K, V> & {
+	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
 
 export type Index<K = any, V = any> = {
@@ -35,9 +31,18 @@ export type Index<K = any, V = any> = {
 	delete: (db: OKV<K, V>, key: K) => void
 }
 
-export type IndexableOKV<K = any, V = any> = OKV<K, V> & {
+export type IndexableOKV<K = any, V = any> = {
 	createIndex(index: Index<K, V>): void
 	deleteIndex(id: string): void
+}
+
+export type OKV<K = any, V = any> = BaseOKV<K, V> & {
+	// Sugar
+	get: (key: K) => V | undefined
+	prefix: (prefix: K) => { key: K; value: V }[]
+	subspace(prefix: K): OKV<K, V>
+	set: (key: K, value: V) => void
+	delete: (key: K) => void
 }
 
 // // TODO: count, aggregations
