@@ -28,7 +28,6 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 
 	return (
 		<div
-			{...rest}
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
@@ -44,6 +43,7 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 		>
 			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
+				{...rest}
 				style={{
 					position: "absolute",
 					bottom: 0,
@@ -67,7 +67,6 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 
 	return (
 		<div
-			{...rest}
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
@@ -83,6 +82,7 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 		>
 			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
+				{...rest}
 				style={{
 					position: "absolute",
 					top: 0,
@@ -106,7 +106,6 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 
 	return (
 		<div
-			{...rest}
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
@@ -123,6 +122,7 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 		>
 			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
+				{...rest}
 				style={{
 					position: "absolute",
 					top: 0,
@@ -145,7 +145,6 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 
 	return (
 		<div
-			{...rest}
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
@@ -161,6 +160,7 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 		>
 			{/* Wrap in a div to prevent animation from squishing content. */}
 			<div
+				{...rest}
 				style={{
 					position: "absolute",
 					top: 0,
@@ -179,9 +179,10 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
 	return (
 		<div
+			{...props}
 			style={{
 				flexGrow: 1,
-				background: "var(--background)",
+				// background: "var(--background)",
 				overflowY: "auto",
 				// padding: "16px",
 				borderRadius: BORDER_RADIUS,

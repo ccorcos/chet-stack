@@ -6,4 +6,10 @@ import * as prompt from "./prompt"
 import * as query from "./query"
 import * as write from "./write"
 
-export { hello, list, prompt, query, write }
+export {
+	hello,
+	list,
+	prompt,
+	query,
+	write,
+}

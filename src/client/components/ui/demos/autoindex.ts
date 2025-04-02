@@ -3,6 +3,7 @@
 import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
+import * as ColorsDemo from "./ColorsDemo"
 import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
 import * as DataListDemo from "./DataListDemo"
 import * as DraggableDemo from "./DraggableDemo"
@@ -14,6 +15,7 @@ import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as GridDemo from "./GridDemo"
 import * as InfiniteLoaderDemo from "./InfiniteLoaderDemo"
 import * as InputDemo from "./InputDemo"
+import * as LayersDemo from "./LayersDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as MasterDetailDemo from "./MasterDetailDemo"
@@ -33,6 +35,7 @@ export {
 	BadgeDemo,
 	ButtonDemo,
 	CalendarDemo,
+	ColorsDemo,
 	CustomDatabaseDemo,
 	DataListDemo,
 	DraggableDemo,
@@ -44,6 +47,7 @@ export {
 	GridDemo,
 	InfiniteLoaderDemo,
 	InputDemo,
+	LayersDemo,
 	LayoutDemo,
 	ListBoxDemo,
 	MasterDetailDemo,
