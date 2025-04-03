@@ -5,12 +5,14 @@ import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
 import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
+import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataListDemo from "./DataListDemo"
 import * as DraggableDemo from "./DraggableDemo"
 import * as DraggableListDemo from "./DraggableListDemo"
 import * as DropdownDemo from "./DropdownDemo"
 import * as EmailDemo from "./EmailDemo"
 import * as FileUploadDemo from "./FileUploadDemo"
+import * as FormsDemo from "./FormsDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as GridDemo from "./GridDemo"
 import * as InfiniteLoaderDemo from "./InfiniteLoaderDemo"
@@ -37,12 +39,14 @@ export {
 	CalendarDemo,
 	ColorsDemo,
 	CustomDatabaseDemo,
+	DarkModeDemo,
 	DataListDemo,
 	DraggableDemo,
 	DraggableListDemo,
 	DropdownDemo,
 	EmailDemo,
 	FileUploadDemo,
+	FormsDemo,
 	FuzzyStringDemo,
 	GridDemo,
 	InfiniteLoaderDemo,

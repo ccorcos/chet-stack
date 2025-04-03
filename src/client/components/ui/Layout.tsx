@@ -182,7 +182,7 @@ export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
 			{...props}
 			style={{
 				flexGrow: 1,
-				// background: "var(--background)",
+				background: "var(--background)",
 				overflowY: "auto",
 				// padding: "16px",
 				borderRadius: BORDER_RADIUS,

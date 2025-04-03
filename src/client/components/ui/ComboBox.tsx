@@ -7,11 +7,11 @@ import { Input } from "./Input"
 import { MenuItem } from "./MenuItem"
 import { Popup, PopupFrame } from "./Popup"
 
-export function ComboBoxSelect(props: {
-	items: string[]
+export function ComboBoxSelect<T extends string>(props: {
+	items: T[]
 	placeholder: string
-	value: string | undefined
-	onChange: (value: string) => void
+	value: T | undefined
+	onChange: (value: T) => void
 	style?: React.CSSProperties
 	Input?: React.FC<JSX.IntrinsicElements["input"]>
 	Button?: React.FC<JSX.IntrinsicElements["button"]>
@@ -34,7 +34,7 @@ export function ComboBoxSelect(props: {
 				items={props.items}
 				value={props.value}
 				onChange={(newValue) => {
-					props.onChange(newValue)
+					props.onChange(newValue as T)
 					setOpen(false)
 				}}
 				onDismiss={() => {
