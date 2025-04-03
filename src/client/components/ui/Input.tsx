@@ -2,18 +2,24 @@ import React from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
 import { withStyle } from "../../helpers/withStyle"
 
+// TODO: lets use css here with colors.
+// Also dark mode force.
+
 function _Input(props: JSX.IntrinsicElements["input"]) {
 	return (
 		<input
 			{...props}
 			className={["feedback", props.className].filter(Boolean).join(" ")}
 			style={{
-				borderWidth: 1,
-				borderStyle: "solid",
+				// borderWidth: 1,
+				// borderStyle: "solid",
+				// borderColor: props.disabled ? "var(--gray4)" : "var(--text-color)",
+
+				border: "none",
 				borderRadius: "0.2em",
-				borderColor: props.disabled ? "var(--gray4)" : "var(--text-color)",
 				padding: "0.2em 0.4em",
 				fontFamily: "inherit",
+				cursor: props.disabled ? "not-allowed" : "auto",
 				...props.style,
 			}}
 		/>

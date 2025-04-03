@@ -12,6 +12,7 @@ else process.env.NODE_ENV = "production"
 const cmd = watch ? "watch" : "copy"
 cpx[cmd](path("src/client/index.html"), path("build"))
 cpx[cmd](path("src/client/index.css"), path("build"))
+cpx[cmd](path("src/client/theme.css"), path("build"))
 cpx[cmd](path("src/client/service-worker.js"), path("build"))
 
 const config: ClientConfig = { host: "localhost:8080", production: !watch }
