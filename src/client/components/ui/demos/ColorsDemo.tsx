@@ -1,124 +1,154 @@
-import { cubehelix, differenceCiede2000, formatHex, interpolate } from "culori"
+import { Cubehelix, cubehelix, differenceCiede2000, formatHex, interpolate, Lch } from "culori"
 import React, { useMemo } from "react"
 import { css } from "../../../helpers/css"
 
-const n = 6
-const rotations = 0.1 // Number of rotations through the rainbow
-const start = 0.9
+const rotations = 0.2 // Number of rotations through the rainbow
+const start = 0.04
+
+// accent
+const offset = 0.5
+const stretch = 1
 
 const stretchEnd = (t: number, f: number) => t / f + (1 - 1 / f)
 
 function cube(
 	t: number,
 	args: {
+		start: number
+		rotations: number
 		saturation: number
 		lightness: number
 	}
 ) {
-	const { saturation: s, lightness: l } = args
-	const hue = start + rotations * t
+	const { saturation: s, lightness: l, start, rotations } = args
+	const hue = start + rotations * (1 - t)
 	return cubehelix({ mode: "cubehelix", h: hue * 360, s: s, l: l, alpha: 1 })
 }
 
-const whiteBackgroundTheme = (i: number) =>
+const colorScheme = (scale: (i: number) => Cubehelix | Lch, n = 6) => {
+	return Array.from({ length: n }, (_, i) => formatHex(scale((n - 1 - i) / (n - 1))))
+}
+
+const lightBackgroundCubehelixColors = colorScheme((i: number) =>
 	cube(i, {
-		saturation: 0.4 - 0.4 * (1 - i),
+		start,
+		rotations,
+		saturation: 0.2 - 0.2 * (1 - i),
 		lightness: stretchEnd(i, 5.5),
 	})
-
-const whiteCubehelixScale = whiteBackgroundTheme
-
-const whiteCubehelixColors = Array.from({ length: n }, (_, i) =>
-	formatHex(whiteCubehelixScale((n - 1 - i) / (n - 1)))
 )
 
-function lightCubehelixScale(t: number) {
-	const hue = start + rotations * t
-
-	let f = 2.5 // lightness factor
-	let l = 0.5
-
-	// Use culori's cubehelix function
-	return cubehelix({
-		mode: "cubehelix",
-		h: hue * 360, // culori expects degrees (0-360) instead of rotations
-		s: 1, // Controls saturation
-
-		l: l,
-		alpha: 1,
+const darkBackgroundCubeHelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start,
+		rotations,
+		saturation: 0.1 - 0.05 * (1 - i),
+		// lightness: (1 - i) / 2.5,
+		lightness: Math.pow(1 - i, 0.6) / 2.5,
 	})
-}
-
-const lightCubehelixColors = Array.from({ length: n }, (_, i) =>
-	formatHex(lightCubehelixScale((n - 1 - i) / (n - 1)))
 )
 
-function blackCubehelixScale(t: number) {
-	const hue = start + rotations * t
+const interp = (i: number, min: number, max: number) => min + (max - min) * i
 
-	const lf = 2.5 - 1.5 * Math.pow(t, 0.9) // lightness factor
-
-	t = 1 - t
-	// Compress the lightness at the beginning
-	// t = Math.pow(t, 0.9)
-
-	// Use culori's cubehelix function
-	return cubehelix({
-		mode: "cubehelix",
-		h: hue * 360, // culori expects degrees (0-360) instead of rotations
-		alpha: 1,
-
-		s: 0.2 - 0.1 * t, // Controls saturation
-		l: t / lf, // Lightness
+const lightAccentCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start,
+		rotations: rotations,
+		saturation: 0.6 + interp(1 - i, 0, 0.4),
+		lightness: 0.8 - interp(1 - i, 0, 0.1),
 	})
-}
-
-const blackCubehelixColors = Array.from({ length: n }, (_, i) =>
-	formatHex(blackCubehelixScale((n - 1 - i) / (n - 1)))
 )
 
-// 12 white-to-blue colors (perceptual interpolation)
-const whiteToBlue = interpolate(["#ffffff", "rgba(0, 122, 255, 1)"], "lch")
-const whiteToBlueColors = Array.from({ length: n }, (_, i) => formatHex(whiteToBlue(i / (n - 1))))
+const darkAccentCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start,
+		rotations: rotations,
+		saturation: 0.4 + interp(1 - i, 0, 0.6),
+		lightness: 0.4 + interp(1 - i, 0, 0.2),
+	})
+)
 
-const whiteToBlack = interpolate(["#ffffff", "#000000"], "lch")
-const whiteToBlackColors = Array.from({ length: 7 }, (_, i) => formatHex(whiteToBlack(i / 6)))
+const lightPrimaryCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + offset,
+		rotations: rotations * stretch,
+		saturation: 1,
+		lightness: 0.5,
+	})
+)
 
-const blackToWhite = interpolate(["#000000", "#ffffff"], "lch")
-const blackToWhiteColors = Array.from({ length: 4 }, (_, i) => formatHex(blackToWhite(i / 3)))
+const darkPrimaryCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + offset,
+		rotations: rotations * stretch,
+		saturation: 1,
+		lightness: 0.5 + (1 - i) * 0.2,
+	})
+)
 
-LAYER_EXAMPLE: {
-	// for (let i = 11; i >= 0; i--) {
-	for (let i = 0; i < n; i++) {
-		const color = whiteCubehelixColors[i + 1]
+const whiteToBlackColors = colorScheme(
+	(i: number) => interpolate(["#000000", "#ffffff"], "lch")(i),
+	7
+).slice(0, -3)
 
-		const selector = Array(i + 1)
-			.fill(".layer")
-			.join(" ")
+const blackToWhiteColors = colorScheme(
+	(i: number) => interpolate(["#ffffff", "#000000"], "lch")(i),
+	4
+)
 
-		css(`${selector} { background-color: ${color}; }`)
-	}
-}
+// LAYER_EXAMPLE: {
+// 	// for (let i = 11; i >= 0; i--) {
+// 	for (let i = 0; i < n; i++) {
+// 		const color = lightBackgroundCubehelixColors[i + 1]
+
+// 		const selector = Array(i + 1)
+// 			.fill(".layer")
+// 			.join(" ")
+
+// 		css(`${selector} { background-color: ${color}; }`)
+// 	}
+// }
 
 type Theme = {
 	background: string[]
 	foreground: string[]
+	ibackground: string[]
+	iforeground: string[]
+	primary: string[]
+	accent: string[]
+	black: string[]
+	white: string[]
 }
 
 const shiftTheme = (theme: Theme) => {
 	return {
+		...theme,
 		background: theme.background.slice(1),
-		foreground: theme.foreground, //.slice(1),
+		ibackground: theme.ibackground.slice(1),
+		primary: theme.primary.slice(1),
+		accent: theme.accent.slice(1),
 	}
 }
 
-const whiteTheme: Theme = {
-	background: whiteCubehelixColors,
+const lightTheme: Theme = {
+	background: lightBackgroundCubehelixColors,
 	foreground: blackToWhiteColors,
+	ibackground: darkBackgroundCubeHelixColors,
+	iforeground: whiteToBlackColors,
+	primary: lightPrimaryCubehelixColors,
+	accent: lightAccentCubehelixColors,
+	black: blackToWhiteColors,
+	white: whiteToBlackColors,
 }
-const blackTheme: Theme = {
-	background: blackCubehelixColors,
+const darkTheme: Theme = {
+	background: darkBackgroundCubeHelixColors,
 	foreground: whiteToBlackColors,
+	ibackground: lightBackgroundCubehelixColors,
+	iforeground: blackToWhiteColors,
+	primary: darkPrimaryCubehelixColors,
+	accent: darkAccentCubehelixColors,
+	black: blackToWhiteColors,
+	white: whiteToBlackColors,
 }
 
 function ColorSwatch(props: { color: string; children?: React.ReactNode }) {
@@ -159,7 +189,7 @@ function SwatchList(props: { colors: string[] }) {
 
 function SwatchPyramid(props: { colors: string[] }) {
 	const d = 40
-	const s = 600
+	const s = 400
 	return (
 		<div>
 			{props.colors.reduceRight(
@@ -203,6 +233,16 @@ function FormExample(props: { theme: Theme }) {
 				color: ${f3};
 			}
 		`)
+
+		css(`
+			.${className} button:focus,
+			.${className} input:focus,
+			.${className} div:focus {
+				outline: 2px solid ${theme.accent[0]};
+				outline-offset: -1px;
+			}
+
+		`)
 		return className
 	}, [])
 
@@ -220,18 +260,61 @@ function FormExample(props: { theme: Theme }) {
 				color: f1,
 			}}
 		>
-			<h3 style={{ marginBottom: 0 }}>Welcome to the form</h3>
-			<p style={{ marginTop: 6, marginBottom: 6 }}>Please sign up.</p>
-			<div>
-				<strong>Name:</strong>
+			<div style={{ display: "flex", flexDirection: "row", gap: 4, alignItems: "center" }}>
+				<h3 style={{ margin: 0 }}>Welcome to the form</h3>
+				<div style={{ flex: 1 }} />
+				<div
+					style={{
+						textAlign: "right",
+						background: theme.accent[0],
+						padding: "4px 6px",
+						borderRadius: 4,
+						fontSize: 12,
+					}}
+				>
+					BETA
+				</div>
 			</div>
+
+			{/* <p style={{ marginTop: 6, marginBottom: 6 }}>Please sign up.</p> */}
+			{/* <div>
+				<strong>Name:</strong>
+			</div> */}
 			<input placeholder="John Doe" style={{ ...reset, background: b2 }} />
-			<div>
+			{/* <div>
 				<strong>Email:</strong>
 			</div>
-			<input placeholder="john@doe.com" style={{ ...reset, background: b2 }} />
+			<input placeholder="john@doe.com" style={{ ...reset, background: b2 }} /> */}
 			<div>
-				<button style={{ ...reset, background: b2 }}>Sign up</button>
+				<button style={{ ...reset, background: theme.primary[0], color: theme.white[0] }}>
+					Sign up
+				</button>
+			</div>
+		</div>
+	)
+}
+
+export function ColorTheme(props: { name: string; theme: Theme }) {
+	const { name, theme } = props
+	return (
+		<div style={{ display: "flex", flexDirection: "row", gap: 4 }}>
+			<div style={{ display: "flex", flexDirection: "column", gap: 0, margin: 4 }}>
+				<div style={{ fontSize: 22, fontWeight: "bold" }}>{name}</div>
+				<div>Background</div>
+				<SwatchList colors={theme.background} />
+				<div>Foreground</div>
+				<SwatchList colors={theme.foreground} />
+				<div>Primary</div>
+				<SwatchList colors={theme.primary} />
+				<div>Accent</div>
+				<SwatchList colors={theme.accent} />
+			</div>
+			<SwatchPyramid colors={theme.background} />
+			<div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+				<FormExample theme={theme} />
+				<FormExample theme={shiftTheme(theme)} />
+				<FormExample theme={shiftTheme(shiftTheme(theme))} />
+				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(theme)))} />
 			</div>
 		</div>
 	)
@@ -239,48 +322,15 @@ function FormExample(props: { theme: Theme }) {
 
 export function ColorsDemo() {
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 12, margin: 12 }}>
-			<SwatchList colors={lightCubehelixColors} />
-			<SwatchList colors={whiteTheme.background} />
-			<SwatchList colors={blackTheme.background} />
-			<div style={{ display: "flex", flexDirection: "row", gap: 12 }}>
-				<FormExample theme={whiteTheme} />
-				<FormExample theme={shiftTheme(whiteTheme)} />
-				<FormExample theme={shiftTheme(shiftTheme(whiteTheme))} />
-				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(whiteTheme)))} />
-			</div>
-			<div style={{ display: "flex", flexDirection: "row", gap: 12 }}>
-				<FormExample theme={blackTheme} />
-				<FormExample theme={shiftTheme(blackTheme)} />
-				<FormExample theme={shiftTheme(shiftTheme(blackTheme))} />
-				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(blackTheme)))} />
-			</div>
+		<div style={{ display: "flex", flexDirection: "column", gap: 0, margin: 12 }}>
+			<ColorTheme name="Light" theme={lightTheme} />
+			<ColorTheme name="Dark" theme={darkTheme} />
 
-			<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-				<SwatchList colors={whiteTheme.background} />
-				<SwatchList colors={blackTheme.background} />
-				<SwatchList colors={whiteTheme.foreground} />
-				<SwatchList colors={blackTheme.foreground} />
-			</div>
-
-			<div style={{ display: "flex", flexDirection: "row", gap: 12 }}>
-				<SwatchPyramid colors={whiteTheme.background} />
-				<SwatchPyramid colors={blackTheme.background} />
-			</div>
-
-			<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-				<div>White to Blue</div>
-				<SwatchList colors={whiteToBlueColors} />
-				<SwatchPyramid colors={whiteToBlueColors} />
-			</div>
-
-			<div className="layer">
-				<div>Example</div>
-				<div className="layer">Here's another layer</div>
-				<div className="layer">
-					<div>And another</div>
-					<div className="layer">with an inner layer</div>
-				</div>
+			<div style={{ display: "flex", flexDirection: "column", gap: 0, margin: 4 }}>
+				<div>Black</div>
+				<SwatchList colors={lightTheme.black} />
+				<div>White</div>
+				<SwatchList colors={lightTheme.white} />
 			</div>
 		</div>
 	)
