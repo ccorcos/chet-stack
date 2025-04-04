@@ -8,7 +8,7 @@ export function css(statement: string): void {
 		document.head.appendChild(styleEl)
 	}
 
-	console.log(statement)
+	// console.log(statement)
 	styleEl.sheet?.insertRule(statement.trim(), styleEl.sheet.cssRules.length)
 }
 
