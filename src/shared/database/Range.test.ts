@@ -4,12 +4,12 @@ import { Range, compareRange, overlapsRange } from "./Range"
 
 describe("range", () => {
 	it("overlaps", () => {
-		const yes = (a: Range, b: Range, message?: string) => {
+		const yes = (a: Range<string>, b: Range<string>, message?: string) => {
 			assert.ok(overlapsRange(a, b), message ?? JSON.stringify({ a, b }))
 			assert.ok(overlapsRange(b, a), message ?? JSON.stringify({ a, b }))
 		}
 
-		const no = (a: Range, b: Range, message?: string) => {
+		const no = (a: Range<string>, b: Range<string>, message?: string) => {
 			assert.ok(!overlapsRange(a, b), message ?? JSON.stringify({ a, b }))
 			assert.ok(!overlapsRange(b, a), message ?? JSON.stringify({ a, b }))
 		}
@@ -83,7 +83,7 @@ describe("range", () => {
 	})
 
 	it("compareRange", () => {
-		const lt = (a: Range, b: Range) => {
+		const lt = (a: Range<string>, b: Range<string>) => {
 			const as = JSON.stringify(a)
 			const bs = JSON.stringify(b)
 			assert.equal(compareRange(a, b), -1, `${as} < ${bs}`)
@@ -92,7 +92,7 @@ describe("range", () => {
 			assert.equal(compareRange(b, b), 0, `${bs} = ${bs}`)
 		}
 
-		const gt = (a: Range, b: Range) => lt(b, a)
+		const gt = (a: Range<string>, b: Range<string>) => lt(b, a)
 
 		// Empty ranges
 		lt({}, { gt: "3" })

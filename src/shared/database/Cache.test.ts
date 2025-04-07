@@ -16,7 +16,7 @@ describe("computeCachedRange", () => {
 	const works = (
 		args: ListArgs<string>,
 		result: { key: string; value: string }[],
-		expected?: Range
+		expected?: Range<string>
 	) => {
 		const range = computeCachedRange(args, result)
 		assert.deepEqual(

@@ -43,7 +43,7 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 		})
 
 		const cache = environment.cache
-		const newCache: Cache = Object.create(cache)
+		const newCache: Cache<string, string> = Object.create(cache)
 		newCache.insert = (args, result) => {
 			cache.insert(KeyEncodeListArgs(args, encoder), KeyEncodeList(result, encoder))
 		}

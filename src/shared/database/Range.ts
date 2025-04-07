@@ -1,8 +1,8 @@
 import { Compare, compare, compoundCompare } from "../compare"
 
-export type Range<K = string> = { gt?: K; gte?: K; lt?: K; lte?: K }
+export type Range<K> = { gt?: K; gte?: K; lt?: K; lte?: K }
 
-export type Bound<K = string> = [number] | [number, K, number]
+export type Bound<K> = [number] | [number, K, number]
 
 export function encodeStartBound<K>(args: { gt?: K; gte?: K }): Bound<K> {
 	const { gt, gte } = args

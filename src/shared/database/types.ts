@@ -1,5 +1,8 @@
 import { Range } from "./Range"
 
+export type Tuple = any[]
+export type JSONValue = any
+
 export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
 
 export type ListArgs<K = any> = {

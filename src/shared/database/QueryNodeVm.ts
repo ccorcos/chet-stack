@@ -3,13 +3,13 @@ import { ValidationError } from "../errors"
 import { Cache } from "./Cache"
 import { BaseOKV, ListArgs } from "./types"
 
-export function queryNodeVm(environment: { db: BaseOKV<string, string> }, query: string) {
-	const { db } = environment
+export function queryNodeVm(environment: { rawDb: BaseOKV<string, string> }, query: string) {
+	const { rawDb } = environment
 
 	const cache = new Cache()
 
 	const list = (args: ListArgs<string>) => {
-		const result = db.list(args)
+		const result = rawDb.list(args)
 		cache.insert(args, result)
 		return result
 	}

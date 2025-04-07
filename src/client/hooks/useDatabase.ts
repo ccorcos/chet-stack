@@ -13,7 +13,7 @@ import { useLoader } from "./useLoader"
 
 export function useGet(key: string) {
 	const { localResult, remoteResult } = useList({ gte: key, lte: key })
-	const localGetResult: LocalGetResult = localResult.miss
+	const localGetResult: LocalGetResult<string> = localResult.miss
 		? { miss: true }
 		: { hit: localResult.hit?.[0]?.value }
 	return { localResult: localGetResult, remoteResult }
@@ -37,7 +37,7 @@ export function useList(_args: ListArgs<string>) {
 	const args = useDeepMemo(() => _args, [_args])
 
 	const [_, rerender] = useCounter()
-	const localResultRef = useRef<LocalListResult>({} as any)
+	const localResultRef = useRef<LocalListResult<string, string>>({} as any)
 
 	useMemo(() => {
 		localResultRef.current = cache.list(args)
@@ -74,7 +74,7 @@ export function useList(_args: ListArgs<string>) {
 export function useListJSON(args: ListArgs<string>) {
 	const { localResult, remoteResult } = useList(args)
 
-	const jsonLocalResult: LocalListResult<any> = useMemo(() => {
+	const jsonLocalResult: LocalListResult<string, any> = useMemo(() => {
 		if (localResult.hit) {
 			return { hit: localResult.hit.map(({ key, value }) => ({ key, value: JSON.parse(value) })) }
 		}
@@ -89,7 +89,7 @@ export function useListJSON(args: ListArgs<string>) {
 	return { localResult: jsonLocalResult, remoteResult }
 }
 
-type PendingWrite = { range: Range; id: string; promise: Promise<any> }
+type PendingWrite = { range: Range<string>; id: string; promise: Promise<any> }
 const pendingWrites: PendingWrite[] = []
 const sortedWrites = orderedArray<PendingWrite>(identity, (a: PendingWrite, b: PendingWrite) => {
 	const dir = compareRange(a.range, b.range)
@@ -110,7 +110,7 @@ function trackPendingWrite(args: WriteArgs<string, string>, promise: Promise<any
 	}
 }
 
-async function pendingWritesSubmitted(args: Range) {
+async function pendingWritesSubmitted(args: Range<string>) {
 	const waitFor = () => {
 		// We can be greedy here because we will call this again once the promise is resolved waiting
 		// for all pending writes to be cleared.

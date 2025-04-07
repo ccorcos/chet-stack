@@ -9,11 +9,13 @@ https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compactObj } from "../compactObj"
-import { compare, compoundCompare } from "../compare"
+import { compare } from "../compare"
 import { randomId } from "../randomId"
 import { reverse } from "../reverse"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
+	Bound,
+	compareBound,
 	compareRange,
 	decodeEndBound,
 	decodeStartBound,
@@ -23,47 +25,55 @@ import {
 } from "./Range"
 import { ListArgs, WriteArgs } from "./types"
 
-export type LocalListResult<V = string> = {
+export type LocalListResult<K, V> = {
 	miss?: true
-	hit?: { key: string; value: V }[]
-	prefix?: { key: string; value: V }[]
+	hit?: { key: K; value: V }[]
+	prefix?: { key: K; value: V }[]
 }
 
-export type LocalGetResult<V = string> = { hit?: V; miss?: true }
+export type LocalGetResult<V> = { hit?: V; miss?: true }
 
-type Listener = { range: Range; id: string; fn: () => void }
+type Listener<K> = { range: Range<K>; id: string; fn: () => void }
 
-const sortedListeners = orderedArray<Listener>(identity, (a: Listener, b: Listener) => {
-	const dir = compareRange(a.range, b.range)
-	if (dir !== 0) return dir
-	return compare(a.id, b.id)
-})
+export class Cache<K, V> {
+	private sortedListeners: ReturnType<typeof orderedArray<Listener<K>>>
+	private sortedRanges: ReturnType<typeof orderedArray<Range<K>>>
+	private orderedKeys: ReturnType<typeof orderedArray<K>>
 
-const sortedRanges = orderedArray<Range>(identity, compareRange)
+	constructor(public compareKey: (a: K, b: K) => number = compare) {
+		this.sortedListeners = orderedArray<Listener<K>>(identity, (a: Listener<K>, b: Listener<K>) => {
+			const dir = compareRange(a.range, b.range, this.compareKey)
+			if (dir !== 0) return dir
+			return compare(a.id, b.id)
+		})
+		this.sortedRanges = orderedArray<Range<K>>(identity, (a, b) =>
+			compareRange(a, b, this.compareKey)
+		)
+		this.orderedKeys = orderedArray(identity, this.compareKey)
+	}
 
-export class Cache {
-	data = new InMemoryBaseOKV<string, string>()
+	data = new InMemoryBaseOKV<K, V>()
 
 	// ==========================================================================
 	// Listeners
 	// ==========================================================================
 
 	// TODO: optimize this with an interval tree.
-	listeners: Listener[] = []
+	listeners: Listener<K>[] = []
 
-	subscribe(range: Range, fn: () => void) {
+	subscribe(range: Range<K>, fn: () => void) {
 		const listener = { range, id: randomId(), fn }
-		sortedListeners.insert(this.listeners, listener)
+		this.sortedListeners.insert(this.listeners, listener)
 		return () => {
-			sortedListeners.remove(this.listeners, listener)
+			this.sortedListeners.remove(this.listeners, listener)
 		}
 	}
 
-	emit(ranges: Range[]) {
+	emit(ranges: Range<K>[]) {
 		const fns = new Set<() => void>()
 		for (const r of ranges) {
 			for (const { range, fn } of this.listeners) {
-				if (overlapsRange(r, range)) fns.add(fn)
+				if (overlapsRange(r, range, this.compareKey)) fns.add(fn)
 			}
 		}
 		for (const fn of fns) fn()
@@ -74,19 +84,22 @@ export class Cache {
 	// ==========================================================================
 
 	// TODO: could just store ranges and do the encoding in the comparison.
-	cachedRanges: Range[] = []
+	cachedRanges: Range<K>[] = []
 
 	// TODO: track versions and don't clobber optimistic writes.
-	insert(args: ListArgs<string>, result: { key: string; value: string }[]) {
+	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
 		const range = computeCachedRange(args, result)
-		sortedRanges.insert(this.cachedRanges, range)
+		this.sortedRanges.insert(this.cachedRanges, range)
 
 		// Delete any previous data in that range.
-		const setKeys = new Set<string>()
-		for (const { key } of result) setKeys.add(key)
-		const deleteKeys = new Set<string>()
+		const setKeys: K[] = []
+		for (const { key } of result) setKeys.push(key)
+
+		const deleteKeys: K[] = []
 		const existing = this.data.list(range)
-		for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.add(key)
+
+		for (const { key } of existing)
+			if (this.orderedKeys.search(setKeys, key).found === undefined) deleteKeys.push(key)
 
 		this.data.write({ set: result, delete: Array.from(deleteKeys) })
 
@@ -97,14 +110,14 @@ export class Cache {
 	// Data ranges
 	// ==========================================================================
 
-	list(args: ListArgs<string>): LocalListResult {
+	list(args: ListArgs<K>): LocalListResult<K, V> {
 		const range = encodeRange(args)
 
-		const eq = (a: any[], b: any[]) => compoundCompare(a, b) === 0
-		const gt = (a: any[], b: any[]) => compoundCompare(a, b) === 1
-		const gte = (a: any[], b: any[]) => compoundCompare(a, b) !== -1
-		const lt = (a: any[], b: any[]) => compoundCompare(a, b) === -1
-		const lte = (a: any[], b: any[]) => compoundCompare(a, b) !== 1
+		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === 0
+		const gt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === 1
+		const gte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) !== -1
+		const lt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === -1
+		const lte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) !== 1
 
 		if (gt(range[0], range[1])) throw new Error("Invalid range.")
 
@@ -188,25 +201,25 @@ export class Cache {
 		return { hit: this.data.list(args) }
 	}
 
-	get(key: string): LocalGetResult {
+	get(key: K): LocalGetResult<V> {
 		const result = this.list({ gte: key, lte: key })
 		if (result.hit) return { hit: result.hit[0]?.value }
 		else return { miss: true }
 	}
 
-	write(args: WriteArgs<string, string>) {
+	write(args: WriteArgs<K, V>) {
 		// Optimistic write
 		this.data.write(args)
 
-		const keys = new Set<string>()
-		for (const { key } of args.set ?? []) keys.add(key)
-		for (const key of args.delete ?? []) keys.add(key)
+		const keys: K[] = []
+		for (const { key } of args.set ?? []) this.orderedKeys.insert(keys, key)
+		for (const key of args.delete ?? []) this.orderedKeys.insert(keys, key)
 
 		// Write cache ranges so we can read our writes.
 		const ranges = Array.from(keys).map(keyToRange)
 
 		for (const range of ranges) {
-			sortedRanges.insert(this.cachedRanges, range)
+			this.sortedRanges.insert(this.cachedRanges, range)
 		}
 
 		// Emit
@@ -214,14 +227,14 @@ export class Cache {
 	}
 }
 
-export function keyToRange(key: string) {
+export function keyToRange<K>(key: K) {
 	return { gte: key, lte: key }
 }
 
-export function computeCachedRange(
-	args: ListArgs<string>,
-	result: { key: string; value: string }[]
-): Range {
+export function computeCachedRange<K, V>(
+	args: ListArgs<K>,
+	result: { key: K; value: V }[]
+): Range<K> {
 	const { gt, gte, lt, lte, limit, reverse } = args
 
 	if (limit === undefined) {

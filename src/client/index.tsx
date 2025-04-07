@@ -20,7 +20,7 @@ const pubsub = new WebsocketPubsubClient({
 })
 
 const prefs = new LocalPreferences()
-const cache = new Cache()
+const cache = new Cache<string, string>()
 
 const environment: ClientEnvironment = {
 	config: clientConfig,

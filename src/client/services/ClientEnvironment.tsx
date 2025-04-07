@@ -12,7 +12,7 @@ export type ClientEnvironment = {
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
 	prefs: LocalPreferences
-	cache: Cache
+	cache: Cache<string, string>
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)
