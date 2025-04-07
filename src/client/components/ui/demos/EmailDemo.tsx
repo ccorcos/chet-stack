@@ -4,13 +4,15 @@ import { useListJSON, useWriteJSON } from "../../../hooks/useDatabase"
 import { useInputFocus } from "../../../hooks/useInputFocus"
 import { isShortcut } from "../../../hooks/useShortcut"
 import { Badge } from "../Badge"
+import { Button, PrimaryButton } from "../Button"
+import { Input } from "../Input"
 import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../Layout"
 import { ListBox, ListItem, useListBox } from "../ListBox"
 import { MenuItem } from "../MenuItem"
 import { Popup, PopupFrame } from "../Popup"
 
 export function EmailDemo() {
-	const [username, setUsername] = useState<string | undefined>(undefined)
+	const [username, setUsername] = useState<string | undefined>("chet")
 	const [selected, setSelected] = useState<string | undefined>(undefined)
 
 	const [compose, setCompose] = useState(false)
@@ -18,25 +20,32 @@ export function EmailDemo() {
 	return (
 		<Layout
 			Topbar={
-				<TopbarLayout show={true}>
-					<FakeLogin
-						username={username}
-						onLogin={setUsername}
-						onLogout={() => setUsername(undefined)}
-					/>
-					{username && <button onClick={() => setCompose(true)}>Compose</button>}
+				<TopbarLayout
+					show={Boolean(username)}
+					style={{ display: "flex", padding: 8, justifyContent: "flex-end", alignItems: "center" }}
+				>
+					<div>
+						<Button onClick={() => setCompose(true)}>Compose</Button>
+					</div>
 				</TopbarLayout>
 			}
 			RightPanel={
-				username &&
-				compose && (
-					<RightPanelLayout show={true}>
+				username && (
+					<RightPanelLayout show={Boolean(compose)}>
 						<Compose from={username} />
 					</RightPanelLayout>
 				)
 			}
 		>
 			<ContentLayout>
+				{!username && (
+					<FakeLogin
+						username={username}
+						onLogin={setUsername}
+						onLogout={() => setUsername(undefined)}
+					/>
+				)}
+
 				{username && <Inbox username={username} selected={selected} setSelected={setSelected} />}
 			</ContentLayout>
 		</Layout>
@@ -67,16 +76,36 @@ function FakeLogin(props: {
 	}
 
 	return (
-		<div>
-			<input
-				type="text"
-				value={username}
-				onChange={(e) => setUsername(e.target.value)}
-				onKeyDown={(e) => {
-					if (e.key === "Enter") onLogin()
+		<div
+			style={{
+				display: "flex",
+				padding: 8,
+				alignItems: "center",
+				justifyContent: "center",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "column",
+					gap: 8,
 				}}
-			/>
-			<button onClick={onLogin}>Login</button>
+			>
+				<h3 style={{ margin: 0 }}>Welcome to Comms</h3>
+				<p style={{ margin: 0 }}>Please sign up with a fake username.</p>
+				<Input
+					type="text"
+					placeholder="Username"
+					value={username}
+					onChange={(e) => setUsername(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") onLogin()
+					}}
+				/>
+				<div>
+					<PrimaryButton onClick={onLogin}>Login</PrimaryButton>
+				</div>
+			</div>
 		</div>
 	)
 }
@@ -181,13 +210,14 @@ function Compose(props: { from: string }) {
 					onDelete={() => setDraft({ ...draft, to: draft.to.slice(0, -1) })}
 				/>
 			</div>
-			<input
+			<Input
+				placeholder="Subject..."
 				value={draft.subject}
 				onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
 			/>
 			<textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
 
-			<button onClick={send}>Send</button>
+			<Button onClick={send}>Send</Button>
 		</div>
 	)
 }
@@ -245,8 +275,9 @@ function SearchUser(props: { onSubmit: (username: string) => void; onDelete: () 
 
 	return (
 		<>
-			<input
+			<Input
 				ref={inputRef}
+				placeholder="To..."
 				onFocus={onFocus}
 				onBlur={onBlur}
 				value={query}

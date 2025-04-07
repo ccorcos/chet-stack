@@ -10,4 +10,6 @@ export class Database extends SQLiteDatabase {
 	reset() {}
 }
 
-export type DatabaseApi = BaseOKV<string, string>
+export type RawDatabaseApi = BaseOKV<string, string>
+
+export type DatabaseApi = BaseOKV<any[], any>

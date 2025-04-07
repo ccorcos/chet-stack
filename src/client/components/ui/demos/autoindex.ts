@@ -4,7 +4,6 @@ import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
-import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
 import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataListDemo from "./DataListDemo"
 import * as DraggableDemo from "./DraggableDemo"
@@ -22,23 +21,19 @@ import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
 import * as MasterDetailDemo from "./MasterDetailDemo"
 import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
-import * as PlantDatabaseDemo from "./PlantDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as PromptMapDemo from "./PromptMapDemo"
-import * as RawDatabaseDemo from "./RawDatabaseDemo"
 import * as SelectableListDemo from "./SelectableListDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 import * as TableViewDemo from "./TableViewDemo"
-import * as TableViewDemo2 from "./TableViewDemo2"
 
 export {
 	BadgeDemo,
 	ButtonDemo,
 	CalendarDemo,
 	ColorsDemo,
-	CustomDatabaseDemo,
 	DarkModeDemo,
 	DataListDemo,
 	DraggableDemo,
@@ -56,14 +51,11 @@ export {
 	ListBoxDemo,
 	MasterDetailDemo,
 	OKVDatabaseDemo,
-	PlantDatabaseDemo,
 	PlaygroundDemo,
 	PopupDemo,
 	PromptMapDemo,
-	RawDatabaseDemo,
 	SelectableListDemo,
 	SpinnerDemo,
 	TableDemo,
 	TableViewDemo,
-	TableViewDemo2,
 }

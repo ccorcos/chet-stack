@@ -24,8 +24,8 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 		}
 
 		const newApi = proxyObj(async (key, args) => {
-			if (key === "list") {
-				const response = await api.list(KeyEncodeListArgs(args, encoder))
+			if (key === "rawList") {
+				const response = await api.rawList(KeyEncodeListArgs(args, encoder))
 				if (response.status === 200) {
 					return {
 						...response,
@@ -35,8 +35,8 @@ export function Subspace(props: { prefix: string; children: React.ReactNode }) {
 
 				return response
 			}
-			if (key === "write") {
-				return api.write(KeyEncodeWrite(args, encoder))
+			if (key === "rawWrite") {
+				return api.rawWrite(KeyEncodeWrite(args, encoder))
 			}
 
 			return api[key](args)

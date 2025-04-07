@@ -45,6 +45,41 @@ type Record = {
 	}
 }
 
+// type StringPropertyType = { id: string; name?: string; type: "string" }
+// type NumberPropertyType = { id: string; name?: string; type: "number" }
+// type BooleanPropertyType = { id: string; name?: string; type: "boolean" }
+// type SelectPropertyType = {
+// 	id: string
+// 	name?: string
+// 	type: "select"
+// 	options?: string[]
+// 	plural?: boolean
+// }
+
+// type Property = StringPropertyType | NumberPropertyType | BooleanPropertyType | SelectPropertyType
+// type PropertyValue = undefined | string | number | boolean | string[]
+// type PropertyType = Property["type"]
+
+// type Schema = {
+// 	id: string
+// 	name: string
+// 	properties: string[]
+// }
+
+// type View = {
+// 	id: string
+// 	name: string
+// 	columns: { property: string; width?: number }[]
+// 	order: string[] // preferred record order with no sort.
+// 	// filter, sort
+// 	// type: "table" | "board" | "calendar" | "list"
+// }
+
+// type Record = {
+// 	id: string
+// 	[property: string]: PropertyValue
+// }
+
 const PlantSchema: Schema = {
 	id: "schema:plants",
 	name: "Plants",

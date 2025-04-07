@@ -61,7 +61,7 @@ export function useList(_args: ListArgs<string>) {
 	const remoteResult = useLoader("list:" + requestId, async () => {
 		// TODO: this doesn't seem to be necessary.
 		// await pendingWritesSubmitted(args)
-		const response = await api.list(args)
+		const response = await api.rawList(args)
 		if (response.status !== 200) throw new Error("Request failed: " + response.status)
 		cache.insert(args, response.body)
 		// return response.body
@@ -133,7 +133,7 @@ export function useWrite() {
 
 	return async (args: WriteArgs<string, string>) => {
 		cache.write(args)
-		const promise = api.write(args)
+		const promise = api.rawWrite(args)
 
 		// Track pending writes.
 		trackPendingWrite(args, promise)

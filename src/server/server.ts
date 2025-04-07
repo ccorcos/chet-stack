@@ -4,6 +4,8 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
+import { codec } from "../shared/database/Codec"
+import { KeyEncode, ValueEncode } from "../shared/database/Encoder"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
 import { PubsubServer } from "./PubsubServer"
@@ -34,7 +36,12 @@ if (!config.production) {
 }
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
-const db = new Database(config.dbPath)
+const rawDb = new Database(config.dbPath)
+const db = ValueEncode(KeyEncode(rawDb, codec), {
+	encode: (value) => JSON.stringify(value),
+	decode: (value) => JSON.parse(value),
+})
+
 const queue = new QueueDatabase(config.queuePath)
 
 const server = http.createServer(app)
@@ -43,7 +50,7 @@ const pubsub = PubsubServer({ config, db }, server)
 // Setup the server environment. This thing gets passed around everywhere and defines
 // the interface between differnet services so we can swap out things like the
 // database or the pubsub service with minimal plumbing.
-const environment: ServerEnvironment = { config, db, queue, pubsub }
+const environment: ServerEnvironment = { config, rawDb, db, queue, pubsub }
 
 FileServer(environment, app)
 QueueServer(environment)

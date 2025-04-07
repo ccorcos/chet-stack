@@ -8,10 +8,10 @@ export const input = t.any
 
 export async function handler(
 	environment: ServerEnvironment,
-	args: ListArgs<any[]>,
+	args: ListArgs<string>,
 	req: Request,
 	res: Response
 ) {
-	const { db } = environment
-	return db.list(args)
+	const { rawDb } = environment
+	return rawDb.list(args)
 }

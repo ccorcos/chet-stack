@@ -8,7 +8,7 @@ export const input = t.any
 
 export async function handler(
 	environment: ServerEnvironment,
-	args: WriteArgs<string, string>, // t.Infer<typeof input>,
+	args: WriteArgs<any[], any>, // t.Infer<typeof input>,
 	req: Request,
 	res: Response
 ) {

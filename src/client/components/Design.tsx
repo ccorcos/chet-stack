@@ -79,7 +79,7 @@ function Sidebar(props: {
 	})
 
 	return (
-		<LeftPanelLayout show={isOpen}>
+		<LeftPanelLayout show={isOpen} className="layer">
 			<Input
 				ref={input}
 				type="search"
