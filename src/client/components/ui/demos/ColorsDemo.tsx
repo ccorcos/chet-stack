@@ -1,3 +1,18 @@
+/*
+
+Guide...
+- accent for active, hover, selection, focus, etc.
+- primary for call-to-action.
+
+To Do...
+- Popup layer separate from a normal layer?
+	Light mode popups don't need a different background...
+- Sometimes we want more layer separation, sometimes less -- select input for example.
+- I'm not sure it makes sense to rotate the accent colors. It can look kind of confusing.
+	especially true when doing the button hover active states and stuff.
+
+*/
+
 import { differenceCiede2000 } from "culori"
 import React, { useMemo } from "react"
 import { darkTheme, lightTheme, shiftTheme, Theme } from "../../../../shared/colors"

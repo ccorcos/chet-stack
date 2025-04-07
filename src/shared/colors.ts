@@ -1,7 +1,7 @@
 import { Cubehelix, cubehelix, formatHex, interpolate, Lch } from "culori"
 
 // Number of rotations through the rainbow
-const rotations = 0.2
+const rotations = 0.1
 const start = 0.04
 
 function cube(
@@ -69,7 +69,7 @@ const lightPrimaryCubehelixColors = colorScheme((i: number) =>
 		start: start + primaryOffset,
 		rotations: rotations,
 		saturation: 1,
-		lightness: 0.5,
+		lightness: 0.5 - interp(1 - i, 0, 0.2),
 	})
 )
 

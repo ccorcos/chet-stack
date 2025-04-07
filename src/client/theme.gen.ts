@@ -2,13 +2,6 @@ import { execSync } from "child_process"
 import { writeFileSync } from "fs"
 import { Theme, darkTheme, lightTheme, shiftTheme } from "../shared/colors"
 
-/*
-Guide...
-- accent for active, hover, selection, focus, etc.
-- primary for call-to-action.
-
-*/
-
 const themeVars = (theme: Theme) =>
 	Object.keys(theme)
 		.map((key) => {
