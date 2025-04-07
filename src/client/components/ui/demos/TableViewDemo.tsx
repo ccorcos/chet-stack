@@ -264,10 +264,10 @@ function TableView() {
 								display: "flex",
 								alignItems: "center",
 								gap: 4,
-								borderLeft: index !== 0 ? "1px solid var(--separator)" : undefined,
-								borderBottom: "1px solid var(--separator)",
+								borderLeft: index !== 0 ? "1px solid var(--border)" : undefined,
+								borderBottom: "1px solid var(--border)",
 								padding: "2px 8px",
-								backgroundColor: "var(--background)",
+								backgroundColor: "var(--bg0)",
 								// make the resizers above the cells.
 								zIndex: PlantSchema.properties.length - index + 10,
 							}}
@@ -300,10 +300,9 @@ function TableView() {
 									style={{
 										display: "flex",
 										alignItems: "center",
-										borderLeft: col !== 0 ? "1px solid var(--separator)" : undefined,
+										borderLeft: col !== 0 ? "1px solid var(--border)" : undefined,
 										// borderBottom:
-										// 	row !== list.length - 1 ? "1px solid var(--separator)" : undefined,
-										borderBottom: "1px solid var(--separator)",
+										borderBottom: "1px solid var(--border)",
 										padding: "2px 8px",
 									}}
 									record={record}
@@ -317,7 +316,6 @@ function TableView() {
 			</Table>
 			<NakedButton
 				style={{
-					// borderTop: "1px solid var(--separator)",
 					textAlign: "left",
 					padding: "2px 8px",
 					borderRadius: 0,
@@ -372,8 +370,8 @@ const TableCell = passthroughRef(
 				{editing && (
 					<Overlay anchor={editing} onDismiss={onDismiss}>
 						<div
+							className="layer"
 							style={{
-								background: "var(--popup-background)",
 								boxShadow: "var(--shadow)",
 								minHeight: "100%",
 								...borderPadding(editing),

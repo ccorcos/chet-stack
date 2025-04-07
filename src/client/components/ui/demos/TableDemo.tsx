@@ -21,7 +21,7 @@ export function TableDemo() {
 					width={columnWidths[0]}
 					minWidth={minWidth}
 					setWidth={setWidth(0)}
-					style={{ border: "1px solid red", backgroundColor: "var(--background)" }}
+					style={{ border: "1px solid red", backgroundColor: "var(--bg0)" }}
 				>
 					Col 1
 				</HeaderCell>
@@ -29,7 +29,7 @@ export function TableDemo() {
 					width={columnWidths[1]}
 					minWidth={minWidth}
 					setWidth={setWidth(1)}
-					style={{ border: "1px solid blue", backgroundColor: "var(--background)" }}
+					style={{ border: "1px solid blue", backgroundColor: "var(--bg0)" }}
 				>
 					Col 2
 				</HeaderCell>
@@ -37,7 +37,7 @@ export function TableDemo() {
 					width={columnWidths[2]}
 					minWidth={minWidth}
 					setWidth={setWidth(2)}
-					style={{ border: "1px solid green", backgroundColor: "var(--background)" }}
+					style={{ border: "1px solid green", backgroundColor: "var(--bg0)" }}
 				>
 					Col 3
 				</HeaderCell>

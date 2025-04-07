@@ -68,8 +68,8 @@ function SwatchPyramid(props: { colors: string[] }) {
 
 function FormExample(props: { theme: Theme }) {
 	const { theme } = props
-	const [b1, b2, b3, b4, b5] = theme.background
-	const [f1, f2, f3, f4, f5] = theme.foreground
+	const [b1, b2, b3, b4, b5] = theme.bg
+	const [f1, f2, f3, f4, f5] = theme.fg
 
 	const reset: React.CSSProperties = {
 		border: "none",
@@ -153,15 +153,23 @@ export function ColorTheme(props: { name: string; theme: Theme }) {
 			<div style={{ display: "flex", flexDirection: "column", gap: 0, margin: 4 }}>
 				<div style={{ fontSize: 22, fontWeight: "bold" }}>{name}</div>
 				<div>Background</div>
-				<SwatchList colors={theme.background} />
+				<SwatchList colors={theme.bg} />
 				<div>Foreground</div>
-				<SwatchList colors={theme.foreground} />
+				<SwatchList colors={theme.fg} />
 				<div>Primary</div>
 				<SwatchList colors={theme.primary} />
 				<div>Accent</div>
 				<SwatchList colors={theme.accent} />
+				<div>Triad</div>
+				<SwatchList colors={theme.triad} />
+				<div>Reverse Triad</div>
+				<SwatchList colors={theme.rtriad} />
+				{/* <div>Quad</div> */}
+				{/* <SwatchList colors={theme.quad} /> */}
+				{/* <div>Reverse Quad</div> */}
+				{/* <SwatchList colors={theme.rquad} /> */}
 			</div>
-			<SwatchPyramid colors={theme.background} />
+			<SwatchPyramid colors={theme.bg} />
 			<div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
 				<FormExample theme={theme} />
 				<FormExample theme={shiftTheme(theme)} />

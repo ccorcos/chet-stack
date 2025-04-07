@@ -89,9 +89,8 @@ export const PopupFrame = passthroughRef((props: React.HTMLProps<HTMLDivElement>
 	return (
 		<div
 			{...props}
-			className="popup"
+			className="layer"
 			style={{
-				background: "var(--popup-background)",
 				boxShadow: "var(--shadow)",
 				padding: 4,
 				borderRadius: 4,

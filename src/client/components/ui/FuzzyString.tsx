@@ -14,8 +14,9 @@ export function FuzzyString(props: { match: FuzzyMatch }) {
 						</span>
 					)
 				} else {
+					// return <span key={i}>{item.skip}</span>
 					return (
-						<span style={{ color: match.length > 1 ? "var(--text-color2)" : undefined }} key={i}>
+						<span style={{ color: match.length > 1 ? "var(--fg1)" : undefined }} key={i}>
 							{item.skip}
 						</span>
 					)

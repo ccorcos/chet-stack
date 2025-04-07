@@ -111,8 +111,8 @@ function Resizer(props: { width: number; minWidth: number; setWidth: (value: num
 				style={{
 					width: 1,
 					height: "100%",
-					backgroundColor: show ? `var(--text-color)` : "transparent",
-					boxShadow: show ? `0 0 1px 1px var(--text-color)` : "none",
+					backgroundColor: show ? `var(--fg0)` : "transparent",
+					boxShadow: show ? `0 0 1px 1px var(--fg0)` : "none",
 					transition: "box-shadow 0.1s ease-in-out, background-color 0.1s ease-in-out",
 				}}
 			/>

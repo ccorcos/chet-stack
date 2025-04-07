@@ -8,7 +8,7 @@ function _Button(props: JSX.IntrinsicElements["button"]) {
 			className={["feedback", props.className].filter(Boolean).join(" ")}
 			style={{
 				cursor: "pointer",
-				border: "1px solid var(--gray)",
+				border: "1px solid var(--bg2)",
 				padding: "0.2em 0.4em",
 				borderRadius: "0.2em",
 				...props.style,
@@ -22,13 +22,14 @@ export const Button = passthroughRef(_Button)
 export const PrimaryButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
 	return _Button({
 		...props,
-		style: { background: "var(--blue)", color: "var(--white)", ...props.style },
+		className: "primary",
 	})
 })
 
 export const NakedButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
 	return _Button({
 		...props,
+		className: "naked",
 		style: { borderColor: "transparent", ...props.style },
 	})
 })

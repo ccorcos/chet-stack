@@ -108,7 +108,7 @@ export const FileUploadDropZone = passthroughRef(
 				onDragOver={handleDragOver}
 				onDrop={handleDrop}
 				style={{
-					border: isDragging ? "3px dashed var(--blue)" : "3px solid transparent",
+					border: isDragging ? "3px dashed var(--primary0)" : "3px solid transparent",
 					...props.style,
 				}}
 			/>

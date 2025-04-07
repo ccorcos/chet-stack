@@ -13,7 +13,6 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 			style={{
 				// borderWidth: 1,
 				// borderStyle: "solid",
-				// borderColor: props.disabled ? "var(--gray4)" : "var(--text-color)",
 
 				border: "none",
 				borderRadius: "0.2em",

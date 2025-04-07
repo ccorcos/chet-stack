@@ -57,9 +57,9 @@ export function MultiSelectInput(props: {
 	return (
 		<PopupFrame style={{ width: 350, display: "flex", flexDirection: "column", padding: 0 }}>
 			<div
+				className="layer"
 				style={{
 					padding: 4,
-					background: "var(--background2)",
 					display: "inline-flex",
 					flexWrap: "wrap",
 					gap: 4,
@@ -67,7 +67,11 @@ export function MultiSelectInput(props: {
 				}}
 			>
 				{props.value.map((value, i) => (
-					<div key={i} style={{ ...tokenStyle, display: "flex", alignItems: "center", gap: 4 }}>
+					<div
+						key={i}
+						className="layer"
+						style={{ ...tokenStyle, display: "flex", alignItems: "center", gap: 4 }}
+					>
 						{value}
 						<NakedButton
 							style={{ padding: 0, fontSize: "inherit", fontFamily: "inherit", width: "1.2em" }}
@@ -95,7 +99,6 @@ export const tokenStyle: React.CSSProperties = {
 	fontSize: "12px",
 	padding: "2px 4px",
 	borderRadius: "2px",
-	backgroundColor: "var(--gray3)",
 }
 
 export function SelectInputResults(props: {
@@ -118,7 +121,7 @@ export function SelectInputResults(props: {
 					onMouseEnter={() => props.setSelectedIndex(i)}
 					style={{ padding: 4, alignItems: "center", display: "flex" }}
 				>
-					<div style={tokenStyle}>
+					<div style={tokenStyle} className="layer">
 						<FuzzyString match={item.match} />
 					</div>
 				</MenuItem>

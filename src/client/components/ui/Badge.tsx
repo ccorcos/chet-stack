@@ -14,7 +14,7 @@ export function Badge(props: {
 				fontSize: "0.8em",
 				padding: "0.2em 0.4em",
 				borderRadius: "0.2em",
-				backgroundColor: "var(--gray3)",
+				backgroundColor: "var(--bg2)",
 				...props.style,
 			}}
 			tabIndex={props.tabIndex}

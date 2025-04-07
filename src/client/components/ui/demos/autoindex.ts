@@ -4,7 +4,6 @@ import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
-import * as ColorsExampleDemo from "./ColorsExampleDemo"
 import * as CustomDatabaseDemo from "./CustomDatabaseDemo"
 import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataListDemo from "./DataListDemo"
@@ -39,7 +38,6 @@ export {
 	ButtonDemo,
 	CalendarDemo,
 	ColorsDemo,
-	ColorsExampleDemo,
 	CustomDatabaseDemo,
 	DarkModeDemo,
 	DataListDemo,

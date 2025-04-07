@@ -1,5 +1,6 @@
 import React, { Suspense } from "react"
 import { parseRoute } from "../../shared/routeHelpers"
+import { useDarkModeSwitcher } from "../hooks/useDarkModeSwitcher"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
 import { useRouterState } from "../services/Router"
 import { App } from "./App"
@@ -8,6 +9,7 @@ import { Spinner } from "./ui/Spinner"
 import { Throttle } from "./ui/Throttle"
 
 export function Root(props: { environment: ClientEnvironment }) {
+	useDarkModeSwitcher()
 	return (
 		<Suspense fallback={<Loading />}>
 			<ClientEnvironmentProvider value={props.environment}>

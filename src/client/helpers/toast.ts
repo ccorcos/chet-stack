@@ -4,7 +4,7 @@ export function toast(message: string) {
 	div.style.position = "fixed"
 	div.style.right = "12px"
 	div.style.bottom = "12px"
-	div.style.backgroundColor = "var(--background)"
+	div.style.backgroundColor = "var(--bg0)"
 	div.style.boxShadow = "var(--shadow)"
 	div.style.padding = "12px"
 	div.style.borderRadius = "4px"

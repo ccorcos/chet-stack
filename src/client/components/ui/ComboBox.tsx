@@ -52,7 +52,7 @@ export function ComboBoxSelect<T extends string>(props: {
 				onClick={() => setOpen(true)}
 				style={{ textAlign: "left", display: "flex", alignItems: "center", ...props.style }}
 			>
-				{props.value || <span style={{ color: "var(--text-color2" }}>{props.placeholder} </span>}{" "}
+				{props.value || <span style={{ color: "var(--fg2" }}>{props.placeholder} </span>}{" "}
 				<span style={{ fontSize: "0.7rem", verticalAlign: "middle", flex: 1, textAlign: "right" }}>
 					▼
 				</span>

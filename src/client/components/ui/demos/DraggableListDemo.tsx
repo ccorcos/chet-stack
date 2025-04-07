@@ -52,7 +52,7 @@ function DraggableList(props: { direction: "vertical" | "horizontal" }) {
 							width: props.direction === "horizontal" ? "auto" : 100,
 							userSelect: "none",
 							cursor: dragState.dragging ? "grabbing" : "grab",
-							backgroundColor: "var(--background)",
+							backgroundColor: "var(--bg0)",
 							boxShadow:
 								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
 						}}

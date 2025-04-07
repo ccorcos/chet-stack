@@ -70,7 +70,7 @@ function IsolatedDarkModeDemo() {
 	}, [globalMode])
 
 	return (
-		<div style={{ border: "1px solid var(--text-color)", padding: 12 }}>
+		<div style={{ border: "1px solid var(--border)", padding: 12 }}>
 			<h3>Isolated Demo</h3>
 			<div style={{ display: "flex", alignItems: "center" }}>
 				<div style={{ width: 200 }}>Global Dark Mode</div>
@@ -120,7 +120,7 @@ function AppDarkModeDemo() {
 	}, [globalMode])
 
 	return (
-		<div style={{ border: "1px solid var(--text-color)", padding: 12 }}>
+		<div style={{ border: "1px solid var(--border)", padding: 12 }}>
 			<h3>App Demo</h3>
 			<div style={{ display: "flex", alignItems: "center" }}>
 				<div style={{ width: 200 }}>Global Dark Mode</div>
@@ -146,7 +146,7 @@ function AppDarkModeDemo() {
 			</div>
 			<div
 				className={localMode}
-				style={{ background: "var(--background)", color: "var(--text-color)" }}
+				style={{ background: "var(--demobackground)", color: "var(--democolor)" }}
 			>
 				<p>Hello world</p>
 			</div>

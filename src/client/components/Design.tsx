@@ -108,7 +108,7 @@ function Sidebar(props: {
 							onMouseEnter={() => setSelectedIndex(i)}
 							style={{
 								padding: "0.5em",
-								backgroundColor: selectedIndex === i ? "var(--gray6)" : undefined,
+								backgroundColor: selectedIndex === i ? "var(--accent0)" : undefined,
 							}}
 						>
 							<FuzzyString match={match} />

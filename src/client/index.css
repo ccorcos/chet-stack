@@ -21,48 +21,52 @@ button {
 html,
 body,
 .dark,
-.light {
-	background: var(--background);
-	color: var(--text-color);
-}
-
-input {
-	color: var(--text-color);
-}
-
-input::placeholder {
-	color: var(--placeholder);
-}
-
-a {
-	color: var(--text-color2);
-}
-
-.hover:hover {
-	background-color: var(--gray6);
-}
-
-button.feedback:hover {
-	background-color: var(--gray6);
-}
-button.feedback:active {
-	background-color: var(--gray4);
-}
-
-input.feedback:hover {
-	background-color: var(--gray6);
-}
-input.feedback:focus {
-	background-color: var(--background);
-}
-
-.feedback:hover {
-	background-color: var(--gray6);
+.light,
+.layer {
+	background: var(--bg0);
+	color: var(--fg0);
 }
 
 input,
 button {
-	background: transparent;
+	background-color: var(--bg1);
+	color: var(--fg0);
+}
+
+.feedback:hover {
+	background-color: var(--bg2);
+}
+.feedback:active {
+	background-color: var(--bg3);
+}
+
+.naked {
+	--bg0: transparent;
+	background-color: transparent;
+}
+
+.primary {
+	--bg0: var(--primary0);
+	--bg1: var(--primary1);
+	--bg2: var(--primary2);
+	--bg3: var(--primary3);
+	--fg0: var(--white0);
+	--fg1: var(--white1);
+	--fg2: var(--white2);
+	--fg3: var(--white3);
+	background-color: var(--primary0);
+	color: var(--white0);
+}
+
+input::placeholder {
+	color: var(--fg2);
+}
+
+button:focus,
+input:focus,
+div:focus {
+	outline: 2px solid var(--accent0);
+	outline-offset: -2px;
 }
 
 /* https://cssloaders.github.io */
@@ -84,11 +88,4 @@ button {
 	display: inline-block;
 	box-sizing: border-box;
 	animation: rotation 800ms linear infinite;
-}
-
-button:focus,
-input:focus,
-div:focus {
-	outline: 1px solid var(--orange);
-	outline-offset: -1px;
 }

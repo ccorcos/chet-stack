@@ -4,10 +4,6 @@ import { Cubehelix, cubehelix, formatHex, interpolate, Lch } from "culori"
 const rotations = 0.2
 const start = 0.04
 
-// Accent color
-const offset = 0.5
-const stretch = 1
-
 function cube(
 	t: number,
 	args: {
@@ -62,14 +58,16 @@ const darkAccentCubehelixColors = colorScheme((i: number) =>
 		start: start,
 		rotations: rotations,
 		saturation: 0.4 + interp(1 - i, 0, 0.6),
-		lightness: 0.4 + interp(1 - i, 0, 0.2),
+		lightness: 0.5 + interp(1 - i, 0, 0.2),
 	})
 )
 
+const primaryOffset = 0.5
+
 const lightPrimaryCubehelixColors = colorScheme((i: number) =>
 	cube(i, {
-		start: start + offset,
-		rotations: rotations * stretch,
+		start: start + primaryOffset,
+		rotations: rotations,
 		saturation: 1,
 		lightness: 0.5,
 	})
@@ -77,8 +75,80 @@ const lightPrimaryCubehelixColors = colorScheme((i: number) =>
 
 const darkPrimaryCubehelixColors = colorScheme((i: number) =>
 	cube(i, {
-		start: start + offset,
-		rotations: rotations * stretch,
+		start: start + primaryOffset,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5 + (1 - i) * 0.2,
+	})
+)
+
+const lightTriadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 1 / 3,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.8 - interp(1 - i, 0, 0.1),
+	})
+)
+
+const darkTriadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 1 / 3,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5 + interp(1 - i, 0, 0.2),
+	})
+)
+
+const lightReverseTriadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 2 / 3,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.8 - interp(1 - i, 0, 0.1),
+	})
+)
+
+const darkReverseTriadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 2 / 3,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5 + interp(1 - i, 0, 0.2),
+	})
+)
+
+const lightQuadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 1 / 4,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5,
+	})
+)
+
+const darkQuadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 1 / 4,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5 + (1 - i) * 0.2,
+	})
+)
+
+const lightReverseQuadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 3 / 4,
+		rotations: rotations,
+		saturation: 1,
+		lightness: 0.5,
+	})
+)
+
+const darkReverseQuadCubehelixColors = colorScheme((i: number) =>
+	cube(i, {
+		start: start + 3 / 4,
+		rotations: rotations,
 		saturation: 1,
 		lightness: 0.5 + (1 - i) * 0.2,
 	})
@@ -95,44 +165,50 @@ const blackToWhiteColors = colorScheme(
 )
 
 export type Theme = {
-	background: string[]
-	foreground: string[]
-	ibackground: string[]
-	iforeground: string[]
+	bg: string[]
+	fg: string[]
 	primary: string[]
 	accent: string[]
+	triad: string[]
+	rtriad: string[]
+	quad: string[]
+	rquad: string[]
 	black: string[]
 	white: string[]
 }
 
 export const lightTheme: Theme = {
-	background: lightBackgroundCubehelixColors,
-	foreground: blackToWhiteColors,
-	ibackground: darkBackgroundCubeHelixColors,
-	iforeground: whiteToBlackColors,
+	bg: lightBackgroundCubehelixColors,
+	fg: blackToWhiteColors,
 	primary: lightPrimaryCubehelixColors,
 	accent: lightAccentCubehelixColors,
 	black: blackToWhiteColors,
 	white: whiteToBlackColors,
+	triad: lightTriadCubehelixColors,
+	rtriad: lightReverseTriadCubehelixColors,
+	quad: lightQuadCubehelixColors,
+	rquad: lightReverseQuadCubehelixColors,
 }
 
 export const darkTheme: Theme = {
-	background: darkBackgroundCubeHelixColors,
-	foreground: whiteToBlackColors,
-	ibackground: lightBackgroundCubehelixColors,
-	iforeground: blackToWhiteColors,
+	bg: darkBackgroundCubeHelixColors,
+	fg: whiteToBlackColors,
 	primary: darkPrimaryCubehelixColors,
 	accent: darkAccentCubehelixColors,
+	triad: darkTriadCubehelixColors,
+	rtriad: darkReverseTriadCubehelixColors,
+	quad: darkQuadCubehelixColors,
+	rquad: darkReverseQuadCubehelixColors,
+
 	black: blackToWhiteColors,
 	white: whiteToBlackColors,
 }
 
 export const shiftTheme = (theme: Theme) => {
-	return {
-		...theme,
-		background: theme.background.slice(1),
-		ibackground: theme.ibackground.slice(1),
-		primary: theme.primary.slice(1),
-		accent: theme.accent.slice(1),
+	const { white, black, fg, ...rest } = theme
+	const newTheme = { ...theme }
+	for (const key in rest) {
+		newTheme[key] = rest[key].slice(1)
 	}
+	return newTheme
 }

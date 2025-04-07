@@ -24,8 +24,8 @@ export function SelectableListDemo() {
 						userSelect: "none",
 						padding: 8,
 						cursor: "pointer",
-						color: selected.has(item) ? "var(--white)" : "",
-						background: selected.has(item) ? "var(--blue)" : "",
+						color: selected.has(item) ? "var(--white0)" : "",
+						background: selected.has(item) ? "var(--accent0)" : "",
 					}}
 				>
 					{item}

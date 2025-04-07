@@ -21,7 +21,7 @@ export const MenuItem = passthroughRef(
 				ref={merged}
 				style={{
 					cursor: "pointer",
-					backgroundColor: props.selected ? "var(--blue)" : undefined,
+					backgroundColor: props.selected ? "var(--accent0)" : undefined,
 					...props.style,
 				}}
 			/>

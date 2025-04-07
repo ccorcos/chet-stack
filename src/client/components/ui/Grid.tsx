@@ -265,10 +265,13 @@ export function Grid<T>(props: {
 	const cellStyle = (row: number, col: number): React.CSSProperties => {
 		if (!selection) return {}
 
-		const selectedStyle = { backgroundColor: "var(--highlight2)" }
+		const selectedStyle = {
+			backgroundColor: "var(--highlight)",
+		}
+
 		const anchorStyle = {
 			...selectedStyle,
-			outline: "2px solid var(--highlight)",
+			outline: "2px solid var(--accent0)",
 			outlineOffset: -2,
 		}
 
@@ -566,7 +569,7 @@ export function Grid<T>(props: {
 											style: {
 												width: colWidth,
 												height: rowHeight,
-												backgroundColor: "var(--background2)",
+												backgroundColor: "var(--bg1)",
 												position: "sticky",
 												top: 0,
 												left: col === -1 ? 0 : undefined,
@@ -595,7 +598,7 @@ export function Grid<T>(props: {
 											style: {
 												width: colWidth,
 												height: rowHeight,
-												backgroundColor: "var(--background2)",
+												backgroundColor: "var(--bg1)",
 												position: "sticky",
 												left: 0,
 												zIndex: 1,

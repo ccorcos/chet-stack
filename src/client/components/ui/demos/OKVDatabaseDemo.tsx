@@ -44,12 +44,12 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	}
 
 	const backgroundColor = loadingUp
-		? "var(--red)"
+		? "red"
 		: loadingDown
-		? "var(--green)"
+		? "green"
 		: loading
-		? "var(--blue)"
-		: "var(--background)"
+		? "blue"
+		: "var(--bg0)"
 
 	return (
 		<div

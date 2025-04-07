@@ -129,7 +129,6 @@ function OKVSelectedDetails(props: { selected: string }) {
 			<ContentEditableInput
 				key={key}
 				multiline={true}
-				// style={{ color:  ? "var(--text-color2)" : "inherit" }}
 				value={text}
 				onSubmit={(value) => {
 					onUpdate(value)
@@ -197,7 +196,7 @@ function OKVList(props: { params: Record<string, string | undefined> }) {
 					<ListBox
 						onClick={onClick}
 						onKeyDown={onKeyDown}
-						style={{ color: loading ? "var(--text-color2)" : "inherit" }}
+						style={{ color: loading ? "var(--fg2)" : "inherit" }}
 					>
 						{items.map((key, i) => (
 							<ListItem

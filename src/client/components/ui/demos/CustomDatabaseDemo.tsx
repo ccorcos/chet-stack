@@ -97,7 +97,7 @@ function SchemaList(props: {
 		<ListBox
 			onClick={onClick}
 			onKeyDown={onKeyDown}
-			style={{ color: props.stale ? "var(--text-color2)" : "inherit" }}
+			style={{ color: props.stale ? "var(--fg1)" : "inherit" }}
 		>
 			{keys.map((key) => (
 				<ListItem key={key} item={key} selected={selected === key}>
@@ -149,9 +149,9 @@ function SchemaEditor(props: { selected: string; stale: boolean }) {
 
 	return (
 		<>
-			{!schema && <div style={{ color: "var(--red)" }}>No schema found</div>}
+			{!schema && <div style={{ color: "var(--primary0)" }}>No schema found</div>}
 			<ContentEditableInput
-				style={{ color: loading ? "var(--text-color2)" : "inherit" }}
+				style={{ color: loading ? "var(--fg1)" : "inherit" }}
 				value={schema || ""}
 				onSubmit={async (value) => {
 					startTransition(() => {

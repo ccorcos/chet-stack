@@ -31,8 +31,7 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				// borderBottom: "2px solid var(--transparent1)",
-				background: "var(--background)",
+				background: "var(--bg0)",
 				transition: `height ${transition}`,
 				height: show ? 64 : 0,
 				overflow: "hidden",
@@ -70,8 +69,8 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				// borderTop: "2px solid var(--transparent1)",
-				background: "var(--background)",
+				// borderTop: "2px solid var(--border)",
+				background: "var(--bg0)",
 				transition: `height ${transition}`,
 				height: show ? 64 : 0,
 				overflow: "hidden",
@@ -109,8 +108,8 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				// borderRight: "2px solid var(--transparent1)",
-				background: "var(--background)",
+				// borderRight: "2px solid var(--border)",
+				background: "var(--bg0)",
 				transition: `width ${transition}`,
 				width: show ? 256 : 0,
 				overflowX: "hidden",
@@ -148,8 +147,8 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 			style={{
 				flexGrow: 0,
 				flexShrink: 0,
-				// borderLeft: "2px solid var(--transparent1)",
-				background: "var(--background)",
+				// borderLeft: "2px solid var(--border)",
+				background: "var(--bg0)",
 				transition: `width ${transition}`,
 				width: show ? 256 : 0,
 				overflow: "hidden",
@@ -182,7 +181,7 @@ export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
 			{...props}
 			style={{
 				flexGrow: 1,
-				background: "var(--background)",
+				background: "var(--bg0)",
 				overflowY: "auto",
 				// padding: "16px",
 				borderRadius: BORDER_RADIUS,

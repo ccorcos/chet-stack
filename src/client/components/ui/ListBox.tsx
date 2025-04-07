@@ -44,8 +44,8 @@ export const ListItem = passthroughRef(
 				style={{
 					userSelect: "none",
 					cursor: "pointer",
-					background: props.selected ? "var(--blue)" : "",
-					color: props.selected ? "var(--background)" : "",
+					background: props.selected ? "var(--accent0)" : "",
+					// color: props.selected ? "var(--white0)" : "",
 					...props.style,
 				}}
 			>

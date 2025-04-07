@@ -37,7 +37,7 @@ export function FuzzyStringDemo() {
 				{sorted.map((book, i) => {
 					if (typeof book === "string")
 						return (
-							<li key={i} style={{ color: "var(--text-color3)" }}>
+							<li key={i} style={{ color: "var(--fg2)" }}>
 								{book}
 							</li>
 						)

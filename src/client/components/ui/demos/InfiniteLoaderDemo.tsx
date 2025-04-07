@@ -123,7 +123,7 @@ export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 						// Overflow grid with relative for stick headers.
 						flex: 1,
 						position: "relative",
-						color: loading || loadingUp || loadingDown ? "var(--gray)" : "var(--text-color)",
+						color: loading || loadingUp || loadingDown ? "var(--fg2)" : "var(--fg0)",
 					}}
 				>
 					<>
