@@ -195,6 +195,8 @@ export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
 }
 
 export function Layout(props: {
+	className?: string
+	style?: React.CSSProperties
 	Topbar?: React.ReactNode
 	LeftPanel?: React.ReactNode
 	children?: React.ReactNode
@@ -203,12 +205,14 @@ export function Layout(props: {
 }) {
 	return (
 		<div
+			className={props.className}
 			style={{
 				height: "100vh",
 				display: "flex",
 				flexDirection: "column",
 				gap: GAP,
 				background: "var(--background2)",
+				...props.style,
 			}}
 		>
 			{props.Topbar}
