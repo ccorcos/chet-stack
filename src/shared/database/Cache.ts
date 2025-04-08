@@ -36,9 +36,10 @@ export type LocalGetResult<V> = { hit?: V; miss?: true }
 type Listener<K> = { range: Range<K>; id: string; fn: () => void }
 
 export class Cache<K, V> {
-	private sortedListeners: ReturnType<typeof orderedArray<Listener<K>>>
-	private sortedRanges: ReturnType<typeof orderedArray<Range<K>>>
-	private orderedKeys: ReturnType<typeof orderedArray<K>>
+	// Weird, tsx seems to have a parse error here.
+	private sortedListeners: any // ReturnType<typeof orderedArray<Listener<K>>>
+	private sortedRanges: any // ReturnType<typeof orderedArray<Range<K>>>
+	private orderedKeys: any // ReturnType<typeof orderedArray<K>>
 
 	constructor(public compareKey: (a: K, b: K) => number = compare) {
 		this.sortedListeners = orderedArray<Listener<K>>(identity, (a: Listener<K>, b: Listener<K>) => {

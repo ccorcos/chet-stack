@@ -1,6 +1,6 @@
 // Monolithic abstraction.
 
-import { codec, MAX, MIN } from "./Codec"
+import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { RangeEmitter } from "./RangeEmitter"
 import { WriteArgs } from "./types"
@@ -24,7 +24,8 @@ class InMemoryTupleDb {
 
 	list = this.storage.list
 	get = (key) => this.storage.list({ gte: key, lt: key }).at(0)?.value
-	prefix = (prefix) => this.storage.list({ gte: [...prefix, MIN], lte: [...prefix, MAX] })
+	prefix = (prefix) =>
+		this.storage.list({ gt: [...prefix], lte: [...prefix, null, null, null, null, null, null] })
 
 	emitter = new RangeEmitter<any[]>(codec.compare)
 	subscribe = this.emitter.subscribe

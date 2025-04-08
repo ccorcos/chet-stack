@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
-import { useListJSON, useWriteJSON } from "../../../hooks/useDatabase"
+import { useList, useWrite } from "../../../hooks/useDatabase"
 import { useInputFocus } from "../../../hooks/useInputFocus"
 import { isShortcut } from "../../../hooks/useShortcut"
 import { Badge } from "../Badge"
@@ -67,7 +67,7 @@ function FakeLogin(props: {
 		)
 	}
 
-	const write = useWriteJSON()
+	const write = useWrite()
 	const onLogin = () => {
 		if (username.trim() === "") return
 		props.onLogin(username)
@@ -134,7 +134,7 @@ function Inbox(props: {
 	selected: string | undefined
 	setSelected: (selected: string | undefined) => void
 }) {
-	const { localResult, remoteResult } = useListJSON({
+	const { localResult, remoteResult } = useList({
 		gt: `inbox:${props.username}`,
 		lt: `inbox:${props.username}\xff`,
 	})
@@ -178,7 +178,7 @@ function Inbox(props: {
 function Compose(props: { from: string }) {
 	const [draft, setDraft] = useState<Draft>({ to: [], subject: "", body: "" })
 
-	const write = useWriteJSON()
+	const write = useWrite()
 	const send = () => {
 		const email: Email = {
 			id: randomId(),
@@ -225,7 +225,7 @@ function Compose(props: { from: string }) {
 function SearchUser(props: { onSubmit: (username: string) => void; onDelete: () => void }) {
 	const [query, setQuery] = useState("")
 
-	const { localResult, remoteResult } = useListJSON({
+	const { localResult, remoteResult } = useList({
 		gte: `user:${query}`,
 		lt: `user:${query}\xff`,
 	})

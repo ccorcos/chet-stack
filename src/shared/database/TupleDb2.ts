@@ -6,7 +6,7 @@
 // index
 // LATER: schema
 
-import { codec, MAX, MIN } from "./Codec"
+import { codec } from "./Codec"
 import { KeyEncode } from "./Encoder"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { Range } from "./Range"
@@ -44,7 +44,8 @@ function readSugar<D extends BaseOKV>(base: D) {
 	return {
 		...base,
 		get: (key) => base.list({ gte: key, lt: key }).at(0)?.value,
-		prefix: (prefix) => base.list({ gte: [...prefix, MIN], lte: [...prefix, MAX] }),
+		prefix: (prefix) =>
+			base.list({ gt: [...prefix], lte: [...prefix, null, null, null, null, null] }),
 	}
 }
 

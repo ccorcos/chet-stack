@@ -3,17 +3,11 @@ import {
 	BooleanEncoding,
 	Codec,
 	Encoding,
-	MAX,
-	MIN,
-	MaxEncoding,
-	MinEncoding,
 	NullEncoding,
 	NumberEncoding,
 	ObjectEncoding,
 	StringEncoding,
 } from "lexicodec"
-
-export { MAX, MIN }
 
 const DateEncoding: Encoding<Date> = {
 	match: (value: unknown) =>
@@ -31,14 +25,14 @@ const FunctionEncoding: Encoding<(...args: any[]) => any> = {
 }
 
 export const codec = new Codec({
-	"\x00": MinEncoding,
-	_: NullEncoding,
 	"?": BooleanEncoding,
 	'"': StringEncoding,
 	"#": NumberEncoding,
 	"[": ArrayEncoding,
 	"{": ObjectEncoding,
-	"~": DateEncoding,
+	// "~": DateEncoding,
 	// f: FunctionEncoding,
-	"\xff": MaxEncoding,
+
+	// Null is the max value which is convenient for prefix queries.
+	"\xff": NullEncoding,
 })

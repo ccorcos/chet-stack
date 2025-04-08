@@ -43,6 +43,7 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		setColumnWidths(newWidths)
 	}
 
+	console.log("list", list)
 	const backgroundColor = loadingUp
 		? "red"
 		: loadingDown
@@ -109,8 +110,9 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 							<ContentEditableInput
 								ref={index === 0 ? firstRef : index === list.length - 1 ? lastRef : undefined}
 								data-key={key}
-								value={key}
-								onSubmit={async (newKey) => {
+								value={JSON.stringify(key)}
+								onSubmit={async (str) => {
+									const newKey = JSON.parse(str)
 									write({
 										set: [{ key: newKey, value }],
 										delete: [key],
@@ -118,8 +120,9 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 								}}
 							/>
 							<ContentEditableInput
-								value={value}
-								onSubmit={async (newValue) => {
+								value={JSON.stringify(value)}
+								onSubmit={async (str) => {
+									const newValue = JSON.parse(str)
 									write({ set: [{ key, value: newValue }] })
 								}}
 								style={{ whiteSpace: "pre-wrap" }}

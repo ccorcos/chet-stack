@@ -6,8 +6,9 @@ export class Database extends SQLiteDatabase {
 	constructor(public dbPath: string) {
 		super(sqlite(dbPath))
 	}
-
-	reset() {}
+	reset() {
+		this.write({ delete: this.list().map((row) => row.key) })
+	}
 }
 
 export type RawDatabaseApi = BaseOKV<string, string>

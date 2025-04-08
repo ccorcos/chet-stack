@@ -1,4 +1,4 @@
-import { codec, MAX, MIN } from "./Codec"
+import { codec } from "./Codec"
 import { KeyEncode, ValueEncode } from "./Encoder"
 import { RangeEmitter } from "./RangeEmitter"
 import { BaseOKV, OKV, ReactiveOKV, WriteArgs } from "./types"
@@ -48,7 +48,7 @@ export function tupleSugar(okv: BaseOKV<any[], any>): TupleDb {
 		write: (tx) => okv.write(tx),
 
 		get: (key) => okv.list({ gte: key, lt: key }).at(0)?.value,
-		prefix: (prefix) => okv.list({ gte: [...prefix, MIN], lte: [...prefix, MAX] }),
+		prefix: (prefix) => okv.list({ gt: prefix, lte: [...prefix, null, null, null, null, null] }),
 		subspace: (prefix) => tupleSugar(tupleSubspace(okv, prefix)),
 
 		set: (key, value) => okv.write({ set: [{ key, value }] }),

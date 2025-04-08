@@ -15,7 +15,7 @@ examples...
 
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { codec, MAX, MIN } from "./Codec"
+import { codec } from "./Codec"
 import { Indexable } from "./Indexing"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { tupleSugar } from "./okv"
@@ -88,7 +88,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "lastfirst",
 			order: 0,
-			range: { gt: ["person", MIN], lt: ["person", MAX] },
+			range: { gt: ["person"], lte: ["person", null, null, null, null] },
 			set: (db, key, value) => {
 				if (value.last === undefined || value.first === undefined) return
 				db.set(["lastfirst", value.last, value.first, value.id], null)
@@ -103,7 +103,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "email",
 			order: 0,
-			range: { gt: ["email", MIN], lt: ["email", MAX] },
+			range: { gt: ["email"], lte: ["email", null, null, null, null] },
 			set: (db, key, value) => {
 				if (value.email === undefined || value.email.length === 0) return
 				for (const { address } of value.email) {
@@ -159,7 +159,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "userPosts",
 			order: 0,
-			range: { gt: ["post", MIN], lt: ["post", MAX] },
+			range: { gt: ["post"], lte: ["post", null, null, null, null] },
 			set: (db, key, value) => {
 				if (value.author_id === undefined) return
 				db.set(["userPosts", value.author_id, value.created_at, value.id], null)
@@ -174,7 +174,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "followedBy",
 			order: 0,
-			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
+			range: { gt: ["follow"], lte: ["follow", null, null, null, null] },
 			set: (db, key, value) => {
 				const { from, to } = value
 				db.set(["followedBy", to, from], value)
@@ -190,7 +190,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "followToTimline",
 			order: 1,
-			range: { gt: ["follow", MIN], lt: ["follow", MAX] },
+			range: { gt: ["follow"], lte: ["follow", null, null, null, null] },
 			set: (db, key, value) => {
 				const { from, to } = value
 				// Insert all posts from the user into the timeline.
@@ -213,7 +213,7 @@ describe("Indexing", () => {
 		createIndex({
 			id: "postToTimeline",
 			order: 1,
-			range: { gt: ["post", MIN], lt: ["post", MAX] },
+			range: { gt: ["post"], lte: ["post", null, null, null, null] },
 			set: (db, key, value) => {
 				// Insert post into all followees' timelines.
 				const { author_id, created_at, id } = value

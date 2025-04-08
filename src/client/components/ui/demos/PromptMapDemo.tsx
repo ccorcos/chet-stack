@@ -1,18 +1,18 @@
 import pLimit from "p-limit"
 import React, { Fragment, Suspense, useLayoutEffect, useMemo, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
-import { useGetJSON, useWriteJSON } from "../../../hooks/useDatabase"
+import { useGet, useWrite } from "../../../hooks/useDatabase"
 import { useRefCurrent } from "../../../hooks/useRefCurrent"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { DataList } from "../DataList"
 import { Layout, LeftPanelLayout } from "../Layout"
 
 export function Spreadsheet(props: { id: string }) {
-	const result = useGetJSON(props.id) || []
+	const result = useGet(props.id) || []
 	result.remoteResult.suspend()
 	const data: string[][] = result.localResult.hit || [["Name"]]
 
-	const write = useWriteJSON()
+	const write = useWrite()
 
 	const [importText, setImportText] = useState("")
 	const onImport = () => {
@@ -183,13 +183,13 @@ function JSONObjectList(props: {
 }) {
 	const { id, ...rest } = props
 
-	const result = useGetJSON(id)
+	const result = useGet(id)
 	result.remoteResult.suspend()
 	const list: string[] = result.localResult.hit || []
 
 	const onNewItem = () => randomId()
 
-	const write = useWriteJSON()
+	const write = useWrite()
 	const onInsert = () => {
 		if (list.length === 0) {
 			write({ set: [{ key: id, value: [onNewItem()] }] })
