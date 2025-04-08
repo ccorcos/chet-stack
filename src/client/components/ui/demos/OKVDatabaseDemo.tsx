@@ -1,7 +1,6 @@
 import React, { Suspense } from "react"
-import { incStr } from "../../../../shared/incStr"
 import { setParam } from "../../../../shared/routeHelpers"
-import { useList, useWrite } from "../../../hooks/useDatabase"
+import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
@@ -9,17 +8,8 @@ import { ContentEditableInput } from "../ContentEditableInput"
 import { Input } from "../Input"
 import { HeaderCell, Table } from "../Table"
 
-function useListQuery(query: { prefix: string; anchor: string; limit: number; reverse: boolean }) {
-	return useList(
-		query.reverse
-			? { gte: query.prefix, lte: query.anchor, limit: query.limit, reverse: true }
-			: { gte: query.anchor, lt: incStr(query.prefix), limit: query.limit }
-	)
-}
-
 const gap = 12
 const minWidth = 150
-const defaultLimit = 50
 
 export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()

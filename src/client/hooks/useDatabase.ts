@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from "react"
 import { LocalGetResult, LocalListResult } from "../../shared/database/Cache"
-import { JSONValue, Key, ListArgs, WriteArgs } from "../../shared/database/types"
+import { JSONValue, ListArgs, Tuple, WriteArgs } from "../../shared/database/types"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useCounter } from "./useCounter"
 import { useDeepMemo } from "./useDeepMemo"
 import { useLoader } from "./useLoader"
 
-export function useGet(key: Key) {
+export function useGet(key: Tuple) {
 	const { localResult, remoteResult } = useList({ gte: key, lte: key })
 	const localGetResult: LocalGetResult<JSONValue> = localResult.miss
 		? { miss: true }
@@ -14,13 +14,13 @@ export function useGet(key: Key) {
 	return { localResult: localGetResult, remoteResult }
 }
 
-export function useList(_args: ListArgs<Key>) {
+export function useList(_args: ListArgs<Tuple>) {
 	const { api, cache } = useClientEnvironment()
 
 	const args = useDeepMemo(() => _args, [_args])
 
 	const [_, rerender] = useCounter()
-	const localResultRef = useRef<LocalListResult<Key, JSONValue>>({} as any)
+	const localResultRef = useRef<LocalListResult<Tuple, JSONValue>>({} as any)
 
 	useMemo(() => {
 		localResultRef.current = cache.list(args)
@@ -96,7 +96,7 @@ export function useList(_args: ListArgs<Key>) {
 export function useWrite() {
 	const { api, cache } = useClientEnvironment()
 
-	return async (args: WriteArgs<Key, JSONValue>) => {
+	return async (args: WriteArgs<Tuple, JSONValue>) => {
 		cache.write(args)
 		const promise = api.write(args)
 
