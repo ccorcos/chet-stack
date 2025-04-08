@@ -130,14 +130,20 @@ describe("cache", () => {
 		cache.insert({ gte: "05", lt: "10" }, v(5, 9))
 		cache.insert({ gt: "15", lte: "20" }, v(6, 20))
 
-		assert.deepEqual(cache.get("00"), { miss: true })
-		assert.deepEqual(cache.get("05"), { hit: "05" })
-		assert.deepEqual(cache.get("06"), { hit: "06" })
-		assert.deepEqual(cache.get("10"), { miss: true })
-		assert.deepEqual(cache.get("15"), { miss: true })
-		assert.deepEqual(cache.get("16"), { hit: "16" })
-		assert.deepEqual(cache.get("20"), { hit: "20" })
-		assert.deepEqual(cache.get("21"), { miss: true })
+		const get = (key: string) => {
+			const result = cache.list({ gte: key, lte: key })
+			if (result.hit) return { hit: result.hit[0].value }
+			return { miss: true }
+		}
+
+		assert.deepEqual(get("00"), { miss: true })
+		assert.deepEqual(get("05"), { hit: "05" })
+		assert.deepEqual(get("06"), { hit: "06" })
+		assert.deepEqual(get("10"), { miss: true })
+		assert.deepEqual(get("15"), { miss: true })
+		assert.deepEqual(get("16"), { hit: "16" })
+		assert.deepEqual(get("20"), { hit: "20" })
+		assert.deepEqual(get("21"), { miss: true })
 
 		assert.deepEqual(cache.list({ gt: "00", lt: "04" }), { miss: true })
 		// No suffix support, so this is a miss.

@@ -1,11 +1,12 @@
+import { isEqual } from "lodash"
 import { useMemo, useRef, useState } from "react"
-import { incStr } from "../../shared/incStr"
+import { Tuple } from "../../shared/database/types"
 import { useList } from "./useDatabase"
 import { pickAnchor, useInfiniteLoader } from "./useInfiniteLoader"
 
-type Cursor = { prefix: string; anchor: string; limit: number; reverse: boolean }
+type Cursor = { prefix: Tuple; anchor: Tuple; limit: number; reverse: boolean }
 
-function useCursorState(prefix: string, limit = 50) {
+function useCursorState(prefix: Tuple, limit = 50) {
 	const [cursor, setCursor] = useState<Cursor>({
 		prefix: prefix,
 		anchor: prefix,
@@ -14,7 +15,7 @@ function useCursorState(prefix: string, limit = 50) {
 	})
 
 	const currentCursor = useMemo(() => {
-		if (cursor.prefix === prefix) return cursor
+		if (isEqual(cursor.prefix, prefix)) return cursor
 		// Reset the cursor when the prefix changes.
 		return {
 			prefix: prefix,
@@ -36,14 +37,29 @@ function useCursorState(prefix: string, limit = 50) {
 	return [currentCursor, setCurrentCursor] as const
 }
 
-export function useInfiniteList(args: { prefix: string }) {
+export function useInfiniteList(args: { prefix: Tuple }) {
 	const { prefix } = args
 	const [cursor, setCursor] = useCursorState(prefix)
 
+	// Actual Prefix
+	// const { localResult } = useList(
+	// 	cursor.reverse
+	// 		? { gte: cursor.prefix, lte: cursor.anchor, limit: cursor.limit, reverse: true }
+	// 		: {
+	// 				gte: cursor.anchor,
+	// 				lt: [...cursor.prefix, null, null, null, null, null, null],
+	// 				limit: cursor.limit,
+	// 		  }
+	// )
+
+	// Just GTE
 	const { localResult } = useList(
 		cursor.reverse
 			? { gte: cursor.prefix, lte: cursor.anchor, limit: cursor.limit, reverse: true }
-			: { gte: cursor.anchor, lt: incStr(cursor.prefix), limit: cursor.limit }
+			: {
+					gte: cursor.anchor,
+					limit: cursor.limit,
+			  }
 	)
 
 	const loading = !localResult.hit

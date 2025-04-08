@@ -1,3 +1,4 @@
+import { isEqual } from "lodash"
 import React from "react"
 import { useDraggableList } from "../../hooks/useDraggableList"
 import { isShortcut } from "../../hooks/useShortcut"
@@ -5,38 +6,20 @@ import { Button } from "./Button"
 import { ListBox, ListItem, useListBox } from "./ListBox"
 
 /** Selectable and Draggable */
-
-export function DataList(
-	props:
-		| {
-				multiselect?: false
-				selected: string | undefined
-				setSelected: (key: string | undefined) => void
-				list: string[]
-				onInsert: () => void
-				onDelete: (items: string) => void
-				/**
-				 * const newData = data.slice()
-				 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
-				 */
-				onReorder: (args: { fromIndex: number; toIndex: number }) => void
-				children?: (item: string) => React.ReactNode
-		  }
-		| {
-				multiselect: true
-				selected: Set<string>
-				setSelected: (keys: Set<string>) => void
-				list: string[]
-				onInsert: () => void
-				onDelete: (items: Set<string>) => void
-				/**
-				 * const newData = data.slice()
-				 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
-				 */
-				onReorder: (args: { fromIndex: number; toIndex: number }) => void
-				children?: (item: string) => React.ReactNode
-		  }
-) {
+export function DataList<T>(props: {
+	multiselect?: boolean
+	selected: T[]
+	setSelected: (keys: T[]) => void
+	list: T[]
+	onInsert: () => void
+	onDelete: (items: T[]) => void
+	/**
+	 * const newData = data.slice()
+	 * newData.splice(toIndex, 0, newData.splice(fromIndex, 1)[0])
+	 */
+	onReorder: (args: { fromIndex: number; toIndex: number }) => void
+	children: (item: T) => React.ReactNode
+}) {
 	const { selected } = props
 
 	const { onClick, onKeyDown } = useListBox(props)
@@ -59,7 +42,7 @@ export function DataList(
 			>
 				{props.list.map((item, index) => (
 					<ListItem
-						key={item}
+						key={JSON.stringify(item)}
 						item={item}
 						data-drag-index={index}
 						style={{
@@ -67,7 +50,7 @@ export function DataList(
 							boxShadow:
 								dragState.dragging && dragState.fromIndex === index ? "var(--shadow)" : "none",
 						}}
-						selected={selected instanceof Set ? selected.has(item) : selected === item}
+						selected={selected.some((x) => isEqual(x, item))}
 						onKeyDown={(e) => {
 							if (isShortcut("delete", e.nativeEvent)) {
 								e.preventDefault()
@@ -75,7 +58,7 @@ export function DataList(
 							}
 						}}
 					>
-						{props.children ? props.children(item) : item}
+						{props.children(item)}
 					</ListItem>
 				))}
 			</ListBox>

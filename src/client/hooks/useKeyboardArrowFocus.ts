@@ -1,6 +1,7 @@
 import { useCallback } from "react"
 import { nextFocusable, prevFocusable } from "../helpers/focusHelpers"
 
+/** Listen to the list container element, not the individual item. */
 export function useKeyboardArrowFocus() {
 	const onKeyDown = useCallback((event: React.KeyboardEvent) => {
 		const list = event.currentTarget as HTMLElement

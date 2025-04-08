@@ -129,8 +129,8 @@ function PageListBox(props: {
 
 	const { onClick, onKeyDown } = useListBox({
 		list: pageNames,
-		selected: currentPage,
-		setSelected: setCurrentPage,
+		selected: [currentPage],
+		setSelected: (pages) => setCurrentPage(pages[0]),
 	})
 
 	return (

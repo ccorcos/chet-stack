@@ -21,8 +21,14 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 		router.replace(url)
 	}
 
+	let parsed = []
+	try {
+		parsed = JSON.parse(prefix)
+	} catch (e) {
+		// ignore
+	}
 	const { list, loading, loadingUp, loadingDown, scrollRef, firstRef, lastRef } = useInfiniteList({
-		prefix,
+		prefix: parsed,
 	})
 
 	const [columnWidths, setColumnWidths] = usePref("RawDatabase2Demo:columnWidths2", [300, 300])
@@ -96,10 +102,9 @@ export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
 						<div key="up2" />
 					</>
 					{list.map(({ key, value }, index) => (
-						<React.Fragment key={key}>
+						<React.Fragment key={JSON.stringify(key)}>
 							<ContentEditableInput
 								ref={index === 0 ? firstRef : index === list.length - 1 ? lastRef : undefined}
-								data-key={key}
 								value={JSON.stringify(key)}
 								onSubmit={async (str) => {
 									const newKey = JSON.parse(str)

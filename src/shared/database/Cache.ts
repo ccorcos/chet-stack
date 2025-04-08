@@ -35,11 +35,13 @@ export type LocalGetResult<V> = { hit?: V; miss?: true }
 
 type Listener<K> = { range: Range<K>; id: string; fn: () => void }
 
-export class Cache<K, V> {
+export class Cache<K = string, V = any> {
 	// Weird, tsx seems to have a parse error here.
 	private sortedListeners: any // ReturnType<typeof orderedArray<Listener<K>>>
 	private sortedRanges: any // ReturnType<typeof orderedArray<Range<K>>>
 	private orderedKeys: any // ReturnType<typeof orderedArray<K>>
+
+	data: InMemoryBaseOKV<K, V>
 
 	constructor(public compareKey: (a: K, b: K) => number = compare) {
 		this.sortedListeners = orderedArray<Listener<K>>(identity, (a: Listener<K>, b: Listener<K>) => {
@@ -51,9 +53,9 @@ export class Cache<K, V> {
 			compareRange(a, b, this.compareKey)
 		)
 		this.orderedKeys = orderedArray(identity, this.compareKey)
-	}
 
-	data = new InMemoryBaseOKV<K, V>()
+		this.data = new InMemoryBaseOKV<K, V>(this.compareKey)
+	}
 
 	// ==========================================================================
 	// Listeners
@@ -200,12 +202,6 @@ export class Cache<K, V> {
 
 		// HIT
 		return { hit: this.data.list(args) }
-	}
-
-	get(key: K): LocalGetResult<V> {
-		const result = this.list({ gte: key, lte: key })
-		if (result.hit) return { hit: result.hit[0]?.value }
-		else return { miss: true }
 	}
 
 	write(args: WriteArgs<K, V>) {

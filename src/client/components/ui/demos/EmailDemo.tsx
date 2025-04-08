@@ -71,7 +71,7 @@ function FakeLogin(props: {
 	const onLogin = () => {
 		if (username.trim() === "") return
 		props.onLogin(username)
-		write({ set: [{ key: `user:${username}`, value: { username } as User }] })
+		write({ set: [{ key: ["user", username], value: { username } as User }] })
 		setUsername("")
 	}
 
@@ -135,8 +135,8 @@ function Inbox(props: {
 	setSelected: (selected: string | undefined) => void
 }) {
 	const { localResult, remoteResult } = useList({
-		gt: `inbox:${props.username}`,
-		lt: `inbox:${props.username}\xff`,
+		gt: ["inbox", props.username],
+		lt: ["inbox", props.username, null],
 	})
 	remoteResult.suspend()
 
@@ -145,8 +145,8 @@ function Inbox(props: {
 
 	const { onClick, onKeyDown } = useListBox({
 		multiselect: false,
-		selected: props.selected,
-		setSelected: props.setSelected,
+		selected: props.selected ? [props.selected] : [],
+		setSelected: (items) => props.setSelected(items[0]),
 		list: emails.map((email) => email.id),
 	})
 
@@ -190,10 +190,10 @@ function Compose(props: { from: string }) {
 		write({
 			set: [
 				...email.to.map((to) => ({
-					key: `inbox:${to}:${email.timestamp}:${email.id}`,
+					key: ["inbox", to, email.timestamp, email.id],
 					value: email,
 				})),
-				{ key: `send:${email.from}:${email.timestamp}:${email.id}`, value: email },
+				{ key: ["sent", email.from, email.timestamp, email.id], value: email },
 			],
 		})
 		setDraft({ to: [], subject: "", body: "" })
@@ -226,8 +226,8 @@ function SearchUser(props: { onSubmit: (username: string) => void; onDelete: () 
 	const [query, setQuery] = useState("")
 
 	const { localResult, remoteResult } = useList({
-		gte: `user:${query}`,
-		lt: `user:${query}\xff`,
+		gte: ["user", query],
+		lt: ["user", query + "\xff"],
 	})
 
 	const loading = !remoteResult.resolved

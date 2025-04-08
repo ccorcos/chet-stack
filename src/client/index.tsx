@@ -2,6 +2,8 @@ import React from "react"
 import { createRoot } from "react-dom/client"
 // import ReactDOM from "react-dom/profiling"
 import { Cache } from "../shared/database/Cache"
+import { codec } from "../shared/database/Codec"
+import { JSONValue, Tuple } from "../shared/database/types"
 import { Root } from "./components/Root"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
@@ -20,7 +22,7 @@ const pubsub = new WebsocketPubsubClient({
 })
 
 const prefs = new LocalPreferences()
-const cache = new Cache<string, string>()
+const cache = new Cache<Tuple, JSONValue>(codec.compare)
 
 const environment: ClientEnvironment = {
 	config: clientConfig,

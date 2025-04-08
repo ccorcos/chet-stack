@@ -1,5 +1,7 @@
+import { isEqual } from "lodash"
 import pLimit from "p-limit"
 import React, { Fragment, Suspense, useLayoutEffect, useMemo, useState } from "react"
+import { Tuple } from "../../../../shared/database/types"
 import { randomId } from "../../../../shared/randomId"
 import { useGet, useWrite } from "../../../hooks/useDatabase"
 import { useRefCurrent } from "../../../hooks/useRefCurrent"
@@ -7,7 +9,7 @@ import { useClientEnvironment } from "../../../services/ClientEnvironment"
 import { DataList } from "../DataList"
 import { Layout, LeftPanelLayout } from "../Layout"
 
-export function Spreadsheet(props: { id: string }) {
+export function Spreadsheet(props: { id: Tuple }) {
 	const result = useGet(props.id) || []
 	result.remoteResult.suspend()
 	const data: string[][] = result.localResult.hit || [["Name"]]
@@ -157,14 +159,14 @@ export function Spreadsheet(props: { id: string }) {
 }
 
 export function PromptMapDemo() {
-	const [selected, setSelected] = useState<string | undefined>(undefined)
+	const [selected, setSelected] = useState<Tuple | undefined>(undefined)
 
 	return (
 		<Layout
 			LeftPanel={
 				<Suspense fallback={<div>Loading...</div>}>
 					<LeftPanelLayout show={true}>
-						<JSONObjectList id="promptList" selected={selected} setSelected={setSelected} />
+						<JSONObjectList id={["promptList"]} selected={selected} setSelected={setSelected} />
 					</LeftPanelLayout>
 				</Suspense>
 			}
@@ -177,17 +179,17 @@ export function PromptMapDemo() {
 }
 
 function JSONObjectList(props: {
-	id: string
-	selected: string | undefined
-	setSelected: (key: string | undefined) => void
+	id: Tuple
+	selected: Tuple | undefined
+	setSelected: (key: Tuple | undefined) => void
 }) {
-	const { id, ...rest } = props
+	const { id } = props
 
 	const result = useGet(id)
 	result.remoteResult.suspend()
-	const list: string[] = result.localResult.hit || []
+	const list: Tuple[] = result.localResult.hit || []
 
-	const onNewItem = () => randomId()
+	const onNewItem = (): Tuple => [randomId()]
 
 	const write = useWrite()
 	const onInsert = () => {
@@ -204,11 +206,20 @@ function JSONObjectList(props: {
 		write({ set: [{ key: id, value: newList }] })
 	}
 
-	const onDelete = (x: string) => {
-		write({ set: [{ key: id, value: list.filter((item) => item !== x) }] })
+	const onDelete = (x: Tuple) => {
+		write({ set: [{ key: id, value: list.filter((item) => !isEqual(item, x)) }] })
 	}
 
 	return (
-		<DataList list={list} {...rest} onInsert={onInsert} onDelete={onDelete} onReorder={onReorder} />
+		<DataList
+			list={list}
+			selected={props.selected ? [props.selected] : []}
+			setSelected={(items) => props.setSelected(items[0])}
+			onInsert={onInsert}
+			onDelete={onDelete}
+			onReorder={onReorder}
+		>
+			{(item) => JSON.stringify(item)}
+		</DataList>
 	)
 }
