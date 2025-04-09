@@ -3,7 +3,7 @@ import { Range } from "./Range"
 export type Tuple = any[]
 export type JSONValue = any
 
-export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
+export type WriteArgs<K, V> = { set?: { key: K; value: V }[]; delete?: K[] }
 
 export type ListOptions = {
 	limit?: number
@@ -11,9 +11,9 @@ export type ListOptions = {
 	reverse?: boolean
 }
 
-export type ListArgs<K = any> = Range<K> & ListOptions
+export type ListArgs<K> = Range<K> & ListOptions
 
-export type BaseOKV<K = any, V = any> = {
+export type BaseOKV<K, V> = {
 	compare: (a: K, b: K) => number
 	list(args?: ListArgs<K>): { key: K; value: V }[]
 	write: (tx: WriteArgs<K, V>) => void
@@ -34,7 +34,7 @@ export type BaseOKVCache<K, V> = {
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 }
 
-export type SugarOKV<K = any, V = any> = BaseOKV<K, V> & {
+export type SugarOKV<K, V> = BaseOKV<K, V> & {
 	get: (key: K) => V | undefined
 	prefix: (prefix: K) => { key: K; value: V }[]
 	subspace(prefix: K): SugarOKV<K, V>

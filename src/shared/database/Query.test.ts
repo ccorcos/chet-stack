@@ -1,47 +1,51 @@
-import { strict as assert } from "assert"
+import assert from "assert"
 import { describe, it } from "mocha"
-import { ValueEncodeOKV } from "./Encoder"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { okv } from "./OKV"
+import { sugar, tuplejson } from "./OKV"
 import { query } from "./Query"
-import { OKV } from "./types"
+import { queryNodeVm } from "./QueryNodeVm"
+import { SugarTupleDb } from "./types"
+
+const modes = {
+	query,
+	queryNodeVm,
+}
 
 describe("query", () => {
-	it("works", () => {
-		const base = new InMemoryBaseOKV<string, string>()
-		const json = ValueEncodeOKV(base, {
-			encode: (value: any) => JSON.stringify(value),
-			decode: (value) => JSON.parse(value),
+	for (const key in modes) {
+		const query = modes[key]
+		it("works " + key, () => {
+			const base = new InMemoryBaseOKV<string, string>()
+			const db = sugar(tuplejson(base))
+
+			db.set(["a"], 1)
+			db.set(["b"], 2)
+			db.set(["c"], 3)
+
+			db.set(["list"], ["a", "b"])
+
+			const { data, ranges, result } = query(
+				db,
+				((db: SugarTupleDb) => {
+					const list = db.get(["list"])
+					const items = list.map((item) => db.get([item]))
+					return items.reduce((a, b) => a + b, 0)
+				}).toString()
+			)
+
+			assert.equal(result, 3)
+
+			assert.deepEqual(data, [
+				{ key: ["a"], value: 1 },
+				{ key: ["b"], value: 2 },
+				{ key: ["list"], value: ["a", "b"] },
+			])
+
+			assert.deepEqual(ranges, [
+				{ gte: ["list"], lte: ["list"] },
+				{ gte: ["a"], lte: ["a"] },
+				{ gte: ["b"], lte: ["b"] },
+			])
 		})
-		const db = okv(json)
-
-		db.set("a", 1)
-		db.set("b", 2)
-		db.set("c", 3)
-
-		db.set("list", ["a", "b"])
-
-		const { data, ranges, result } = query(
-			db,
-			((db: OKV<string, any>) => {
-				const list = db.get("list")
-				const items = list.map((item) => db.get(item))
-				return items.reduce((a, b) => a + b, 0)
-			}).toString()
-		)
-
-		assert.equal(result, 3)
-
-		assert.deepEqual(data, [
-			{ key: "a", value: 1 },
-			{ key: "b", value: 2 },
-			{ key: "list", value: ["a", "b"] },
-		])
-
-		assert.deepEqual(ranges, [
-			{ gte: "list", lte: "list" },
-			{ gte: "a", lte: "a" },
-			{ gte: "b", lte: "b" },
-		])
-	})
+	}
 })

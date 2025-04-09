@@ -1,48 +1,31 @@
 import vm from "vm"
 import { ValidationError } from "../errors"
-import { Cache } from "./Cache"
-import { ListArgs, TupleDb } from "./types"
+import { sugar } from "./OKV"
+import { Query, QueryCache } from "./Query"
+import { TupleDb } from "./types"
 
-export function queryNodeVm(environment: { db: TupleDb }, query: string) {
-	const { db } = environment
+export function queryNodeVm(db: TupleDb, query: string) {
+	const cache = new QueryCache(db)
 
-	const cache = new Cache<any[], any>()
-
-	const list = (args: ListArgs<any[]>) => {
-		const result = db.list(args)
-		cache.insert(args, result)
-		return result
-	}
-
-	const get = (key: any[]) => {
-		const value = list({ gte: key, lte: key })
-		return value[0]?.value
-	}
-
-	const sandbox = {
+	const context = vm.createContext({
 		require: undefined,
 		process: undefined,
 		global: undefined,
 		console: { log: (msg: string) => console.log("[Sandbox]", msg) },
-		db: { list, get },
-	}
-
-	// Create a VM context
-	const context = vm.createContext(sandbox)
+	})
+	const code = `(function() { return ${query.trim()} })();`
 
 	let result: any
 	try {
-		// Execute the script and capture the return value
-		result = vm.runInContext(["(function() {", query, "})();"].join("\n"), context, {
-			timeout: 1000,
-		})
+		const fn: Query = vm.runInContext(code, context, { timeout: 1000 })
+		result = fn(sugar(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)
 		throw new ValidationError("Sandbox error")
 	}
 
 	const data = cache.data.data
-	const ranges = cache.cachedRanges
+	const ranges = cache.reads
 
 	return { data, ranges, result }
 }
