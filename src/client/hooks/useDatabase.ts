@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef } from "react"
-import { LocalGetResult, LocalListResult } from "../../shared/database/Cache"
+import { CacheListResult } from "../../shared/database/Cache"
 import { JSONValue, ListArgs, Tuple, WriteArgs } from "../../shared/database/types"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useCounter } from "./useCounter"
 import { useDeepMemo } from "./useDeepMemo"
 import { useLoader } from "./useLoader"
+
+export type LocalGetResult<V> = { hit?: V; miss?: true }
 
 export function useGet(key: Tuple) {
 	const { localResult, remoteResult } = useList({ gte: key, lte: key })
@@ -20,7 +22,7 @@ export function useList(_args: ListArgs<Tuple>) {
 	const args = useDeepMemo(() => _args, [_args])
 
 	const [_, rerender] = useCounter()
-	const localResultRef = useRef<LocalListResult<Tuple, JSONValue>>({} as any)
+	const localResultRef = useRef<CacheListResult<Tuple, JSONValue>>({} as any)
 
 	useMemo(() => {
 		localResultRef.current = cache.list(args)

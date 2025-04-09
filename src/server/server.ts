@@ -36,8 +36,8 @@ if (!config.production) {
 }
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
-const rawDb = new Database(config.dbPath)
-const db = ValueEncode(KeyEncode(rawDb, codec), {
+const base = new Database(config.dbPath)
+const db = ValueEncode(KeyEncode(base, codec), {
 	encode: (value) => JSON.stringify(value),
 	decode: (value) => JSON.parse(value),
 })
@@ -50,7 +50,7 @@ const pubsub = PubsubServer({ config, db }, server)
 // Setup the server environment. This thing gets passed around everywhere and defines
 // the interface between differnet services so we can swap out things like the
 // database or the pubsub service with minimal plumbing.
-const environment: ServerEnvironment = { config, rawDb, db, queue, pubsub }
+const environment: ServerEnvironment = { config, db, queue, pubsub }
 
 FileServer(environment, app)
 QueueServer(environment)

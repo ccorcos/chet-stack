@@ -11,6 +11,4 @@ export class Database extends SQLiteDatabase {
 	}
 }
 
-export type RawDatabaseApi = BaseOKV<string, string>
-
 export type DatabaseApi = BaseOKV<any[], any>

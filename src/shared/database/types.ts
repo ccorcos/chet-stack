@@ -21,6 +21,31 @@ export type BaseOKV<K = any, V = any> = {
 	write: (tx: WriteArgs<K, V>) => void
 }
 
+export type CacheListResult<K, V> = {
+	miss?: true
+	hit?: { key: K; value: V }[]
+	prefix?: { key: K; value: V }[]
+}
+
+export type BaseOKVCache<K, V> = {
+	list: (args: ListArgs<K>) => CacheListResult<K, V>
+	write: (args: WriteArgs<K, V>) => void
+
+	subscribe: (range: Range<K>, fn: () => void) => () => void
+	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
+}
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 export type ReactiveOKV<K = any, V = any> = BaseOKV<K, V> & {
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 }

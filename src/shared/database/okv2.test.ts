@@ -5,7 +5,7 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { okv, reactiveOkv, tupleOkv } from "./okv"
+import { okv, reactiveOkv, tupleOkv } from "./okv2"
 import { RangeEmitter } from "./RangeEmitter"
 
 describe("okv", () => {

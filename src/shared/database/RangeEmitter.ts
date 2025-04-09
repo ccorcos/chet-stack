@@ -9,7 +9,6 @@ export type RangeListener<K> = { range: Range<K>; id: string; fn: () => void }
 export class RangeEmitter<K> {
 	// TODO: optimize this with an interval tree.
 	listeners: RangeListener<K>[] = []
-
 	sorted: ReturnType<typeof orderedArray<RangeListener<K>>>
 
 	constructor(public compareKey: (a: K, b: K) => number = compare) {

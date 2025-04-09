@@ -1,6 +1,6 @@
 import { ValidationError } from "../errors"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { okv } from "./okv"
+import { okv } from "./okv2"
 import { Range } from "./Range"
 import { BaseOKV, ListArgs, OKV, WriteArgs } from "./types"
 

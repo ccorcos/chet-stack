@@ -10,7 +10,6 @@ import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compactObj } from "../compactObj"
 import { compare } from "../compare"
-import { randomId } from "../randomId"
 import { reverse } from "../reverse"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
@@ -20,79 +19,44 @@ import {
 	decodeEndBound,
 	decodeStartBound,
 	encodeRange,
-	overlapsRange,
 	Range,
 } from "./Range"
-import { ListArgs, WriteArgs } from "./types"
+import { RangeEmitter } from "./RangeEmitter"
+import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 
-export type LocalListResult<K, V> = {
-	miss?: true
-	hit?: { key: K; value: V }[]
-	prefix?: { key: K; value: V }[]
-}
-
-export type LocalGetResult<V> = { hit?: V; miss?: true }
-
-type Listener<K> = { range: Range<K>; id: string; fn: () => void }
-
-export class Cache<K = string, V = any> {
-	// Weird, tsx seems to have a parse error here.
-	private sortedListeners: any // ReturnType<typeof orderedArray<Listener<K>>>
-	private sortedRanges: any // ReturnType<typeof orderedArray<Range<K>>>
-	private orderedKeys: any // ReturnType<typeof orderedArray<K>>
-
+export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
-
-	constructor(public compareKey: (a: K, b: K) => number = compare) {
-		this.sortedListeners = orderedArray<Listener<K>>(identity, (a: Listener<K>, b: Listener<K>) => {
-			const dir = compareRange(a.range, b.range, this.compareKey)
-			if (dir !== 0) return dir
-			return compare(a.id, b.id)
-		})
-		this.sortedRanges = orderedArray<Range<K>>(identity, (a, b) =>
-			compareRange(a, b, this.compareKey)
-		)
-		this.orderedKeys = orderedArray(identity, this.compareKey)
-
-		this.data = new InMemoryBaseOKV<K, V>(this.compareKey)
-	}
-
-	// ==========================================================================
-	// Listeners
-	// ==========================================================================
-
-	// TODO: optimize this with an interval tree.
-	listeners: Listener<K>[] = []
-
-	subscribe(range: Range<K>, fn: () => void) {
-		const listener = { range, id: randomId(), fn }
-		this.sortedListeners.insert(this.listeners, listener)
-		return () => {
-			this.sortedListeners.remove(this.listeners, listener)
-		}
-	}
-
-	emit(ranges: Range<K>[]) {
-		const fns = new Set<() => void>()
-		for (const r of ranges) {
-			for (const { range, fn } of this.listeners) {
-				if (overlapsRange(r, range, this.compareKey)) fns.add(fn)
-			}
-		}
-		for (const fn of fns) fn()
-	}
-
-	// ==========================================================================
-	// Data ranges
-	// ==========================================================================
-
-	// TODO: could just store ranges and do the encoding in the comparison.
+	emitter: RangeEmitter<K>
 	cachedRanges: Range<K>[] = []
 
-	// TODO: track versions and don't clobber optimistic writes.
+	constructor(public compareKey: (a: K, b: K) => number = compare) {
+		this.data = new InMemoryBaseOKV<K, V>(compareKey)
+		this.emitter = new RangeEmitter(compareKey)
+	}
+
+	subscribe = (range: Range<K>, fn: () => void) => this.emitter.subscribe(range, fn)
+	emit = (ranges: Range<K>[]) => this.emitter.emit(ranges)
+
+	// ==========================================================================
+	// Helpers for dealing with ordered arrays.
+	// ==========================================================================
+
+	get orderedRanges() {
+		return orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, this.compareKey))
+	}
+
+	get orderedKeys() {
+		return orderedArray(identity, this.compareKey)
+	}
+
+	/**
+	 * Insert data into the cache that was returned from a list query.
+	 * TODO: eventually we want to track versions of keys so we don't clobber
+	 * optimistic writes
+	 */
 	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
 		const range = computeCachedRange(args, result)
-		this.sortedRanges.insert(this.cachedRanges, range)
+		this.orderedRanges.insert(this.cachedRanges, range)
 
 		// Delete any previous data in that range.
 		const setKeys: K[] = []
@@ -106,14 +70,10 @@ export class Cache<K = string, V = any> {
 
 		this.data.write({ set: result, delete: Array.from(deleteKeys) })
 
-		this.emit([range])
+		this.emitter.emit([range])
 	}
 
-	// ==========================================================================
-	// Data ranges
-	// ==========================================================================
-
-	list(args: ListArgs<K>): LocalListResult<K, V> {
+	list(args: ListArgs<K>): CacheListResult<K, V> {
 		const range = encodeRange(args)
 
 		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === 0
@@ -216,7 +176,7 @@ export class Cache<K = string, V = any> {
 		const ranges = Array.from(keys).map(keyToRange)
 
 		for (const range of ranges) {
-			this.sortedRanges.insert(this.cachedRanges, range)
+			this.orderedRanges.insert(this.cachedRanges, range)
 		}
 
 		// Emit

@@ -3,30 +3,20 @@ import { ValidationError } from "../errors"
 import { Cache } from "./Cache"
 import { BaseOKV, ListArgs } from "./types"
 
-export function queryNodeVm(environment: { rawDb: BaseOKV<string, string> }, query: string) {
-	const { rawDb } = environment
+export function queryNodeVm(environment: { db: BaseOKV<any[], any> }, query: string) {
+	const { db } = environment
 
-	const cache = new Cache()
+	const cache = new Cache<any[], any>()
 
-	const list = (args: ListArgs<string>) => {
-		const result = rawDb.list(args)
+	const list = (args: ListArgs<any[]>) => {
+		const result = db.list(args)
 		cache.insert(args, result)
 		return result
 	}
 
-	const listJSON = (args: ListArgs<string>) => {
-		const result = list(args)
-		return result.map(({ key, value }) => ({ key, value: JSON.parse(value) }))
-	}
-
-	const get = (key: string) => {
+	const get = (key: any[]) => {
 		const value = list({ gte: key, lte: key })
 		return value[0]?.value
-	}
-
-	const getJSON = (key: string) => {
-		const value = get(key)
-		return JSON.parse(value)
 	}
 
 	const sandbox = {
@@ -34,7 +24,7 @@ export function queryNodeVm(environment: { rawDb: BaseOKV<string, string> }, que
 		process: undefined,
 		global: undefined,
 		console: { log: (msg: string) => console.log("[Sandbox]", msg) },
-		db: { list, get, getJSON, listJSON },
+		db: { list, get },
 	}
 
 	// Create a VM context
