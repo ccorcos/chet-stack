@@ -1,5 +1,5 @@
 import { codec } from "./Codec"
-import { tupleSugar } from "./OKV3"
+import { tupleSugar } from "./OKV"
 import { rangeContains } from "./Range"
 import { BaseOKV, ListArgs, OKV, TupleDb, WriteArgs } from "./types"
 

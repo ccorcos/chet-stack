@@ -2,7 +2,7 @@ import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { ValueEncodeOKV } from "./Encoder"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { okv } from "./OKV3"
+import { okv } from "./OKV"
 import { query } from "./Query"
 import { OKV } from "./types"
 
