@@ -124,8 +124,8 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 				{...rest}
 				style={{
 					position: "absolute",
-					top: 0,
-					bottom: 0,
+					// top: 0,
+					// bottom: 0,
 					right: 0,
 					width: 256,
 					...props.style,
@@ -151,7 +151,8 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 				background: "var(--bg0)",
 				transition: `width ${transition}`,
 				width: show ? 256 : 0,
-				overflow: "hidden",
+				overflowX: "hidden",
+				overflowY: "auto",
 				position: "relative",
 				borderRadius: BORDER_RADIUS,
 			}}
@@ -162,8 +163,8 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 				{...rest}
 				style={{
 					position: "absolute",
-					top: 0,
-					bottom: 0,
+					// top: 0,
+					// bottom: 0,
 					left: 0,
 					width: 256,
 					...props.style,

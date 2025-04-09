@@ -24,7 +24,7 @@ export function LayoutDemo() {
 	return (
 		<Layout
 			Topbar={
-				<TopbarLayout show={showTopbar}>
+				<TopbarLayout show={showTopbar} className="layer">
 					<div style={{ display: "flex", alignItems: "center", height: "100%", width: "100%" }}>
 						<Button onClick={() => setShowTopbar(!showTopbar)}>
 							{showTopbar ? "close" : "open"}
@@ -33,7 +33,7 @@ export function LayoutDemo() {
 				</TopbarLayout>
 			}
 			Bottombar={
-				<BottombarLayout show={showBottomBar}>
+				<BottombarLayout show={showBottomBar} className="layer">
 					<div
 						style={{
 							padding: 8,
@@ -49,7 +49,7 @@ export function LayoutDemo() {
 				</BottombarLayout>
 			}
 			LeftPanel={
-				<LeftPanelLayout show={showSidebar}>
+				<LeftPanelLayout show={showSidebar} className="layer">
 					<div style={{ padding: "16px" }}>
 						<Button onClick={() => setShowSidebar(!showSidebar)} style={{ marginTop: "16px" }}>
 							{showSidebar ? "close" : "open"}
@@ -63,7 +63,7 @@ export function LayoutDemo() {
 				</LeftPanelLayout>
 			}
 			RightPanel={
-				<RightPanelLayout show={showRightPanel}>
+				<RightPanelLayout show={showRightPanel} className="layer">
 					<div style={{ padding: "16px" }}>
 						<Button
 							onClick={() => setShowRightPanel(!showRightPanel)}
@@ -71,6 +71,12 @@ export function LayoutDemo() {
 						>
 							{showRightPanel ? "close" : "open"}
 						</Button>
+
+						{[...Array(200)].map((_, i) => (
+							<p key={i} style={{ marginBottom: "16px" }}>
+								Scroll content {i + 1}
+							</p>
+						))}
 					</div>
 				</RightPanelLayout>
 			}
