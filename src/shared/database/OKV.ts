@@ -25,7 +25,7 @@ function subspace(db: TupleDb, prefix: Tuple): TupleDb {
 			return KeyDecodeList(result, encoder)
 		},
 		write: (args) => {
-			return KeyEncodeWrite(args, encoder)
+			return db.write(KeyEncodeWrite(args, encoder))
 		},
 	}
 }

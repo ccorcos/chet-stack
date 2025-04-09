@@ -56,10 +56,6 @@ export type SugarTupleDb = SugarOKV<Tuple, JSONValue>
 //
 //
 
-export type ReactiveOKV<K = any, V = any> = BaseOKV<K, V> & {
-	subscribe: (range: Range<K>, fn: () => void) => () => void
-}
-
 export type Index<K = any, V = any> = {
 	id: string
 	// secondary indexes are 0, tertiary indexes are 1.
@@ -73,19 +69,3 @@ export type IndexableOKV<K = any, V = any> = {
 	createIndex(index: Index<K, V>): void
 	deleteIndex(id: string): void
 }
-
-// // TODO: count, aggregations
-// export type IntervalTreeApi<
-// 	B = (string | number)[],
-// 	K = (string | number)[],
-// 	V = any,
-// > = KeyValueApi<[B, B, K], V> & {
-// 	overlaps: (args?: ListArgs<B>) => { key: [B, B, K]; value: V }[]
-// }
-
-// function itree<B, K, V>(okv: OrderedKeyValueApi<any, any>) {
-// 	return {
-// 		set: (b1: B, b2: B, k: K, v: V) => okv.set([b1, b2, k], v),
-// 		overlaps: (b1: B, b2: B) => okv.list({ gt: [b1, b1, undefined], lt: [b2, b2, undefined] }),
-// 	}
-// }
