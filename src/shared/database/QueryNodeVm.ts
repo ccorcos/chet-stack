@@ -1,9 +1,9 @@
 import vm from "vm"
 import { ValidationError } from "../errors"
 import { Cache } from "./Cache"
-import { BaseOKV, ListArgs } from "./types"
+import { ListArgs, TupleDb } from "./types"
 
-export function queryNodeVm(environment: { db: BaseOKV<any[], any> }, query: string) {
+export function queryNodeVm(environment: { db: TupleDb }, query: string) {
 	const { db } = environment
 
 	const cache = new Cache<any[], any>()

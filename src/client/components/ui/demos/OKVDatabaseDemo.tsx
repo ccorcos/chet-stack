@@ -4,6 +4,7 @@ import { useWrite } from "../../../hooks/useDatabase"
 import { useInfiniteList } from "../../../hooks/useInfiniteList"
 import { usePref } from "../../../hooks/usePref"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { Subspace } from "../../Subspace"
 import { ContentEditableInput } from "../ContentEditableInput"
 import { Input } from "../Input"
 import { HeaderCell, Table } from "../Table"
@@ -12,6 +13,14 @@ const gap = 12
 const minWidth = 150
 
 export function OKVDatabaseDemo(props: { params: Record<string, string> }) {
+	return (
+		<Subspace prefix={[]}>
+			<Demo {...props} />
+		</Subspace>
+	)
+}
+
+function Demo(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()
 	const write = useWrite()
 

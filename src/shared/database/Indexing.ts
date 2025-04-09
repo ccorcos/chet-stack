@@ -1,7 +1,7 @@
 import { codec } from "./Codec"
-import { tupleSugar } from "./okv2"
+import { tupleSugar } from "./OKV3"
 import { rangeContains } from "./Range"
-import { BaseOKV, ListArgs, OKV, WriteArgs } from "./types"
+import { BaseOKV, ListArgs, OKV, TupleDb, WriteArgs } from "./types"
 
 export type Index<K = any[], V = any> = {
 	id: string
@@ -28,7 +28,7 @@ function reifyFn(fn: string) {
 	return new Function("return " + fn)()
 }
 
-export function Indexable(base: BaseOKV<any[], any>) {
+export function Indexable(base: TupleDb) {
 	const db = tupleSugar(base)
 
 	const write = (args: WriteArgs<any, any>) => {

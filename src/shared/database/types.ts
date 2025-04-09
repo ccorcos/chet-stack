@@ -5,15 +5,13 @@ export type JSONValue = any
 
 export type WriteArgs<K = any, V = any> = { set?: { key: K; value: V }[]; delete?: K[] }
 
-export type ListArgs<K = any> = {
-	gt?: K
-	gte?: K
-	lt?: K
-	lte?: K
+export type ListOptions = {
 	limit?: number
 	offset?: number
 	reverse?: boolean
 }
+
+export type ListArgs<K = any> = Range<K> & ListOptions
 
 export type BaseOKV<K = any, V = any> = {
 	compare: (a: K, b: K) => number
@@ -35,6 +33,17 @@ export type BaseOKVCache<K, V> = {
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 }
+
+export type SugarOKV<K = any, V = any> = BaseOKV<K, V> & {
+	get: (key: K) => V | undefined
+	prefix: (prefix: K) => { key: K; value: V }[]
+	subspace(prefix: K): SugarOKV<K, V>
+	set: (key: K, value: V) => void
+	delete: (key: K) => void
+}
+
+export type TupleDb = BaseOKV<Tuple, JSONValue>
+export type SugarTupleDb = SugarOKV<Tuple, JSONValue>
 
 //
 //
@@ -63,15 +72,6 @@ export type Index<K = any, V = any> = {
 export type IndexableOKV<K = any, V = any> = {
 	createIndex(index: Index<K, V>): void
 	deleteIndex(id: string): void
-}
-
-export type OKV<K = any, V = any> = BaseOKV<K, V> & {
-	// Sugar
-	get: (key: K) => V | undefined
-	prefix: (prefix: K) => { key: K; value: V }[]
-	subspace(prefix: K): OKV<K, V>
-	set: (key: K, value: V) => void
-	delete: (key: K) => void
 }
 
 // // TODO: count, aggregations

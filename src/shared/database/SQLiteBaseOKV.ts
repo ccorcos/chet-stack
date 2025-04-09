@@ -5,7 +5,7 @@ import { BaseOKV } from "./types"
 type K = string
 type V = string
 
-export class SQLiteDatabase implements BaseOKV<string, string> {
+export class SQLiteBaseOKV implements BaseOKV<string, string> {
 	/**
 	 * import sqlite from "better-sqlite3"
 	 * new SQLiteDatabase(sqlite("path/to.db"))
@@ -99,18 +99,4 @@ export class SQLiteDatabase implements BaseOKV<string, string> {
 	close() {
 		this.db.close()
 	}
-
-	// this.getQuery = db.prepare(`select * from data where key = $key`)
-	// private getQuery: Statement
-	// get(key: K) {
-	// 	return this.getQuery.all({ key: key }).map((row: any) => row.value)[0] as V | undefined
-	// }
-
-	// set(key: K, value: V) {
-	// 	this.write({ set: [{ key, value }] })
-	// }
-
-	// delete(key: K) {
-	// 	this.write({ delete: [key] })
-	// }
 }

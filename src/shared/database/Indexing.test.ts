@@ -18,7 +18,7 @@ import { describe, it } from "mocha"
 import { codec } from "./Codec"
 import { Indexable } from "./Indexing"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { tupleSugar } from "./okv2"
+import { tupleSugar } from "./OKV3"
 
 type Person = {
 	id: string

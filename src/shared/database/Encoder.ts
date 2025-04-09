@@ -1,6 +1,6 @@
 import { compactObj } from "../compactObj"
 import { Range } from "./Range"
-import { BaseOKV, BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
+import { BaseOKV, CacheListResult, ListArgs, Tuple, WriteArgs } from "./types"
 
 export type KeyEncoder<I, O> = {
 	compare: (a: I, b: I) => number
@@ -23,7 +23,7 @@ export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O
 	})
 }
 
-function KeyEncodeRange<K, O>(args: Range<K>, encoder: Encoder<K, O>): Range<O> {
+export function KeyEncodeRange<K, O>(args: Range<K>, encoder: Encoder<K, O>): Range<O> {
 	return compactObj({
 		gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),
 		gte: args?.gte === undefined ? undefined : encoder.encode(args.gte),
@@ -39,7 +39,7 @@ export function KeyDecodeList<K, V, O>(
 	return results.map(({ key, value }) => ({ key: encoder.decode(key), value }))
 }
 
-function KeyEncodeList<K, V, O>(
+export function KeyEncodeList<K, V, O>(
 	results: { key: K; value: V }[],
 	encoder: Encoder<K, O>
 ): { key: O; value: V }[] {
@@ -86,7 +86,7 @@ export function ValueEncodeOKV<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O
 	}
 }
 
-function KeyDecodeCacheListResult<I, O, V>(
+export function KeyDecodeCacheListResult<I, O, V>(
 	result: CacheListResult<O, V>,
 	encoder: Encoder<I, O>
 ): CacheListResult<I, V> {
@@ -95,28 +95,23 @@ function KeyDecodeCacheListResult<I, O, V>(
 	return { miss: true }
 }
 
-export function KeyEncodeOKVCache<I, O, V>(
-	cache: BaseOKVCache<O, V>,
-	encoder: KeyEncoder<I, O>
-): BaseOKVCache<I, V> {
+// Subspace
+export function TupleSubspaceEncoder(prefix: Tuple): Encoder<Tuple, Tuple> {
 	return {
-		compare: encoder.compare,
-		list(args) {
-			const newArgs = KeyEncodeListArgs(args, encoder)
-			const results = cache.list(newArgs)
-			return KeyDecodeCacheListResult(results, encoder)
-		},
-		write(args) {
-			const newArgs = KeyEncodeWrite(args, encoder)
-			return cache.write(newArgs)
-		},
-		insert(args, result) {
-			const newArgs = KeyEncodeListArgs(args, encoder)
-			const newResult = KeyEncodeList(result, encoder)
-			return cache.insert(newArgs, newResult)
-		},
-		subscribe(range, fn) {
-			return cache.subscribe(KeyEncodeRange(range, encoder), fn)
-		},
+		encode: (key) => [...prefix, ...key],
+		decode: (key) => key.slice(prefix.length),
 	}
+}
+
+function constraintToSubspace(args: ListArgs<Tuple>, prefix: Tuple) {
+	const newArgs = { ...args }
+	if (newArgs.gt === undefined && newArgs.gte === undefined) newArgs.gt = prefix
+	if (newArgs.lt === undefined && newArgs.lte === undefined)
+		newArgs.lte = [...prefix, ...Array(10).fill(null)]
+	return newArgs
+}
+
+export function EncodeSubspaceListArgs(args: ListArgs<Tuple>, prefix: Tuple) {
+	const encoder = TupleSubspaceEncoder(prefix)
+	return constraintToSubspace(KeyEncodeListArgs(args, encoder), prefix)
 }

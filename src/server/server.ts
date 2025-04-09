@@ -4,8 +4,7 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
-import { codec } from "../shared/database/Codec"
-import { KeyEncodeOKV, ValueEncodeOKV } from "../shared/database/Encoder"
+import { tuplejson } from "../shared/database/OKV3"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
 import { PubsubServer } from "./PubsubServer"
@@ -37,10 +36,7 @@ if (!config.production) {
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
-const db = ValueEncodeOKV(KeyEncodeOKV(base, codec), {
-	encode: (value) => JSON.stringify(value),
-	decode: (value) => JSON.parse(value),
-})
+const db = tuplejson(base)
 
 const queue = new QueueDatabase(config.queuePath)
 

@@ -1,8 +1,8 @@
 import sqlite from "better-sqlite3"
-import { SQLiteDatabase } from "../../shared/database/SQLiteDatabase"
-import { BaseOKV } from "../../shared/database/types"
+import { SQLiteBaseOKV } from "../../shared/database/SQLiteBaseOKV"
+import { BaseOKV, JSONValue, Tuple } from "../../shared/database/types"
 
-export class Database extends SQLiteDatabase {
+export class Database extends SQLiteBaseOKV {
 	constructor(public dbPath: string) {
 		super(sqlite(dbPath))
 	}
@@ -11,4 +11,4 @@ export class Database extends SQLiteDatabase {
 	}
 }
 
-export type DatabaseApi = BaseOKV<any[], any>
+export type DatabaseApi = BaseOKV<Tuple, JSONValue>
