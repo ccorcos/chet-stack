@@ -71,7 +71,6 @@ export function LayoutDemo() {
 						>
 							{showRightPanel ? "close" : "open"}
 						</Button>
-
 						{[...Array(200)].map((_, i) => (
 							<p key={i} style={{ marginBottom: "16px" }}>
 								Scroll content {i + 1}

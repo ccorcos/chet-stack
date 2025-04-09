@@ -1,6 +1,5 @@
 import React, { createContext, useContext } from "react"
-import { Cache } from "../../shared/database/Cache"
-import { JSONValue, Tuple } from "../../shared/database/types"
+import { BaseOKVCache, JSONValue, Tuple } from "../../shared/database/types"
 import type { ClientConfig } from "./ClientConfig"
 import { LocalPreferences } from "./LocalPreferences"
 import { Router } from "./Router"
@@ -13,7 +12,7 @@ export type ClientEnvironment = {
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
 	prefs: LocalPreferences
-	cache: Cache<Tuple, JSONValue>
+	cache: BaseOKVCache<Tuple, JSONValue>
 }
 
 const ClientEnvironmentContext = createContext<ClientEnvironment | undefined>(undefined)

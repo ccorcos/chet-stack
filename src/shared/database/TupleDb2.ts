@@ -7,7 +7,7 @@
 // LATER: schema
 
 import { codec } from "./Codec"
-import { KeyEncode } from "./Encoder"
+import { KeyEncodeOKV } from "./Encoder"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { Range } from "./Range"
 import { RangeEmitter } from "./RangeEmitter"
@@ -62,7 +62,7 @@ function subspaceSugar<D extends BaseOKV>(base: D) {
 		...base,
 		subspace: (prefix) =>
 			sugar(
-				KeyEncode(base, {
+				KeyEncodeOKV(base, {
 					compare: base.compare,
 					encode: (key) => [...prefix, ...key],
 					decode: (key) => key.slice(prefix.length),

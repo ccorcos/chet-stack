@@ -1,60 +1,60 @@
-import React from "react"
+import React, { useMemo } from "react"
+import {
+	Encoder,
+	KeyDecodeList,
+	KeyEncodeListArgs,
+	KeyEncodeOKVCache,
+	KeyEncodeWrite,
+} from "../../shared/database/Encoder"
+import { BaseOKVCache, JSONValue, Tuple } from "../../shared/database/types"
+import { proxyObj } from "../../shared/proxyHelpers"
+import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
+import { ClientApi } from "../services/api"
 
-export function Subspace(props: { prefix: string; children: React.ReactNode }) {
-	// const environment = useClientEnvironment()
+function TupleSubspaceEncoder(prefix: Tuple): Encoder<Tuple, Tuple> {
+	return {
+		encode: (key) => [...prefix, ...key],
+		decode: (key) => key.slice(prefix.length),
+	}
+}
 
-	// const { api } = environment
+function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
+	const encoder = TupleSubspaceEncoder(prefix)
 
-	// const newEnvironment = useMemo(() => {
-	// 	const encoder: KeyEncoder<string, string> = {
-	// 		compare: compare,
-	// 		encode: (key) => props.prefix + key,
-	// 		decode: (key) => key.slice(props.prefix.length),
-	// 	}
+	return proxyObj(async (key, ...args) => {
+		if (key === "list") {
+			const response = await api.list(KeyEncodeListArgs(args[0], encoder))
+			if (response.status === 200) {
+				return {
+					...response,
+					body: KeyDecodeList(response.body, encoder),
+				}
+			}
+			return response
+		}
+		if (key === "write") {
+			return api.write(KeyEncodeWrite(args[0], encoder))
+		}
+		return api[key](...args)
+	})
+}
 
-	// 	const newApi = proxyObj(async (key, args) => {
-	// 		if (key === "rawList") {
-	// 			const response = await api.rawList(KeyEncodeListArgs(args, encoder))
-	// 			if (response.status === 200) {
-	// 				return {
-	// 					...response,
-	// 					body: KeyDecodeList(response.body, encoder),
-	// 				}
-	// 			}
+function CacheSubspace(cache: BaseOKVCache<Tuple, JSONValue>, prefix: Tuple) {
+	const encoder = TupleSubspaceEncoder(prefix)
+	return KeyEncodeOKVCache(cache, { ...encoder, compare: cache.compare })
+}
 
-	// 			return response
-	// 		}
-	// 		if (key === "rawWrite") {
-	// 			return api.rawWrite(KeyEncodeWrite(args, encoder))
-	// 		}
+export function Subspace(props: { prefix: Tuple; children: React.ReactNode }) {
+	const environment = useClientEnvironment()
+	const { api, cache } = environment
 
-	// 		return api[key](args)
-	// 	})
+	const newEnvironment = useMemo(() => {
+		const newApi = ApiSubspace(api, props.prefix)
+		const newCache = CacheSubspace(cache, props.prefix)
+		return { ...environment, api: newApi, cache: newCache }
+	}, [props.prefix])
 
-	// 	const cache = environment.cache
-	// 	const newCache: Cache<Tuple, any> = Object.create(cache)
-	// 	newCache.insert = (args, result) => {
-	// 		cache.insert(KeyEncodeListArgs(args, encoder), KeyEncodeList(result, encoder))
-	// 	}
-	// 	newCache.list = (args) => {
-	// 		const result = cache.list(KeyEncodeListArgs(args, encoder))
-	// 		if (result.hit) result.hit = KeyDecodeList(result.hit, encoder)
-	// 		if (result.prefix) result.prefix = KeyDecodeList(result.prefix, encoder)
-	// 		return result
-	// 	}
-	// 	newCache.subscribe = (range, fn) => {
-	// 		return cache.subscribe(KeyEncodeListArgs(range, encoder), fn)
-	// 	}
-	// 	newCache.write = (args) => {
-	// 		return cache.write(KeyEncodeWrite(args, encoder))
-	// 	}
-
-	// 	return { ...environment, api: newApi, cache: newCache }
-	// }, [props.prefix])
-
-	// return (
-	// 	<ClientEnvironmentProvider value={newEnvironment}>{props.children}</ClientEnvironmentProvider>
-	// )
-
-	return props.children
+	return (
+		<ClientEnvironmentProvider value={newEnvironment}>{props.children}</ClientEnvironmentProvider>
+	)
 }

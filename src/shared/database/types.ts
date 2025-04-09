@@ -28,6 +28,7 @@ export type CacheListResult<K, V> = {
 }
 
 export type BaseOKVCache<K, V> = {
+	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
 	write: (args: WriteArgs<K, V>) => void
 

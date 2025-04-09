@@ -1,10 +1,10 @@
 import { codec } from "./Codec"
-import { KeyEncode, ValueEncode } from "./Encoder"
+import { KeyEncodeOKV, ValueEncodeOKV } from "./Encoder"
 import { RangeEmitter } from "./RangeEmitter"
 import { BaseOKV, OKV, ReactiveOKV, WriteArgs } from "./types"
 
 export function stringSubspace<V>(base: BaseOKV<string, V>, prefix: string): BaseOKV<string, V> {
-	return KeyEncode(base, {
+	return KeyEncodeOKV(base, {
 		compare: base.compare,
 		encode: (key) => prefix + key,
 		decode: (key) => key.slice(prefix.length),
@@ -27,14 +27,14 @@ function stringSugar<V>(base: BaseOKV<string, V>): OKV<string, V> {
 export const okv = stringSugar
 
 function tuplejson(okv: BaseOKV<string, string>): BaseOKV<any[], any> {
-	return ValueEncode(KeyEncode(okv, codec), {
+	return ValueEncodeOKV(KeyEncodeOKV(okv, codec), {
 		encode: (value) => JSON.stringify(value),
 		decode: (value) => JSON.parse(value),
 	})
 }
 
 function tupleSubspace(okv: BaseOKV<any[], any>, prefix: any[]): BaseOKV<any[], any> {
-	return KeyEncode(okv, {
+	return KeyEncodeOKV(okv, {
 		compare: okv.compare,
 		encode: (key) => [...prefix, ...key],
 		decode: (key) => key.slice(prefix.length),

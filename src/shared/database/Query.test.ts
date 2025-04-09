@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { ValueEncode } from "./Encoder"
+import { ValueEncodeOKV } from "./Encoder"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { okv } from "./okv2"
 import { query } from "./Query"
@@ -9,7 +9,7 @@ import { OKV } from "./types"
 describe("query", () => {
 	it("works", () => {
 		const base = new InMemoryBaseOKV<string, string>()
-		const json = ValueEncode(base, {
+		const json = ValueEncodeOKV(base, {
 			encode: (value: any) => JSON.stringify(value),
 			decode: (value) => JSON.parse(value),
 		})

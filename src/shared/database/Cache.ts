@@ -9,7 +9,7 @@ https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compactObj } from "../compactObj"
-import { compare } from "../compare"
+import { compare as cmp } from "../compare"
 import { reverse } from "../reverse"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
@@ -29,9 +29,9 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	emitter: RangeEmitter<K>
 	cachedRanges: Range<K>[] = []
 
-	constructor(public compareKey: (a: K, b: K) => number = compare) {
-		this.data = new InMemoryBaseOKV<K, V>(compareKey)
-		this.emitter = new RangeEmitter(compareKey)
+	constructor(public compare: (a: K, b: K) => number = cmp) {
+		this.data = new InMemoryBaseOKV<K, V>(compare)
+		this.emitter = new RangeEmitter(compare)
 	}
 
 	subscribe = (range: Range<K>, fn: () => void) => this.emitter.subscribe(range, fn)
@@ -42,11 +42,11 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	// ==========================================================================
 
 	get orderedRanges() {
-		return orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, this.compareKey))
+		return orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, this.compare))
 	}
 
 	get orderedKeys() {
-		return orderedArray(identity, this.compareKey)
+		return orderedArray(identity, this.compare)
 	}
 
 	/**
@@ -76,11 +76,11 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	list(args: ListArgs<K>): CacheListResult<K, V> {
 		const range = encodeRange(args)
 
-		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === 0
-		const gt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === 1
-		const gte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) !== -1
-		const lt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) === -1
-		const lte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compareKey) !== 1
+		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) === 0
+		const gt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) === 1
+		const gte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) !== -1
+		const lt = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) === -1
+		const lte = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) !== 1
 
 		if (gt(range[0], range[1])) throw new Error("Invalid range.")
 

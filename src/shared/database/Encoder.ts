@@ -1,4 +1,6 @@
-import { BaseOKV, ListArgs, WriteArgs } from "./types"
+import { compactObj } from "../compactObj"
+import { Range } from "./Range"
+import { BaseOKV, BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 
 export type KeyEncoder<I, O> = {
 	compare: (a: I, b: I) => number
@@ -12,13 +14,22 @@ export type Encoder<I, O> = {
 }
 
 export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O>): ListArgs<O> {
-	return {
+	return compactObj({
 		...args,
 		gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),
 		gte: args?.gte === undefined ? undefined : encoder.encode(args.gte),
 		lt: args?.lt === undefined ? undefined : encoder.encode(args.lt),
 		lte: args?.lte === undefined ? undefined : encoder.encode(args.lte),
-	}
+	})
+}
+
+function KeyEncodeRange<K, O>(args: Range<K>, encoder: Encoder<K, O>): Range<O> {
+	return compactObj({
+		gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),
+		gte: args?.gte === undefined ? undefined : encoder.encode(args.gte),
+		lt: args?.lt === undefined ? undefined : encoder.encode(args.lt),
+		lte: args?.lte === undefined ? undefined : encoder.encode(args.lte),
+	})
 }
 
 export function KeyDecodeList<K, V, O>(
@@ -28,7 +39,7 @@ export function KeyDecodeList<K, V, O>(
 	return results.map(({ key, value }) => ({ key: encoder.decode(key), value }))
 }
 
-export function KeyEncodeList<K, V, O>(
+function KeyEncodeList<K, V, O>(
 	results: { key: K; value: V }[],
 	encoder: Encoder<K, O>
 ): { key: O; value: V }[] {
@@ -45,7 +56,7 @@ export function KeyEncodeWrite<K, V, O>(
 	}
 }
 
-export function KeyEncode<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>): BaseOKV<I, V> {
+export function KeyEncodeOKV<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>): BaseOKV<I, V> {
 	return {
 		compare: encoder.compare,
 		list(args) {
@@ -60,7 +71,7 @@ export function KeyEncode<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>)
 	}
 }
 
-export function ValueEncode<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>): BaseOKV<K, I> {
+export function ValueEncodeOKV<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>): BaseOKV<K, I> {
 	return {
 		compare: db.compare,
 		list(args) {
@@ -71,6 +82,41 @@ export function ValueEncode<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>):
 				set: tx.set?.map(({ key, value }) => ({ key, value: encoder.encode(value) })),
 				delete: tx.delete,
 			})
+		},
+	}
+}
+
+function KeyDecodeCacheListResult<I, O, V>(
+	result: CacheListResult<O, V>,
+	encoder: Encoder<I, O>
+): CacheListResult<I, V> {
+	if (result.hit) return { hit: KeyDecodeList(result.hit, encoder) }
+	if (result.prefix) return { prefix: KeyDecodeList(result.prefix, encoder) }
+	return { miss: true }
+}
+
+export function KeyEncodeOKVCache<I, O, V>(
+	cache: BaseOKVCache<O, V>,
+	encoder: KeyEncoder<I, O>
+): BaseOKVCache<I, V> {
+	return {
+		compare: encoder.compare,
+		list(args) {
+			const newArgs = KeyEncodeListArgs(args, encoder)
+			const results = cache.list(newArgs)
+			return KeyDecodeCacheListResult(results, encoder)
+		},
+		write(args) {
+			const newArgs = KeyEncodeWrite(args, encoder)
+			return cache.write(newArgs)
+		},
+		insert(args, result) {
+			const newArgs = KeyEncodeListArgs(args, encoder)
+			const newResult = KeyEncodeList(result, encoder)
+			return cache.insert(newArgs, newResult)
+		},
+		subscribe(range, fn) {
+			return cache.subscribe(KeyEncodeRange(range, encoder), fn)
 		},
 	}
 }

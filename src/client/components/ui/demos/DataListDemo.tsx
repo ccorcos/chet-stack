@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { useGet, useWrite } from "../../../hooks/useDatabase"
+import { Subspace } from "../../Subspace"
 import { DataList } from "../DataList"
 
 // 1. Fractional indexing
@@ -8,14 +9,16 @@ import { DataList } from "../DataList"
 
 export function DataListDemo() {
 	return (
-		<div>
-			<div>DataListDemo</div>
-			<JSONArrayDemo />
-		</div>
+		<Subspace prefix={["hello"]}>
+			<div>
+				<div>DataListDemo</div>
+				<JSONArrayDemo />
+			</div>
+		</Subspace>
 	)
 }
 
-const JSONArrayDemoKey = ["JSONArrayDemo2"]
+const JSONArrayDemoKey = ["DataListDemo-JSONArray"]
 
 function JSONArrayDemo() {
 	const result = useGet(JSONArrayDemoKey)
