@@ -46,35 +46,3 @@ export function sugar(db: TupleDb): SugarTupleDb {
 		delete: (key) => db.write({ delete: [key] }),
 	}
 }
-
-// export class Transaction<K, V> implements BaseOKV<K, V> {
-// 	data: InMemoryBaseOKV<K, V>
-// 	reads: Range<K>[] = []
-// 	// writes: WriteArgs<K, V> = { set: [], delete: [] }
-
-// 	constructor(public db: BaseOKV<K, V>) {
-// 		this.data = new InMemoryBaseOKV<K, V>(this.db.compare)
-// 	}
-
-// 	compare = (a: K, b: K) => this.db.compare(a, b)
-
-// 	list(args: ListArgs<K> = {}): { key: K; value: V }[] {
-// 		this.reads.push(args)
-// 		const data = this.db.list(args)
-// 		this.data.write({ set: data })
-// 		return data
-// 	}
-
-// 	write(args: WriteArgs<K, V>) {
-// 		throw new Error("Not implemented")
-// 		// this.writes = {
-// 		// 	set: [...this.writes.set!, ...(args.set ?? [])],
-// 		// 	delete: [...this.writes.delete!, ...(args.delete ?? [])],
-// 		// }
-// 	}
-
-// 	commit = () => {
-// 		throw new Error("Not implemented")
-// 		// this.db.write(this.writes)
-// 	}
-// }

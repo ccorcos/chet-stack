@@ -12,5 +12,5 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	return queryNodeVm(environment, args.query)
+	return queryNodeVm(environment.db, args.query)
 }
