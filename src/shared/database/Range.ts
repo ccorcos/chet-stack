@@ -18,6 +18,9 @@ export function decodeStartBound<K>(bound: Bound<K>): { gt?: K; gte?: K } {
 	if (bound.length === 1) return {}
 	if (bound[2] === 0) return { gte: bound[1] }
 	if (bound[2] === 1) return { gt: bound[1] }
+
+	// If we get an end bound, we treat it as gte so that we can join ranges.
+	if (bound[2] === -1) return { gte: bound[1] }
 	throw new Error("Invalid start bound")
 }
 
@@ -35,6 +38,9 @@ export function decodeEndBound<K>(bound: Bound<K>): { lt?: K; lte?: K } {
 	if (bound.length === 1) return {}
 	if (bound[2] === 0) return { lte: bound[1] }
 	if (bound[2] === -1) return { lt: bound[1] }
+
+	// If we get a start bound, we treat it as lte so that we can join ranges.
+	if (bound[2] === 1) return { lte: bound[1] }
 	throw new Error("Invalid end bound")
 }
 

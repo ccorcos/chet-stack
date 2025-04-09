@@ -18,7 +18,9 @@ import {
 	compareRange,
 	decodeEndBound,
 	decodeStartBound,
+	encodeEndBound,
 	encodeRange,
+	encodeStartBound,
 	Range,
 } from "./Range"
 import { RangeEmitter } from "./RangeEmitter"
@@ -27,7 +29,7 @@ import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
-	cachedRanges: Range<K>[] = []
+	ranges: Range<K>[] = []
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryBaseOKV<K, V>(compare)
@@ -56,7 +58,7 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 	 */
 	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
 		const range = computeCachedRange(args, result)
-		this.orderedRanges.insert(this.cachedRanges, range)
+		this.orderedRanges.insert(this.ranges, range)
 
 		// Delete any previous data in that range.
 		const setKeys: K[] = []
@@ -87,7 +89,7 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 		// gte === lte
 		if (eq(range[0], range[1])) {
 			const cursor = range[0]
-			for (const range of this.cachedRanges) {
+			for (const range of this.ranges) {
 				const [left, right] = encodeRange(range)
 				if (gt(left, cursor)) return { miss: true }
 				if (lt(right, cursor)) continue
@@ -100,11 +102,16 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 			// REVERSE
 			let miss = true
 			let cursor = range[1]
-			for (const r of reverse(this.cachedRanges)) {
+			for (const r of reverse(this.ranges)) {
 				const [start, end] = encodeRange(r)
 				if (lte(start, cursor) && gte(end, cursor)) {
 					miss = false
-					cursor = start
+					if (r.gte !== undefined) {
+						// If this range starts with gte, then the next range can start with lt and the result is continuous.
+						cursor = encodeEndBound({ lt: r.gte })
+					} else {
+						cursor = start
+					}
 					if (lte(start, range[0])) break
 				}
 				// No early exit because the list is ordered by start, not end and we're going in reverse.
@@ -133,11 +140,16 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 		// FORWARD
 		let miss = true
 		let cursor = range[0]
-		for (const r of this.cachedRanges) {
+		for (const r of this.ranges) {
 			const [start, end] = encodeRange(r)
 			if (lte(start, cursor) && gte(end, cursor)) {
 				miss = false
-				cursor = end
+				if (r.lte !== undefined) {
+					// If this range ends with lte, then the next range can start with gt and the result is continuous.
+					cursor = encodeStartBound({ gt: r.lte })
+				} else {
+					cursor = end
+				}
 				if (gte(cursor, range[1])) break
 			}
 			// Early exit.
@@ -176,7 +188,7 @@ export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
 		const ranges = Array.from(keys).map(keyToRange)
 
 		for (const range of ranges) {
-			this.orderedRanges.insert(this.cachedRanges, range)
+			this.orderedRanges.insert(this.ranges, range)
 		}
 
 		// Emit
@@ -211,4 +223,8 @@ export function computeCachedRange<K, V>(
 
 	// Last item is the end of the range.
 	return compactObj({ gt, gte, lte: result[result.length - 1].key })
+}
+
+function isGte<K>(bound: Bound<K>): bound is [number, K, number] {
+	return bound.length === 3 && bound[2] === 0
 }

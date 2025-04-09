@@ -124,7 +124,7 @@ describe("computeCachedRange", () => {
 	})
 })
 
-describe("cache", () => {
+describe("Cache", () => {
 	it("works", () => {
 		const cache = new Cache()
 		cache.insert({ gte: "05", lt: "10" }, v(5, 9))
@@ -158,23 +158,41 @@ describe("cache", () => {
 		assert.deepEqual(cache.list({ gt: "05", lte: "10" }), { prefix: v(6, 9) })
 		assert.deepEqual(cache.list({ gt: "05", lt: "10" }), { hit: v(6, 9) })
 	})
-})
 
-interface Func {
-	(...args: any[]): any
-	called: number
-}
+	it("Joined ranges", () => {
+		const cache = new Cache()
+		cache.insert({ limit: 2 }, v(0, 1))
+		cache.insert({ gt: "01", limit: 2 }, v(2, 3))
 
-function func(): Func {
-	const f = () => {
-		f.called++
+		assert.deepEqual(cache.list({ limit: 3 }), { hit: v(0, 2) })
+		assert.deepEqual(cache.list({ limit: 4 }), { hit: v(0, 3) })
+		assert.deepEqual(cache.list({ limit: 5 }), { prefix: v(0, 3) })
+	})
+
+	it("Joined ranges - reversed", () => {
+		const cache = new Cache()
+		cache.insert({ limit: 2, reverse: true }, v(2, 3).reverse())
+		cache.insert({ lt: "02", limit: 2, reverse: true }, v(0, 1).reverse())
+
+		assert.deepEqual(cache.list({ limit: 3, reverse: true }), { hit: v(1, 3).reverse() })
+		assert.deepEqual(cache.list({ limit: 4, reverse: true }), { hit: v(0, 3).reverse() })
+		assert.deepEqual(cache.list({ limit: 5, reverse: true }), { prefix: v(0, 3).reverse() })
+	})
+
+	interface Func {
+		(...args: any[]): any
+		called: number
 	}
-	f.called = 0
-	return f
-}
 
-describe("subscribe / emit", () => {
-	it("works", () => {
+	function func(): Func {
+		const f = () => {
+			f.called++
+		}
+		f.called = 0
+		return f
+	}
+
+	it("subscribe / emit", () => {
 		const cache = new Cache()
 		const cb1 = func()
 		const cb2 = func()
