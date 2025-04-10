@@ -6,6 +6,7 @@ We're going to start with just solving the problem, and then worry about perform
 https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 */
 
+import { uniqWith } from "lodash"
 import { compactObj } from "../compactObj"
 import { compare as cmp } from "../compare"
 import { OrderedList } from "../OrderedList"
@@ -29,7 +30,9 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
 	ranges: OrderedList<Range<K>>
-	writes: {
+
+	refs: OrderedList<{ key: K; ref: number }, K>
+	pending: {
 		set: InMemoryBaseOKV<K, V>
 		delete: InMemoryBaseOKV<K, null>
 	}
@@ -39,10 +42,12 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		this.emitter = new RangeEmitter(compare)
 		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
 
-		this.writes = {
+		this.pending = {
 			set: new InMemoryBaseOKV(compare),
 			delete: new InMemoryBaseOKV(compare),
 		}
+
+		this.refs = new OrderedList<{ key: K; ref: number }, K>([], compare, ({ key }) => key)
 	}
 
 	subscribe = (range: Range<K>, fn: () => void) => this.emitter.subscribe(range, fn)
@@ -56,8 +61,8 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		const range = computeCachedRange(args, result)
 		this.ranges.insert(range)
 
-		const optimisticSets = this.writes.set.list(range)
-		const optimisticDeletes = this.writes.delete.list(range).map(({ key }) => key)
+		const optimisticSets = this.pending.set.list(range)
+		const optimisticDeletes = this.pending.delete.list(range).map(({ key }) => key)
 
 		const slice = new InMemoryBaseOKV<K, V>(this.compare)
 		slice.write({ set: result })
@@ -181,21 +186,47 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	write(args: WriteArgs<K, V>) {
 		// Optimistic write
 		this.data.write(args)
-		this.writes.set.write({ set: args.set })
-		this.writes.delete.write({ set: args.delete?.map((key) => ({ key, value: null })) })
+
+		// Track pending writes.
+		const setKeys = args.set?.map(({ key }) => key) ?? []
+		const deleteKeys = args.delete ?? []
+		this.pending.set.write({ set: args.set, delete: deleteKeys })
+		this.pending.delete.write({
+			set: args.delete?.map((key) => ({ key, value: null })),
+			delete: setKeys,
+		})
+
+		// Reference count pending writes.
+		const allKeys = uniqWith([...setKeys, ...deleteKeys], (a, b) => this.compare(a, b) === 0)
+		for (const key of allKeys) {
+			this.refs.update(key, (existing) => {
+				if (existing === undefined) return { key, ref: 1 }
+				return { key, ref: existing.ref + 1 }
+			})
+		}
 
 		// Write cache ranges so we can read our writes.
-		const keys = new OrderedList<K>([], this.compare)
-		for (const { key } of args.set ?? []) keys.insert(key)
-		for (const key of args.delete ?? []) keys.insert(key)
-		const ranges = Array.from(keys.items).map(keyToRange)
+		const ranges = allKeys.map(keyToRange)
 		for (const range of ranges) this.ranges.insert(range)
 
 		// Emit
 		this.emit(ranges)
 
 		return () => {
-			// TODO: reference count to clean up writes.
+			// Cleanup pending write reference count so that new data can overwrite it from the server.
+			const deref: K[] = []
+			for (const key of allKeys) {
+				this.refs.update(key, (existing) => {
+					if (existing === undefined) return console.warn("Ref count is should be non-zero!")
+					if (existing.ref === 1) {
+						deref.push(key)
+						return undefined
+					}
+					return { key, ref: existing.ref - 1 }
+				})
+			}
+			this.pending.set.write({ delete: deref })
+			this.pending.delete.write({ delete: deref })
 		}
 	}
 }

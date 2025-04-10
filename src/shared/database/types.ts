@@ -32,7 +32,7 @@ export type BaseOKVCache<K, V> = {
 
 	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
-	write: (args: WriteArgs<K, V>) => void // () => void
+	write: (args: WriteArgs<K, V>) => () => void
 
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 }

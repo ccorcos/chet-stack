@@ -98,8 +98,10 @@ export function useWrite() {
 	const { api, cache } = useClientEnvironment()
 
 	return async (args: WriteArgs<Tuple, JSONValue>) => {
-		cache.write(args)
+		const cleanup = cache.write(args)
 		const promise = api.write(args)
+
+		promise.then(cleanup)
 
 		// Track pending writes.
 		// trackPendingWrite(args, promise)
