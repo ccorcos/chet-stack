@@ -2,6 +2,7 @@ import { Cache } from "./Cache"
 import { BaseOKV, BaseOKVTransaction, ListArgs, WriteArgs } from "./types"
 
 export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
+	committed = false
 	cache: Cache<K, V>
 	writes: { set: { key: K; value: V }[]; delete: K[] } = { set: [], delete: [] }
 
@@ -22,6 +23,7 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 	}
 
 	list(args: ListArgs<K> = {}): { key: K; value: V }[] {
+		if (this.committed) throw new Error("Transaction already committed")
 		const result = this.cache.list(args)
 
 		if (result.hit) {
@@ -52,19 +54,25 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 
 		// MISS
 		const data = this.db.list(args)
+
+		// Check which writes are missing from here.
+		// Cache should do this to some extent later so it doesnt clobber optimistic writes.
+		// We can inspect the cache ranges and slice things up to read from the cache in those ranges
+		// or we can just go through the writes and modify the data.
+
 		this.cache.insert(args, data)
 		return data
 	}
 
 	write(args: WriteArgs<K, V>) {
+		if (this.committed) throw new Error("Transaction already committed")
 		this.cache.write(args)
 		this.writes = {
-			set: [...this.writes.set!, ...(args.set ?? [])],
-			delete: [...this.writes.delete!, ...(args.delete ?? [])],
+			set: [...this.writes.set, ...(args.set ?? [])],
+			delete: [...this.writes.delete, ...(args.delete ?? [])],
 		}
 	}
 
-	committed = false
 	commit = () => {
 		if (this.committed) throw new Error("Transaction already committed")
 		this.committed = true

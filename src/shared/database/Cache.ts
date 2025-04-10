@@ -26,7 +26,7 @@ import {
 import { RangeEmitter } from "./RangeEmitter"
 import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 
-export class Cache<K = string, V = any> implements BaseOKVCache<K, V> {
+export class Cache<K, V> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
 	ranges: Range<K>[] = []
