@@ -11,26 +11,12 @@ function kv(start: number, end?: number) {
 		.map((i) => ({ key: i, value: i }))
 }
 
-function rng(start: number, end?: number) {
-	if (end === undefined) end = start
-	return { gte: start.toString().padStart(2, "0"), lte: end.toString().padStart(2, "0") }
-}
-
 describe("Transaction", () => {
 	it("reads through to the database", () => {
 		const db = new InMemoryBaseOKV()
 		db.write({ set: kv(0, 10) })
-
 		const tx = new Transaction(db)
-
-		assert.deepEqual(tx.list(rng(0)), kv(0))
 		assert.deepEqual(tx.list(), kv(0, 10))
-
-		// Reading through to the database works.
-		// Cached ranges and stuff work.
-		// Cache prefix result and then fetch more should combine correctly.
-		// Overwriting the cache works and returns the correct values.
-		// Overwriting your own writes should work too.
 	})
 
 	it("reads it own writes", () => {
@@ -39,12 +25,37 @@ describe("Transaction", () => {
 
 		const tx = new Transaction(db)
 
-		tx.write({ set: [{ key: "00", value: "xx" }] })
-		assert.deepEqual(tx.list(rng(0)), [{ key: "00", value: "xx" }])
-		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 10)])
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
 
+		// Db hasnt changed uet.
 		assert.deepEqual(db.list(), kv(0, 10))
 		tx.commit()
-		assert.deepEqual(db.list(), [{ key: "00", value: "xx" }, ...kv(1, 10)])
+		// Now it has.
+		assert.deepEqual(db.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+	})
+
+	it("prefix results combine correctly", () => {
+		const db = new InMemoryBaseOKV()
+		db.write({ set: kv(0, 10) })
+
+		const tx = new Transaction(db)
+		tx.list({ gte: "00", lte: "05" })
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+	})
+
+	it("overwriting pending sets and deletes", () => {
+		const db = new InMemoryBaseOKV()
+		db.write({ set: kv(0, 10) })
+
+		const tx = new Transaction(db)
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+		tx.write({ set: [{ key: "10", value: "xx" }], delete: ["00"] })
+		assert.deepEqual(tx.list(), [...kv(1, 9), { key: "10", value: "xx" }])
+
+		tx.commit()
+		assert.deepEqual(db.list(), [...kv(1, 9), { key: "10", value: "xx" }])
 	})
 })

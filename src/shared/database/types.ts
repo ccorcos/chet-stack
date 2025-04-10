@@ -1,3 +1,4 @@
+import { OrderedList } from "../OrderedList"
 import { Range } from "./Range"
 
 export type Tuple = any[]
@@ -26,8 +27,8 @@ export type CacheListResult<K, V> = {
 }
 
 export type BaseOKVCache<K, V> = {
-	// data: BaseOKV<K, V> // Data in the cache.
-	// ranges: OrderedList<Range<K>> // Ranges if data in the cache.
+	data: BaseOKV<K, V> // Data in the cache.
+	ranges: OrderedList<Range<K>> // Ranges if data in the cache.
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 
 	compare: (a: K, b: K) => number
@@ -38,9 +39,7 @@ export type BaseOKVCache<K, V> = {
 }
 
 export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
-	// data: BaseOKV<K, V> // Data in the cache.
-	// ranges: Range<K>[] // Ranges if data in the cache.
-	writes: { set: { key: K; value: V }[]; delete: K[] }
+	cache: BaseOKVCache<K, V>
 	committed: boolean
 	commit: () => void
 }
