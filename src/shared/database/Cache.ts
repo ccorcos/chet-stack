@@ -6,8 +6,6 @@ We're going to start with just solving the problem, and then worry about perform
 https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 */
 
-import { orderedArray } from "@ccorcos/ordered-array"
-import { identity } from "lodash"
 import { compactObj } from "../compactObj"
 import { compare as cmp } from "../compare"
 import { OrderedList } from "../OrderedList"
@@ -44,10 +42,6 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	// ==========================================================================
 	// Helpers for dealing with ordered arrays.
 	// ==========================================================================
-
-	get orderedRanges() {
-		return orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, this.compare))
-	}
 
 	/**
 	 * Insert data into the cache that was returned from a list query.
