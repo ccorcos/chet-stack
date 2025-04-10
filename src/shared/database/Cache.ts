@@ -259,7 +259,3 @@ export function computeCachedRange<K, V>(
 	// Last item is the end of the range.
 	return compactObj({ gt, gte, lte: result[result.length - 1].key })
 }
-
-function isGte<K>(bound: Bound<K>): bound is [number, K, number] {
-	return bound.length === 3 && bound[2] === 0
-}
