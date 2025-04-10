@@ -26,20 +26,20 @@ export type CacheListResult<K, V> = {
 }
 
 export type BaseOKVCache<K, V> = {
-	data: BaseOKV<K, V> // Data in the cache.
-	ranges: Range<K>[] // Ranges if data in the cache.
+	// data: BaseOKV<K, V> // Data in the cache.
+	// ranges: OrderedList<Range<K>> // Ranges if data in the cache.
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 
 	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
-	write: (args: WriteArgs<K, V>) => void
+	write: (args: WriteArgs<K, V>) => void // () => void
 
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
 
 export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
-	data: BaseOKV<K, V> // Data in the cache.
-	ranges: Range<K>[] // Ranges if data in the cache.
+	// data: BaseOKV<K, V> // Data in the cache.
+	// ranges: Range<K>[] // Ranges if data in the cache.
 	writes: { set: { key: K; value: V }[]; delete: K[] }
 	committed: boolean
 	commit: () => void

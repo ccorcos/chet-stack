@@ -10,6 +10,7 @@ import { orderedArray } from "@ccorcos/ordered-array"
 import { identity } from "lodash"
 import { compactObj } from "../compactObj"
 import { compare as cmp } from "../compare"
+import { OrderedList } from "../OrderedList"
 import { reverse } from "../reverse"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
@@ -29,11 +30,12 @@ import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 export class Cache<K, V> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
-	ranges: Range<K>[] = []
+	ranges: OrderedList<Range<K>>
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryBaseOKV<K, V>(compare)
 		this.emitter = new RangeEmitter(compare)
+		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
 	}
 
 	subscribe = (range: Range<K>, fn: () => void) => this.emitter.subscribe(range, fn)
@@ -47,10 +49,6 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		return orderedArray<Range<K>>(identity, (a, b) => compareRange(a, b, this.compare))
 	}
 
-	get orderedKeys() {
-		return orderedArray(identity, this.compare)
-	}
-
 	/**
 	 * Insert data into the cache that was returned from a list query.
 	 * TODO: eventually we want to track versions of keys so we don't clobber
@@ -58,20 +56,17 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	 */
 	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
 		const range = computeCachedRange(args, result)
-		this.orderedRanges.insert(this.ranges, range)
+		this.ranges.insert(range)
 
 		// Delete any previous data in that range.
-		const setKeys: K[] = []
-		for (const { key } of result) setKeys.push(key)
+		const setKeys = new OrderedList<K>([], this.compare)
+		for (const { key } of result) setKeys.insert(key)
 
-		const deleteKeys: K[] = []
+		const deleteKeys = new OrderedList<K>([], this.compare)
 		const existing = this.data.list(range)
+		for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.insert(key)
 
-		for (const { key } of existing)
-			if (this.orderedKeys.search(setKeys, key).found === undefined) deleteKeys.push(key)
-
-		this.data.write({ set: result, delete: Array.from(deleteKeys) })
-
+		this.data.write({ set: result, delete: deleteKeys.items })
 		this.emitter.emit([range])
 	}
 
@@ -89,7 +84,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		// gte === lte
 		if (eq(range[0], range[1])) {
 			const cursor = range[0]
-			for (const range of this.ranges) {
+			for (const range of this.ranges.items) {
 				const [left, right] = encodeRange(range)
 				if (gt(left, cursor)) return { miss: true }
 				if (lt(right, cursor)) continue
@@ -102,7 +97,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 			// REVERSE
 			let miss = true
 			let cursor = range[1]
-			for (const r of reverse(this.ranges)) {
+			for (const r of reverse(this.ranges.items)) {
 				const [start, end] = encodeRange(r)
 				if (lte(start, cursor) && gte(end, cursor)) {
 					miss = false
@@ -140,7 +135,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		// FORWARD
 		let miss = true
 		let cursor = range[0]
-		for (const r of this.ranges) {
+		for (const r of this.ranges.items) {
 			const [start, end] = encodeRange(r)
 			if (lte(start, cursor) && gte(end, cursor)) {
 				miss = false
@@ -180,15 +175,15 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		// Optimistic write
 		this.data.write(args)
 
-		const keys: K[] = []
-		for (const { key } of args.set ?? []) this.orderedKeys.insert(keys, key)
-		for (const key of args.delete ?? []) this.orderedKeys.insert(keys, key)
+		const keys = new OrderedList<K>([], this.compare)
+		for (const { key } of args.set ?? []) keys.insert(key)
+		for (const key of args.delete ?? []) keys.insert(key)
 
 		// Write cache ranges so we can read our writes.
-		const ranges = Array.from(keys).map(keyToRange)
+		const ranges = Array.from(keys.items).map(keyToRange)
 
 		for (const range of ranges) {
-			this.orderedRanges.insert(this.ranges, range)
+			this.ranges.insert(range)
 		}
 
 		// Emit
