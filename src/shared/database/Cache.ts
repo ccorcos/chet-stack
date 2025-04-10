@@ -29,11 +29,20 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
 	ranges: OrderedList<Range<K>>
+	writes: {
+		set: InMemoryBaseOKV<K, V>
+		delete: InMemoryBaseOKV<K, null>
+	}
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryBaseOKV<K, V>(compare)
 		this.emitter = new RangeEmitter(compare)
 		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
+
+		this.writes = {
+			set: new InMemoryBaseOKV(compare),
+			delete: new InMemoryBaseOKV(compare),
+		}
 	}
 
 	subscribe = (range: Range<K>, fn: () => void) => this.emitter.subscribe(range, fn)
@@ -43,24 +52,28 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	// Helpers for dealing with ordered arrays.
 	// ==========================================================================
 
-	/**
-	 * Insert data into the cache that was returned from a list query.
-	 * TODO: eventually we want to track versions of keys so we don't clobber
-	 * optimistic writes
-	 */
 	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
 		const range = computeCachedRange(args, result)
 		this.ranges.insert(range)
 
+		const optimisticSets = this.writes.set.list(range)
+		const optimisticDeletes = this.writes.delete.list(range).map(({ key }) => key)
+
+		const slice = new InMemoryBaseOKV<K, V>(this.compare)
+		slice.write({ set: result })
+		slice.write({ set: optimisticSets, delete: optimisticDeletes })
+
 		// Delete any previous data in that range.
-		const setKeys = new OrderedList<K>([], this.compare)
-		for (const { key } of result) setKeys.insert(key)
+		const existing = new InMemoryBaseOKV<K, V>(this.compare)
+		existing.data = this.data.list(range)
+		for (const { key } of existing.list()) {
+			if (slice.list({ gte: key, lte: key }).length === 1) existing.write({ delete: [key] })
+		}
 
-		const deleteKeys = new OrderedList<K>([], this.compare)
-		const existing = this.data.list(range)
-		for (const { key } of existing) if (!setKeys.has(key)) deleteKeys.insert(key)
-
-		this.data.write({ set: result, delete: deleteKeys.items })
+		this.data.write({
+			set: slice.list(),
+			delete: existing.list().map(({ key }) => key),
+		})
 		this.emitter.emit([range])
 	}
 
@@ -168,20 +181,22 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	write(args: WriteArgs<K, V>) {
 		// Optimistic write
 		this.data.write(args)
+		this.writes.set.write({ set: args.set })
+		this.writes.delete.write({ set: args.delete?.map((key) => ({ key, value: null })) })
 
+		// Write cache ranges so we can read our writes.
 		const keys = new OrderedList<K>([], this.compare)
 		for (const { key } of args.set ?? []) keys.insert(key)
 		for (const key of args.delete ?? []) keys.insert(key)
-
-		// Write cache ranges so we can read our writes.
 		const ranges = Array.from(keys.items).map(keyToRange)
-
-		for (const range of ranges) {
-			this.ranges.insert(range)
-		}
+		for (const range of ranges) this.ranges.insert(range)
 
 		// Emit
 		this.emit(ranges)
+
+		return () => {
+			// TODO: reference count to clean up writes.
+		}
 	}
 }
 
