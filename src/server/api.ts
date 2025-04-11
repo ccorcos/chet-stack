@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
-import { Assert } from "tuple-database/database/typeHelpers"
 import * as t from "../shared/dataTypes"
+import { Assert } from "../shared/typeHelpers"
 import * as api from "./apis/autoindex"
 import { ServerEnvironment } from "./services/ServerEnvironment"
 

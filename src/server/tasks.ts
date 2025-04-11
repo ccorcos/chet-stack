@@ -1,4 +1,4 @@
-import { Assert } from "tuple-database/database/typeHelpers"
+import { Assert } from "../shared/typeHelpers"
 import { ServerEnvironment } from "./services/ServerEnvironment"
 import * as queueTasks from "./tasks/autoindex"
 

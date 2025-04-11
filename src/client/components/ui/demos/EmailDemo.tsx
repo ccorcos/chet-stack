@@ -1,3 +1,5 @@
+// https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083dfc1cd0c9d0465?pvs=4
+
 import React, { useCallback, useRef, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { useList, useWrite } from "../../../hooks/useDatabase"
