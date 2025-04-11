@@ -1,10 +1,10 @@
 import assert from "assert"
 import { describe, it } from "mocha"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { sugar, tuplejson } from "./OKV"
+import { tupleDb, tupleOkv } from "./OKV"
 import { query } from "./Query"
 import { queryNodeVm } from "./QueryNodeVm"
-import { SugarTupleDb } from "./types"
+import { TupleDb } from "./types"
 
 const modes = {
 	query,
@@ -16,7 +16,7 @@ describe("query", () => {
 		const query = modes[key]
 		it("works " + key, () => {
 			const base = new InMemoryBaseOKV<string, string>()
-			const db = sugar(tuplejson(base))
+			const db = tupleDb(tupleOkv(base))
 
 			db.set(["a"], 1)
 			db.set(["b"], 2)
@@ -26,7 +26,7 @@ describe("query", () => {
 
 			const { data, ranges, result } = query(
 				db,
-				((db: SugarTupleDb) => {
+				((db: TupleDb) => {
 					const list = db.get(["list"])
 					const items = list.map((item) => db.get([item]))
 					return items.reduce((a, b) => a + b, 0)

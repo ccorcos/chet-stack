@@ -13,7 +13,7 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 		return this.db.compare
 	}
 
-	list(args: ListArgs<K> = {}): { key: K; value: V }[] {
+	list = (args: ListArgs<K> = {}): { key: K; value: V }[] => {
 		if (this.committed) throw new Error("Transaction already committed")
 		const result = this.cache.list(args)
 
@@ -63,7 +63,7 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 		return again.hit
 	}
 
-	write(args: WriteArgs<K, V>) {
+	write = (args: WriteArgs<K, V>) => {
 		if (this.committed) throw new Error("Transaction already committed")
 		this.cache.write(args)
 	}

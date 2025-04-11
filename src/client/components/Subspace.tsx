@@ -35,7 +35,10 @@ function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
 	})
 }
 
-function CacheSubspace(cache: BaseOKVCache<Tuple, JSONValue>, prefix: Tuple) {
+function CacheSubspace(
+	cache: BaseOKVCache<Tuple, JSONValue>,
+	prefix: Tuple
+): BaseOKVCache<Tuple, JSONValue> {
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
 		compare: cache.compare,

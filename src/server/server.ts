@@ -4,7 +4,7 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
-import { tuplejson } from "../shared/database/OKV"
+import { tupleOkv } from "../shared/database/OKV"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
 import { PubsubServer } from "./PubsubServer"
@@ -36,7 +36,7 @@ if (!config.production) {
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
-const db = tuplejson(base)
+const db = tupleOkv(base)
 
 const queue = new QueueDatabase(config.queuePath)
 

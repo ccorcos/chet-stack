@@ -1,4 +1,3 @@
-import { OrderedList } from "../OrderedList"
 import { Range } from "./Range"
 
 export type Tuple = any[]
@@ -14,6 +13,10 @@ export type ListOptions = {
 
 export type ListArgs<K> = Range<K> & ListOptions
 
+/**
+ * Compare is important so that we can do other in-memory things, e.g. caching reads
+ * and writes in a transaction.
+ */
 export type BaseOKV<K, V> = {
 	compare: (a: K, b: K) => number
 	list(args?: ListArgs<K>): { key: K; value: V }[]
@@ -26,53 +29,60 @@ export type CacheListResult<K, V> = {
 	prefix?: { key: K; value: V }[]
 }
 
+/**
+ * This type is useful for implementing subspace. We intentionally don't include the
+ * data or the ranges of the cache on this type so we can create a subspace without
+ * copying all that data.
+ */
 export type BaseOKVCache<K, V> = {
-	data: BaseOKV<K, V> // Data in the cache.
-	ranges: OrderedList<Range<K>> // Ranges if data in the cache.
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
-
 	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
 	write: (args: WriteArgs<K, V>) => () => void
-
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
 
+/**
+ * Similar to BaseOKVCache, this is useful for building compositional abstractions.
+ * But in other situations you're going to want the actual Transaction class so that
+ * you can inspect the pending writes, etc.
+ */
 export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
-	cache: BaseOKVCache<K, V>
 	committed: boolean
 	commit: () => void
 }
 
-export type SugarOKV<K, V> = BaseOKV<K, V> & {
-	get: (key: K) => V | undefined
-	prefix: (prefix: K) => { key: K; value: V }[]
-	subspace(prefix: K): SugarOKV<K, V>
-	set: (key: K, value: V) => void
-	delete: (key: K) => void
+export type BaseTupleOKV = BaseOKV<Tuple, JSONValue>
+export type BaseTupleOKVTx = BaseOKVTransaction<Tuple, JSONValue>
+
+export type ReadOnlyTupleDb = BaseTupleOKV & {
+	get: (key: Tuple) => JSONValue | undefined
+	subspace: (prefix: Tuple) => ReadOnlyTupleDb
 }
 
-export type TupleDb = BaseOKV<Tuple, JSONValue>
-export type SugarTupleDb = SugarOKV<Tuple, JSONValue>
+export type TupleDb = BaseTupleOKV & {
+	get: (key: Tuple) => JSONValue | undefined
+	subspace: (prefix: Tuple) => TupleDb
+	set: (key: Tuple, value: JSONValue) => void
+	delete: (key: Tuple) => void
+	transact: () => TupleTx
+}
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+export type TupleTx = BaseTupleOKVTx & {
+	get: (key: Tuple) => JSONValue | undefined
+	set: (key: Tuple, value: JSONValue) => void
+	delete: (key: Tuple) => void
+	subspace: (prefix: Tuple) => TupleTx
+}
 
+// ==========================================================================
 export type Index = {
 	id: string
 	// secondary indexes are 0, tertiary indexes are 1.
 	order: number
 	range: ListArgs<Tuple>
-	set: (db: TupleDb, key: Tuple, value: JSONValue) => void
-	delete: (db: TupleDb, key: Tuple) => void
+	set: (db: BaseTupleOKV, key: Tuple, value: JSONValue) => void
+	delete: (db: BaseTupleOKV, key: Tuple) => void
 }
 
 export type IndexableOKV = {

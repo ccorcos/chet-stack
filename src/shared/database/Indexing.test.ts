@@ -18,7 +18,7 @@ import { describe, it } from "mocha"
 import { codec } from "./Codec"
 import { Indexable } from "./Indexing"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { tupleSugar } from "./OKV"
+import { tupleDb } from "./OKV"
 
 type Person = {
 	id: string
@@ -29,107 +29,105 @@ type Person = {
 	email?: { address?: string; label?: string }[]
 }
 
+const john: Person = {
+	id: "p1",
+	first: "John",
+	last: "Doe",
+	birthday: "1980-05-15",
+	phone: [
+		{ number: "555-123-4567", label: "mobile" },
+		{ number: "555-987-6543", label: "work" },
+	],
+	email: [
+		{ address: "john.doe@example.com", label: "personal" },
+		{ address: "jdoe@work.com", label: "work" },
+	],
+}
+const jane: Person = {
+	id: "p2",
+	first: "Jane",
+	last: "Smith",
+	birthday: "1985-10-20",
+	phone: [{ number: "555-222-3333", label: "mobile" }],
+	email: [{ address: "jane.smith@example.com", label: "personal" }],
+}
+const robert: Person = {
+	id: "p3",
+	first: "Robert",
+	last: "Johnson",
+	birthday: "1975-03-08",
+	phone: [
+		{ number: "555-444-5555", label: "home" },
+		{ number: "555-666-7777", label: "work" },
+	],
+	email: [
+		{ address: "robert.j@example.com", label: "personal" },
+		{ address: "rjohnson@company.com", label: "work" },
+	],
+}
+const emily: Person = {
+	id: "p4",
+	first: "Emily",
+	last: "Davis",
+	birthday: "1990-12-25",
+	phone: [{ number: "555-888-9999", label: "mobile" }],
+	email: [
+		{ address: "emily.davis@example.com", label: "personal" },
+		{ address: "edavis@school.edu", label: "school" },
+	],
+}
+
 // Example person data for testing
-const example: Person[] = [
-	{
-		id: "p1",
-		first: "John",
-		last: "Doe",
-		birthday: "1980-05-15",
-		phone: [
-			{ number: "555-123-4567", label: "mobile" },
-			{ number: "555-987-6543", label: "work" },
-		],
-		email: [
-			{ address: "john.doe@example.com", label: "personal" },
-			{ address: "jdoe@work.com", label: "work" },
-		],
-	},
-	{
-		id: "p2",
-		first: "Jane",
-		last: "Smith",
-		birthday: "1985-10-20",
-		phone: [{ number: "555-222-3333", label: "mobile" }],
-		email: [{ address: "jane.smith@example.com", label: "personal" }],
-	},
-	{
-		id: "p3",
-		first: "Robert",
-		last: "Johnson",
-		birthday: "1975-03-08",
-		phone: [
-			{ number: "555-444-5555", label: "home" },
-			{ number: "555-666-7777", label: "work" },
-		],
-		email: [
-			{ address: "robert.j@example.com", label: "personal" },
-			{ address: "rjohnson@company.com", label: "work" },
-		],
-	},
-	{
-		id: "p4",
-		first: "Emily",
-		last: "Davis",
-		birthday: "1990-12-25",
-		phone: [{ number: "555-888-9999", label: "mobile" }],
-		email: [
-			{ address: "emily.davis@example.com", label: "personal" },
-			{ address: "edavis@school.edu", label: "school" },
-		],
-	},
-]
+const example: Person[] = [john, jane, robert, emily]
 
 describe("Indexing", () => {
 	it("seconary index", () => {
-		const db = tupleSugar(new InMemoryBaseOKV(codec.compare))
-		const { createIndex } = Indexable(db)
+		const { createIndex, deleteIndex, ...base } = Indexable(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(base)
+
+		db.set(["person", john.id], john)
 
 		createIndex({
 			id: "lastfirst",
 			order: 0,
-			range: { gt: ["person"], lte: ["person", null, null, null, null] },
-			set: (db, key, value) => {
+			range: { gt: ["person"], lt: ["person", null] },
+			set: (tx, key, value) => {
 				if (value.last === undefined || value.first === undefined) return
-				db.set(["lastfirst", value.last, value.first, value.id], null)
+				tx.set(["lastfirst", value.last, value.first, value.id], null)
 			},
-			delete: (db, key) => {
-				const value = db.get(key)
+			delete: (tx, key) => {
+				const value = tx.get(key)
 				if (value.last === undefined || value.first === undefined) return
-				db.delete(["lastfirst", value.last, value.first, value.id])
+				tx.delete(["lastfirst", value.last, value.first, value.id])
 			},
 		})
 
-		createIndex({
-			id: "email",
-			order: 0,
-			range: { gt: ["email"], lte: ["email", null, null, null, null] },
-			set: (db, key, value) => {
-				if (value.email === undefined || value.email.length === 0) return
-				for (const { address } of value.email) {
-					if (address === undefined) continue
-					db.set(["email", address, value.id], key)
-				}
-			},
-			delete: (db, key) => {
-				const value = db.get(key)
-				if (value.email === undefined || value.email.length === 0) return
-				for (const { address } of value.email) {
-					if (address === undefined) continue
-					db.delete(["email", address, value.id])
-				}
-			},
-		})
+		// Index was built
+		assert.deepEqual(db.list(), [
+			{ key: ["lastfirst", john.last, john.first, john.id], value: null },
+			{ key: ["person", john.id], value: john },
+		])
 
-		// Running indexes manually here.
-		for (const person of example) {
-			db.set(["person", person.id], person)
-		}
+		// Index is maintained
+		db.set(["person", jane.id], jane)
+		assert.deepEqual(db.list(), [
+			{ key: ["lastfirst", john.last, john.first, john.id], value: null },
+			{ key: ["lastfirst", jane.last, jane.first, jane.id], value: null },
+			{ key: ["person", john.id], value: john },
+			{ key: ["person", jane.id], value: jane },
+		])
 
-		const p1 = example[0]
-		db.delete(["person", p1.id])
+		db.delete(["person", john.id])
+		assert.deepEqual(db.list(), [
+			{ key: ["lastfirst", jane.last, jane.first, jane.id], value: null },
+			{ key: ["person", jane.id], value: jane },
+		])
 
-		console.log(db.list())
+		// Cleanup the index when deleting.
+		deleteIndex("lastfirst")
+		assert.deepEqual(db.list(), [{ key: ["person", jane.id], value: jane }])
+
+		// TODO: test the whole transaction write with the indexes in there all at once.
 	})
 
 	it("tertiary index", () => {
@@ -151,38 +149,37 @@ describe("Indexing", () => {
 			content: string
 		}
 
-		const db = tupleSugar(new InMemoryBaseOKV(codec.compare))
-		const { createIndex } = Indexable(db)
+		const { createIndex, deleteIndex, ...base } = Indexable(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(base)
 
 		// Secondary indexes
-
 		createIndex({
 			id: "userPosts",
 			order: 0,
-			range: { gt: ["post"], lte: ["post", null, null, null, null] },
-			set: (db, key, value) => {
+			range: { gt: ["post"], lt: ["post", null] },
+			set: (tx, key, value) => {
 				if (value.author_id === undefined) return
-				db.set(["userPosts", value.author_id, value.created_at, value.id], null)
+				tx.set(["userPosts", value.author_id, value.created_at, value.id], null)
 			},
-			delete: (db, key) => {
-				const value = db.get(key)
+			delete: (tx, key) => {
+				const value = tx.get(key)
 				if (value.author_id === undefined) return
-				db.delete(["userPosts", value.author_id, value.created_at, value.id])
+				tx.delete(["userPosts", value.author_id, value.created_at, value.id])
 			},
 		})
 
 		createIndex({
 			id: "followedBy",
 			order: 0,
-			range: { gt: ["follow"], lte: ["follow", null, null, null, null] },
-			set: (db, key, value) => {
+			range: { gt: ["follow"], lt: ["follow", null] },
+			set: (tx, key, value) => {
 				const { from, to } = value
-				db.set(["followedBy", to, from], value)
+				tx.set(["followedBy", to, from], value)
 			},
-			delete: (db, key) => {
-				const value = db.get(key)
+			delete: (tx, key) => {
+				const value = tx.get(key)
 				const { from, to } = value
-				db.delete(["followedBy", to, from])
+				tx.delete(["followedBy", to, from])
 			},
 		})
 
@@ -190,22 +187,22 @@ describe("Indexing", () => {
 		createIndex({
 			id: "followToTimline",
 			order: 1,
-			range: { gt: ["follow"], lte: ["follow", null, null, null, null] },
-			set: (db, key, value) => {
+			range: { gt: ["follow"], lt: ["follow", null] },
+			set: (tx, key, value) => {
 				const { from, to } = value
 				// Insert all posts from the user into the timeline.
-				for (const { key } of db.prefix(["userPosts", to])) {
-					const [_indexName, _authorId, createdAt, postId] = key
-					db.set(["timeline", from, createdAt, postId], null)
+				for (const { key } of tx.subspace(["userPosts", to]).list()) {
+					const [createdAt, postId] = key
+					tx.set(["timeline", from, createdAt, postId], null)
 				}
 			},
-			delete: (db, key) => {
-				const value = db.get(key)
+			delete: (tx, key) => {
+				const value = tx.get(key)
 				const { from, to } = value
 				// Delete all posts from the user into the timeline.
-				for (const { key } of db.prefix(["userPosts", to])) {
-					const [_indexName, _authorId, createdAt, postId] = key
-					db.delete(["timeline", from, createdAt, postId])
+				for (const { key } of tx.subspace(["userPosts", to]).list()) {
+					const [createdAt, postId] = key
+					tx.delete(["timeline", from, createdAt, postId])
 				}
 			},
 		})
@@ -213,22 +210,22 @@ describe("Indexing", () => {
 		createIndex({
 			id: "postToTimeline",
 			order: 1,
-			range: { gt: ["post"], lte: ["post", null, null, null, null] },
-			set: (db, key, value) => {
+			range: { gt: ["post"], lt: ["post", null] },
+			set: (tx, key, value) => {
 				// Insert post into all followees' timelines.
 				const { author_id, created_at, id } = value
-				for (const { key } of db.prefix(["followedBy", author_id])) {
-					const [_indexName, _to, from] = key
-					db.set(["timeline", from, created_at, id], null)
+				for (const { key, value } of tx.subspace(["followedBy", author_id]).list()) {
+					const { from } = value
+					tx.set(["timeline", from, created_at, id], null)
 				}
 			},
-			delete: (db, key) => {
-				const value = db.get(key)
+			delete: (tx, key) => {
+				const value = tx.get(key)
 				// Delete post from all followees' timelines.
 				const { author_id, created_at, id } = value
-				for (const { key } of db.prefix(["followedBy", author_id])) {
-					const [_indexName, _to, from] = key
-					db.delete(["timeline", from, created_at, id])
+				for (const { key, value } of tx.subspace(["followedBy", author_id]).list()) {
+					const { from } = value
+					tx.delete(["timeline", from, created_at, id])
 				}
 			},
 		})
@@ -260,24 +257,24 @@ describe("Indexing", () => {
 
 		for (const { id } of users) {
 			// Two posts per user.
-			assert.equal(db.prefix(["userPosts", id]).length, 2)
+			assert.equal(db.subspace(["userPosts", id]).list().length, 2)
 			// No follows so empty timelines.
-			assert.equal(db.prefix(["timeline", id]).length, 0)
+			assert.equal(db.subspace(["timeline", id]).list().length, 0)
 		}
 
 		// Create a follow should add to the timeline index.
 		const follow12: Follow = { id: ["u1", "u2"], from: "u1", to: "u2" }
 		db.set(["follow", follow12.id], follow12)
-		assert.equal(db.prefix(["timeline", "u1"]).length, 2)
+		assert.equal(db.subspace(["timeline", "u1"]).list().length, 2)
 
 		// Create another follow
 		const follow13: Follow = { id: ["u1", "u3"], from: "u1", to: "u3" }
 		db.set(["follow", follow13.id], follow13)
-		assert.equal(db.prefix(["timeline", "u1"]).length, 4)
+		assert.equal(db.subspace(["timeline", "u1"]).list().length, 4)
 
 		// Remove that first follow.
-		// IMPORTANT: need to run tertiary index updates before secondary updates before primary updates.
+		// It's important that the tertiary index updates run before secondary updates for this to work.
 		db.delete(["follow", follow12.id])
-		assert.equal(db.prefix(["timeline", "u1"]).length, 2)
+		assert.equal(db.subspace(["timeline", "u1"]).list().length, 2)
 	})
 })

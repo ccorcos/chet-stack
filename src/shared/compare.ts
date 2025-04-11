@@ -6,6 +6,7 @@ export function compare<K = any>(a: K, b: K) {
 	return -1
 }
 
+/** This does not recursively compound compare! */
 export function compoundCompare<K>(a: K[], b: K[], compareKey: Compare<K> = compare) {
 	const len = Math.min(a.length, b.length)
 
@@ -13,13 +14,7 @@ export function compoundCompare<K>(a: K[], b: K[], compareKey: Compare<K> = comp
 		const aa = a[i]
 		const bb = b[i]
 
-		let dir
-		if (Array.isArray(aa) || Array.isArray(bb)) {
-			if (!Array.isArray(aa) || !Array.isArray(bb)) throw new Error("Invalid array comparison")
-			dir = compoundCompare(aa, bb, compareKey)
-		} else {
-			dir = compareKey(aa, bb)
-		}
+		const dir = compareKey(aa, bb)
 		if (dir !== 0) return dir
 	}
 

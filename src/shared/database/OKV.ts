@@ -7,16 +7,17 @@ import {
 	TupleSubspaceEncoder,
 	ValueEncodeOKV,
 } from "./Encoder"
-import { BaseOKV, ListOptions, SugarTupleDb, Tuple, TupleDb } from "./types"
+import { Transaction } from "./Transaction"
+import { BaseOKV, BaseTupleOKV, BaseTupleOKVTx, Tuple, TupleDb, TupleTx } from "./types"
 
-export function tuplejson(okv: BaseOKV<string, string>): TupleDb {
+export function tupleOkv(okv: BaseOKV<string, string>): BaseTupleOKV {
 	return ValueEncodeOKV(KeyEncodeOKV(okv, codec), {
 		encode: (value) => JSON.stringify(value),
 		decode: (value) => JSON.parse(value),
 	})
 }
 
-function subspace(db: TupleDb, prefix: Tuple): TupleDb {
+function subspace(db: BaseTupleOKV, prefix: Tuple): BaseTupleOKV {
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
 		compare: db.compare,
@@ -34,15 +35,83 @@ function subspace(db: TupleDb, prefix: Tuple): TupleDb {
  * Separating the sugar from the base api makes it a lot easier to build compositional
  * abstractions because the base layer is the only two functions we need to wrap.
  */
-export function sugar(db: TupleDb): SugarTupleDb {
+export function tupleDb(db: BaseTupleOKV): TupleDb {
+	const { compare, list, write } = db
 	return {
-		...db,
+		compare,
+		list,
+		write,
 		get: (key) => db.list({ gte: key, lte: key }).at(0)?.value,
-		prefix: (prefix, options: ListOptions = {}) =>
-			db.list({ ...options, gt: prefix, lte: [...prefix, ...Array(10).fill(null)] }),
-		subspace: (prefix) => sugar(subspace(db, prefix)),
-
 		set: (key, value) => db.write({ set: [{ key, value }] }),
 		delete: (key) => db.write({ delete: [key] }),
+		subspace: (prefix) => tupleDb(subspace(db, prefix)),
+		transact: () => {
+			const tx = new Transaction(db)
+			const { list, write, ...rest } = tupleTx(tx)
+			return {
+				...rest,
+				list: tx.list,
+				write: tx.write,
+				commit: tx.commit,
+				get committed() {
+					return tx.committed
+				},
+			}
+		},
+	}
+}
+
+export function tupleTx(tx: BaseTupleOKVTx): TupleTx {
+	const { compare, list, write, commit } = tx
+	return {
+		compare,
+		list,
+		write,
+		commit,
+		get committed() {
+			return tx.committed
+		},
+		get: (key) => tx.list({ gte: key, lte: key }).at(0)?.value,
+		set: (key, value) => tx.write({ set: [{ key, value }] }),
+		delete: (key) => tx.write({ delete: [key] }),
+		subspace: (prefix) =>
+			tupleTx({
+				commit: () => {
+					throw new Error("The transaction cannot be committed by a transaction subspace.")
+				},
+				get committed() {
+					return tx.committed
+				},
+				...subspace(tx, prefix),
+			}),
+	}
+}
+
+function isTx(tx: TupleDb | TupleTx): tx is TupleTx {
+	return "committed" in tx
+}
+
+/**
+ * Helper function writing composable transactions.
+ */
+export function transact<I extends any[], O>(fn: (tx: TupleTx, ...args: I) => O) {
+	return (tx: TupleDb | TupleTx, ...args: I) => {
+		if (isTx(tx)) return fn(tx, ...args)
+
+		const { commit, ...rest } = tx.transact()
+
+		const result = fn(
+			{
+				...rest,
+				commit: () => {
+					throw new Error("This transaction will be committed by the caller.")
+				},
+			},
+			...args
+		)
+
+		commit()
+
+		return result
 	}
 }

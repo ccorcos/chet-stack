@@ -1,10 +1,10 @@
 import vm from "vm"
 import { ValidationError } from "../errors"
-import { sugar } from "./OKV"
+import { tupleDb } from "./OKV"
 import { Query, QueryCache } from "./Query"
-import { TupleDb } from "./types"
+import { BaseTupleOKV } from "./types"
 
-export function queryNodeVm(db: TupleDb, query: string) {
+export function queryNodeVm(db: BaseTupleOKV, query: string) {
 	const cache = new QueryCache(db)
 
 	const context = vm.createContext({
@@ -18,7 +18,7 @@ export function queryNodeVm(db: TupleDb, query: string) {
 	let result: any
 	try {
 		const fn: Query = vm.runInContext(code, context, { timeout: 1000 })
-		result = fn(sugar(cache))
+		result = fn(tupleDb(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)
 		throw new ValidationError("Sandbox error")

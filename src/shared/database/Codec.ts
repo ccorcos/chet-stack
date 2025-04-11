@@ -24,6 +24,14 @@ const FunctionEncoding: Encoding<(...args: any[]) => any> = {
 	compare: (a, b, cmp) => cmp(a.toString(), b.toString()),
 }
 
+/**
+ * It's super convenient to have a codec that is JSON compatible. This avoids the pain
+ * of manually serializing over the wire, particularly as it sneaks into not just the
+ * records but also arguments like ListArgs.
+ * The main trade-off here is that we're using null as a max value which is convenient for
+ * prefix queries but not perfect because you have to do things like
+ * {lte: [null, null, null, ...]} technically infinite nulls to be mathematically correct.
+ */
 export const codec = new Codec({
 	"?": BooleanEncoding,
 	'"': StringEncoding,

@@ -1,92 +1,125 @@
 import { codec } from "./Codec"
-import { tupleSugar } from "./OKV"
-import { rangeContains } from "./Range"
-import { BaseOKV, ListArgs, OKV, TupleDb, WriteArgs } from "./types"
+import { transact, tupleDb } from "./OKV"
+import { Range, rangeContains } from "./Range"
+import { BaseTupleOKV, JSONValue, ReadOnlyTupleDb, Tuple, TupleTx, WriteArgs } from "./types"
 
-export type Index<K = any[], V = any> = {
+export type Index = {
 	id: string
 	order: number // secondary indexes are 0, tertiary indexes are 1.
-	range: ListArgs<K>
-	set: (db: OKV<K, V>, key: K, value: V) => void
-	delete: (db: OKV<K, V>, key: K) => void
+	range: Range<Tuple>
+	set: (tx: TupleTx, key: Tuple, value: JSONValue) => void
+	delete: (tx: TupleTx, key: Tuple) => void
 }
 
-export type SerializedIndex<K = any, V = any> = {
-	id: string
-	order: number // secondary indexes are 0, tertiary indexes are 1.
-	range: ListArgs<K>
-	set: string
-	delete: string
-}
-
-export type IndexableBaseOKV<K, V> = BaseOKV<K, V> & {
-	createIndex(index: Index<any, any>): void
-	deleteIndex(id: string): void
-}
+export type SerializedIndex = Omit<Index, "set" | "delete"> & { set: string; delete: string }
 
 function reifyFn(fn: string) {
 	return new Function("return " + fn)()
 }
 
-export function Indexable(base: TupleDb) {
-	const db = tupleSugar(base)
+type IndexableBaseTupleOKV = BaseTupleOKV & {
+	createIndex(index: Index): void
+	deleteIndex(id: string): void
+}
 
-	const write = (args: WriteArgs<any, any>) => {
-		const indexes = db
-			.prefix(["_index"])
-			.map(({ value }) => value as SerializedIndex)
-			.map((index) => {
-				return {
-					...index,
-					set: reifyFn(index.set),
-					delete: reifyFn(index.delete),
-				} as Index
-			})
-		indexes.sort((a, b) => a.order - b.order)
+function getIndexes(internal: ReadOnlyTupleDb) {
+	const indexes = internal
+		.subspace(["index"])
+		.list()
+		.map(({ value }) => value as SerializedIndex)
+		.map((index) => {
+			return {
+				...index,
+				set: reifyFn(index.set),
+				delete: reifyFn(index.delete),
+			} as Index
+		})
+	indexes.sort((a, b) => a.order - b.order)
+	return indexes
+}
 
-		// Remove from top down.
-		indexes.reverse()
-		for (const index of indexes) {
-			for (const { key } of args.delete ?? []) {
-				if (rangeContains(index.range, key, codec.compare)) index.delete(db, key)
-			}
-		}
-		for (const { key } of args.delete ?? []) {
-			db.delete(key)
-		}
+const writeAndIndex = transact((tx, args: WriteArgs<Tuple, JSONValue>) => {
+	const internal = tx.subspace(["_"])
+	const app = tx.subspace(["#"])
 
-		// Add from bottom up.
-		for (const { key, value } of args.set ?? []) {
-			db.set(key, value)
-		}
-		for (const index of indexes) {
-			for (const { key, value } of args.set ?? []) {
-				// TODO: need the codec for Max symbol, etc.
-				if (rangeContains(index.range, key, codec.compare)) index.set(db, key, value)
+	const indexes = getIndexes(internal)
+
+	// Delete from index top-down.
+	indexes.reverse()
+	for (const index of indexes) {
+		for (const key of args.delete ?? []) {
+			if (rangeContains(index.range, key, codec.compare)) {
+				index.delete(app, key)
 			}
 		}
 	}
 
-	const idb: IndexableBaseOKV<any, any> = {
+	for (const key of args.delete ?? []) {
+		app.delete(key)
+	}
+
+	// Add from bottom up.
+	for (const { key, value } of args.set ?? []) {
+		app.set(key, value)
+	}
+
+	for (const index of indexes) {
+		for (const { key, value } of args.set ?? []) {
+			if (rangeContains(index.range, key, codec.compare)) {
+				index.set(app, key, value)
+			}
+		}
+	}
+})
+
+const buildIndex = transact((tx, index: Index) => {
+	const app = tx.subspace(["#"])
+	for (const { key, value } of app.list(index.range)) {
+		index.set(app, key, value)
+	}
+})
+
+const unbuildIndex = transact((tx, index: Index) => {
+	const app = tx.subspace(["#"])
+	for (const { key } of app.list(index.range)) {
+		index.delete(app, key)
+	}
+})
+
+const createIndex = transact((tx, index: Index) => {
+	buildIndex(tx, index)
+	const internal = tx.subspace(["_"])
+	const serialized: SerializedIndex = {
+		id: index.id,
+		order: index.order,
+		range: index.range,
+		set: index.set.toString(),
+		delete: index.delete.toString(),
+	}
+	internal.set(["index", index.id], serialized)
+})
+
+const deleteIndex = transact((tx, index: Index) => {
+	unbuildIndex(tx, index)
+	const internal = tx.subspace(["_"])
+	internal.delete(["index", index.id])
+})
+
+export function Indexable(base: BaseTupleOKV) {
+	const db = tupleDb(base)
+	const idb: IndexableBaseTupleOKV = {
 		compare: db.compare,
-		list: db.list,
-		write: write,
-
-		createIndex(index: Index<any, any>) {
-			for (const { key, value } of db.list(index.range)) index.set(db, key, value)
-			db.set(["_index", index.id], {
-				id: index.id,
-				order: index.order,
-				range: index.range,
-				set: index.set.toString(),
-				delete: index.delete.toString(),
-			})
-		},
-
-		deleteIndex(id: string) {
-			const index = db.get(["_index", id])
-			db.delete(["_index", id])
-			for (const { key, value } of db.list(index.range)) index.delete(db, key, value)
+		list: db.subspace(["#"]).list,
+		write: (args) => writeAndIndex(db, args),
+		createIndex: (index) => createIndex(db, index),
+		deleteIndex: (id: string) => {
+			const serialized = db.subspace(["_"]).get(["index", id]) as SerializedIndex
+			const index = {
+				...serialized,
+				set: reifyFn(serialized.set),
+				delete: reifyFn(serialized.delete),
+			} as Index
+			deleteIndex(db, index)
 		},
 	}
 	return idb

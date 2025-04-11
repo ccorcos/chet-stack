@@ -1,8 +1,8 @@
 import { ValidationError } from "../errors"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { sugar } from "./OKV"
+import { tupleDb } from "./OKV"
 import { Range } from "./Range"
-import { BaseOKV, ListArgs, SugarTupleDb, TupleDb, WriteArgs } from "./types"
+import { BaseOKV, BaseTupleOKV, ListArgs, TupleDb, WriteArgs } from "./types"
 
 export class QueryCache<K, V> implements BaseOKV<K, V> {
 	data: InMemoryBaseOKV<K, V>
@@ -26,9 +26,9 @@ export class QueryCache<K, V> implements BaseOKV<K, V> {
 	}
 }
 
-export type Query = (db: SugarTupleDb) => any
+export type Query = (db: TupleDb) => any
 
-export function query(db: TupleDb, query: string) {
+export function query(db: BaseTupleOKV, query: string) {
 	const cache = new QueryCache(db)
 
 	const context = {
@@ -42,7 +42,7 @@ export function query(db: TupleDb, query: string) {
 			`return (function() { return ${query.trim()} })();`
 		)(...Object.values(context))
 
-		result = fn(sugar(cache))
+		result = fn(tupleDb(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)
 		throw new ValidationError("Sandbox error")
