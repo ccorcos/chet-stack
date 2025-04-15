@@ -12,7 +12,7 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 // All of the queries we need.
 // Just start typing it all out.
 
-import * as t from "../DataType"
+import * as t from "./DataType"
 
 const UserSchema = t.object({
 	id: t.string,
