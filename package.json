@@ -32,7 +32,6 @@
 		"csv": "^6.3.10",
 		"csv-parse": "^5.5.6",
 		"culori": "^4.0.1",
-		"data-type-ts": "^1.0.2",
 		"date-fns": "^2.30.0",
 		"dotenv": "^16.4.7",
 		"fs-extra": "^11.1.1",

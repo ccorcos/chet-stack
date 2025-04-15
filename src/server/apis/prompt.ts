@@ -4,8 +4,8 @@ This API is a template.
 
 */
 
-import * as t from "data-type-ts"
 import type { Request, Response } from "express"
+import * as t from "../../shared/DataType"
 import { recurPromptClaude } from "../helpers/gpt"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
@@ -14,7 +14,7 @@ export const input = t.object({ system: t.string, prompts: t.array(t.string) })
 
 export async function handler(
 	environment: ServerEnvironment,
-	args: t.Infer<typeof input>,
+	args: t.InferType<typeof input>,
 	req: Request,
 	res: Response
 ) {

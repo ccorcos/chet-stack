@@ -4,8 +4,8 @@ This API is a template.
 
 */
 
-import * as t from "data-type-ts"
 import type { Request, Response } from "express"
+import * as t from "../../shared/DataType"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // Used for request validation.
@@ -21,7 +21,7 @@ export async function hello(name: string) {
 // environment.api.hello({name: "World"})
 export async function handler(
 	environment: ServerEnvironment,
-	args: t.Infer<typeof input>,
+	args: t.InferType<typeof input>,
 	req: Request,
 	res: Response
 ) {

@@ -1,9 +1,36 @@
+/*
+
+This code was refactored from v0 of data-type-ts library.
+It is fundamentally not extensible as a library without a macro system.
+
+TODO:
+
+export const uuid = new t.Validator<string>({
+	validate: (value) =>
+		t.string.validate(value) ||
+		!value.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)
+			? { message: `${JSON.stringify(value)} is not a valid UUID.` }
+			: undefined,
+	inspect: () => "UUID",
+})
+
+export const datetime = new t.Validator<string>({
+	validate: (value) =>
+		t.string.validate(value) || !value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/)
+			? { message: `${JSON.stringify(value)} is not a valid ISO 8601 datetime string.` }
+			: undefined,
+	inspect: () => "Datetime",
+})
+
+
+*/
+
 import isBoolean from "lodash/isBoolean"
 import isEqual from "lodash/isEqual"
 import isNumber from "lodash/isNumber"
 import isPlainObject_ from "lodash/isPlainObject"
 import isString from "lodash/isString"
-import { Simplify } from "../typeHelpers"
+import { Simplify } from "./typeHelpers"
 
 // ============================================================================
 // Data Types

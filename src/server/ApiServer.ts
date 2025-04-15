@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser"
 import express, { Express } from "express"
-import * as t from "../shared/dataTypes"
+import * as t from "../shared/DataType"
 import { api } from "./api"
 import { path } from "./helpers/path"
 import { config } from "./services/ServerConfig"
@@ -19,7 +19,7 @@ export function ApiServer(environment: ServerEnvironment, app: Express) {
 			express.json({ limit: "4mb" }),
 			express.text(),
 			async (req, res) => {
-				const error = input.validate(req.body)
+				const error = t.validate(input, req.body)
 				if (error) return res.status(400).json({ message: t.formatError(error) })
 				try {
 					const result = await handler(environment, req.body, req, res)

@@ -1,7 +1,6 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import { Assert } from "../typeHelpers"
-import * as t from "./DataType"
+import * as t from "../DataType"
 import {
 	ArrayDataType,
 	BooleanDataType,
@@ -16,7 +15,8 @@ import {
 	StringDataType,
 	TupleDataType,
 	UndefinedDataType,
-} from "./DataType"
+} from "../DataType"
+import { Assert } from "../typeHelpers"
 
 // InferType tests.
 type InferTests =
