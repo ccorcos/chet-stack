@@ -1,7 +1,7 @@
 import sqlite from "better-sqlite3"
 import { isPlainObject } from "lodash"
-import { transact, tupleDb, tupleOkv } from "../../shared/database/OKV"
 import { SQLiteBaseOKV } from "../../shared/database/SQLiteBaseOKV"
+import { transact, tupleDb, tupleOkv } from "../../shared/database/TupleDb"
 import { Tuple, TupleDb } from "../../shared/database/types"
 import { randomId } from "../../shared/randomId"
 import { Simplify } from "../../shared/typeHelpers"

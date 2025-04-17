@@ -5,13 +5,6 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
-// schema validation
-// indexing
-// compound indexes with alternating +/- directions...
-// tertiary indexes
-// All of the queries we need.
-// Just start typing it all out.
-
 import * as t from "./DataType"
 
 const UserSchema = t.object({
@@ -21,13 +14,6 @@ const UserSchema = t.object({
 })
 
 type User = t.InferType<typeof UserSchema>
-
-const UserProfileSchema = t.object({
-	id: t.string,
-	name: t.string,
-})
-
-type UserProfile = t.InferType<typeof UserProfileSchema>
 
 const RoleSchema = t.object({
 	userId: t.string,
@@ -92,9 +78,9 @@ const NewChannelContentSchema = t.object({
 type NewChannelContent = t.InferType<typeof NewChannelContentSchema>
 
 const StatusSchema = t.or(
-	t.object({ type: t.literal("draft"), editedAt: t.string }),
-	t.object({ type: t.literal("scheduled"), id: t.string }),
-	t.object({ type: t.literal("sent"), id: t.string })
+	t.object({ type: t.literal("draft"), timestamp: t.datetime }),
+	t.object({ type: t.literal("scheduled"), timestamp: t.datetime }),
+	t.object({ type: t.literal("sent"), timestamp: t.datetime })
 )
 
 type Status = t.InferType<typeof StatusSchema>
@@ -108,8 +94,8 @@ type Reaction = t.InferType<typeof ReactionSchema>
 
 const OutgoingMessageSchema = t.object({
 	id: t.string,
-	root: t.string,
-	branch: t.optional(t.string),
+	root: t.string, // id of the first message in the thread
+	branch: t.optional(t.string), // is of the message that this branched from (next message has this message as the root.)
 
 	authorId: t.string,
 	subject: t.string,
@@ -136,11 +122,15 @@ type OutgoingMessage = t.InferType<typeof OutgoingMessageSchema>
 const IncomingMessageSchema = t.object({
 	id: t.string,
 	userId: t.string,
-	subscriptionId: t.string,
+	receivedAt: t.datetime,
 	messageId: t.string,
+	subscriptionIds: t.array(t.string),
 
 	read: t.boolean,
+	readAt: t.optional(t.string),
+
 	done: t.boolean,
+	doneAt: t.optional(t.string),
 
 	metadata: t.map(t.any),
 })
@@ -173,7 +163,103 @@ const ViewSchema = t.object({
 	id: t.string,
 	userId: t.string,
 	order: t.number,
+	checkpointAt: t.optional(t.datetime),
 	filterJs: t.string,
 })
 
 type View = t.InferType<typeof ViewSchema>
+
+export const tables = {
+	user: UserSchema,
+	org: OrgSchema,
+	channel: ChannelSchema,
+	message: OutgoingMessageSchema,
+	inbox: IncomingMessageSchema,
+	subscription: SubscriptionSchema,
+	view: ViewSchema,
+}
+
+export const secondaryIndexes = {
+	org: {
+		byMember: function* (org: Org) {
+			for (const m of org.members) yield [m.userId, org.id]
+		},
+	},
+	subscription: {
+		byUser: (sub: Subscription) => [sub.userId, sub.priority, sub.id],
+		byTarget: (sub: Subscription) => [sub.target.type, sub.target.id, sub.priority, sub.id],
+	},
+	message: {
+		byAuthor: (m: OutgoingMessage) => [m.authorId, m.status.type, m.status.timestamp, m.id],
+		byTo: function* (m: OutgoingMessage) {
+			for (const to of m.to) yield [to.type, to.id, m.status.type, m.status.timestamp, m.id]
+		},
+	},
+	inbox: {
+		byUser: (inbox: IncomingMessage) => [inbox.userId, inbox.receivedAt, inbox.messageId],
+		byUserReadAt: (inbox: IncomingMessage) =>
+			inbox.read && [(inbox.userId, inbox.readAt, inbox.messageId)],
+		byUserDoneAt: (inbox: IncomingMessage) =>
+			inbox.done && [inbox.userId, inbox.doneAt, inbox.messageId],
+		bySubscription: function* (inbox: IncomingMessage) {
+			for (const subId of inbox.subscriptionIds)
+				yield [inbox.userId, subId, inbox.receivedAt, inbox.messageId]
+		},
+	},
+	view: {
+		byUser: (view: View) => [view.userId, view.order, view.id],
+	},
+}
+
+/*
+
+Compose... don't push this all into a single abstraction.
+Compose functions -- transact is powerful.
+
+Schemas... needs to work with subspaces. Default open or default closed.
+Indexes... also needs to work with subspaces.
+
+
+- login
+- list org members and edit
+- create a new org
+- list of org channels in a tree view
+- create a new channel
+- edit channel members
+- list user’s subscriptions
+
+    `["usersubs", sub.user, sub.type, sub.id]`
+
+- list user outgoing mail
+
+    `["outbox", message.author, message.edited, message.id]`
+
+- list user incoming mail
+
+    `["inbox", message.author, message.sent, message.id]`
+
+- list channel messages
+- draft a message
+- schedule or send a message
+- list inbox views
+- edit inbox views
+- search all messages
+- reply to a message
+    - edit recipients in the reply
+- branch a message
+- react to a message
+
+*/
+
+// Primary records
+// Schemas for validation
+// Secondary indexes
+// Tertiary indexes
+
+// schema validation
+// indexing
+// compound indexes with alternating +/- directions...
+// tertiary indexes
+// All of the queries we need.
+// Just start typing it all out.
+// Permissions.

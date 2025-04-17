@@ -8,8 +8,8 @@ import sqlite from "better-sqlite3"
 import * as cheerio from "cheerio"
 import { URL } from "url"
 import { config } from "../server/services/ServerConfig"
-import { transact, tupleDb, tupleOkv } from "../shared/database/OKV"
 import { SQLiteBaseOKV } from "../shared/database/SQLiteBaseOKV"
+import { transact, tupleDb, tupleOkv } from "../shared/database/TupleDb"
 import { sleep } from "../shared/sleep"
 
 const storage = new SQLiteBaseOKV(sqlite(config.dbPath))

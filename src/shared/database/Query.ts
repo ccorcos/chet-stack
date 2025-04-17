@@ -1,7 +1,7 @@
 import { ValidationError } from "../errors"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { tupleDb } from "./OKV"
 import { Range } from "./Range"
+import { tupleDb } from "./TupleDb"
 import { BaseOKV, BaseTupleOKV, ListArgs, TupleDb, WriteArgs } from "./types"
 
 export class QueryCache<K, V> implements BaseOKV<K, V> {

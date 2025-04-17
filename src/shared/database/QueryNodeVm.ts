@@ -1,7 +1,7 @@
 import vm from "vm"
 import { ValidationError } from "../errors"
-import { tupleDb } from "./OKV"
 import { Query, QueryCache } from "./Query"
+import { tupleDb } from "./TupleDb"
 import { BaseTupleOKV } from "./types"
 
 export function queryNodeVm(db: BaseTupleOKV, query: string) {

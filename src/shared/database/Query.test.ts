@@ -1,9 +1,9 @@
 import assert from "assert"
 import { describe, it } from "mocha"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { tupleDb, tupleOkv } from "./OKV"
 import { query } from "./Query"
 import { queryNodeVm } from "./QueryNodeVm"
+import { tupleDb, tupleOkv } from "./TupleDb"
 import { TupleDb } from "./types"
 
 const modes = {

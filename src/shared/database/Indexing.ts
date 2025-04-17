@@ -1,6 +1,6 @@
 import { codec } from "./Codec"
-import { transact, tupleDb } from "./OKV"
 import { Range, rangeContains } from "./Range"
+import { transact, tupleDb } from "./TupleDb"
 import { BaseTupleOKV, JSONValue, ReadOnlyTupleDb, Tuple, TupleTx, WriteArgs } from "./types"
 
 export type Index = {

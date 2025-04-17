@@ -2,9 +2,9 @@ import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { transact, tupleDb } from "./OKV"
+import { transact, tupleDb } from "./TupleDb"
 
-describe("OKV", () => {
+describe("TupleDb", () => {
 	it("tupledb subspace", () => {
 		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
 

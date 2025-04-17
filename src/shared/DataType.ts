@@ -14,13 +14,6 @@ export const uuid = new t.Validator<string>({
 	inspect: () => "UUID",
 })
 
-export const datetime = new t.Validator<string>({
-	validate: (value) =>
-		t.string.validate(value) || !value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/)
-			? { message: `${JSON.stringify(value)} is not a valid ISO 8601 datetime string.` }
-			: undefined,
-	inspect: () => "Datetime",
-})
 
 
 */
@@ -46,6 +39,10 @@ export interface UndefinedDataType {
 
 export interface StringDataType {
 	type: "string"
+}
+
+export interface DatetimeDataType {
+	type: "datetime"
 }
 
 export interface NumberDataType {
@@ -96,6 +93,7 @@ export type DataType =
 	| NullDataType
 	| UndefinedDataType
 	| StringDataType
+	| DatetimeDataType
 	| NumberDataType
 	| BooleanDataType
 	| AnyDataType
@@ -131,6 +129,8 @@ export type InferType<T extends DataType> = T extends NullDataType
 	? undefined
 	: T extends StringDataType
 	? string
+	: T extends DatetimeDataType
+	? string
 	: T extends NumberDataType
 	? number
 	: T extends BooleanDataType
@@ -156,6 +156,7 @@ export type InferType<T extends DataType> = T extends NullDataType
 export const null_: NullDataType = { type: "null" }
 export const undefined_: UndefinedDataType = { type: "undefined" }
 export const string: StringDataType = { type: "string" }
+export const datetime: DatetimeDataType = { type: "datetime" }
 export const number: NumberDataType = { type: "number" }
 export const boolean: BooleanDataType = { type: "boolean" }
 export const any: AnyDataType = { type: "any" }
@@ -233,6 +234,20 @@ const Validators: {
 		if (!isString(value)) {
 			return {
 				message: `${JSON.stringify(value)} is not a string`,
+				path: [],
+			}
+		}
+	},
+	datetime: (dataType, value) => {
+		if (!isString(value)) {
+			return {
+				message: `${JSON.stringify(value)} is not a string`,
+				path: [],
+			}
+		}
+		if (!value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/)) {
+			return {
+				message: `${JSON.stringify(value)} is not a valid ISO 8601 datetime string.`,
 				path: [],
 			}
 		}
@@ -420,6 +435,7 @@ const Inspectors: {
 	null: (dataType) => "null",
 	undefined: (dataType) => "undefined",
 	string: (dataType) => "string",
+	datetime: (dataType) => "datetime",
 	number: (dataType) => "number",
 	boolean: (dataType) => "boolean",
 	literal: (dataType) => JSON.stringify(dataType.value),
@@ -456,6 +472,7 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	null: object({ type: literal("null") }),
 	undefined: object({ type: literal("undefined") }),
 	string: object({ type: literal("string") }),
+	datetime: object({ type: literal("datetime") }),
 	number: object({ type: literal("number") }),
 	boolean: object({ type: literal("boolean") }),
 	any: object({ type: literal("any") }),
