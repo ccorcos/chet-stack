@@ -42,6 +42,7 @@ export function tupleDb(db: BaseTupleOKV): TupleDb {
 		list,
 		write,
 		get: (key) => db.list({ gte: key, lte: key }).at(0)?.value,
+		has: (key) => db.list({ gte: key, lte: key }).length > 0,
 		set: (key, value) => db.write({ set: [{ key, value }] }),
 		delete: (key) => db.write({ delete: [key] }),
 		subspace: (prefix) => tupleDb(subspace(db, prefix)),
@@ -72,6 +73,7 @@ export function tupleTx(tx: BaseTupleOKVTx): TupleTx {
 			return tx.committed
 		},
 		get: (key) => tx.list({ gte: key, lte: key }).at(0)?.value,
+		has: (key) => tx.list({ gte: key, lte: key }).length > 0,
 		set: (key, value) => tx.write({ set: [{ key, value }] }),
 		delete: (key) => tx.write({ delete: [key] }),
 		subspace: (prefix) =>

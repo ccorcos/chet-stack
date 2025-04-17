@@ -62,6 +62,7 @@ export type ReadOnlyTupleDb = BaseTupleOKV & {
 
 export type TupleDb = BaseTupleOKV & {
 	get: (key: Tuple) => JSONValue | undefined
+	has: (key: Tuple) => boolean
 	subspace: (prefix: Tuple) => TupleDb
 	set: (key: Tuple, value: JSONValue) => void
 	delete: (key: Tuple) => void
@@ -70,6 +71,7 @@ export type TupleDb = BaseTupleOKV & {
 
 export type TupleTx = BaseTupleOKVTx & {
 	get: (key: Tuple) => JSONValue | undefined
+	has: (key: Tuple) => boolean
 	set: (key: Tuple, value: JSONValue) => void
 	delete: (key: Tuple) => void
 	subspace: (prefix: Tuple) => TupleTx
