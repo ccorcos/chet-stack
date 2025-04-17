@@ -1,3 +1,4 @@
+import { reifyFn } from "../reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"
 import { transact, tupleDb } from "./TupleDb"
@@ -12,10 +13,6 @@ export type Index = {
 }
 
 export type SerializedIndex = Omit<Index, "set" | "delete"> & { set: string; delete: string }
-
-function reifyFn(fn: string) {
-	return new Function("return " + fn)()
-}
 
 type IndexableBaseTupleOKV = BaseTupleOKV & {
 	createIndex(index: Index): void
