@@ -32,44 +32,25 @@ describe("RecordDb", () => {
 
 		createIndex(db, "user", "lastfirst", (user) => [user.last, user.first, user.id])
 
-		const app = db.subspace(["external"])
-
 		assert.deepEqual(
-			app
-				.subspace(["user"])
-				.list()
-				.map(({ value }) => value),
+			db.list().map(({ key }) => key),
 			[
-				{ id: "1", first: "John", last: "Doe" },
-				{ id: "2", first: "Jane", last: "Smith" },
-			]
-		)
-
-		assert.deepEqual(
-			app
-				.subspace(["user.firstlast"])
-				.list()
-				.map(({ key }) => key),
-			[
-				["Jane", "Smith", "2"],
-				["John", "Doe", "1"],
-			]
-		)
-
-		assert.deepEqual(
-			app
-				.subspace(["user.lastfirst"])
-				.list()
-				.map(({ key }) => key),
-			[
-				["Doe", "John", "1"],
-				["Smith", "Jane", "2"],
+				["external", "user", "1"],
+				["external", "user", "2"],
+				["external", "user.firstlast", "Jane", "Smith", "2"],
+				["external", "user.firstlast", "John", "Doe", "1"],
+				["external", "user.lastfirst", "Doe", "John", "1"],
+				["external", "user.lastfirst", "Smith", "Jane", "2"],
+				["internal", "index", "user", "firstlast"],
+				["internal", "index", "user", "lastfirst"],
+				["internal", "table", "user"],
 			]
 		)
 
 		setRecord(db, "user", { id: "3", first: "Chet", last: "Corcos" })
 		deleteRecord(db, "user", "1")
 
+		const app = db.subspace(["external"])
 		assert.deepEqual(
 			app.list().map(({ key }) => key),
 			[
