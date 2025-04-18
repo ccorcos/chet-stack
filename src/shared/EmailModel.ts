@@ -3,6 +3,49 @@ Email data model example.
 
 https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083dfc1cd0c9d0465?pvs=4
 
+
+
+- login
+- list org members and edit
+- create a new org
+- list of org channels in a tree view
+- create a new channel
+- edit channel members
+- list user’s subscriptions
+
+    `["usersubs", sub.user, sub.type, sub.id]`
+
+- list user outgoing mail
+
+    `["outbox", message.author, message.edited, message.id]`
+
+- list user incoming mail
+
+    `["inbox", message.author, message.sent, message.id]`
+
+- list channel messages
+- draft a message
+- schedule or send a message
+- list inbox views
+- edit inbox views
+- search all messages
+- reply to a message
+    - edit recipients in the reply
+- branch a message
+- react to a message
+
+
+Primary records
+Schemas for validation
+Secondary indexes
+Tertiary indexes
+
+compound indexes with alternating +/- directions...
+tertiary indexes
+All of the queries we need.
+Permissions.
+
+
 */
 
 import { createIndex, createTable } from "./database/RecordDb"
@@ -223,46 +266,3 @@ export const initEmailModel = transact((tx) => {
 		}
 	}
 })
-
-/*
-
-- login
-- list org members and edit
-- create a new org
-- list of org channels in a tree view
-- create a new channel
-- edit channel members
-- list user’s subscriptions
-
-    `["usersubs", sub.user, sub.type, sub.id]`
-
-- list user outgoing mail
-
-    `["outbox", message.author, message.edited, message.id]`
-
-- list user incoming mail
-
-    `["inbox", message.author, message.sent, message.id]`
-
-- list channel messages
-- draft a message
-- schedule or send a message
-- list inbox views
-- edit inbox views
-- search all messages
-- reply to a message
-    - edit recipients in the reply
-- branch a message
-- react to a message
-
-*/
-
-// Primary records
-// Schemas for validation
-// Secondary indexes
-// Tertiary indexes
-
-// compound indexes with alternating +/- directions...
-// tertiary indexes
-// All of the queries we need.
-// Permissions.
