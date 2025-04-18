@@ -5,11 +5,12 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
-import { createIndex, createTable } from "./database/RecordDb"
+import { recordTx } from "./database/RecordDb"
 import { transact } from "./database/TupleDb"
 import * as t from "./DataType"
 
 const UserSchema = t.object({
+	table: t.literal("user"),
 	id: t.string,
 	email: t.string,
 	name: t.string,
@@ -25,6 +26,7 @@ const RoleSchema = t.object({
 export type Role = t.InferType<typeof RoleSchema>
 
 const OrgSchema = t.object({
+	table: t.literal("org"),
 	id: t.string,
 	name: t.string,
 	members: t.array(RoleSchema),
@@ -34,6 +36,7 @@ const OrgSchema = t.object({
 export type Org = t.InferType<typeof OrgSchema>
 
 const ChannelSchema = t.object({
+	table: t.literal("channel"),
 	id: t.string,
 	org: t.string,
 	name: t.string,
@@ -95,6 +98,7 @@ const ReactionSchema = t.object({
 export type Reaction = t.InferType<typeof ReactionSchema>
 
 const OutgoingMessageSchema = t.object({
+	table: t.literal("message"),
 	id: t.string,
 	root: t.string, // id of the first message in the thread
 	branch: t.optional(t.string), // is of the message that this branched from (next message has this message as the root.)
@@ -122,6 +126,7 @@ const OutgoingMessageSchema = t.object({
 export type OutgoingMessage = t.InferType<typeof OutgoingMessageSchema>
 
 const IncomingMessageSchema = t.object({
+	table: t.literal("inbox"),
 	id: t.string,
 	userId: t.string,
 	receivedAt: t.datetime,
@@ -147,6 +152,7 @@ const SubscriptionTargetSchema = t.or(
 )
 
 const SubscriptionSchema = t.object({
+	table: t.literal("subscription"),
 	id: t.string,
 	userId: t.string,
 	/** which subscription gets evaluated first. */
@@ -162,6 +168,7 @@ const SubscriptionSchema = t.object({
 export type Subscription = t.InferType<typeof SubscriptionSchema>
 
 const ViewSchema = t.object({
+	table: t.literal("view"),
 	id: t.string,
 	userId: t.string,
 	order: t.number,
@@ -214,12 +221,13 @@ export const secondaryIndexes = {
 }
 
 export const initEmailModel = transact((tx) => {
-	for (const [table, schema] of Object.entries(tables)) {
-		createTable(tx, table, schema)
+	const rtx = recordTx(tx)
+	for (const [table, dataType] of Object.entries(tables)) {
+		rtx.setTable({ table, dataType })
 	}
 	for (const [table, indexes] of Object.entries(secondaryIndexes)) {
-		for (const [index, fn] of Object.entries(indexes)) {
-			createIndex(tx, table, index, fn)
+		for (const [name, fn] of Object.entries(indexes)) {
+			rtx.createIndex({ table, name, fn })
 		}
 	}
 })

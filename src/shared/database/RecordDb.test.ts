@@ -3,56 +3,72 @@ import { describe, it } from "mocha"
 import * as t from "../DataType"
 import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import {
-	createIndex,
-	createTable,
-	deleteIndex,
-	deleteRecord,
-	deleteTable,
-	setRecord,
-} from "./RecordDb"
-import { tupleDb } from "./TupleDb"
+import { recordDb } from "./RecordDb"
 
 describe("RecordDb", () => {
 	it("validates schema", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
-		createTable(db, "user", t.object({ id: t.string, name: t.string }))
-		assert.throws(() => setRecord(db, "user", { id: "1", name: 1 }))
-		setRecord(db, "user", { id: "1", name: "John" })
+		const db = recordDb(new InMemoryBaseOKV(codec.compare))
+		db.setTable({
+			table: "user",
+			dataType: t.object({
+				table: t.literal("user"),
+				id: t.string,
+				name: t.string,
+			}),
+		})
+
+		assert.throws(() => db.setRecord({ table: "user", id: "1", name: 1 }))
+		db.setRecord({ table: "user", id: "1", name: "John" })
 	})
 
 	it("indexes", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = recordDb(new InMemoryBaseOKV(codec.compare))
 
-		createTable(db, "user", t.object({ id: t.string, first: t.string, last: t.string }))
-		createIndex(db, "user", "firstlast", (user) => [user.first, user.last, user.id])
+		db.setTable({
+			table: "user",
+			dataType: t.object({ id: t.string, first: t.string, last: t.string }),
+		})
+		db.createIndex({
+			table: "user",
+			name: "firstlast",
+			fn: (user) => [user.first, user.last, user.id],
+		})
 
-		setRecord(db, "user", { id: "1", first: "John", last: "Doe" })
-		setRecord(db, "user", { id: "2", first: "Jane", last: "Smith" })
+		db.setRecord({ table: "user", id: "1", first: "John", last: "Doe" })
+		db.setRecord({ table: "user", id: "2", first: "Jane", last: "Smith" })
 
-		createIndex(db, "user", "lastfirst", (user) => [user.last, user.first, user.id])
+		db.createIndex({
+			table: "user",
+			name: "lastfirst",
+			fn: (user) => [user.last, user.first, user.id],
+		})
 
 		assert.deepEqual(
-			db.list().map(({ key }) => key),
+			db.model.list().map(({ key }) => key),
 			[
-				["external", "user", "1"],
-				["external", "user", "2"],
-				["external", "user.firstlast", "Jane", "Smith", "2"],
-				["external", "user.firstlast", "John", "Doe", "1"],
-				["external", "user.lastfirst", "Doe", "John", "1"],
-				["external", "user.lastfirst", "Smith", "Jane", "2"],
-				["internal", "index", "user", "firstlast"],
-				["internal", "index", "user", "lastfirst"],
-				["internal", "table", "user"],
+				["index", "user", "firstlast"],
+				["index", "user", "lastfirst"],
+				["table", "user"],
 			]
 		)
 
-		setRecord(db, "user", { id: "3", first: "Chet", last: "Corcos" })
-		deleteRecord(db, "user", "1")
-
-		const app = db.subspace(["external"])
 		assert.deepEqual(
-			app.list().map(({ key }) => key),
+			db.data.list().map(({ key }) => key),
+			[
+				["user", "1"],
+				["user", "2"],
+				["user.firstlast", "Jane", "Smith", "2"],
+				["user.firstlast", "John", "Doe", "1"],
+				["user.lastfirst", "Doe", "John", "1"],
+				["user.lastfirst", "Smith", "Jane", "2"],
+			]
+		)
+
+		db.setRecord({ table: "user", id: "3", first: "Chet", last: "Corcos" })
+		db.deleteRecord({ table: "user", id: "1" })
+
+		assert.deepEqual(
+			db.data.list().map(({ key }) => key),
 			[
 				["user", "2"],
 				["user", "3"],
@@ -63,10 +79,10 @@ describe("RecordDb", () => {
 			]
 		)
 
-		deleteIndex(db, "user", "firstlast")
+		db.deleteIndex({ table: "user", name: "firstlast" })
 
 		assert.deepEqual(
-			app.list().map(({ key }) => key),
+			db.data.list().map(({ key }) => key),
 			[
 				["user", "2"],
 				["user", "3"],
@@ -75,9 +91,13 @@ describe("RecordDb", () => {
 			]
 		)
 
-		deleteTable(db, "user")
+		db.deleteTable("user")
 		assert.deepEqual(
-			app.list().map(({ key }) => key),
+			db.data.list().map(({ key }) => key),
+			[]
+		)
+		assert.deepEqual(
+			db.model.list().map(({ key }) => key),
 			[]
 		)
 	})

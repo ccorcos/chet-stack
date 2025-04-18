@@ -207,6 +207,6 @@ describe("DataType", () => {
 			d: t.array(t.any),
 			e: t.map(t.tuple(t.string, t.number)),
 		})
-		valid(t.dataTypeDataType, ThingType)
+		valid(t.dataType, ThingType)
 	})
 })

@@ -1,3 +1,9 @@
+/*
+
+TODO: this is more general than RecordDb but we're probably going to dump this at some point.
+
+*/
+
 import { reifyFn } from "../reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"

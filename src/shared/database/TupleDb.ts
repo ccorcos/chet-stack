@@ -8,7 +8,15 @@ import {
 	ValueEncodeOKV,
 } from "./Encoder"
 import { Transaction } from "./Transaction"
-import { BaseOKV, BaseTupleOKV, BaseTupleOKVTx, Tuple, TupleDb, TupleTx } from "./types"
+import {
+	BaseOKV,
+	BaseTupleOKV,
+	BaseTupleOKVTx,
+	ReadOnlyTupleDb,
+	Tuple,
+	TupleDb,
+	TupleTx,
+} from "./types"
 
 export function tupleOkv(okv: BaseOKV<string, string>): BaseTupleOKV {
 	return ValueEncodeOKV(KeyEncodeOKV(okv, codec), {
@@ -60,6 +68,11 @@ export function tupleDb(db: BaseTupleOKV): TupleDb {
 			}
 		},
 	}
+}
+
+export function readOnlyTupleDb(db: TupleDb | TupleTx): ReadOnlyTupleDb {
+	const { compare, list, get, has } = db
+	return { compare, list, get, has, subspace: (args) => readOnlyTupleDb(db.subspace(args)) }
 }
 
 export function tupleTx(tx: BaseTupleOKVTx): TupleTx {

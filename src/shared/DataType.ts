@@ -466,7 +466,7 @@ export function inspect<T extends DataType>(dataType: T): string {
 // ============================================================================
 
 // We're going to mutate this array to avoid circular references.
-export const dataTypeDataType: OrDataType<DataType> = { type: "or", options: [] }
+export const dataType: OrDataType<DataType> = { type: "or", options: [] }
 
 const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	null: object({ type: literal("null") }),
@@ -482,26 +482,24 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	}),
 	array: object({
 		type: literal("array"),
-		items: dataTypeDataType,
+		items: dataType,
 	}),
 	tuple: object({
 		type: literal("tuple"),
-		items: array(dataTypeDataType),
+		items: array(dataType),
 	}),
 	map: object({
 		type: literal("map"),
-		items: dataTypeDataType,
+		items: dataType,
 	}),
 	object: object({
 		type: literal("object"),
-		properties: map(
-			or(dataTypeDataType, object({ type: literal("optional"), value: dataTypeDataType }))
-		),
+		properties: map(or(dataType, object({ type: literal("optional"), value: dataType }))),
 	}),
 	or: object({
 		type: literal("or"),
-		options: array(dataTypeDataType),
+		options: array(dataType),
 	}),
 }
 
-for (const value of Object.values(dataTypeDataTypes)) dataTypeDataType.options.push(value)
+for (const value of Object.values(dataTypeDataTypes)) dataType.options.push(value)

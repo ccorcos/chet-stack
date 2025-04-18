@@ -52,11 +52,18 @@ export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
 	commit: () => void
 }
 
+// ==========================================================================
+// TupleDb
+// ==========================================================================
+
 export type BaseTupleOKV = BaseOKV<Tuple, JSONValue>
 export type BaseTupleOKVTx = BaseOKVTransaction<Tuple, JSONValue>
 
-export type ReadOnlyTupleDb = BaseTupleOKV & {
+export type ReadOnlyTupleDb = {
+	compare: (a: Tuple, b: Tuple) => number
+	list(args?: ListArgs<Tuple>): { key: Tuple; value: JSONValue }[]
 	get: (key: Tuple) => JSONValue | undefined
+	has: (key: Tuple) => boolean
 	subspace: (prefix: Tuple) => ReadOnlyTupleDb
 }
 
