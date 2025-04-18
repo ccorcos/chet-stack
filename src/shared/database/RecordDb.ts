@@ -11,8 +11,11 @@ import { transact } from "./TupleDb"
 type TableSchema = { table: string; dataType: DataType }
 
 export const createTable = transact((tx, table: string, dataType: DataType) => {
+	if (tx.has(["internal", "table", table])) return false
+
 	const tableSchema: TableSchema = { table, dataType }
 	tx.set(["internal", "table", table], tableSchema)
+	return true
 })
 
 export const deleteTable = transact((tx, table: string) => {
@@ -33,9 +36,11 @@ type IndexFn = (value: any) => undefined | any[] | Generator<any[]>
 type Index = { table: string; name: string; fn: string }
 
 export const createIndex = transact((tx, table: string, name: string, fn: IndexFn) => {
+	if (tx.has(["internal", "index", table, name])) return false
 	const index: Index = { table, name, fn: fn.toString() }
 	tx.set(["internal", "index", table, name], index)
 	buildIndex(tx, table, name)
+	return true
 })
 
 const buildIndex = transact((tx, table: string, name: string) => {

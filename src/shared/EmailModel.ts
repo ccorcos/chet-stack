@@ -5,6 +5,8 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
+import { createIndex, createTable } from "./database/RecordDb"
+import { transact } from "./database/TupleDb"
 import * as t from "./DataType"
 
 const UserSchema = t.object({
@@ -13,14 +15,14 @@ const UserSchema = t.object({
 	name: t.string,
 })
 
-type User = t.InferType<typeof UserSchema>
+export type User = t.InferType<typeof UserSchema>
 
 const RoleSchema = t.object({
 	userId: t.string,
 	role: t.or(t.literal("admin"), t.literal("member")),
 })
 
-type Role = t.InferType<typeof RoleSchema>
+export type Role = t.InferType<typeof RoleSchema>
 
 const OrgSchema = t.object({
 	id: t.string,
@@ -29,7 +31,7 @@ const OrgSchema = t.object({
 	channelIds: t.array(t.string),
 })
 
-type Org = t.InferType<typeof OrgSchema>
+export type Org = t.InferType<typeof OrgSchema>
 
 const ChannelSchema = t.object({
 	id: t.string,
@@ -40,42 +42,42 @@ const ChannelSchema = t.object({
 	channelIds: t.array(t.string),
 })
 
-type Channel = t.InferType<typeof ChannelSchema>
+export type Channel = t.InferType<typeof ChannelSchema>
 
 const ReceieverSchema = t.or(
 	t.object({ type: t.literal("user"), id: t.string }),
 	t.object({ type: t.literal("channel"), id: t.string })
 )
 
-type Receiever = t.InferType<typeof ReceieverSchema>
+export type Receiever = t.InferType<typeof ReceieverSchema>
 
 const TextContentSchema = t.object({
 	type: t.literal("text"),
 	body: t.string,
 })
 
-type TextContent = t.InferType<typeof TextContentSchema>
+export type TextContent = t.InferType<typeof TextContentSchema>
 
 const InviteChannelContentSchema = t.object({
 	type: t.literal("inviteChannel"),
 	role: RoleSchema,
 })
 
-type InviteChannelContent = t.InferType<typeof InviteChannelContentSchema>
+export type InviteChannelContent = t.InferType<typeof InviteChannelContentSchema>
 
 const InviteMessageContentSchema = t.object({
 	type: t.literal("inviteMessage"),
 	role: RoleSchema,
 })
 
-type InviteMessageContent = t.InferType<typeof InviteMessageContentSchema>
+export type InviteMessageContent = t.InferType<typeof InviteMessageContentSchema>
 
 const NewChannelContentSchema = t.object({
 	type: t.literal("newChannel"),
 	channelId: ChannelSchema,
 })
 
-type NewChannelContent = t.InferType<typeof NewChannelContentSchema>
+export type NewChannelContent = t.InferType<typeof NewChannelContentSchema>
 
 const StatusSchema = t.or(
 	t.object({ type: t.literal("draft"), timestamp: t.datetime }),
@@ -83,14 +85,14 @@ const StatusSchema = t.or(
 	t.object({ type: t.literal("sent"), timestamp: t.datetime })
 )
 
-type Status = t.InferType<typeof StatusSchema>
+export type Status = t.InferType<typeof StatusSchema>
 
 const ReactionSchema = t.object({
 	userId: t.string,
 	value: t.string,
 })
 
-type Reaction = t.InferType<typeof ReactionSchema>
+export type Reaction = t.InferType<typeof ReactionSchema>
 
 const OutgoingMessageSchema = t.object({
 	id: t.string,
@@ -117,7 +119,7 @@ const OutgoingMessageSchema = t.object({
 	metadata: t.map(t.any),
 })
 
-type OutgoingMessage = t.InferType<typeof OutgoingMessageSchema>
+export type OutgoingMessage = t.InferType<typeof OutgoingMessageSchema>
 
 const IncomingMessageSchema = t.object({
 	id: t.string,
@@ -135,7 +137,7 @@ const IncomingMessageSchema = t.object({
 	metadata: t.map(t.any),
 })
 
-type IncomingMessage = t.InferType<typeof IncomingMessageSchema>
+export type IncomingMessage = t.InferType<typeof IncomingMessageSchema>
 
 const SubscriptionTargetSchema = t.or(
 	t.object({ type: t.literal("user"), id: t.string }),
@@ -157,7 +159,7 @@ const SubscriptionSchema = t.object({
 	mapJs: t.string,
 })
 
-type Subscription = t.InferType<typeof SubscriptionSchema>
+export type Subscription = t.InferType<typeof SubscriptionSchema>
 
 const ViewSchema = t.object({
 	id: t.string,
@@ -167,7 +169,7 @@ const ViewSchema = t.object({
 	filterJs: t.string,
 })
 
-type View = t.InferType<typeof ViewSchema>
+export type View = t.InferType<typeof ViewSchema>
 
 export const tables = {
 	user: UserSchema,
@@ -211,14 +213,18 @@ export const secondaryIndexes = {
 	},
 }
 
+export const initEmailModel = transact((tx) => {
+	for (const [table, schema] of Object.entries(tables)) {
+		createTable(tx, table, schema)
+	}
+	for (const [table, indexes] of Object.entries(secondaryIndexes)) {
+		for (const [index, fn] of Object.entries(indexes)) {
+			createIndex(tx, table, index, fn)
+		}
+	}
+})
+
 /*
-
-Compose... don't push this all into a single abstraction.
-Compose functions -- transact is powerful.
-
-Schemas... needs to work with subspaces. Default open or default closed.
-Indexes... also needs to work with subspaces.
-
 
 - login
 - list org members and edit
@@ -256,10 +262,7 @@ Indexes... also needs to work with subspaces.
 // Secondary indexes
 // Tertiary indexes
 
-// schema validation
-// indexing
 // compound indexes with alternating +/- directions...
 // tertiary indexes
 // All of the queries we need.
-// Just start typing it all out.
 // Permissions.
