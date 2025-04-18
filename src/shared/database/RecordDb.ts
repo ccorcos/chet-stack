@@ -2,6 +2,11 @@
 
 Adds a record layer on top of TupleDb.
 
+RecordDb is fundamentally different because all of the writes must go through
+setRecord and deleteRecord.
+
+Principle: records must be able to identify themselves (e.g. include table and id).
+
 */
 
 import * as t from "../DataType"

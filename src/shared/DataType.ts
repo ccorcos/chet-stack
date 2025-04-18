@@ -78,6 +78,7 @@ export type Optional<T extends DataType> = { type: "optional"; value: T }
 export interface ObjectDataType<T extends { [key: string]: DataType | Optional<DataType> }> {
 	type: "object"
 	properties: T
+	strict: boolean
 }
 
 export interface AnyDataType {
@@ -182,9 +183,10 @@ export function optional<T extends DataType>(value: T): Optional<T> {
 }
 
 export function object<T extends { [key: string]: DataType | Optional<DataType> }>(
-	properties: T
+	properties: T,
+	strict = true
 ): ObjectDataType<T> {
-	return { type: "object", properties }
+	return { type: "object", properties, strict }
 }
 
 export function or<T extends DataType[]>(...values: T): OrDataType<T[number]> {
@@ -364,6 +366,17 @@ const Validators: {
 				}
 			}
 		}
+
+		if (dataType.strict) {
+			for (const key in value) {
+				if (!(key in dataType.properties)) {
+					return {
+						message: `${JSON.stringify(value)} has extra property ${JSON.stringify(key)}`,
+						path: [],
+					}
+				}
+			}
+		}
 	},
 	or: (dataType, value) => {
 		const errors: Array<ValidateError> = []
@@ -495,6 +508,7 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	object: object({
 		type: literal("object"),
 		properties: map(or(dataType, object({ type: literal("optional"), value: dataType }))),
+		strict: boolean,
 	}),
 	or: object({
 		type: literal("or"),

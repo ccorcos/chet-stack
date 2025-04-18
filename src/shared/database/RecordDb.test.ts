@@ -26,7 +26,12 @@ describe("RecordDb", () => {
 
 		db.setTable({
 			table: "user",
-			dataType: t.object({ id: t.string, first: t.string, last: t.string }),
+			dataType: t.object({
+				table: t.literal("user"),
+				id: t.string,
+				first: t.string,
+				last: t.string,
+			}),
 		})
 		db.createIndex({
 			table: "user",

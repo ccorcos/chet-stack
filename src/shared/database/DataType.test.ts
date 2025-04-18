@@ -182,12 +182,16 @@ describe("DataType", () => {
 				id: { type: "string" },
 				age: { type: "optional", value: { type: "number" } },
 			},
+			strict: true,
 		})
 
 		valid(user, { id: "123", age: 12 })
 		valid(user, { id: "123" })
 		invalid(user, { id: "123", age: "hello" })
 		invalid(user, { age: "hello" })
+
+		invalid(user, { id: "123", age: 12, extra: true })
+		valid({ ...user, strict: false }, { id: "123", age: 12, extra: true })
 	})
 
 	it("is", () => {
