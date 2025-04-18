@@ -42,23 +42,14 @@ function CacheSubspace(
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
 		compare: cache.compare,
-		list(args = {}) {
+		list(args) {
 			const newArgs = EncodeSubspaceListArgs(args, prefix)
-			const result = cache.list(newArgs)
-			return KeyDecodeList(result, encoder)
-		},
-		listCached(args) {
-			const newArgs = EncodeSubspaceListArgs(args, prefix)
-			const results = cache.listCached(newArgs)
+			const results = cache.list(newArgs)
 			return KeyDecodeCacheListResult(results, encoder)
 		},
 		write(args) {
 			const newArgs = KeyEncodeWrite(args, encoder)
 			return cache.write(newArgs)
-		},
-		finalize(args) {
-			const newArgs = KeyEncodeWrite(args, encoder)
-			return cache.finalize(newArgs)
 		},
 		insert(args, result) {
 			const newArgs = EncodeSubspaceListArgs(args, prefix)

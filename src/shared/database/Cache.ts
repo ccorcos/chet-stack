@@ -82,11 +82,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		this.emitter.emit([range])
 	}
 
-	list(args: ListArgs<K>) {
-		return this.data.list(args)
-	}
-
-	listCached(args: ListArgs<K>): CacheListResult<K, V> {
+	list(args: ListArgs<K>): CacheListResult<K, V> {
 		const range = encodeRange(args)
 
 		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) === 0
@@ -215,27 +211,23 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 
 		// Emit
 		this.emit(ranges)
-	}
 
-	finalize(args: WriteArgs<K, V>) {
-		const setKeys = args.set?.map(({ key }) => key) ?? []
-		const deleteKeys = args.delete ?? []
-		const allKeys = uniqWith([...setKeys, ...deleteKeys], (a, b) => this.compare(a, b) === 0)
-
-		// Cleanup pending write reference count so that new data can overwrite it from the server.
-		const deref: K[] = []
-		for (const key of allKeys) {
-			this.refs.update(key, (existing) => {
-				if (existing === undefined) return console.warn("Ref count is should be non-zero!")
-				if (existing.ref === 1) {
-					deref.push(key)
-					return undefined
-				}
-				return { key, ref: existing.ref - 1 }
-			})
+		return () => {
+			// Cleanup pending write reference count so that new data can overwrite it from the server.
+			const deref: K[] = []
+			for (const key of allKeys) {
+				this.refs.update(key, (existing) => {
+					if (existing === undefined) return console.warn("Ref count is should be non-zero!")
+					if (existing.ref === 1) {
+						deref.push(key)
+						return undefined
+					}
+					return { key, ref: existing.ref - 1 }
+				})
+			}
+			this.pending.set.write({ delete: deref })
+			this.pending.delete.write({ delete: deref })
 		}
-		this.pending.set.write({ delete: deref })
-		this.pending.delete.write({ delete: deref })
 	}
 }
 

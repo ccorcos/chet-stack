@@ -3,7 +3,7 @@ import { omit } from "lodash"
 import { describe, it } from "mocha"
 import { Cache, computeCachedRange, keyToRange } from "./Cache"
 import { Range } from "./Range"
-import { ListArgs, WriteArgs } from "./types"
+import { ListArgs } from "./types"
 
 /** Includes end value! */
 function kv(start: number, end: number) {
@@ -131,7 +131,7 @@ describe("Cache", () => {
 		cache.insert({ gt: "15", lte: "20" }, kv(6, 20))
 
 		const get = (key: string) => {
-			const result = cache.listCached({ gte: key, lte: key })
+			const result = cache.list({ gte: key, lte: key })
 			if (result.hit) return { hit: result.hit[0].value }
 			return { miss: true }
 		}
@@ -145,18 +145,18 @@ describe("Cache", () => {
 		assert.deepEqual(get("20"), { hit: "20" })
 		assert.deepEqual(get("21"), { miss: true })
 
-		assert.deepEqual(cache.listCached({ gt: "00", lt: "04" }), { miss: true })
+		assert.deepEqual(cache.list({ gt: "00", lt: "04" }), { miss: true })
 		// No suffix support, so this is a miss.
-		assert.deepEqual(cache.listCached({ gt: "01", lt: "08" }), { miss: true })
+		assert.deepEqual(cache.list({ gt: "01", lt: "08" }), { miss: true })
 
 		// Inside
-		assert.deepEqual(cache.listCached({ gte: "05", lt: "08" }), { hit: kv(5, 7) })
+		assert.deepEqual(cache.list({ gte: "05", lt: "08" }), { hit: kv(5, 7) })
 
 		// Bounds
-		assert.deepEqual(cache.listCached({ gte: "05", lt: "10" }), { hit: kv(5, 9) })
-		assert.deepEqual(cache.listCached({ gte: "05", lte: "10" }), { prefix: kv(5, 9) })
-		assert.deepEqual(cache.listCached({ gt: "05", lte: "10" }), { prefix: kv(6, 9) })
-		assert.deepEqual(cache.listCached({ gt: "05", lt: "10" }), { hit: kv(6, 9) })
+		assert.deepEqual(cache.list({ gte: "05", lt: "10" }), { hit: kv(5, 9) })
+		assert.deepEqual(cache.list({ gte: "05", lte: "10" }), { prefix: kv(5, 9) })
+		assert.deepEqual(cache.list({ gt: "05", lte: "10" }), { prefix: kv(6, 9) })
+		assert.deepEqual(cache.list({ gt: "05", lt: "10" }), { hit: kv(6, 9) })
 	})
 
 	it("Joined ranges", () => {
@@ -164,9 +164,9 @@ describe("Cache", () => {
 		cache.insert({ limit: 2 }, kv(0, 1))
 		cache.insert({ gt: "01", limit: 2 }, kv(2, 3))
 
-		assert.deepEqual(cache.listCached({ limit: 3 }), { hit: kv(0, 2) })
-		assert.deepEqual(cache.listCached({ limit: 4 }), { hit: kv(0, 3) })
-		assert.deepEqual(cache.listCached({ limit: 5 }), { prefix: kv(0, 3) })
+		assert.deepEqual(cache.list({ limit: 3 }), { hit: kv(0, 2) })
+		assert.deepEqual(cache.list({ limit: 4 }), { hit: kv(0, 3) })
+		assert.deepEqual(cache.list({ limit: 5 }), { prefix: kv(0, 3) })
 	})
 
 	it("Joined ranges - reversed", () => {
@@ -174,9 +174,9 @@ describe("Cache", () => {
 		cache.insert({ limit: 2, reverse: true }, kv(2, 3).reverse())
 		cache.insert({ lt: "02", limit: 2, reverse: true }, kv(0, 1).reverse())
 
-		assert.deepEqual(cache.listCached({ limit: 3, reverse: true }), { hit: kv(1, 3).reverse() })
-		assert.deepEqual(cache.listCached({ limit: 4, reverse: true }), { hit: kv(0, 3).reverse() })
-		assert.deepEqual(cache.listCached({ limit: 5, reverse: true }), { prefix: kv(0, 3).reverse() })
+		assert.deepEqual(cache.list({ limit: 3, reverse: true }), { hit: kv(1, 3).reverse() })
+		assert.deepEqual(cache.list({ limit: 4, reverse: true }), { hit: kv(0, 3).reverse() })
+		assert.deepEqual(cache.list({ limit: 5, reverse: true }), { prefix: kv(0, 3).reverse() })
 	})
 
 	it("Optimistic writes", () => {
@@ -184,54 +184,52 @@ describe("Cache", () => {
 		const cache = new Cache()
 
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		const write1: WriteArgs<string, string> = { set: [{ key: "00", value: "xx" }], delete: ["10"] }
-		cache.write(write1)
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		const cleanup1 = cache.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "xx" }, ...kv(1, 9)],
 		})
 
 		// Stays the same.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "xx" }, ...kv(1, 9)],
 		})
 
 		// Adds another reference count.
-		const write2: WriteArgs<string, string> = { set: [{ key: "00", value: "yy" }] }
-		cache.write(write2)
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		const cleanup2 = cache.write({ set: [{ key: "00", value: "yy" }] })
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
 
 		// Stays the same.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
 
 		// Removes reference count on 10, but we still have a reference count on 00.
 		// console.log("REFS", cache.refs.items)
-		cache.finalize(write1)
+		cleanup1()
 		// console.log("REFS", cache.refs.items)
 
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
 		// Overwrites 10 but not 00.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 10)],
 		})
 
 		// Removes reference count on 00.
-		cache.finalize(write2)
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), {
+		cleanup2()
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 10)],
 		})
 
 		// Overwrites 10 but not 00.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		assert.deepEqual(cache.listCached({ gte: "00", lte: "10" }), { hit: kv(0, 10) })
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), { hit: kv(0, 10) })
 	})
 
 	interface Func {

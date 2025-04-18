@@ -15,7 +15,7 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 
 	list = (args: ListArgs<K> = {}): { key: K; value: V }[] => {
 		if (this.committed) throw new Error("Transaction already committed")
-		const result = this.cache.listCached(args)
+		const result = this.cache.list(args)
 
 		if (result.hit) {
 			return result.hit
@@ -58,7 +58,7 @@ export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
 			// Don't return data, because we may have pending writes in the new range.
 		}
 
-		const again = this.cache.listCached(args)
+		const again = this.cache.list(args)
 		if (!again.hit) throw new Error("Cache should have hit")
 		return again.hit
 	}

@@ -34,11 +34,12 @@ export type CacheListResult<K, V> = {
  * data or the ranges of the cache on this type so we can create a subspace without
  * copying all that data.
  */
-export type BaseOKVCache<K, V> = BaseOKV<K, V> & {
-	subscribe: (range: Range<K>, fn: () => void) => () => void
+export type BaseOKVCache<K, V> = {
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
-	finalize: (args: WriteArgs<K, V>) => void
-	listCached: (args: ListArgs<K>) => CacheListResult<K, V>
+	compare: (a: K, b: K) => number
+	list: (args: ListArgs<K>) => CacheListResult<K, V>
+	write: (args: WriteArgs<K, V>) => () => void
+	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
 
 /**
