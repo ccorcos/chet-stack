@@ -21,6 +21,38 @@ describe("RecordDb", () => {
 		db.setRecord({ table: "user", id: "1", name: "John" })
 	})
 
+	it("validates optionally", () => {
+		const db = recordDb(new InMemoryBaseOKV(codec.compare), "optional")
+		db.setTable({
+			table: "user",
+			dataType: t.object({
+				table: t.literal("user"),
+				id: t.string,
+				name: t.string,
+			}),
+		})
+
+		assert.throws(() => db.setRecord({ table: "user", id: "1", name: 1 }))
+		db.setRecord({ table: "user", id: "1", name: "John" })
+		db.setRecord({ table: "blah", id: "12" })
+	})
+
+	it("doesn't validate", () => {
+		const db = recordDb(new InMemoryBaseOKV(codec.compare), "none")
+		db.setTable({
+			table: "user",
+			dataType: t.object({
+				table: t.literal("user"),
+				id: t.string,
+				name: t.string,
+			}),
+		})
+
+		db.setRecord({ table: "user", id: "1", name: 1 })
+		db.setRecord({ table: "user", id: "1", name: "John" })
+		db.setRecord({ table: "blah", id: "12" })
+	})
+
 	it("indexes", () => {
 		const db = recordDb(new InMemoryBaseOKV(codec.compare))
 

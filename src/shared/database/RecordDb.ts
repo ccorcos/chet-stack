@@ -115,22 +115,28 @@ const unindexRecord = transact((tx, args: IndexDefArgs, record: any) => {
 	}
 })
 
-const validateRecord = transact((tx, record: any, strict = true) => {
+type ValidationMode = "strict" | "optional" | "none"
+
+const validateRecord = transact((tx, record: any, mode: ValidationMode = "strict") => {
 	if (!record.table) throw new Error("Record must have a table")
 	if (!record.id) throw new Error("Record must have an id")
+	if (mode === "none") return
 
 	const schema = tx.get(["model", "table", record.table])
-	if (!schema) {
-		if (strict) throw new Error(`Table schema ${record.table} not found`)
-		else console.warn(`Table schema ${record.table} not found`)
-	} else {
+	if (schema) {
 		const error = validate(schema.dataType, record)
-		if (error) throw new Error(`Invalid ${record.table} record: ${formatError(error)}`)
+		if (!error) return
+		throw new Error(`Invalid ${record.table} record: ${formatError(error)}`)
 	}
+
+	if (mode === "strict") {
+		throw new Error(`Table schema ${record.table} not found`)
+	}
+	// console.warn(`Table schema ${record.table} not found`)
 })
 
-export const setRecord = transact((tx, record: any, strict = true) => {
-	validateRecord(tx, record, strict)
+export const setRecord = transact((tx, record: any, mode: ValidationMode = "strict") => {
+	validateRecord(tx, record, mode)
 
 	// Overwrite.
 	deleteRecord(tx, record)
@@ -165,7 +171,7 @@ export type RecordDb = {
 	deleteTable: (table: string) => void
 	createIndex: (indexDef: IndexDefArgs) => void
 	deleteIndex: (args: { table: string; name: string }) => void
-	setRecord: (record: any, strict?: boolean) => void
+	setRecord: (record: any) => void
 	deleteRecord: (args: { table: string; id: string }) => void
 
 	model: ReadOnlyTupleDb
@@ -179,7 +185,7 @@ export type RecordTx = {
 	deleteTable: (table: string) => void
 	createIndex: (indexDef: IndexDefArgs) => void
 	deleteIndex: (args: { table: string; name: string }) => void
-	setRecord: (record: any, strict?: boolean) => void
+	setRecord: (record: any) => void
 	deleteRecord: (args: { table: string; id: string }) => void
 
 	model: ReadOnlyTupleDb
@@ -189,29 +195,29 @@ export type RecordTx = {
 	commit: () => void
 }
 
-export function recordDb(base: BaseTupleOKV, dbStrict = true): RecordDb {
+export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): RecordDb {
 	const db = tupleDb(base)
 	const recordDb: RecordDb = {
 		setTable: (args) => setTable(db, args),
 		deleteTable: (args) => deleteTable(db, args),
 		createIndex: (args) => createIndex(db, args),
 		deleteIndex: (args) => deleteIndex(db, args),
-		setRecord: (args, strict) => setRecord(db, args, strict === undefined ? dbStrict : strict),
+		setRecord: (args) => setRecord(db, args, mode),
 		deleteRecord: (args) => deleteRecord(db, args),
 		model: readOnlyTupleDb(db.subspace(["model"])),
 		data: readOnlyTupleDb(db.subspace(["data"])),
-		transact: () => recordTx(db.transact(), dbStrict),
+		transact: () => recordTx(db.transact(), mode),
 	}
 	return recordDb
 }
 
-export function recordTx(tx: TupleTx, dbStrict = true): RecordTx {
+export function recordTx(tx: TupleTx, mode: ValidationMode = "strict"): RecordTx {
 	const recordTx: RecordTx = {
 		setTable: (args) => setTable(tx, args),
 		deleteTable: (args) => deleteTable(tx, args),
 		createIndex: (args) => createIndex(tx, args),
 		deleteIndex: (args) => deleteIndex(tx, args),
-		setRecord: (args, strict) => setRecord(tx, args, strict === undefined ? dbStrict : strict),
+		setRecord: (args) => setRecord(tx, args, mode),
 		deleteRecord: (args) => deleteRecord(tx, args),
 		model: readOnlyTupleDb(tx.subspace(["model"])),
 		data: readOnlyTupleDb(tx.subspace(["data"])),

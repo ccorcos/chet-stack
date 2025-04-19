@@ -220,6 +220,7 @@ export const secondaryIndexes = {
 	},
 }
 
+// TODO: need to think about what `transact` means now...
 export const initEmailModel = transact((tx) => {
 	const rtx = recordTx(tx)
 	for (const [table, dataType] of Object.entries(tables)) {
