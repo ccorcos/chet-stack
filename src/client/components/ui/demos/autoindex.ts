@@ -23,6 +23,7 @@ import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as PromptMapDemo from "./PromptMapDemo"
+import * as RecordDbDemo from "./RecordDbDemo"
 import * as SelectableListDemo from "./SelectableListDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
@@ -52,6 +53,7 @@ export {
 	PlaygroundDemo,
 	PopupDemo,
 	PromptMapDemo,
+	RecordDbDemo,
 	SelectableListDemo,
 	SpinnerDemo,
 	TableDemo,

@@ -54,6 +54,11 @@ function CacheSubspace(
 			const results = cache.list(newArgs)
 			return KeyDecodeCacheListResult(results, encoder)
 		},
+		listRaw(args) {
+			const newArgs = EncodeSubspaceListArgs(args, prefix)
+			const results = cache.listRaw(newArgs)
+			return KeyDecodeList(results, encoder)
+		},
 		write(args) {
 			const newArgs = KeyEncodeWrite(args, encoder)
 			return cache.write(newArgs)

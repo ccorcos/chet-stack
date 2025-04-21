@@ -185,7 +185,7 @@ export type RecordTx = {
 	deleteTable: (table: string) => void
 	createIndex: (indexDef: IndexDefArgs) => void
 	deleteIndex: (args: { table: string; name: string }) => void
-	setRecord: (record: any) => void
+	setRecord: (record: { table: string; id: string }) => void
 	deleteRecord: (args: { table: string; id: string }) => void
 
 	model: ReadOnlyTupleDb

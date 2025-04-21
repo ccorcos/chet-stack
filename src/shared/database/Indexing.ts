@@ -8,14 +8,21 @@ import { reifyFn } from "../reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"
 import { transact, tupleDb } from "./TupleDb"
-import { BaseTupleOKV, JSONValue, ReadOnlyTupleDb, Tuple, TupleTx, WriteArgs } from "./types"
+import {
+	BaseTupleOKV,
+	JSONValue,
+	ReadOnlyTupleDb,
+	ReadWriteTupleDb,
+	Tuple,
+	WriteArgs,
+} from "./types"
 
 export type Index = {
 	id: string
 	order: number // secondary indexes are 0, tertiary indexes are 1.
 	range: Range<Tuple>
-	set: (tx: TupleTx, key: Tuple, value: JSONValue) => void
-	delete: (tx: TupleTx, key: Tuple) => void
+	set: (tx: ReadWriteTupleDb, key: Tuple, value: JSONValue) => void
+	delete: (tx: ReadWriteTupleDb, key: Tuple) => void
 }
 
 export type SerializedIndex = Omit<Index, "set" | "delete"> & { set: string; delete: string }

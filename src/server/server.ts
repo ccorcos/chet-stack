@@ -4,6 +4,7 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
+import { recordDb } from "../shared/database/RecordDb"
 import { tupleOkv } from "../shared/database/TupleDb"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
@@ -37,6 +38,26 @@ if (!config.production) {
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
 const db = tupleOkv(base)
+
+DEMO: {
+	const tx = recordDb(db).transact()
+	if (!tx.model.has(["index", "person", "byName"])) {
+		tx.createIndex({
+			table: "person",
+			name: "byName",
+			fn: (value) => [value.name, value.id],
+		})
+	}
+	if (!tx.model.has(["index", "person", "byAge"])) {
+		tx.createIndex({
+			table: "person",
+			name: "byAge",
+			fn: (value) => [value.age, value.id],
+		})
+	}
+
+	tx.commit()
+}
 
 const queue = new QueueDatabase(config.queuePath)
 

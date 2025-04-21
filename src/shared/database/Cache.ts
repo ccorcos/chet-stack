@@ -57,7 +57,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 	// Helpers for dealing with ordered arrays.
 	// ==========================================================================
 
-	insert(args: ListArgs<K>, result: { key: K; value: V }[]) {
+	insert = (args: ListArgs<K>, result: { key: K; value: V }[]) => {
 		const range = computeCachedRange(args, result)
 		this.ranges.insert(range)
 
@@ -82,7 +82,9 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		this.emitter.emit([range])
 	}
 
-	list(args: ListArgs<K>): CacheListResult<K, V> {
+	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.data.list(args)
+
+	list = (args: ListArgs<K>): CacheListResult<K, V> => {
 		const range = encodeRange(args)
 
 		const eq = (a: Bound<K>, b: Bound<K>) => compareBound(a, b, this.compare) === 0
@@ -183,7 +185,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		return { hit: this.data.list(args) }
 	}
 
-	write(args: WriteArgs<K, V>) {
+	write = (args: WriteArgs<K, V>) => {
 		// Optimistic write
 		this.data.write(args)
 

@@ -5,7 +5,7 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
-import { recordTx } from "./database/RecordDb"
+import { recordDb } from "./database/RecordDb"
 import { transact } from "./database/TupleDb"
 import * as t from "./DataType"
 
@@ -222,7 +222,7 @@ export const secondaryIndexes = {
 
 // TODO: need to think about what `transact` means now...
 export const initEmailModel = transact((tx) => {
-	const rtx = recordTx(tx)
+	const rtx = recordDb(tx)
 	for (const [table, dataType] of Object.entries(tables)) {
 		rtx.setTable({ table, dataType })
 	}

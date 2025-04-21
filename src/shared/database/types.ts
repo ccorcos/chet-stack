@@ -39,6 +39,7 @@ export type BaseOKVCache<K, V> = {
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
+	listRaw: (args: ListArgs<K>) => { key: K; value: V }[]
 	write: (args: WriteArgs<K, V>) => () => void
 	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
