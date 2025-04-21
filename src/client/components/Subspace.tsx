@@ -16,7 +16,7 @@ import { ClientApi } from "../services/api"
 function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
 	const encoder = TupleSubspaceEncoder(prefix)
 
-	return proxyObj(async (key, ...args) => {
+	return proxyObj(async (key: keyof ClientApi, ...args) => {
 		if (key === "list") {
 			const newArgs = EncodeSubspaceListArgs(args[0], prefix)
 			const response = await api.list(newArgs)
@@ -31,7 +31,14 @@ function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
 		if (key === "write") {
 			return api.write(KeyEncodeWrite(args[0], encoder))
 		}
-		return api[key](...args)
+
+		if (key === "writeRecords") {
+			const subspace = args[0].subspace ?? []
+			return api.writeRecords({ ...args[0], subspace: [...subspace, ...prefix] })
+		}
+
+		const fn = api[key] as any
+		return fn(...args)
 	})
 }
 

@@ -55,45 +55,6 @@ export function useList(_args: ListArgs<Tuple>) {
 	return { localResult, remoteResult }
 }
 
-// type PendingWrite = { range: Range<string>; id: string; promise: Promise<any> }
-// const pendingWrites: PendingWrite[] = []
-// const sortedWrites = orderedArray<PendingWrite>(identity, (a: PendingWrite, b: PendingWrite) => {
-// 	const dir = compareRange(a.range, b.range)
-// 	if (dir !== 0) return dir
-// 	return compare(a.id, b.id)
-// })
-
-// function trackPendingWrite(args: WriteArgs<string, string>, promise: Promise<any>) {
-// 	const keys = new Set<string>()
-// 	for (const { key } of args.set ?? []) keys.add(key)
-// 	for (const key of args.delete ?? []) keys.add(key)
-// 	const ranges = Array.from(keys).map(keyToRange)
-
-// 	for (const range of ranges) {
-// 		const pendingWrite: PendingWrite = { range, id: randomId(), promise }
-// 		pendingWrite.promise = promise.then(() => sortedWrites.remove(pendingWrites, pendingWrite))
-// 		sortedWrites.insert(pendingWrites, pendingWrite)
-// 	}
-// }
-
-// async function pendingWritesSubmitted(args: Range<string>) {
-// 	const waitFor = () => {
-// 		// We can be greedy here because we will call this again once the promise is resolved waiting
-// 		// for all pending writes to be cleared.
-// 		for (const pendingWrite of pendingWrites) {
-// 			if (overlapsRange(pendingWrite.range, args)) {
-// 				return pendingWrite.promise
-// 			}
-// 		}
-// 	}
-
-// 	let promise = waitFor()
-// 	while (promise !== undefined) {
-// 		await promise
-// 		promise = waitFor()
-// 	}
-// }
-
 export function useWrite() {
 	const { api, cache } = useClientEnvironment()
 
