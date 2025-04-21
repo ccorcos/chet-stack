@@ -81,7 +81,7 @@ for (let i = 1; i < maxLayers; i++) {
 		}
 
 		@media (prefers-color-scheme: dark) {
-			:root {
+			${selector} {
 				${themeVars(dark)}
 			}
 		}

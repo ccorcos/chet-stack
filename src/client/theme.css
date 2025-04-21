@@ -305,7 +305,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
+	.layer {
 		--bg0: #2a2622;
 		--bg1: #3f3a35;
 		--bg2: #4e4b44;
@@ -500,7 +500,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
+	.layer .layer {
 		--bg0: #3f3a35;
 		--bg1: #4e4b44;
 		--bg2: #5c5953;
@@ -667,7 +667,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
+	.layer .layer .layer {
 		--bg0: #4e4b44;
 		--bg1: #5c5953;
 		--bg2: #676660;

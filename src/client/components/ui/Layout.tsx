@@ -124,8 +124,7 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 				{...rest}
 				style={{
 					position: "absolute",
-					// top: 0,
-					// bottom: 0,
+					minHeight: "100%",
 					right: 0,
 					width: 256,
 					...props.style,
@@ -163,8 +162,7 @@ function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean
 				{...rest}
 				style={{
 					position: "absolute",
-					// top: 0,
-					// bottom: 0,
+					minHeight: "100%",
 					left: 0,
 					width: 256,
 					...props.style,

@@ -82,7 +82,7 @@ div:focus {
 .spinner {
 	width: 1.25em;
 	height: 1.25em;
-	border: 0.15em solid var(--text-color2);
+	border: 0.15em solid var(--fg2);
 	border-bottom-color: transparent;
 	border-radius: 100%;
 	display: inline-block;
