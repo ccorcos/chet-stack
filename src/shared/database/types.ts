@@ -1,3 +1,4 @@
+import { Assert } from "../typeHelpers"
 import { Range } from "./Range"
 
 export type Tuple = any[]
@@ -67,13 +68,23 @@ export type ReadOnlyTupleDb = {
 	subspace: (prefix: Tuple) => ReadOnlyTupleDb
 }
 
+export type ReadWriteTupleDb = BaseTupleOKV & {
+	get: (key: Tuple) => JSONValue | undefined
+	has: (key: Tuple) => boolean
+	set: (key: Tuple, value: JSONValue) => void
+	delete: (key: Tuple) => void
+	subspace: (prefix: Tuple) => ReadWriteTupleDb
+}
+
+type ReadWriteExtendsRead = Assert<ReadWriteTupleDb, ReadOnlyTupleDb>
+
 export type TupleDb = BaseTupleOKV & {
 	get: (key: Tuple) => JSONValue | undefined
 	has: (key: Tuple) => boolean
-	subspace: (prefix: Tuple) => TupleDb
 	set: (key: Tuple, value: JSONValue) => void
 	delete: (key: Tuple) => void
 	transact: () => TupleTx
+	subspace: (prefix: Tuple) => TupleDb
 }
 
 export type TupleTx = BaseTupleOKVTx & {
@@ -83,6 +94,8 @@ export type TupleTx = BaseTupleOKVTx & {
 	delete: (key: Tuple) => void
 	subspace: (prefix: Tuple) => TupleTx
 }
+
+type TupleTxExtendsReadWriteTupleDb = Assert<TupleTx, ReadWriteTupleDb>
 
 // ==========================================================================
 export type Index = {

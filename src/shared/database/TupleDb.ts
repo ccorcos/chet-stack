@@ -13,6 +13,7 @@ import {
 	BaseTupleOKV,
 	BaseTupleOKVTx,
 	ReadOnlyTupleDb,
+	ReadWriteTupleDb,
 	Tuple,
 	TupleDb,
 	TupleTx,
@@ -102,29 +103,19 @@ export function tupleTx(tx: BaseTupleOKVTx): TupleTx {
 	}
 }
 
-function isTx(tx: TupleDb | TupleTx): tx is TupleTx {
-	return "committed" in tx
+function isDb(tx: TupleDb | ReadWriteTupleDb): tx is TupleDb {
+	return "transact" in tx
 }
 
 /**
  * Helper function writing composable transactions.
  */
-export function transact<I extends any[], O>(fn: (tx: TupleTx, ...args: I) => O) {
-	return (tx: TupleDb | TupleTx, ...args: I) => {
-		if (isTx(tx)) return fn(tx, ...args)
+export function transact<I extends any[], O>(fn: (tx: ReadWriteTupleDb, ...args: I) => O) {
+	return (tx: TupleDb | ReadWriteTupleDb, ...args: I) => {
+		if (!isDb(tx)) return fn(tx, ...args)
 
 		const { commit, ...rest } = tx.transact()
-
-		const result = fn(
-			{
-				...rest,
-				commit: () => {
-					throw new Error("This transaction will be committed by the caller.")
-				},
-			},
-			...args
-		)
-
+		const result = fn(rest, ...args)
 		commit()
 
 		return result
