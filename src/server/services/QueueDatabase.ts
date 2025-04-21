@@ -1,7 +1,7 @@
 import sqlite from "better-sqlite3"
 import { isPlainObject } from "lodash"
 import { SQLiteBaseOKV } from "../../shared/database/SQLiteBaseOKV"
-import { transact, tupleDb, tupleOkv } from "../../shared/database/TupleDb"
+import { tupleDb, tupleOkv, tupleTx } from "../../shared/database/TupleDb"
 import { Tuple, TupleDb } from "../../shared/database/types"
 import { randomId } from "../../shared/randomId"
 import { Simplify } from "../../shared/typeHelpers"
@@ -34,16 +34,16 @@ type TaskDatabaseSchema =
 	| { key: ["running", { started_at: string }, { id: string }]; value: null }
 	| { key: ["failed", { started_at: string }, { id: string }]; value: Task }
 
-const enqueueTask = transact((tx, task: Task) => {
+function enqueueTask(db: TupleDb, task: Task) {
 	const { id, run_at } = task
-	tx.set(["task", { id }], task)
-	tx.set(["waiting", { run_at }, { id }], null)
-})
+	db.set(["task", { id }], task)
+	db.set(["waiting", { run_at }, { id }], null)
+}
 
-const dequeueTask = transact((tx, now: string) => {
-	const waiting = tx.subspace(["waiting"])
-	const running = tx.subspace(["running"])
-	const tasks = tx.subspace(["task"])
+function dequeueTask(db: TupleDb, now: string) {
+	const waiting = db.subspace(["waiting"])
+	const running = db.subspace(["running"])
+	const tasks = db.subspace(["task"])
 
 	const result = waiting.list({ lte: [{ run_at: now }], limit: 1 })
 	if (result.length === 0) return
@@ -57,12 +57,12 @@ const dequeueTask = transact((tx, now: string) => {
 	tasks.set([{ id: taskId }], { ...task, started_at: now })
 	running.set([{ started_at: now }, { id: taskId }], null)
 	return { ...task, started_at: now }
-})
+}
 
-const finishTask = transact((tx, task: Task, error?: TaskError) => {
-	const tasks = tx.subspace(["task"])
-	const running = tx.subspace(["running"])
-	const failed = tx.subspace(["failed"])
+function finishTask(db: TupleDb, task: Task, error?: TaskError) {
+	const tasks = db.subspace(["task"])
+	const running = db.subspace(["running"])
+	const failed = db.subspace(["failed"])
 
 	const { started_at, id } = task
 	if (!started_at) throw new Error(`Cannot finish a task that was never started: ${id}`)
@@ -73,7 +73,7 @@ const finishTask = transact((tx, task: Task, error?: TaskError) => {
 	if (!error) return
 
 	failed.set([{ started_at }, { id }], { ...task, error })
-})
+}
 
 const debug = (...args: any[]) => console.log("queue:", ...args)
 
@@ -141,7 +141,7 @@ export class QueueDatabase {
 		while (true) {
 			const tuples = this.db.list({ limit: 100 })
 			if (tuples.length === 0) break
-			const tx = this.db.transact()
+			const tx = tupleTx(this.db)
 			for (const tuple of tuples) tx.delete(tuple.key)
 			tx.commit()
 		}

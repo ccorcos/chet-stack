@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
 import { recordDb } from "../../shared/database/RecordDb"
-import { tupleDb } from "../../shared/database/TupleDb"
+import { tupleDb, tupleTx } from "../../shared/database/TupleDb"
 import * as t from "../../shared/DataType"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
@@ -18,8 +18,12 @@ export async function handler(
 	res: Response
 ) {
 	const { db } = environment
-	const tx = recordDb(tupleDb(db).subspace(args.subspace ?? []), "optional").transact()
-	for (const record of args.delete ?? []) tx.deleteRecord(record)
-	for (const record of args.set ?? []) tx.setRecord(record)
+
+	const tx = tupleTx(tupleDb(db).subspace(args.subspace ?? []))
+
+	const rdb = recordDb(tx, "optional")
+	for (const record of args.delete ?? []) rdb.deleteRecord(record)
+	for (const record of args.set ?? []) rdb.setRecord(record)
+
 	tx.commit()
 }

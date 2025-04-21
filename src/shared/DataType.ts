@@ -479,6 +479,7 @@ export function inspect<T extends DataType>(dataType: T): string {
 // ============================================================================
 
 // We're going to mutate this array to avoid circular references.
+// TODO: we should make a dataType that's just {type: "dataType"} so that it can be serialized.
 export const dataType: OrDataType<DataType> = { type: "or", options: [] }
 
 const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {

@@ -1,7 +1,7 @@
 import { Cache } from "./Cache"
-import { BaseOKV, BaseOKVTransaction, ListArgs, WriteArgs } from "./types"
+import { BaseOKV, BaseOKVTx, ListArgs, WriteArgs } from "./types"
 
-export class Transaction<K, V> implements BaseOKVTransaction<K, V> {
+export class Transaction<K, V> implements BaseOKVTx<K, V> {
 	committed = false
 	cache: Cache<K, V>
 

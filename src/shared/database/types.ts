@@ -1,4 +1,3 @@
-import { Assert } from "../typeHelpers"
 import { Range } from "./Range"
 
 export type Tuple = any[]
@@ -49,7 +48,7 @@ export type BaseOKVCache<K, V> = {
  * But in other situations you're going to want the actual Transaction class so that
  * you can inspect the pending writes, etc.
  */
-export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
+export type BaseOKVTx<K, V> = BaseOKV<K, V> & {
 	committed: boolean
 	commit: () => void
 }
@@ -59,7 +58,7 @@ export type BaseOKVTransaction<K, V> = BaseOKV<K, V> & {
 // ==========================================================================
 
 export type BaseTupleOKV = BaseOKV<Tuple, JSONValue>
-export type BaseTupleOKVTx = BaseOKVTransaction<Tuple, JSONValue>
+export type BaseTupleOKVTx = BaseOKVTx<Tuple, JSONValue>
 
 export type ReadOnlyTupleDb = {
 	compare: (a: Tuple, b: Tuple) => number
@@ -69,22 +68,11 @@ export type ReadOnlyTupleDb = {
 	subspace: (prefix: Tuple) => ReadOnlyTupleDb
 }
 
-export type ReadWriteTupleDb = BaseTupleOKV & {
-	get: (key: Tuple) => JSONValue | undefined
-	has: (key: Tuple) => boolean
-	set: (key: Tuple, value: JSONValue) => void
-	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => ReadWriteTupleDb
-}
-
-type ReadWriteExtendsRead = Assert<ReadWriteTupleDb, ReadOnlyTupleDb>
-
 export type TupleDb = BaseTupleOKV & {
 	get: (key: Tuple) => JSONValue | undefined
 	has: (key: Tuple) => boolean
 	set: (key: Tuple, value: JSONValue) => void
 	delete: (key: Tuple) => void
-	transact: () => TupleTx
 	subspace: (prefix: Tuple) => TupleDb
 }
 
@@ -93,10 +81,9 @@ export type TupleTx = BaseTupleOKVTx & {
 	has: (key: Tuple) => boolean
 	set: (key: Tuple, value: JSONValue) => void
 	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => TupleTx
+	// Reverts back to TupleDb to avoid committing with the subspace.
+	subspace: (prefix: Tuple) => TupleDb
 }
-
-type TupleTxExtendsReadWriteTupleDb = Assert<TupleTx, ReadWriteTupleDb>
 
 // ==========================================================================
 export type Index = {

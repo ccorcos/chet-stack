@@ -4,7 +4,7 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
-import { recordDb } from "../shared/database/RecordDb"
+import { recordDb, RecordDb } from "../shared/database/RecordDb"
 import { tupleOkv } from "../shared/database/TupleDb"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
@@ -40,23 +40,24 @@ const base = new Database(config.dbPath)
 const db = tupleOkv(base)
 
 DEMO: {
-	const tx = recordDb(db).transact()
-	if (!tx.model.has(["index", "person", "byName"])) {
-		tx.createIndex({
-			table: "person",
-			name: "byName",
-			fn: (value) => [value.name, value.id],
-		})
-	}
-	if (!tx.model.has(["index", "person", "byAge"])) {
-		tx.createIndex({
-			table: "person",
-			name: "byAge",
-			fn: (value) => [value.age, value.id],
-		})
+	function init(db: RecordDb) {
+		if (!db.model.has(["index", "person", "byName"])) {
+			db.createIndex({
+				table: "person",
+				name: "byName",
+				fn: (value) => [value.name, value.id],
+			})
+		}
+		if (!db.model.has(["index", "person", "byAge"])) {
+			db.createIndex({
+				table: "person",
+				name: "byAge",
+				fn: (value) => [value.age, value.id],
+			})
+		}
 	}
 
-	tx.commit()
+	init(recordDb(db))
 }
 
 const queue = new QueueDatabase(config.queuePath)

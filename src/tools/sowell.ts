@@ -9,7 +9,8 @@ import * as cheerio from "cheerio"
 import { URL } from "url"
 import { config } from "../server/services/ServerConfig"
 import { SQLiteBaseOKV } from "../shared/database/SQLiteBaseOKV"
-import { transact, tupleDb, tupleOkv } from "../shared/database/TupleDb"
+import { tupleDb, tupleOkv, tupleTx } from "../shared/database/TupleDb"
+import { TupleDb } from "../shared/database/types"
 import { sleep } from "../shared/sleep"
 
 const storage = new SQLiteBaseOKV(sqlite(config.dbPath))
@@ -54,19 +55,19 @@ async function start(url: string) {
 	await crawl()
 }
 
-const enqueue = transact((tx, url) => {
-	if (tx.has(["queue", url])) return
-	if (tx.has(["link", url])) return
-	tx.set(["queue", url], null)
-})
+const enqueue = (db: TupleDb, url) => {
+	if (db.has(["queue", url])) return
+	if (db.has(["link", url])) return
+	db.set(["queue", url], null)
+}
 
-const next = transact((tx) => {
-	const queue = tx.list({ gt: ["queue"], lt: ["queue", null], limit: 1 })
+const next = (db: TupleDb) => {
+	const queue = db.list({ gt: ["queue"], lt: ["queue", null], limit: 1 })
 	if (queue.length === 1) {
 		const url = queue[0].key.at(-1)
 		return url
 	}
-})
+}
 
 async function crawl() {
 	while (true) {
@@ -77,7 +78,7 @@ async function crawl() {
 		const html = await loadPage(url)
 		const { internal, external } = parseLinks(url, html)
 
-		const tx = db.transact()
+		const tx = tupleTx(db)
 		tx.delete(["queue", url])
 		tx.set(["link", url], { html, internal, external })
 		for (const link of internal) enqueue(tx, link)

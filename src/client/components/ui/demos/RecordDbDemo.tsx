@@ -1,6 +1,6 @@
 import { once } from "lodash"
 import React, { useState } from "react"
-import { recordTx } from "../../../../shared/database/RecordDb"
+import { recordDb } from "../../../../shared/database/RecordDb"
 import { Transaction } from "../../../../shared/database/Transaction"
 import { tupleTx } from "../../../../shared/database/TupleDb"
 import { BaseOKVCache, JSONValue, Tuple } from "../../../../shared/database/types"
@@ -13,31 +13,31 @@ import { ComboBoxSelect } from "../ComboBox"
 import { Input } from "../Input"
 
 const init = once((cache: BaseOKVCache<Tuple, JSONValue>) => {
-	const tx = recordTx(
-		tupleTx(
-			new Transaction({
-				compare: cache.compare,
-				list: cache.listRaw,
-				write: (args) => {
-					const finalize = cache.write(args)
-					finalize()
-				},
-			})
-		)
+	const tx = tupleTx(
+		new Transaction({
+			compare: cache.compare,
+			list: cache.listRaw,
+			write: (args) => {
+				const finalize = cache.write(args)
+				finalize()
+			},
+		})
 	)
 
-	tx.setTable({
+	const rdb = recordDb(tx)
+
+	rdb.setTable({
 		table: "person",
 		dataType: t.object({ id: t.string, table: t.literal("person"), name: t.string, age: t.number }),
 	})
 
-	tx.createIndex({
+	rdb.createIndex({
 		table: "person",
 		name: "byName",
 		fn: (value) => [value.name, value.id],
 	})
 
-	tx.createIndex({
+	rdb.createIndex({
 		table: "person",
 		name: "byAge",
 		fn: (value) => [value.age, value.id],
@@ -84,20 +84,19 @@ export function RecordDbDemo() {
 						if (!age) return
 
 						let finalize: any
-						const tx = recordTx(
-							tupleTx(
-								new Transaction({
-									compare: cache.compare,
-									list: cache.listRaw,
-									write: (args) => {
-										finalize = cache.write(args)
-									},
-								})
-							)
+						const tx = tupleTx(
+							new Transaction({
+								compare: cache.compare,
+								list: cache.listRaw,
+								write: (args) => {
+									finalize = cache.write(args)
+								},
+							})
 						)
+						const rdb = recordDb(tx)
 
 						const record = { table: "person", id: randomId(), name, age }
-						tx.setRecord(record)
+						rdb.setRecord(record)
 						tx.commit()
 						setDraft({ name: "", age: -1 })
 

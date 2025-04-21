@@ -5,8 +5,7 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
-import { recordDb } from "./database/RecordDb"
-import { transact } from "./database/TupleDb"
+import { RecordDb } from "./database/RecordDb"
 import * as t from "./DataType"
 
 const UserSchema = t.object({
@@ -221,17 +220,16 @@ export const secondaryIndexes = {
 }
 
 // TODO: need to think about what `transact` means now...
-export const initEmailModel = transact((tx) => {
-	const rtx = recordDb(tx)
+export const initEmailModel = (db: RecordDb) => {
 	for (const [table, dataType] of Object.entries(tables)) {
-		rtx.setTable({ table, dataType })
+		db.setTable({ table, dataType })
 	}
 	for (const [table, indexes] of Object.entries(secondaryIndexes)) {
 		for (const [name, fn] of Object.entries(indexes)) {
-			rtx.createIndex({ table, name, fn })
+			db.createIndex({ table, name, fn })
 		}
 	}
-})
+}
 
 /*
 

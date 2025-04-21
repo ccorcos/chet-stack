@@ -7,22 +7,15 @@ TODO: this is more general than RecordDb but we're probably going to dump this a
 import { reifyFn } from "../reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"
-import { transact, tupleDb } from "./TupleDb"
-import {
-	BaseTupleOKV,
-	JSONValue,
-	ReadOnlyTupleDb,
-	ReadWriteTupleDb,
-	Tuple,
-	WriteArgs,
-} from "./types"
+import { tupleDb } from "./TupleDb"
+import { BaseTupleOKV, JSONValue, ReadOnlyTupleDb, Tuple, TupleDb, WriteArgs } from "./types"
 
 export type Index = {
 	id: string
 	order: number // secondary indexes are 0, tertiary indexes are 1.
 	range: Range<Tuple>
-	set: (tx: ReadWriteTupleDb, key: Tuple, value: JSONValue) => void
-	delete: (tx: ReadWriteTupleDb, key: Tuple) => void
+	set: (tx: TupleDb, key: Tuple, value: JSONValue) => void
+	delete: (tx: TupleDb, key: Tuple) => void
 }
 
 export type SerializedIndex = Omit<Index, "set" | "delete"> & { set: string; delete: string }
@@ -48,7 +41,7 @@ function getIndexes(internal: ReadOnlyTupleDb) {
 	return indexes
 }
 
-const writeAndIndex = transact((tx, args: WriteArgs<Tuple, JSONValue>) => {
+const writeAndIndex = (tx: TupleDb, args: WriteArgs<Tuple, JSONValue>) => {
 	const internal = tx.subspace(["_"])
 	const app = tx.subspace(["#"])
 
@@ -80,25 +73,25 @@ const writeAndIndex = transact((tx, args: WriteArgs<Tuple, JSONValue>) => {
 			}
 		}
 	}
-})
+}
 
-const buildIndex = transact((tx, index: Index) => {
-	const app = tx.subspace(["#"])
+const buildIndex = (db: TupleDb, index: Index) => {
+	const app = db.subspace(["#"])
 	for (const { key, value } of app.list(index.range)) {
 		index.set(app, key, value)
 	}
-})
+}
 
-const unbuildIndex = transact((tx, index: Index) => {
-	const app = tx.subspace(["#"])
+const unbuildIndex = (db: TupleDb, index: Index) => {
+	const app = db.subspace(["#"])
 	for (const { key } of app.list(index.range)) {
 		index.delete(app, key)
 	}
-})
+}
 
-const createIndex = transact((tx, index: Index) => {
-	buildIndex(tx, index)
-	const internal = tx.subspace(["_"])
+const createIndex = (db: TupleDb, index: Index) => {
+	buildIndex(db, index)
+	const internal = db.subspace(["_"])
 	const serialized: SerializedIndex = {
 		id: index.id,
 		order: index.order,
@@ -107,13 +100,13 @@ const createIndex = transact((tx, index: Index) => {
 		delete: index.delete.toString(),
 	}
 	internal.set(["index", index.id], serialized)
-})
+}
 
-const deleteIndex = transact((tx, index: Index) => {
-	unbuildIndex(tx, index)
-	const internal = tx.subspace(["_"])
+const deleteIndex = (db: TupleDb, index: Index) => {
+	unbuildIndex(db, index)
+	const internal = db.subspace(["_"])
 	internal.delete(["index", index.id])
-})
+}
 
 export function Indexable(base: BaseTupleOKV) {
 	const db = tupleDb(base)

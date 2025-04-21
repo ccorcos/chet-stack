@@ -12,8 +12,8 @@ Principle: records must be able to identify themselves (e.g. include table and i
 import * as t from "../DataType"
 import { formatError, validate } from "../DataType"
 import { reifyFn } from "../reifyFn"
-import { readOnlyTupleDb, transact, tupleDb } from "./TupleDb"
-import { BaseTupleOKV, ReadOnlyTupleDb, TupleTx } from "./types"
+import { readOnlyTupleDb, tupleDb } from "./TupleDb"
+import { BaseTupleOKV, ReadOnlyTupleDb, TupleDb } from "./types"
 
 const TableDefSchema = t.object({
 	table: t.string,
@@ -35,94 +35,94 @@ export type IndexDef = t.InferType<typeof IndexDefSchema>
 export type IndexFn = (value: any) => undefined | any[] | Generator<any[]>
 export type IndexDefArgs = { table: string; name: string; fn: IndexFn }
 
-export const setTable = transact((tx, tableDef: TableDef) => {
+export const setTable = (db: TupleDb, tableDef: TableDef) => {
 	const error = validate(TableDefSchema, tableDef)
 	if (error) throw new Error(`Invalid table schema: ${formatError(error)}`)
 
 	// Overwrite any existing table. It's up to the developer to ensure backwards compatible schema.
-	tx.set(["model", "table", tableDef.table], tableDef)
-})
+	db.set(["model", "table", tableDef.table], tableDef)
+}
 
-export const deleteTable = transact((tx, table: string) => {
+export const deleteTable = (db: TupleDb, table: string) => {
 	// Delete all table indexes
-	for (const { value } of tx.subspace(["model", "index", table]).list()) {
+	for (const { value } of db.subspace(["model", "index", table]).list()) {
 		const index = value as IndexDef
-		deleteIndex(tx, index)
+		deleteIndex(db, index)
 	}
 
 	// Delete all table records
-	const tableRecords = tx.subspace(["data", table])
+	const tableRecords = db.subspace(["data", table])
 	for (const { key } of tableRecords.list()) tableRecords.delete(key)
 
 	// Delete table schema
-	tx.delete(["model", "table", table])
-})
+	db.delete(["model", "table", table])
+}
 
 export const hasIndex = (db: ReadOnlyTupleDb, args: { table: string; name: string }) => {
 	return db.has(["model", "index", args.table, args.name])
 }
 
-export const createIndex = transact((tx, args: IndexDefArgs) => {
+export const createIndex = (db: TupleDb, args: IndexDefArgs) => {
 	const indexDef: IndexDef = { ...args, fn: args.fn.toString() }
 	const error = validate(IndexDefSchema, indexDef)
 	if (error) throw new Error(`Invalid index schema: ${formatError(error)}`)
 
-	if (hasIndex(tx, indexDef)) throw new Error(`Index ${indexDef.name} already exists`)
+	if (hasIndex(db, indexDef)) throw new Error(`Index ${indexDef.name} already exists`)
 
-	tx.set(["model", "index", indexDef.table, indexDef.name], indexDef)
-	buildIndex(tx, args)
-})
+	db.set(["model", "index", indexDef.table, indexDef.name], indexDef)
+	buildIndex(db, args)
+}
 
-const buildIndex = transact((tx, args: IndexDefArgs) => {
-	for (const { value } of tx.subspace(["data", args.table]).list()) indexRecord(tx, args, value)
-})
+const buildIndex = (db: TupleDb, args: IndexDefArgs) => {
+	for (const { value } of db.subspace(["data", args.table]).list()) indexRecord(db, args, value)
+}
 
-const indexRecord = transact((tx, args: IndexDefArgs, record: any) => {
+const indexRecord = (db: TupleDb, args: IndexDefArgs, record: any) => {
 	const indexKeys = args.fn(record)
 	if (!indexKeys) return
 	if (Array.isArray(indexKeys)) {
-		tx.set(["data", [args.table, args.name].join("."), ...indexKeys], null)
+		db.set(["data", [args.table, args.name].join("."), ...indexKeys], null)
 		return
 	}
 	for (const indexKey of indexKeys) {
-		tx.set(["data", [args.table, args.name].join("."), indexKey], null)
+		db.set(["data", [args.table, args.name].join("."), indexKey], null)
 	}
-})
+}
 
-export const deleteIndex = transact((tx, args: { table: string; name: string }) => {
-	unbuildIndex(tx, args)
-	tx.delete(["model", "index", args.table, args.name])
-})
+export const deleteIndex = (db: TupleDb, args: { table: string; name: string }) => {
+	unbuildIndex(db, args)
+	db.delete(["model", "index", args.table, args.name])
+}
 
-const unbuildIndex = transact((tx, args: { table: string; name: string }) => {
-	const index: IndexDef | undefined = tx.get(["model", "index", args.table, args.name])
+const unbuildIndex = (db: TupleDb, args: { table: string; name: string }) => {
+	const index: IndexDef | undefined = db.get(["model", "index", args.table, args.name])
 	if (!index) throw new Error(`Index ${args.name} not found`)
 	const fn = reifyFn(index.fn) as IndexFn
 
-	for (const { value } of tx.subspace(["data", args.table]).list())
-		unindexRecord(tx, { ...args, fn }, value)
-})
+	for (const { value } of db.subspace(["data", args.table]).list())
+		unindexRecord(db, { ...args, fn }, value)
+}
 
-const unindexRecord = transact((tx, args: IndexDefArgs, record: any) => {
+const unindexRecord = (db: TupleDb, args: IndexDefArgs, record: any) => {
 	const indexKeys = args.fn(record)
 	if (!indexKeys) return
 	if (Array.isArray(indexKeys)) {
-		tx.delete(["data", [args.table, args.name].join("."), ...indexKeys])
+		db.delete(["data", [args.table, args.name].join("."), ...indexKeys])
 		return
 	}
 	for (const indexKey of indexKeys) {
-		tx.delete(["data", [args.table, args.name].join("."), indexKey])
+		db.delete(["data", [args.table, args.name].join("."), indexKey])
 	}
-})
+}
 
 type ValidationMode = "strict" | "optional" | "none"
 
-const validateRecord = transact((tx, record: any, mode: ValidationMode = "strict") => {
+const validateRecord = (db: TupleDb, record: any, mode: ValidationMode = "strict") => {
 	if (!record.table) throw new Error("Record must have a table")
 	if (!record.id) throw new Error("Record must have an id")
 	if (mode === "none") return
 
-	const schema = tx.get(["model", "table", record.table])
+	const schema = db.get(["model", "table", record.table])
 	if (schema) {
 		const error = validate(schema.dataType, record)
 		if (!error) return
@@ -133,35 +133,35 @@ const validateRecord = transact((tx, record: any, mode: ValidationMode = "strict
 		throw new Error(`Table schema ${record.table} not found`)
 	}
 	// console.warn(`Table schema ${record.table} not found`)
-})
+}
 
-export const setRecord = transact((tx, record: any, mode: ValidationMode = "strict") => {
-	validateRecord(tx, record, mode)
+export const setRecord = (db: TupleDb, record: any, mode: ValidationMode = "strict") => {
+	validateRecord(db, record, mode)
 
 	// Overwrite.
-	deleteRecord(tx, record)
-	tx.set(["data", record.table, record.id], record)
+	deleteRecord(db, record)
+	db.set(["data", record.table, record.id], record)
 
 	// Run the indexers.
-	for (const { value } of tx.subspace(["model", "index", record.table]).list()) {
+	for (const { value } of db.subspace(["model", "index", record.table]).list()) {
 		const index: IndexDef = value
 		const fn = reifyFn(value.fn) as IndexFn
-		indexRecord(tx, { ...index, fn }, record)
+		indexRecord(db, { ...index, fn }, record)
 	}
-})
+}
 
-export const deleteRecord = transact((tx, args: { table: string; id: string }) => {
-	const existing = tx.get(["data", args.table, args.id])
+export const deleteRecord = (db: TupleDb, args: { table: string; id: string }) => {
+	const existing = db.get(["data", args.table, args.id])
 	if (!existing) return
 
-	for (const { value } of tx.subspace(["model", "index", args.table]).list()) {
+	for (const { value } of db.subspace(["model", "index", args.table]).list()) {
 		const index: IndexDef = value
 		const fn = reifyFn(value.fn) as IndexFn
-		unindexRecord(tx, { ...index, fn }, existing)
+		unindexRecord(db, { ...index, fn }, existing)
 	}
 
-	tx.delete(["data", args.table, args.id])
-})
+	db.delete(["data", args.table, args.id])
+}
 
 // TODO:
 // - id doesnt have to be a string.
@@ -176,23 +176,6 @@ export type RecordDb = {
 
 	model: ReadOnlyTupleDb
 	data: ReadOnlyTupleDb
-
-	transact: () => RecordTx
-}
-
-export type RecordTx = {
-	setTable: (tableDef: TableDef) => void
-	deleteTable: (table: string) => void
-	createIndex: (indexDef: IndexDefArgs) => void
-	deleteIndex: (args: { table: string; name: string }) => void
-	setRecord: (record: { table: string; id: string }) => void
-	deleteRecord: (args: { table: string; id: string }) => void
-
-	model: ReadOnlyTupleDb
-	data: ReadOnlyTupleDb
-
-	committed: boolean
-	commit: () => void
 }
 
 export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): RecordDb {
@@ -206,26 +189,6 @@ export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): R
 		deleteRecord: (args) => deleteRecord(db, args),
 		model: readOnlyTupleDb(db.subspace(["model"])),
 		data: readOnlyTupleDb(db.subspace(["data"])),
-		transact: () => recordTx(db.transact(), mode),
 	}
 	return recordDb
-}
-
-export function recordTx(tx: TupleTx, mode: ValidationMode = "strict"): RecordTx {
-	const recordTx: RecordTx = {
-		setTable: (args) => setTable(tx, args),
-		deleteTable: (args) => deleteTable(tx, args),
-		createIndex: (args) => createIndex(tx, args),
-		deleteIndex: (args) => deleteIndex(tx, args),
-		setRecord: (args) => setRecord(tx, args, mode),
-		deleteRecord: (args) => deleteRecord(tx, args),
-		model: readOnlyTupleDb(tx.subspace(["model"])),
-		data: readOnlyTupleDb(tx.subspace(["data"])),
-		get committed() {
-			return tx.committed
-		},
-		commit: tx.commit,
-	}
-
-	return recordTx
 }

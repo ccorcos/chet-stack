@@ -8,16 +8,7 @@ import {
 	ValueEncodeOKV,
 } from "./Encoder"
 import { Transaction } from "./Transaction"
-import {
-	BaseOKV,
-	BaseTupleOKV,
-	BaseTupleOKVTx,
-	ReadOnlyTupleDb,
-	ReadWriteTupleDb,
-	Tuple,
-	TupleDb,
-	TupleTx,
-} from "./types"
+import { BaseOKV, BaseTupleOKV, ReadOnlyTupleDb, Tuple, TupleDb, TupleTx } from "./types"
 
 export function tupleOkv(okv: BaseOKV<string, string>): BaseTupleOKV {
 	return ValueEncodeOKV(KeyEncodeOKV(okv, codec), {
@@ -55,19 +46,6 @@ export function tupleDb(db: BaseTupleOKV): TupleDb {
 		set: (key, value) => db.write({ set: [{ key, value }] }),
 		delete: (key) => db.write({ delete: [key] }),
 		subspace: (prefix) => tupleDb(subspace(db, prefix)),
-		transact: () => {
-			const tx = new Transaction(db)
-			const { list, write, ...rest } = tupleTx(tx)
-			return {
-				...rest,
-				list: tx.list,
-				write: tx.write,
-				commit: tx.commit,
-				get committed() {
-					return tx.committed
-				},
-			}
-		},
 	}
 }
 
@@ -76,48 +54,17 @@ export function readOnlyTupleDb(db: TupleDb | TupleTx): ReadOnlyTupleDb {
 	return { compare, list, get, has, subspace: (args) => readOnlyTupleDb(db.subspace(args)) }
 }
 
-export function tupleTx(tx: BaseTupleOKVTx): TupleTx {
-	const { compare, list, write, commit } = tx
+export function tupleTx(db: BaseTupleOKV): TupleTx {
+	const baseTx = new Transaction(db)
+	const sugar = tupleDb(baseTx)
 	return {
-		compare,
-		list,
-		write,
-		commit,
+		...sugar,
+		compare: baseTx.compare,
+		list: baseTx.list,
+		write: baseTx.write,
+		commit: baseTx.commit,
 		get committed() {
-			return tx.committed
+			return baseTx.committed
 		},
-		get: (key) => tx.list({ gte: key, lte: key }).at(0)?.value,
-		has: (key) => tx.list({ gte: key, lte: key }).length > 0,
-		set: (key, value) => tx.write({ set: [{ key, value }] }),
-		delete: (key) => tx.write({ delete: [key] }),
-		subspace: (prefix) =>
-			tupleTx({
-				commit: () => {
-					throw new Error("The transaction cannot be committed by a transaction subspace.")
-				},
-				get committed() {
-					return tx.committed
-				},
-				...subspace(tx, prefix),
-			}),
-	}
-}
-
-function isDb(tx: TupleDb | ReadWriteTupleDb): tx is TupleDb {
-	return "transact" in tx
-}
-
-/**
- * Helper function writing composable transactions.
- */
-export function transact<I extends any[], O>(fn: (tx: ReadWriteTupleDb, ...args: I) => O) {
-	return (tx: TupleDb | ReadWriteTupleDb, ...args: I) => {
-		if (!isDb(tx)) return fn(tx, ...args)
-
-		const { commit, ...rest } = tx.transact()
-		const result = fn(rest, ...args)
-		commit()
-
-		return result
 	}
 }

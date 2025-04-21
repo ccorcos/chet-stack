@@ -2,7 +2,8 @@ import { strict as assert } from "assert"
 import { describe, it } from "mocha"
 import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { transact, tupleDb } from "./TupleDb"
+import { tupleDb, tupleTx } from "./TupleDb"
+import { TupleDb } from "./types"
 
 describe("TupleDb", () => {
 	it("tupledb subspace", () => {
@@ -28,7 +29,7 @@ describe("TupleDb", () => {
 	it("tupledb transact basics", () => {
 		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
 
-		const tx = db.transact()
+		const tx = tupleTx(db)
 		tx.set(["foo"], "bar")
 		assert.equal(tx.get(["foo"]), "bar")
 		assert.equal(db.get(["foo"]), undefined)
@@ -44,11 +45,10 @@ describe("TupleDb", () => {
 	it("tupledb transact then subspace", () => {
 		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
 
-		const tx = db.transact()
+		const tx = tupleTx(db)
 		const person = tx.subspace(["person"])
 		person.set([0], "chet")
 		person.set([1], "simon")
-		assert.throws(() => person.commit())
 
 		assert.equal(person.get([0]), "chet")
 		assert.equal(person.get([1]), "simon")
@@ -66,7 +66,7 @@ describe("TupleDb", () => {
 		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
 		const person = db.subspace(["person"])
 
-		const tx = person.transact()
+		const tx = tupleTx(person)
 		tx.set([0], "chet")
 		tx.set([1], "simon")
 
@@ -92,16 +92,16 @@ describe("TupleDb", () => {
 	it("transact composition", () => {
 		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
 
-		const createPerson = transact((tx, person: { name: string; age: number }) => {
+		const createPerson = (tx: TupleDb, person: { name: string; age: number }) => {
 			const people = tx.subspace(["people"])
 			people.set(["name", person.name], null)
 			people.set(["age", person.age], null)
-		})
+		}
 
-		const createPersonTwoPlaces = transact((tx, person: { name: string; age: number }) => {
+		const createPersonTwoPlaces = (tx: TupleDb, person: { name: string; age: number }) => {
 			createPerson(tx.subspace(["A"]), person)
 			createPerson(tx.subspace(["B"]), person)
-		})
+		}
 
 		createPersonTwoPlaces(db, { name: "chet", age: 30 })
 
