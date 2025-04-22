@@ -91,6 +91,10 @@ export interface OrDataType<T extends DataType> {
 	options: Array<T>
 }
 
+export interface DataTypeDataType {
+	type: "dataType"
+}
+
 export type DataType =
 	| NullDataType
 	| UndefinedDataType
@@ -105,6 +109,7 @@ export type DataType =
 	| MapDataType<DataType>
 	| ObjectDataType<{ [key: string]: DataType | Optional<DataType> }>
 	| OrDataType<DataType>
+	| DataTypeDataType
 
 // ============================================================================
 // Type Inference
@@ -151,6 +156,8 @@ export type InferType<T extends DataType> = T extends NullDataType
 	? InferType<U>
 	: T extends AnyDataType<infer U>
 	? U
+	: T extends DataTypeDataType
+	? DataType
 	: never
 
 // ============================================================================
@@ -164,6 +171,10 @@ export const datetime: DatetimeDataType = { type: "datetime" }
 export const number: NumberDataType = { type: "number" }
 export const boolean: BooleanDataType = { type: "boolean" }
 export const any: AnyDataType = { type: "any" }
+
+// It's important we don't actually use dataTypeDataType externally because it is circular
+// and will not serialize.
+export const dataType: DataTypeDataType = { type: "dataType" }
 
 export function literal<T extends string | number | boolean>(value: T): LiteralDataType<T> {
 	return { type: "literal", value }
@@ -395,6 +406,9 @@ const Validators: {
 			children: errors,
 		}
 	},
+	dataType: (dataType, value) => {
+		return validate(dataTypeDataType, value)
+	},
 }
 
 export function validate<T extends DataType>(dataType: T, value: any): ValidateError | undefined {
@@ -471,6 +485,7 @@ const Inspectors: {
 		" }",
 	any: (dataType) => "any",
 	or: (dataType) => dataType.options.map(inspect).join(" | "),
+	dataType: (dataType) => "DataType",
 }
 
 export function inspect<T extends DataType>(dataType: T): string {
@@ -481,9 +496,9 @@ export function inspect<T extends DataType>(dataType: T): string {
 // DataType DataType.
 // ============================================================================
 
-// We're going to mutate this array to avoid circular references.
-// TODO: we should make a dataType that's just {type: "dataType"} so that it can be serialized.
-export const dataType: OrDataType<DataType> = { type: "or", options: [] }
+// We're going to mutate this array to avoid circular references. This type cannot be
+// serialized so use {type: "dataType"} instead.
+const dataTypeDataType: OrDataType<DataType> = { type: "or", options: [] }
 
 const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	null: object({ type: literal("null") }),
@@ -499,25 +514,28 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	}),
 	array: object({
 		type: literal("array"),
-		items: dataType,
+		items: dataTypeDataType,
 	}),
 	tuple: object({
 		type: literal("tuple"),
-		items: array(dataType),
+		items: array(dataTypeDataType),
 	}),
 	map: object({
 		type: literal("map"),
-		items: dataType,
+		items: dataTypeDataType,
 	}),
 	object: object({
 		type: literal("object"),
-		properties: map(or(dataType, object({ type: literal("optional"), value: dataType }))),
+		properties: map(
+			or(dataTypeDataType, object({ type: literal("optional"), value: dataTypeDataType }))
+		),
 		strict: boolean,
 	}),
 	or: object({
 		type: literal("or"),
-		options: array(dataType),
+		options: array(dataTypeDataType),
 	}),
+	dataType: object({ type: literal("dataType") }),
 }
 
-for (const value of Object.values(dataTypeDataTypes)) dataType.options.push(value)
+for (const value of Object.values(dataTypeDataTypes)) dataTypeDataType.options.push(value)
