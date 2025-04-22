@@ -32,9 +32,12 @@ function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
 			return api.write(KeyEncodeWrite(args[0], encoder))
 		}
 
-		if (key === "writeRecords") {
-			const subspace = args[0].subspace ?? []
-			return api.writeRecords({ ...args[0], subspace: [...subspace, ...prefix] })
+		if (key === "writeRecordDb") {
+			const { subspace, operations } = args[0]
+			return api.writeRecordDb({
+				operations,
+				subspace: [...prefix, ...(subspace ?? [])],
+			})
 		}
 
 		const fn = api[key] as any

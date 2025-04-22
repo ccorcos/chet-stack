@@ -192,3 +192,19 @@ export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): R
 	}
 	return recordDb
 }
+
+export type RecordDbOperation =
+	| { type: "setRecord"; args: { table: string; id: string } }
+	| { type: "deleteRecord"; args: { table: string; id: string } }
+	| { type: "createIndex"; args: IndexDef }
+	| { type: "deleteIndex"; args: { table: string; name: string } }
+	| { type: "setTable"; args: TableDef }
+	| { type: "deleteTable"; args: string }
+
+export function applyRecordDbOperation(db: RecordDb, op: RecordDbOperation) {
+	if (op.type === "createIndex") {
+		return db.createIndex({ ...op.args, fn: reifyFn(op.args.fn) })
+	} else {
+		return db[op.type](op.args)
+	}
+}
