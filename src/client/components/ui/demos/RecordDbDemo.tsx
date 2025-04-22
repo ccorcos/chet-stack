@@ -1,54 +1,145 @@
-import { once } from "lodash"
-import React, { useState } from "react"
-import { recordDb } from "../../../../shared/database/RecordDb"
+import React, { useLayoutEffect, useState } from "react"
+import {
+	applyRecordDbOperation,
+	recordDb,
+	RecordDbOperation,
+	TableDef,
+} from "../../../../shared/database/RecordDb"
 import { Transaction } from "../../../../shared/database/Transaction"
 import { tupleTx } from "../../../../shared/database/TupleDb"
-import { BaseOKVCache, JSONValue, Tuple } from "../../../../shared/database/types"
 import * as t from "../../../../shared/DataType"
 import { randomId } from "../../../../shared/randomId"
 import { useGet, useList } from "../../../hooks/useDatabase"
 import { useClientEnvironment } from "../../../services/ClientEnvironment"
+import { Subspace } from "../../Subspace"
 import { Button } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { Input } from "../Input"
-
-const init = once((cache: BaseOKVCache<Tuple, JSONValue>) => {
-	const tx = tupleTx(
-		new Transaction({
-			compare: cache.compare,
-			list: cache.listRaw,
-			write: (args) => {
-				const finalize = cache.write(args)
-				finalize()
-			},
-		})
-	)
-
-	const rdb = recordDb(tx)
-
-	rdb.setTable({
-		table: "person",
-		dataType: t.object({ id: t.string, table: t.literal("person"), name: t.string, age: t.number }),
-	})
-
-	rdb.createIndex({
-		table: "person",
-		name: "byName",
-		fn: (value) => [value.name, value.id],
-	})
-
-	rdb.createIndex({
-		table: "person",
-		name: "byAge",
-		fn: (value) => [value.age, value.id],
-	})
-
-	tx.commit()
-})
+import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
+import { ListBox, ListItem, useListBox } from "../ListBox"
 
 export function RecordDbDemo() {
+	return (
+		<Subspace prefix={["RecordDbDemo"]}>
+			<RecordDb />
+		</Subspace>
+	)
+}
+
+function RecordDb() {
+	const { localResult } = useList({
+		gt: ["model", "table"],
+		lt: ["model", "table", null],
+	})
+
+	const result = localResult.hit || localResult.prefix
+	const tables = result?.map((item) => item.value as TableDef)
+	const [selected, setSelected] = useState<TableDef[]>([])
+	useLayoutEffect(() => {
+		if (tables && tables.length > 0) setSelected([tables[0]])
+	}, [Boolean(tables)])
+
+	return (
+		<Layout
+			LeftPanel={
+				<LeftPanelLayout className="layer" style={{ padding: 8 }}>
+					{tables ? (
+						<TableList tables={tables} selected={selected} setSelected={setSelected} />
+					) : (
+						<div>Loading...</div>
+					)}
+				</LeftPanelLayout>
+			}
+		>
+			<ContentLayout style={{ padding: 8 }}>
+				{selected.length > 0 && <TableEditor table={selected[0]} />}
+			</ContentLayout>
+		</Layout>
+	)
+}
+
+function TableEditor(props: { table: TableDef }) {
+	const { table } = props
+	// TODO: dataType editor.
+	return <div>TableEditor</div>
+}
+
+function useWriteRecordDb() {
 	const { api, cache } = useClientEnvironment()
-	init(cache)
+
+	return async (operations: RecordDbOperation[]) => {
+		// Optimistic update.
+		let finalize: any
+		const tx = tupleTx(
+			new Transaction({
+				compare: cache.compare,
+				list: cache.listRaw,
+				write: (args) => {
+					finalize = cache.write(args)
+				},
+			})
+		)
+		const rdb = recordDb(tx)
+		for (const operation of operations) applyRecordDbOperation(rdb, operation)
+		tx.commit()
+
+		const promise = api.writeRecordDb({ operations })
+		promise.then(finalize)
+		return await promise
+	}
+}
+
+function TableList(props: {
+	tables: TableDef[]
+	selected: TableDef[]
+	setSelected: (selected: TableDef[]) => void
+}) {
+	const { tables, selected, setSelected } = props
+
+	const { onClick, onKeyDown } = useListBox({
+		list: tables,
+		selected,
+		setSelected,
+		multiselect: true,
+	})
+
+	const write = useWriteRecordDb()
+
+	const handleNewTable = () => {
+		const table: TableDef = { table: "Untitled " + randomId(), dataType: t.any }
+		write([{ type: "setTable", args: table }])
+		setSelected([table])
+	}
+
+	return (
+		<ListBox
+			onClick={onClick}
+			onKeyDown={onKeyDown}
+			style={{ display: "flex", flexDirection: "column", gap: 4 }}
+		>
+			{tables.map((table) => (
+				<ListItem
+					key={table.table}
+					item={table}
+					selected={selected.includes(table)}
+					style={{ padding: 4, borderRadius: 4 }}
+				>
+					{table.table.startsWith("Untitled ") ? (
+						<span style={{ color: "var(--fg1)" }}>Untitled</span>
+					) : (
+						table.table
+					)}
+				</ListItem>
+			))}
+			<div>
+				<Button onClick={handleNewTable}>New Table</Button>
+			</div>
+		</ListBox>
+	)
+}
+
+export function RecordDbDemoOld() {
+	const { api, cache } = useClientEnvironment()
 
 	const [draft, setDraft] = useState<{ name: string; age: number }>({ name: "", age: -1 })
 	const [state, setState] = useState<"byId" | "byName" | "byAge">("byId")
@@ -100,7 +191,7 @@ export function RecordDbDemo() {
 						tx.commit()
 						setDraft({ name: "", age: -1 })
 
-						const promise = api.writeRecords({ set: [record] })
+						const promise = api.writeRecordDb({ operations: [{ type: "setRecord", args: record }] })
 						promise.then(finalize)
 					}}
 				>

@@ -22,8 +22,10 @@ function useIsVisible(show: boolean) {
 
 export const TopbarLayout = passthroughRef(_TopbarLayout)
 
-function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
-	const { show, ...rest } = props
+function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+	const { show: _show, ...rest } = props
+	const show = _show ?? true
+
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
 	return (
@@ -60,8 +62,10 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) 
 
 export const BottombarLayout = passthroughRef(_BottombarLayout)
 
-function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
-	const { show, ...rest } = props
+function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+	const { show: _show, ...rest } = props
+	const show = _show ?? true
+
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
 	return (
@@ -99,8 +103,10 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 
 export const LeftPanelLayout = passthroughRef(_LeftPanelLayout)
 
-function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
-	const { show, ...rest } = props
+function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+	const { show: _show, ...rest } = props
+	const show = _show ?? true
+
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
 	return (
@@ -137,8 +143,10 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean 
 }
 export const RightPanelLayout = passthroughRef(_RightPanelLayout)
 
-function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show: boolean }) {
-	const { show, ...rest } = props
+function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+	const { show: _show, ...rest } = props
+	const show = _show ?? true
+
 	const { isVisible, handleTransitionEnd } = useIsVisible(show)
 
 	return (

@@ -48,7 +48,7 @@ function Demo(props: { params: Record<string, string> }) {
 		setColumnWidths(newWidths)
 	}
 
-	console.log("list", list)
+	// console.log("list", list)
 	const backgroundColor = loadingUp
 		? "red"
 		: loadingDown
