@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 import { describe, it } from "mocha"
-import * as t from "../DataType"
+import * as t from "./DataType"
 import {
 	ArrayDataType,
 	BooleanDataType,
@@ -15,8 +15,8 @@ import {
 	StringDataType,
 	TupleDataType,
 	UndefinedDataType,
-} from "../DataType"
-import { Assert } from "../typeHelpers"
+} from "./DataType"
+import { Assert } from "./typeHelpers"
 
 // InferType tests.
 type InferTests =
@@ -29,6 +29,8 @@ type InferTests =
 	| Assert<InferType<LiteralDataType<"hello">>, "hello">
 	| Assert<InferType<LiteralDataType<true>>, true>
 	| Assert<InferType<LiteralDataType<string>>, string>
+	| Assert<InferType<t.AnyDataType>, any>
+	| Assert<InferType<t.AnyDataType<string>>, string>
 	| Assert<InferType<ArrayDataType<StringDataType>>, Array<string>>
 	| Assert<InferType<ArrayDataType<NumberDataType>>, Array<number>>
 	| Assert<

@@ -81,8 +81,9 @@ export interface ObjectDataType<T extends { [key: string]: DataType | Optional<D
 	strict: boolean
 }
 
-export interface AnyDataType {
+export interface AnyDataType<T = any> {
 	type: "any"
+	_type?: T // Phantom type, doesn't actually exist.
 }
 
 export interface OrDataType<T extends DataType> {
@@ -148,6 +149,8 @@ export type InferType<T extends DataType> = T extends NullDataType
 	? InferObject<U>
 	: T extends OrDataType<infer U>
 	? InferType<U>
+	: T extends AnyDataType<infer U>
+	? U
 	: never
 
 // ============================================================================
