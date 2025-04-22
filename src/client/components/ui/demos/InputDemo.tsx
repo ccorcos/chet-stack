@@ -25,6 +25,10 @@ export function InputDemo() {
 			<Input type="number" placeholder="123" />
 			<div>Date Input</div>
 			<Input type="date" placeholder="2024-01-01" />
+			<div>Checkbox Input</div>
+			<div>
+				<Input type="checkbox" />
+			</div>
 			<div>Naked Input</div>
 			<NakedInput type="text" placeholder="Hello" />
 			<div>Slider Input</div>
