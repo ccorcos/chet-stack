@@ -26,35 +26,59 @@ const initialTypes: { [T in t.DataType["type"]]: Extract<t.DataType, { type: T }
 }
 
 export function DataTypeInputDemo() {
-	const [dataType, setDataType] = useState<t.DataType>(t.any)
-	return <DataTypeInput dataType={dataType} onChange={setDataType} />
+	const [dataType, setDataType] = useState<t.DataType>(t.object({}))
+	return (
+		<div style={{ padding: 8 }}>
+			<DataTypeInput dataType={dataType} onChange={setDataType} />
+		</div>
+	)
 }
 
 function DataTypeInput(props: { dataType: t.DataType; onChange: (dataType: t.DataType) => void }) {
 	const { dataType } = props
 
-	return (
-		<div>
-			<DataTypeTypeInput
-				type={dataType.type}
-				onChange={(type) => props.onChange(initialTypes[type])}
-			/>
-			{dataType.type === "literal" && (
-				<LiteralDataTypeInput dataType={dataType} onChange={props.onChange} />
-			)}
-			{dataType.type === "map" && (
-				<MapDataTypeInput dataType={dataType} onChange={props.onChange} />
-			)}
+	const extra = (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: 8,
+				paddingLeft: 8,
+				marginLeft: 7,
+				borderLeft: "1px solid var(--border)",
+			}}
+		>
 			{dataType.type === "object" && (
 				<ObjectDataTypeInput dataType={dataType} onChange={props.onChange} />
 			)}
-			{dataType.type === "array" && (
-				<ArrayDataTypeInput dataType={dataType} onChange={props.onChange} />
-			)}
+
 			{dataType.type === "tuple" && (
 				<TupleDataTypeInput dataType={dataType} onChange={props.onChange} />
 			)}
 			{dataType.type === "or" && <OrDataTypeInput dataType={dataType} onChange={props.onChange} />}
+		</div>
+	)
+
+	const hasExtra = extra.props.children.filter(Boolean).length > 0
+
+	return (
+		<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+			<div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+				<DataTypeTypeInput
+					type={dataType.type}
+					onChange={(type) => props.onChange(initialTypes[type])}
+				/>
+				{dataType.type === "literal" && (
+					<LiteralDataTypeInput dataType={dataType} onChange={props.onChange} />
+				)}
+				{dataType.type === "map" && (
+					<MapDataTypeInput dataType={dataType} onChange={props.onChange} />
+				)}
+				{dataType.type === "array" && (
+					<ArrayDataTypeInput dataType={dataType} onChange={props.onChange} />
+				)}
+			</div>
+			{hasExtra && extra}
 		</div>
 	)
 }
@@ -65,6 +89,7 @@ function DataTypeTypeInput(props: {
 }) {
 	return (
 		<ComboBoxSelect
+			style={{ width: 110 }}
 			items={Object.keys(initialTypes)}
 			value={props.type}
 			onChange={(type) => props.onChange(type as t.DataType["type"])}
@@ -82,6 +107,7 @@ function LiteralDataTypeInput(props: {
 	return (
 		<>
 			<ComboBoxSelect
+				style={{ width: 110 }}
 				items={["string", "number", "boolean"]}
 				value={typeof dataType.value}
 				onChange={(type) => {
@@ -130,14 +156,10 @@ function MapDataTypeInput(props: {
 	const { dataType } = props
 
 	return (
-		<div>
-			{"{[key: string]: "}
-			<DataTypeInput
-				dataType={dataType.items}
-				onChange={(dataType) => props.onChange({ type: "map", items: dataType })}
-			/>
-			{"}"}
-		</div>
+		<DataTypeInput
+			dataType={dataType.items}
+			onChange={(dataType) => props.onChange({ type: "map", items: dataType })}
+		/>
 	)
 }
 
@@ -171,33 +193,28 @@ function ObjectDataTypeInput(props: {
 
 	const propertyInputs = Object.entries(dataType.properties).map(([key, value], index) => {
 		return (
-			<div key={index}>
+			<div
+				key={index}
+				style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}
+			>
+				<Button
+					onClick={() => {
+						const properties = { ...dataType.properties }
+						delete properties[key]
+						props.onChange({ type: "object", properties, strict: dataType.strict })
+					}}
+				>
+					X
+				</Button>
 				<Input
 					value={key}
+					style={{ width: 160, alignSelf: "flex-start" }}
 					onChange={(event) => {
 						props.onChange({
 							type: "object",
 							properties: updateKey(key, event.target.value),
 							strict: dataType.strict,
 						})
-					}}
-				/>
-				<DataTypeInput
-					dataType={value.type === "optional" ? value.value : value}
-					onChange={(newDataType) => {
-						if (value.type === "optional") {
-							props.onChange({
-								type: "object",
-								properties: updateValue(key, t.optional(newDataType)),
-								strict: dataType.strict,
-							})
-						} else {
-							props.onChange({
-								type: "object",
-								properties: updateValue(key, newDataType),
-								strict: dataType.strict,
-							})
-						}
 					}}
 				/>
 				<Input
@@ -220,15 +237,26 @@ function ObjectDataTypeInput(props: {
 						}
 					}}
 				/>
-				<Button
-					onClick={() => {
-						const properties = { ...dataType.properties }
-						delete properties[key]
-						props.onChange({ type: "object", properties, strict: dataType.strict })
-					}}
-				>
-					Remove
-				</Button>
+				<div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+					<DataTypeInput
+						dataType={value.type === "optional" ? value.value : value}
+						onChange={(newDataType) => {
+							if (value.type === "optional") {
+								props.onChange({
+									type: "object",
+									properties: updateValue(key, t.optional(newDataType)),
+									strict: dataType.strict,
+								})
+							} else {
+								props.onChange({
+									type: "object",
+									properties: updateValue(key, newDataType),
+									strict: dataType.strict,
+								})
+							}
+						}}
+					/>
+				</div>
 			</div>
 		)
 	})
@@ -245,33 +273,41 @@ function ObjectDataTypeInput(props: {
 	}
 
 	return (
-		<div>
-			{"{"}
+		<>
 			{propertyInputs}
-			{draft === undefined ? (
-				<Button onClick={() => setDraft("")}>New Property</Button>
-			) : (
-				<div>
-					<Input
-						value={draft}
-						onChange={(event) => setDraft(event.target.value)}
-						onBlur={handleNewProperty}
-						onKeyDown={(event) => {
-							if (event.key === "Enter") handleNewProperty()
-						}}
-					/>
-				</div>
-			)}
-			{"}"}
 			<div>
-				Strict:{" "}
+				{draft === undefined ? (
+					<Button onClick={() => setDraft("")}>New Property</Button>
+				) : (
+					<div>
+						<Input
+							style={{ width: 160 }}
+							value={draft}
+							onChange={(event) => setDraft(event.target.value)}
+							onBlur={handleNewProperty}
+							onKeyDown={(event) => {
+								if (event.key === "Enter") handleNewProperty()
+							}}
+						/>
+					</div>
+				)}
+			</div>
+			<div
+				style={{
+					display: "flex",
+					flexDirection: "row",
+					gap: 8,
+					alignItems: "center",
+				}}
+			>
+				<div>Strict:</div>
 				<Input
 					type="checkbox"
 					checked={dataType.strict}
 					onChange={(event) => props.onChange({ ...dataType, strict: event.target.checked })}
 				/>
 			</div>
-		</div>
+		</>
 	)
 }
 
@@ -282,14 +318,10 @@ function ArrayDataTypeInput(props: {
 	const { dataType } = props
 
 	return (
-		<div>
-			{"["}
-			<DataTypeInput
-				dataType={dataType.items}
-				onChange={(dataType) => props.onChange({ type: "array", items: dataType })}
-			/>
-			{"]"}
-		</div>
+		<DataTypeInput
+			dataType={dataType.items}
+			onChange={(dataType) => props.onChange({ type: "array", items: dataType })}
+		/>
 	)
 }
 
@@ -316,17 +348,20 @@ function TupleDataTypeInput(props: {
 	}
 
 	return (
-		<div>
-			{"["}
+		<>
 			{dataType.items.map((item, index) => (
-				<div key={index}>
+				<div
+					key={index}
+					style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}
+				>
+					<Button onClick={() => removeItem(index)}>x</Button>
 					<DataTypeInput dataType={item} onChange={(dataType) => updateItem(index, dataType)} />
-					<Button onClick={() => removeItem(index)}>Remove</Button>
 				</div>
 			))}
-			<Button onClick={addItem}>Add Item</Button>
-			{"]"}
-		</div>
+			<div>
+				<Button onClick={addItem}>Add Item</Button>
+			</div>
+		</>
 	)
 }
 
@@ -354,17 +389,19 @@ function OrDataTypeInput(props: {
 	}
 
 	return (
-		<div>
+		<>
 			{dataType.options.map((option, index) => (
-				<div key={index}>
+				<div
+					key={index}
+					style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}
+				>
+					{dataType.options.length > 2 && <Button onClick={() => removeOption(index)}>x</Button>}
 					<DataTypeInput dataType={option} onChange={(dataType) => updateOption(index, dataType)} />
-					{index < dataType.options.length - 1 && " | "}
-					{dataType.options.length > 2 && (
-						<Button onClick={() => removeOption(index)}>Remove</Button>
-					)}
 				</div>
 			))}
-			<Button onClick={addOption}>Add Option</Button>
-		</div>
+			<div>
+				<Button onClick={addOption}>Add Option</Button>
+			</div>
+		</>
 	)
 }

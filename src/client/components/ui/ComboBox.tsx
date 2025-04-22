@@ -42,6 +42,7 @@ export function ComboBoxSelect<T extends string>(props: {
 					setOpen(false)
 				}}
 				Input={props.Input}
+				style={props.style}
 			/>
 		)
 	} else {
@@ -146,6 +147,7 @@ export function ComboBox(props: {
 	autoFocus?: boolean
 	notice?: React.ReactNode
 	Input?: React.FC<JSX.IntrinsicElements["input"]>
+	style?: React.CSSProperties
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const args = useComboBox(props)
@@ -157,7 +159,7 @@ export function ComboBox(props: {
 	const ComboInput = props.Input ?? Input
 	return (
 		<>
-			<ComboInput ref={inputRef} {...args.inputProps} />
+			<ComboInput ref={inputRef} {...args.inputProps} style={props.style} />
 			<Popup
 				open={args.focused && args.resultsProps.filteredItems.length > 0}
 				anchor={inputRef.current}
