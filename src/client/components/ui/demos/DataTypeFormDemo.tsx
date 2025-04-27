@@ -1,16 +1,7 @@
-import {
-	cloneDeep,
-	get,
-	isArray,
-	isBoolean,
-	isEqual,
-	isNumber,
-	isPlainObject,
-	isString,
-	set,
-} from "lodash"
-import React, { useState } from "react"
+import { get, isArray, isBoolean, isEqual, isNumber, isPlainObject, isString } from "lodash"
+import React, { useMemo, useState } from "react"
 import * as t from "../../../../shared/DataType"
+import { parseDate } from "../../../../shared/dateHelpers"
 import { unreachable } from "../../../../shared/typeHelpers"
 import { Button } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
@@ -20,13 +11,13 @@ export function DataTypeFormDemo() {
 	const [dataType, setDataType] = useState<t.DataType>(
 		t.object({
 			string: t.string,
-			literal: t.optional(t.literal("hello")),
-			map: t.map(t.number),
-			array: t.array(
-				t.object({
-					nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
-				})
-			),
+			// literal: t.optional(t.literal("hello")),
+			map: t.map(t.or(t.number, t.string)),
+			// array: t.array(
+			// 	t.object({
+			// 		nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
+			// 	})
+			// ),
 		})
 	)
 
@@ -36,11 +27,16 @@ export function DataTypeFormDemo() {
 		<div style={{ padding: 8, display: "flex", flexDirection: "row", gap: 8 }}>
 			{/* <div style={{ whiteSpace: "pre", fontSize: 12 }}>{JSON.stringify(dataType, null, 2)}</div> */}
 			<DataTypeForm dataType={dataType} value={value} onChange={setValue} />
+			{/* <DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={setDataType} /> */}
 		</div>
 	)
 }
 
-function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (value: any) => void }) {
+export function DataTypeForm(props: {
+	dataType: t.DataType
+	value: any
+	onChange: (value: any) => void
+}) {
 	const { dataType, value, onChange } = props
 
 	switch (dataType.type) {
@@ -50,7 +46,7 @@ function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (valu
 		case "undefined":
 			return <span>{dataType.type}</span>
 		case "literal":
-			return <span>{dataType.value}</span>
+			return <span>literal: {dataType.value}</span>
 
 		case "string": {
 			let str = ""
@@ -109,17 +105,25 @@ function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (valu
 			return (
 				<div>
 					<span>{"["}</span>
-					{items.map((item) => (
-						<DataTypeForm
-							dataType={dataType.items}
-							value={item}
-							onChange={(newItem) => {
-								onChange(items.map((x) => (x === item ? newItem : x)))
-							}}
-						/>
-						// Delete Item
+					{items.map((item, index) => (
+						<div>
+							<DataTypeForm
+								dataType={dataType.items}
+								value={item}
+								onChange={(newItem) => {
+									onChange(items.map((x) => (x === item ? newItem : x)))
+								}}
+							/>
+							<Button
+								onClick={() => {
+									onChange(items.filter((x, i) => i !== index))
+								}}
+							>
+								Delete
+							</Button>
+						</div>
 					))}
-					<Button>NewItem</Button>
+					<Button>New Item</Button>
 					<span>{"]"}</span>
 				</div>
 			)
@@ -158,7 +162,7 @@ function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (valu
 			return (
 				<div>
 					{Object.entries(obj).map(([key, value]) => (
-						<div>
+						<div style={{ display: "flex" }}>
 							<Input
 								value={key}
 								onChange={(event) => {
@@ -195,7 +199,7 @@ function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (valu
 					))}
 					<Button
 						onClick={() => {
-							const newObj = Object.fromEntries(Object.entries(obj).concat(["", undefined]))
+							const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
 							onChange(newObj)
 						}}
 					>
@@ -233,28 +237,113 @@ function DataTypeForm(props: { dataType: t.DataType; value: any; onChange: (valu
 		}
 
 		case "or": {
-			const [discriminatingKey, discriminatingOptions] = discriminateDataTypes(dataType.options)
-			const validDt = dataType.options.filter((dt) => t.validate(dt, value) === undefined)
-
-			const currentDt = validDt[0] || dataType.options[0]
-
-			return (
-				<ComboBoxSelect
-					style={{ width: 110 }}
-					items={discriminatingOptions}
-					value={get(currentDt, discriminatingKey)}
-					onChange={(newValue) => {
-						// Force it to conform to the new type, and everything else gets coerced in the UI.
-						const newObj = set(cloneDeep(value), discriminatingKey, newValue)
-						onChange(newObj)
-					}}
-					placeholder="Select type..."
-				/>
-			)
+			return <OrDataTypeForm dataType={dataType} value={value} onChange={onChange} />
 		}
 
 		default:
 			throw unreachable(dataType)
+	}
+}
+
+function OrDataTypeForm(props: {
+	dataType: t.OrDataType<t.DataType>
+	value: any
+	onChange: (newValue: any) => void
+}) {
+	const { dataType, value, onChange } = props
+
+	const { initialDt, discriminatingKey, discriminatingOptions } = useMemo(() => {
+		const [discriminatingKey, discriminatingOptions] = discriminateDataTypes(dataType.options)
+		const validDt = dataType.options.filter((dt) => t.validate(dt, value) === undefined)
+		return {
+			discriminatingKey,
+			discriminatingOptions,
+			initialDt: validDt[0] || dataType.options[0],
+		}
+	}, [props.dataType])
+
+	const [currentDt, setCurrentDt] = useState(initialDt)
+
+	return (
+		<>
+			<ComboBoxSelect
+				style={{ width: 110 }}
+				items={discriminatingOptions}
+				value={get(currentDt, discriminatingKey)}
+				onChange={(newOption) => {
+					// // This is trickier than it seems:
+					// // object({key: or(number, string)})
+					// // discriminating path is properties.key.options.type
+					// // value needs to be coerced from 0 to "", etc.
+
+					// // Force it to conform to the new type, and everything else gets coerced in the UI.
+					// const newObj = set(cloneDeep(value), discriminatingKey, newValue)
+					// onChange(newObj)
+					const newDt = dataType.options.find((dt) => get(dt, discriminatingKey) === newOption)!
+					setCurrentDt(newDt)
+				}}
+				placeholder="Select type..."
+			/>
+			<DataTypeForm dataType={currentDt} value={value} onChange={onChange} />
+		</>
+	)
+}
+
+function coerce(dataType: t.DataType, value: any) {
+	if (t.validate(dataType, value) === undefined) return value
+
+	switch (dataType.type) {
+		case "string": {
+			if (isNumber(value) || isBoolean(value)) {
+				return value.toString()
+			}
+			if (Array.isArray(value)) {
+				return value.join(",")
+			}
+			if (isPlainObject(value)) {
+				return JSON.stringify(value)
+			}
+			return ""
+		}
+
+		case "number": {
+			if (isBoolean(value)) {
+				return value ? 1 : 0
+			}
+			if (isString(value) || Array.isArray(value)) {
+				return value.length
+			}
+			if (isPlainObject(value)) {
+				return Object.keys(value).length
+			}
+			return 0
+		}
+
+		case "boolean": {
+			return Boolean(value)
+		}
+
+		case "undefined":
+			return undefined
+		case "null":
+			return null
+
+		case "datetime": {
+			// Hmm. Shouldn't have to do this. Should be able to be undefined...
+			if (isString(value)) {
+				return parseDate(value) || new Date().toISOString()
+			}
+		}
+
+		case "object":
+		case "literal":
+		case "array":
+		case "tuple":
+		case "map":
+		case "any":
+		case "or":
+		case "dataType":
+		default:
 	}
 }
 

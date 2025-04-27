@@ -14,3 +14,9 @@ export function formatDate(isoDate: string) {
 	const target = new Date(isoDate)
 	return formatRelative(target, now)
 }
+
+export function parseDate(str: string) {
+	try {
+		return new Date(str).toISOString()
+	} catch (error) {}
+}

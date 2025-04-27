@@ -9,7 +9,7 @@ export const uuid = new t.Validator<string>({
 	validate: (value) =>
 		t.string.validate(value) ||
 		!value.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)
-			? { message: `${JSON.stringify(value)} is not a valid UUID.` }
+			? { message: `${inspectJson(value)} is not a valid UUID.` }
 			: undefined,
 	inspect: () => "UUID",
 })
@@ -23,6 +23,7 @@ import isEqual from "lodash/isEqual"
 import isNumber from "lodash/isNumber"
 import isPlainObject_ from "lodash/isPlainObject"
 import isString from "lodash/isString"
+import { inspect as inspectJson } from "./inspect"
 import { Simplify } from "./typeHelpers"
 
 // ============================================================================
@@ -233,7 +234,7 @@ const Validators: {
 	undefined: (dataType, value) => {
 		if (value !== undefined) {
 			return {
-				message: `${JSON.stringify(value)} is not undefined`,
+				message: `${inspectJson(value)} is not undefined`,
 				path: [],
 			}
 		}
@@ -241,7 +242,7 @@ const Validators: {
 	null: (dataType, value) => {
 		if (value !== null) {
 			return {
-				message: `${JSON.stringify(value)} is not null`,
+				message: `${inspectJson(value)} is not null`,
 				path: [],
 			}
 		}
@@ -249,7 +250,7 @@ const Validators: {
 	string: (dataType, value) => {
 		if (!isString(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not a string`,
+				message: `${inspectJson(value)} is not a string`,
 				path: [],
 			}
 		}
@@ -257,13 +258,13 @@ const Validators: {
 	datetime: (dataType, value) => {
 		if (!isString(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not a string`,
+				message: `${inspectJson(value)} is not a string`,
 				path: [],
 			}
 		}
 		if (!value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/)) {
 			return {
-				message: `${JSON.stringify(value)} is not a valid ISO 8601 datetime string.`,
+				message: `${inspectJson(value)} is not a valid ISO 8601 datetime string.`,
 				path: [],
 			}
 		}
@@ -271,7 +272,7 @@ const Validators: {
 	number: (dataType, value) => {
 		if (!isNumber(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not a number`,
+				message: `${inspectJson(value)} is not a number`,
 				path: [],
 			}
 		}
@@ -279,7 +280,7 @@ const Validators: {
 	boolean: (dataType, value) => {
 		if (!isBoolean(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not a boolean`,
+				message: `${inspectJson(value)} is not a boolean`,
 				path: [],
 			}
 		}
@@ -288,7 +289,7 @@ const Validators: {
 	literal: (dataType, value) => {
 		if (!isEqual(value, dataType.value)) {
 			return {
-				message: `${JSON.stringify(value)} is not ${JSON.stringify(dataType.value)}`,
+				message: `${inspectJson(value)} is not ${inspectJson(dataType.value)}`,
 				path: [],
 			}
 		}
@@ -296,7 +297,7 @@ const Validators: {
 	array: (dataType, value) => {
 		if (!Array.isArray(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not an array`,
+				message: `${inspectJson(value)} is not an array`,
 				path: [],
 			}
 		}
@@ -313,13 +314,13 @@ const Validators: {
 	tuple: (dataType, value) => {
 		if (!Array.isArray(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not an array`,
+				message: `${inspectJson(value)} is not an array`,
 				path: [],
 			}
 		}
 		if (value.length !== dataType.items.length) {
 			return {
-				message: `${JSON.stringify(value)} is not a tuple of length ${dataType.items.length}`,
+				message: `${inspectJson(value)} is not a tuple of length ${dataType.items.length}`,
 				path: [],
 			}
 		}
@@ -336,7 +337,7 @@ const Validators: {
 	map: (dataType, value) => {
 		if (!isPlainObject(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not a map`,
+				message: `${inspectJson(value)} is not a map`,
 				path: [],
 			}
 		}
@@ -353,7 +354,7 @@ const Validators: {
 	object: (dataType, value) => {
 		if (!isPlainObject(value)) {
 			return {
-				message: `${JSON.stringify(value)} is not an object`,
+				message: `${inspectJson(value)} is not an object`,
 				path: [],
 			}
 		}
@@ -385,7 +386,7 @@ const Validators: {
 			for (const key in value) {
 				if (!(key in dataType.properties)) {
 					return {
-						message: `${JSON.stringify(value)} has extra property ${JSON.stringify(key)}`,
+						message: `${inspectJson(value)} has extra property ${inspectJson(key)}`,
 						path: [],
 					}
 				}
@@ -401,7 +402,7 @@ const Validators: {
 		}
 		// TODO: find discriminating keys so we can report just one message.
 		return {
-			message: `${JSON.stringify(value)} must satisfy one of:`,
+			message: `${inspectJson(value)} must satisfy one of:`,
 			path: [],
 			children: errors,
 		}
@@ -429,7 +430,7 @@ function pathToString(path: Array<string | number>) {
 			if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(item)) {
 				return `.${item}`
 			}
-			return `[${JSON.stringify(item)}]`
+			return `[${inspectJson(item)}]`
 		})
 		.join("")
 }
@@ -468,7 +469,7 @@ const Inspectors: {
 	datetime: (dataType) => "datetime",
 	number: (dataType) => "number",
 	boolean: (dataType) => "boolean",
-	literal: (dataType) => JSON.stringify(dataType.value),
+	literal: (dataType) => inspectJson(dataType.value),
 	array: (dataType) => "Array<" + inspect(dataType.items) + ">",
 	tuple: (dataType) => "[" + dataType.items.map(inspect).join(", ") + "]",
 	map: (dataType) => "{ [key: string]: " + inspect(dataType.items) + " }",

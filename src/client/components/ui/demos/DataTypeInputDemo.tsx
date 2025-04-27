@@ -3,6 +3,7 @@ import * as t from "../../../../shared/DataType"
 import { Button } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
 import { Input } from "../Input"
+import { DataTypeForm } from "./DataTypeFormDemo"
 
 const initialTypes: { [T in t.DataType["type"]]: Extract<t.DataType, { type: T }> } = {
 	any: t.any,
@@ -40,10 +41,15 @@ export function DataTypeInputDemo() {
 	)
 	return (
 		<div style={{ padding: 8, display: "flex", flexDirection: "row", gap: 8 }}>
-			<DataTypeInput dataType={dataType} onChange={setDataType} />
-			<div style={{ whiteSpace: "pre", fontSize: 12 }}>{JSON.stringify(dataType, null, 2)}</div>
+			<DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={setDataType} />
 		</div>
 	)
+	// return (
+	// 	<div style={{ padding: 8, display: "flex", flexDirection: "row", gap: 8 }}>
+	// 		<DataTypeInput dataType={dataType} onChange={setDataType} />
+	// 		<div style={{ whiteSpace: "pre", fontSize: 12 }}>{JSON.stringify(dataType, null, 2)}</div>
+	// 	</div>
+	// )
 }
 
 function DataTypeInput(props: { dataType: t.DataType; onChange: (dataType: t.DataType) => void }) {
