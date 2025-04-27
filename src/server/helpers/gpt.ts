@@ -1,107 +1,9 @@
-import { Anthropic } from "@anthropic-ai/sdk"
-import { MessageParam as ClaudeMessage } from "@anthropic-ai/sdk/resources/index.mjs"
 import "dotenv/config"
-import { OpenAI } from "openai"
+import { sleep } from "../../shared/sleep"
 
-// Initialize the client
-const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY })
+export type GptMessage = { role: string; content: string }
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
-type Message = { role: string; content: string }
-type OpenAIMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam
-
-const model: "openai" | "claude" = "openai"
-const OpenAiModel: OpenAI.Chat.ChatModel = "gpt-4.5-preview" //"gpt-4o-mini";
-const ClaudeModel: Anthropic.Model = "claude-3-7-sonnet-latest"
-
-const DEBUG = true
-const debug = (...args: any[]) => {
-	if (DEBUG) console.error(...args)
-}
-
-const log = (...args: any[]) => {
-	console.warn(...args)
-}
-
-export async function recurPromptClaude(system: string, prompts: string[]): Promise<Message[]> {
-	const messages: ClaudeMessage[] = []
-
-	for (let i = 0; i < prompts.length; i++) {
-		const prompt = prompts[i]
-
-		debug("USER> ", prompt, "\n\n")
-		messages.push({
-			role: "user",
-			content: prompt,
-		})
-
-		const response = await retry(
-			async () =>
-				await anthropic.messages.create({
-					model: ClaudeModel,
-					max_tokens: 5000,
-					system: system,
-					messages: messages,
-				})
-		)
-
-		// @ts-ignore
-		const result = response.content[0].text
-
-		debug("ASSISTANT> ", result, "\n\n")
-		messages.push({
-			role: "assistant",
-			content: result,
-		})
-	}
-
-	return messages as Message[]
-}
-
-export async function recurPromptOpenAI(system: string, prompts: string[]): Promise<Message[]> {
-	const messages: OpenAIMessage[] = []
-
-	messages.push({
-		role: "system",
-		content: system,
-	})
-
-	for (let i = 0; i < prompts.length; i++) {
-		const prompt = prompts[i]
-
-		debug("USER> ", prompt, "\n\n")
-		messages.push({
-			role: "user",
-			content: prompt,
-		})
-
-		const response = await retry(async () =>
-			openai.chat.completions.create({
-				model: OpenAiModel,
-				messages: messages,
-				top_p: 0.1,
-			})
-		)
-
-		const result = response.choices[0].message.content!
-
-		debug("ASSISTANT> ", result, "\n\n")
-		messages.push({
-			role: "assistant",
-			content: result,
-		})
-	}
-
-	// Ignore the system prompt to be consistent with Claude.
-	return messages.slice(1) as Message[]
-}
-
-function formatMessages(messages: Message[]) {
-	return messages.map(({ role, content }) => `${role}> ${content}`).join("\n\n\n")
-}
-
-async function retry<T>(fn: () => Promise<T>, tries = 0) {
+export async function retryFetchGpt<T>(fn: () => Promise<T>, tries = 0) {
 	try {
 		// console.error("running")
 		return await fn()
@@ -119,11 +21,9 @@ async function retry<T>(fn: () => Promise<T>, tries = 0) {
 			console.error(error)
 			console.error(`RATE LIMIT, sleeping for ${waitTimeMs}ms`)
 			await sleep(waitTimeMs)
-			return retry(fn, tries + 1)
+			return retryFetchGpt(fn, tries + 1)
 		}
 
 		throw error
 	}
 }
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
