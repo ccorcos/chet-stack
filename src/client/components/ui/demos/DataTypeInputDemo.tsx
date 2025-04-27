@@ -26,10 +26,22 @@ const initialTypes: { [T in t.DataType["type"]]: Extract<t.DataType, { type: T }
 }
 
 export function DataTypeInputDemo() {
-	const [dataType, setDataType] = useState<t.DataType>(t.object({}))
+	const [dataType, setDataType] = useState<t.DataType>(
+		t.object({
+			string: t.string,
+			literal: t.optional(t.literal("hello")),
+			map: t.map(t.number),
+			array: t.array(
+				t.object({
+					nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
+				})
+			),
+		})
+	)
 	return (
-		<div style={{ padding: 8 }}>
+		<div style={{ padding: 8, display: "flex", flexDirection: "row", gap: 8 }}>
 			<DataTypeInput dataType={dataType} onChange={setDataType} />
+			<div style={{ whiteSpace: "pre", fontSize: 12 }}>{JSON.stringify(dataType, null, 2)}</div>
 		</div>
 	)
 }

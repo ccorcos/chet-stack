@@ -43,6 +43,10 @@ export const setTable = (db: TupleDb, tableDef: TableDef) => {
 	db.set(["model", "table", tableDef.table], tableDef)
 }
 
+export const hasTable = (db: ReadOnlyTupleDb, table: string) => {
+	return db.has(["model", "table", table])
+}
+
 export const deleteTable = (db: TupleDb, table: string) => {
 	// Delete all table indexes
 	for (const { value } of db.subspace(["model", "index", table]).list()) {
@@ -169,7 +173,9 @@ export const deleteRecord = (db: TupleDb, args: { table: string; id: string }) =
 export type RecordDb = {
 	setTable: (tableDef: TableDef) => void
 	deleteTable: (table: string) => void
+	hasTable: (table: string) => boolean
 	createIndex: (indexDef: IndexDefArgs) => void
+	hasIndex: (args: { table: string; name: string }) => boolean
 	deleteIndex: (args: { table: string; name: string }) => void
 	setRecord: (record: any) => void
 	deleteRecord: (args: { table: string; id: string }) => void
@@ -183,7 +189,9 @@ export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): R
 	const recordDb: RecordDb = {
 		setTable: (args) => setTable(db, args),
 		deleteTable: (args) => deleteTable(db, args),
+		hasTable: (args) => hasTable(db, args),
 		createIndex: (args) => createIndex(db, args),
+		hasIndex: (args) => hasIndex(db, args),
 		deleteIndex: (args) => deleteIndex(db, args),
 		setRecord: (args) => setRecord(db, args, mode),
 		deleteRecord: (args) => deleteRecord(db, args),

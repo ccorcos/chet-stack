@@ -20,7 +20,8 @@ import { ListBox, ListItem, useListBox } from "../ListBox"
 
 export function RecordDbDemo() {
 	return (
-		<Subspace prefix={["RecordDbDemo"]}>
+		// <Subspace prefix={["RecordDbDemo"]}>
+		<Subspace prefix={["EmailDemo"]}>
 			<RecordDb />
 		</Subspace>
 	)
@@ -61,7 +62,7 @@ function RecordDb() {
 function TableEditor(props: { table: TableDef }) {
 	const { table } = props
 	// TODO: dataType editor.
-	return <div>TableEditor</div>
+	return <div>{JSON.stringify(table, null, 2)}</div>
 }
 
 function useWriteRecordDb() {

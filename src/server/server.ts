@@ -4,12 +4,14 @@ import helmet from "helmet"
 import http from "http"
 import livereload from "livereload"
 import morgan from "morgan"
-import { tupleOkv } from "../shared/database/TupleDb"
+import { recordDb } from "../shared/database/RecordDb"
+import { tupleDb, tupleOkv } from "../shared/database/TupleDb"
+import { initEmailModel } from "../shared/EmailModel"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
+import { path } from "./helpers/path"
 import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
-import { path } from "./helpers/path"
 import { Database } from "./services/Database"
 import { QueueDatabase } from "./services/QueueDatabase"
 import { config } from "./services/ServerConfig"
@@ -37,6 +39,10 @@ if (!config.production) {
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
 const db = tupleOkv(base)
+
+INIT: {
+	initEmailModel(recordDb(tupleDb(db).subspace(["EmailDemo"])))
+}
 
 const queue = new QueueDatabase(config.queuePath)
 

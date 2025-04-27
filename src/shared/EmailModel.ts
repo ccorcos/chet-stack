@@ -219,13 +219,13 @@ export const secondaryIndexes = {
 	},
 }
 
-// TODO: need to think about what `transact` means now...
 export const initEmailModel = (db: RecordDb) => {
 	for (const [table, dataType] of Object.entries(tables)) {
 		db.setTable({ table, dataType })
 	}
 	for (const [table, indexes] of Object.entries(secondaryIndexes)) {
 		for (const [name, fn] of Object.entries(indexes)) {
+			if (db.hasIndex({ table, name })) continue
 			db.createIndex({ table, name, fn })
 		}
 	}
