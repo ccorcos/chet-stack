@@ -6,6 +6,7 @@ import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
 import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataListDemo from "./DataListDemo"
+import * as DataTypeFormDemo from "./DataTypeFormDemo"
 import * as DataTypeInputDemo from "./DataTypeInputDemo"
 import * as DraggableDemo from "./DraggableDemo"
 import * as DraggableListDemo from "./DraggableListDemo"
@@ -37,6 +38,7 @@ export {
 	ColorsDemo,
 	DarkModeDemo,
 	DataListDemo,
+	DataTypeFormDemo,
 	DataTypeInputDemo,
 	DraggableDemo,
 	DraggableListDemo,

@@ -6,7 +6,7 @@ This API is a template.
 
 import type { Request, Response } from "express"
 import * as t from "../../shared/DataType"
-import { recurPromptClaude } from "../helpers/gpt"
+import { recurPromptClaude } from "../helpers/gptClaude"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // Used for request validation.

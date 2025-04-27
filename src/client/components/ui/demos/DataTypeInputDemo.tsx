@@ -77,7 +77,7 @@ function DataTypeInput(props: { dataType: t.DataType; onChange: (dataType: t.Dat
 		<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 			<div style={{ display: "flex", flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
 				<DataTypeTypeInput
-					type={dataType.type}
+					value={dataType.type}
 					onChange={(type) => props.onChange(initialTypes[type])}
 				/>
 				{dataType.type === "literal" && (
@@ -96,15 +96,15 @@ function DataTypeInput(props: { dataType: t.DataType; onChange: (dataType: t.Dat
 }
 
 function DataTypeTypeInput(props: {
-	type: t.DataType["type"]
+	value: t.DataType["type"]
 	onChange: (dataType: t.DataType["type"]) => void
 }) {
 	return (
 		<ComboBoxSelect
 			style={{ width: 110 }}
 			items={Object.keys(initialTypes)}
-			value={props.type}
-			onChange={(type) => props.onChange(type as t.DataType["type"])}
+			value={props.value}
+			onChange={(newType) => props.onChange(newType as t.DataType["type"])}
 			placeholder="Select type..."
 		/>
 	)
