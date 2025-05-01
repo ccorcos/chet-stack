@@ -12,22 +12,34 @@ export function DataTypeFormDemo() {
 		t.object({
 			string: t.string,
 			// literal: t.optional(t.literal("hello")),
+			orLiteral: t.or(t.literal("hello"), t.literal("world")),
 			map: t.map(t.or(t.number, t.string)),
-			// array: t.array(
-			// 	t.object({
-			// 		nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
-			// 	})
-			// ),
+			array: t.array(
+				t.object({
+					nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
+				})
+			),
 		})
 	)
 
 	const [value, setValue] = useState<any>({})
 
+	console.log("value", value)
+	console.log("dataType", dataType)
+
 	return (
-		<div style={{ padding: 8, display: "flex", flexDirection: "row", gap: 8 }}>
+		<div
+			style={{
+				padding: 8,
+				display: "flex",
+				alignItems: "flex-start",
+				flexDirection: "row",
+				gap: 8,
+			}}
+		>
 			{/* <div style={{ whiteSpace: "pre", fontSize: 12 }}>{JSON.stringify(dataType, null, 2)}</div> */}
-			<DataTypeForm dataType={dataType} value={value} onChange={setValue} />
-			{/* <DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={setDataType} /> */}
+			{/* <DataTypeForm dataType={dataType} value={value} onChange={setValue} /> */}
+			<DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={setDataType} />
 		</div>
 	)
 }
@@ -46,7 +58,8 @@ export function DataTypeForm(props: {
 		case "undefined":
 			return <span>{dataType.type}</span>
 		case "literal":
-			return <span>literal: {dataType.value}</span>
+			// return <span>literal: {dataType.value}</span>
+			return false
 
 		case "string": {
 			let str = ""
@@ -99,19 +112,19 @@ export function DataTypeForm(props: {
 		case "array": {
 			let items: any[] = []
 			if (isArray(value)) items = value
-			if (isString(value)) items = value.split(",").map((str) => str.trim())
-			if (value !== undefined || value !== null) items.push(value)
+			else if (isString(value)) items = value.split(",").map((str) => str.trim())
+			else if (value !== undefined && value !== null) items.push(value)
 
 			return (
 				<div>
-					<span>{"["}</span>
+					<span>{" ["}</span>
 					{items.map((item, index) => (
-						<div>
+						<div style={{ display: "flex", alignItems: "flex-start" }}>
 							<DataTypeForm
 								dataType={dataType.items}
 								value={item}
 								onChange={(newItem) => {
-									onChange(items.map((x) => (x === item ? newItem : x)))
+									onChange(items.map((x, i) => (i === index ? newItem : x)))
 								}}
 							/>
 							<Button
@@ -123,7 +136,14 @@ export function DataTypeForm(props: {
 							</Button>
 						</div>
 					))}
-					<Button>New Item</Button>
+					<Button
+						onClick={() => {
+							console.log("NEW")
+							onChange([...items, undefined])
+						}}
+					>
+						New Item
+					</Button>
 					<span>{"]"}</span>
 				</div>
 			)
@@ -132,10 +152,10 @@ export function DataTypeForm(props: {
 		case "tuple": {
 			let tup: any[] = []
 			if (isArray(value)) tup = value
-			if (value !== null && value !== undefined) tup = [value]
+			else if (value !== null && value !== undefined) tup = [value]
 
 			return (
-				<div>
+				<div style={{ display: "flex", alignItems: "flex-start" }}>
 					<span>{"["}</span>
 					{dataType.items.map((itemDataType, index) => {
 						const itemValue = tup[index]
@@ -146,7 +166,7 @@ export function DataTypeForm(props: {
 								onChange={(newValue) => {
 									const newTup = [...tup]
 									newTup[index] = newValue
-									onChange(newValue)
+									onChange(newTup)
 								}}
 							/>
 						)
@@ -162,7 +182,7 @@ export function DataTypeForm(props: {
 			return (
 				<div>
 					{Object.entries(obj).map(([key, value]) => (
-						<div style={{ display: "flex" }}>
+						<div style={{ display: "flex", alignItems: "flex-start" }}>
 							<Input
 								value={key}
 								onChange={(event) => {
@@ -214,11 +234,11 @@ export function DataTypeForm(props: {
 			if (isPlainObject(value)) obj = value
 
 			return (
-				<div>
+				<div style={{}}>
 					{Object.entries(dataType.properties).map(([key, valueDataType]) => {
 						const dt = valueDataType.type === "optional" ? valueDataType.value : valueDataType
 						return (
-							<div>
+							<div style={{ display: "flex", alignItems: "flex-start" }}>
 								<span>{key}:</span>
 								<DataTypeForm
 									dataType={dt}
