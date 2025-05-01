@@ -98,12 +98,12 @@ export function Spreadsheet(props: { id: Tuple }) {
 
 				limit(async () => {
 					console.log("prompt", prompt)
-					const response = await api.prompt({ system, prompts: [prompt] })
+					const response = await api.prompt({ system, prompt: prompt })
 					if (response.status !== 200) {
 						writeCell(i, j, "error...")
 						return
 					}
-					const value = response.body.reverse()[0].content
+					const value = response.body
 					writeCell(i, j, value)
 				})
 			}

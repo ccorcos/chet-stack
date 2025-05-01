@@ -6,11 +6,11 @@ This API is a template.
 
 import type { Request, Response } from "express"
 import * as t from "../../shared/DataType"
-import { recurPromptClaude } from "../helpers/gptClaude"
+import { promptLocal } from "../helpers/gptLocal"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // Used for request validation.
-export const input = t.object({ system: t.string, prompts: t.array(t.string) })
+export const input = t.object({ system: t.string, prompt: t.string })
 
 export async function handler(
 	environment: ServerEnvironment,
@@ -18,5 +18,5 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	return recurPromptClaude(args.system, args.prompts)
+	return promptLocal(args.system, args.prompt)
 }
