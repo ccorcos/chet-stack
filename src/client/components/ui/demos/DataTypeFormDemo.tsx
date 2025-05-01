@@ -5,20 +5,35 @@ import { parseDate } from "../../../../shared/dateHelpers"
 import { unreachable } from "../../../../shared/typeHelpers"
 import { Button } from "../Button"
 import { ComboBoxSelect } from "../ComboBox"
+import { ContentEditableInput } from "../ContentEditableInput"
 import { Input } from "../Input"
+
+/*
+
+t.or(t.string, t.number)
+-> dropdown(["string", "number"])
+
+t.or(t.object({type: "string"}), t.object({type: "number"}))
+-> type: dropdown(["string", "number"])
+
+Using inspect for most general case.
+t.or(t.number, t.object({type: "string"}), t.object({a: t.number}), t.object({b: t.string}))
+-> dropdown(["number", "{type: "string"}", {a: number}, {b: number}"])
+
+*/
 
 export function DataTypeFormDemo() {
 	const [dataType, setDataType] = useState<t.DataType>(
 		t.object({
 			string: t.string,
 			// literal: t.optional(t.literal("hello")),
-			orLiteral: t.or(t.literal("hello"), t.literal("world")),
-			map: t.map(t.or(t.number, t.string)),
-			array: t.array(
-				t.object({
-					nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
-				})
-			),
+			// orLiteral: t.or(t.literal("hello"), t.literal("world")),
+			// map: t.map(t.or(t.number, t.string)),
+			// array: t.array(
+			// 	t.object({
+			// 		nested: t.tuple(t.string, t.or(t.number, t.object({ id: t.string }))),
+			// 	})
+			// ),
 		})
 	)
 
@@ -66,7 +81,19 @@ export function DataTypeForm(props: {
 			if (isString(value)) str = value
 			if (isNumber(value) || isBoolean(value) || isArray(value)) str = value.toString()
 			if (isPlainObject(value)) str = JSON.stringify(value)
-			return <Input value={str} onChange={(event) => onChange(event.target.value)} />
+			return (
+				<ContentEditableInput
+					style={{
+						border: "1px solid var(--bg2)",
+						padding: "0.2em 0.4em",
+						borderRadius: "0.2em",
+						backgroundColor: "var(--bg1)",
+						color: "var(--fg0)",
+					}}
+					value={str}
+					onChange={(value) => onChange(value)}
+				/>
+			)
 		}
 		case "number": {
 			let num = 0
@@ -183,10 +210,16 @@ export function DataTypeForm(props: {
 				<div>
 					{Object.entries(obj).map(([key, value]) => (
 						<div style={{ display: "flex", alignItems: "flex-start" }}>
-							<Input
+							<ContentEditableInput
+								style={{
+									border: "1px solid var(--bg2)",
+									padding: "0.2em 0.4em",
+									borderRadius: "0.2em",
+									backgroundColor: "var(--bg1)",
+									color: "var(--fg0)",
+								}}
 								value={key}
-								onChange={(event) => {
-									const newKey = event.target.value
+								onChange={(newKey) => {
 									const newObj = Object.fromEntries(
 										Object.entries(obj).map(([k, v]) => (k === key ? [newKey, v] : [k, v]))
 									)
@@ -286,6 +319,7 @@ function OrDataTypeForm(props: {
 
 	return (
 		<>
+			{discriminatingKey}:
 			<ComboBoxSelect
 				style={{ width: 110 }}
 				items={discriminatingOptions}
