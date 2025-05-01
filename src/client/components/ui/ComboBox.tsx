@@ -9,7 +9,7 @@ import { Popup, PopupFrame } from "./Popup"
 
 export function ComboBoxSelect<T extends string>(props: {
 	items: T[]
-	placeholder: string
+	placeholder?: string
 	value: T | undefined
 	onChange: (value: T) => void
 	style?: React.CSSProperties

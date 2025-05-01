@@ -54,29 +54,33 @@ export interface BooleanDataType {
 	type: "boolean"
 }
 
-export interface LiteralDataType<T extends string | number | boolean> {
+export interface LiteralDataType<T extends string | number | boolean = string | number | boolean> {
 	type: "literal"
 	value: T
 }
 
-export interface ArrayDataType<T extends DataType> {
+export interface ArrayDataType<T extends DataType = DataType> {
 	type: "array"
 	items: T
 }
 
-export interface TupleDataType<T extends DataType[]> {
+export interface TupleDataType<T extends DataType[] = DataType[]> {
 	type: "tuple"
 	items: T
 }
 
-export interface MapDataType<T extends DataType> {
+export interface MapDataType<T extends DataType = DataType> {
 	type: "map"
 	items: T
 }
 
-export type Optional<T extends DataType> = { type: "optional"; value: T }
+export type Optional<T extends DataType = DataType> = { type: "optional"; value: T }
 
-export interface ObjectDataType<T extends { [key: string]: DataType | Optional<DataType> }> {
+export interface ObjectDataType<
+	T extends { [key: string]: DataType | Optional<DataType> } = {
+		[key: string]: DataType | Optional<DataType>
+	},
+> {
 	type: "object"
 	properties: T
 	strict: boolean
@@ -87,7 +91,7 @@ export interface AnyDataType<T = any> {
 	_type?: T // Phantom type, doesn't actually exist.
 }
 
-export interface OrDataType<T extends DataType> {
+export interface OrDataType<T extends DataType = DataType> {
 	type: "or"
 	options: Array<T>
 }
@@ -95,6 +99,25 @@ export interface OrDataType<T extends DataType> {
 export interface DataTypeDataType {
 	type: "dataType"
 }
+
+/*
+
+case "string":
+case "number":
+case "boolean":
+case "undefined":
+case "object":
+case "null":
+case "datetime":
+case "literal":
+case "array":
+case "tuple":
+case "map":
+case "any":
+case "or":
+case "dataType":
+
+*/
 
 export type DataType =
 	| NullDataType
@@ -417,6 +440,8 @@ export function validate<T extends DataType>(dataType: T, value: any): ValidateE
 	return validator(dataType as any, value)
 }
 
+// Function overload to prevent infinite recursie type inference.
+export function is(dataType: DataType, value: any): boolean
 export function is<T extends DataType>(dataType: T, value: any): value is InferType<T> {
 	return !validate(dataType, value)
 }

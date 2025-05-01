@@ -1,4 +1,4 @@
-import { get, isArray, isBoolean, isEqual, isNumber, isPlainObject, isString } from "lodash"
+import { get, isArray, isBoolean, isEqual, isNumber, isPlainObject, isString, uniq } from "lodash"
 import React, { useMemo, useState } from "react"
 import * as t from "../../../../shared/DataType"
 import { parseDate } from "../../../../shared/dateHelpers"
@@ -307,7 +307,7 @@ function OrDataTypeForm(props: {
 
 	const { initialDt, discriminatingKey, discriminatingOptions } = useMemo(() => {
 		const [discriminatingKey, discriminatingOptions] = discriminateDataTypes(dataType.options)
-		const validDt = dataType.options.filter((dt) => t.validate(dt, value) === undefined)
+		const validDt = dataType.options.filter((dt) => t.is(dt, value))
 		return {
 			discriminatingKey,
 			discriminatingOptions,
@@ -344,7 +344,7 @@ function OrDataTypeForm(props: {
 }
 
 function coerce(dataType: t.DataType, value: any) {
-	if (t.validate(dataType, value) === undefined) return value
+	if (t.is(dataType, value)) return value
 
 	switch (dataType.type) {
 		case "string": {
@@ -478,4 +478,158 @@ export function discriminateDataTypes(options: t.DataType[]) {
 	entries.sort((a, b) => a[0].split(".").length - b[0].split(".").length)
 
 	return entries[0]
+}
+
+/**
+ * Given an or with different primitive type options, select an type and present the form.
+ */
+function OrTypePicker(props: {
+	dataType: t.OrDataType
+	value: any
+	onChange: (newValue: any) => void
+}) {
+	const { dataType, value, onChange } = props
+	const types = dataType.options.map((opt) => opt.type)
+
+	const initialType = useMemo(() => {
+		const validOpt = dataType.options.find((opt) => t.is(opt, value))
+		if (validOpt) return validOpt.type
+		return types[0]
+	}, [])
+
+	const [type, setType] = useState(initialType)
+	const currentOpt = dataType.options.find((opt) => opt.type === type)!
+
+	return (
+		<>
+			<ComboBoxSelect items={types} value={type} onChange={setType} />
+			<DataTypeForm dataType={currentOpt} value={value} onChange={onChange} />
+		</>
+	)
+}
+
+function OrDataTypeForm2(props: {
+	dataType: t.OrDataType
+	value: any
+	onChange: (newValue: any) => void
+}) {
+	const { dataType, value, onChange } = props
+
+	if (dataType.options.length === 0) {
+		// We should probably avoid this ever happening.
+		return false
+	}
+
+	if (dataType.options.length === 1) {
+		// Trivial case: or(number)
+		return <DataTypeForm dataType={dataType.options[0]} value={value} onChange={onChange} />
+	}
+
+	// Lets try to discriminate the different options.
+	const types = uniq(dataType.options.map((opt) => opt.type))
+
+	if (types.length === dataType.options.length) {
+		// If all the options are different types, then present a type selector.
+		return <OrTypePicker {...props} />
+	}
+
+	if (types.length === 1) {
+		// If all the options are the same type, then we need to try to discriminate further.
+		const type = types[0]
+
+		switch (type) {
+			case "string":
+			case "number":
+			case "boolean":
+			case "undefined":
+			case "null":
+			case "datetime":
+			case "any":
+			case "dataType": {
+				// Trivial case, e.g. or(number, number) -> number
+				return <DataTypeForm dataType={dataType.options[0]} value={value} onChange={onChange} />
+			}
+
+			case "or": {
+				// Trivial case, e.g. or(or(...), or(...)) -> or(..., ...)
+				const options = dataType.options as t.OrDataType[]
+				const allOptions = options.flatMap((opt) => opt.options)
+				return (
+					<DataTypeForm
+						dataType={{ type: "or", options: allOptions }}
+						value={value}
+						onChange={onChange}
+					/>
+				)
+			}
+
+			case "literal": {
+				// Select a literal option.
+				const options = dataType.options as t.LiteralDataType[]
+				return (
+					<ComboBoxSelect
+						items={options.map((opt) => JSON.stringify(opt))}
+						value={JSON.stringify(value)}
+						onChange={(newOption) => onChange(JSON.parse(newOption))}
+					/>
+				)
+			}
+
+			case "object": {
+				const options = dataType.options as t.ObjectDataType[]
+				const props = options.map((opt) => Object.keys(opt.properties))
+			}
+
+			case "array": {
+			}
+			case "tuple": {
+			}
+			case "map": {
+			}
+		}
+	}
+
+	// Complicated general base case.
+
+	// -----------------------------------------
+	// -----------------------------------------
+	// -----------------------------------------
+	// -----------------------------------------
+
+	// const { initialDt, discriminatingKey, discriminatingOptions } = useMemo(() => {
+	// 	const [discriminatingKey, discriminatingOptions] = discriminateDataTypes(dataType.options)
+	// 	const validDt = dataType.options.filter((dt) => t.validate(dt, value) === undefined)
+	// 	return {
+	// 		discriminatingKey,
+	// 		discriminatingOptions,
+	// 		initialDt: validDt[0] || dataType.options[0],
+	// 	}
+	// }, [props.dataType])
+
+	// const [currentDt, setCurrentDt] = useState(initialDt)
+
+	// return (
+	// 	<>
+	// 		{discriminatingKey}:
+	// 		<ComboBoxSelect
+	// 			style={{ width: 110 }}
+	// 			items={discriminatingOptions}
+	// 			value={get(currentDt, discriminatingKey)}
+	// 			onChange={(newOption) => {
+	// 				// // This is trickier than it seems:
+	// 				// // object({key: or(number, string)})
+	// 				// // discriminating path is properties.key.options.type
+	// 				// // value needs to be coerced from 0 to "", etc.
+
+	// 				// // Force it to conform to the new type, and everything else gets coerced in the UI.
+	// 				// const newObj = set(cloneDeep(value), discriminatingKey, newValue)
+	// 				// onChange(newObj)
+	// 				const newDt = dataType.options.find((dt) => get(dt, discriminatingKey) === newOption)!
+	// 				setCurrentDt(newDt)
+	// 			}}
+	// 			placeholder="Select type..."
+	// 		/>
+	// 		<DataTypeForm dataType={currentDt} value={value} onChange={onChange} />
+	// 	</>
+	// )
 }
