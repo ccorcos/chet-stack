@@ -14,6 +14,6 @@ export function inspect(value: any) {
 			2
 		)
 	} else {
-		return value
+		return JSON.stringify(value)
 	}
 }
