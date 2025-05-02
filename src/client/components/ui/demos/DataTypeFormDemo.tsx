@@ -39,7 +39,7 @@ export function DataTypeFormDemo() {
 			<Example init={t.dataType} />
 			<Example init={t.object({ name: t.string, age: t.number, admin: t.boolean })} />
 			{/* Primitive type discrimination */}
-			<Example init={t.or(t.string, t.number)} />
+			<Example init={t.or(t.string, t.object({ name: t.string, admin: t.boolean }))} />
 			{/* Object literal property discrimination */}
 			<Example
 				init={t.or(
@@ -65,9 +65,16 @@ export function DataTypeFormDemo() {
 
 function Example(props: { init: t.DataType }) {
 	const [dataType, setDataType] = useState<t.DataType>(props.init)
+	const [value, setValue] = useState<any>()
 	return (
-		<div className="layer" style={{ padding: 8 }}>
-			<DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={setDataType} />
+		<div className="layer" style={{ padding: 8, display: "flex" }}>
+			<DataTypeForm
+				dataType={t.dataTypeDataType}
+				value={dataType}
+				onChange={setDataType}
+				style={{ flex: 1 }}
+			/>
+			<DataTypeForm dataType={dataType} value={value} onChange={setValue} style={{ flex: 1 }} />
 		</div>
 	)
 }
