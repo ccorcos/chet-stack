@@ -9,8 +9,8 @@ function _Button(props: JSX.IntrinsicElements["button"]) {
 			style={{
 				cursor: "pointer",
 				border: "1px solid var(--bg2)",
-				padding: "0.2em 0.4em",
-				borderRadius: "0.2em",
+				padding: "4px 8px",
+				borderRadius: 4,
 				...props.style,
 			}}
 		/>

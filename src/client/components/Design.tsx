@@ -83,7 +83,7 @@ function Sidebar(props: {
 			<Input
 				ref={input}
 				type="search"
-				style={{ width: "calc(100% - 1em)", margin: "0.5em" }}
+				style={{ width: "calc(100% - 16px)", margin: 8 }}
 				placeholder="Search..."
 				value={searchText}
 				onChange={(e) => setSearchText(e.target.value)}
@@ -107,7 +107,7 @@ function Sidebar(props: {
 							onMouseDown={(e) => e.preventDefault()}
 							onMouseEnter={() => setSelectedIndex(i)}
 							style={{
-								padding: "0.5em",
+								padding: 8,
 								backgroundColor: selectedIndex === i ? "var(--accent0)" : undefined,
 							}}
 						>
@@ -140,7 +140,7 @@ function PageListBox(props: {
 					key={pageName}
 					item={pageName}
 					selected={pageName === props.currentPage}
-					style={{ padding: "0.5em" }}
+					style={{ padding: 8 }}
 					className="feedback"
 				>
 					{pageName}

@@ -65,7 +65,7 @@ export function UploadPreview(props: Upload) {
 				}),
 			}}
 		>
-			<div style={{ flex: 1, textOverflow: "ellipsis", overflow: "hidden", fontSize: "0.6em" }}>
+			<div style={{ flex: 1, textOverflow: "ellipsis", overflow: "hidden", fontSize: 14 }}>
 				{file.name}
 			</div>
 			<div>{uploaded ? "✅" : error ? "❌" : `${progress}%`}</div>

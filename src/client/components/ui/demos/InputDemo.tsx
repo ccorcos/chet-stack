@@ -20,7 +20,7 @@ export function InputDemo() {
 			<div>Disabled Input</div>
 			<Input type="text" placeholder="Hello" disabled />
 			<div>ContentEditableInput</div>
-			<ContentEditableInput value="Hello" style={{ padding: "0.2em 0.4em" }} />
+			<ContentEditableInput value="Hello" style={{ padding: "4px 8px" }} />
 			<div>Number Input</div>
 			<Input type="number" placeholder="123" />
 			<div>Date Input</div>

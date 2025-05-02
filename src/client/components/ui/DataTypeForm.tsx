@@ -70,8 +70,8 @@ function DataTypeFormInner(props: {
 				<ContentEditableInput
 					style={{
 						border: "1px solid var(--bg2)",
-						padding: "0.2em 0.4em",
-						borderRadius: "0.2em",
+						padding: "4px 8px",
+						borderRadius: 4,
 						backgroundColor: "var(--bg1)",
 						color: "var(--fg0)",
 					}}
@@ -200,8 +200,8 @@ function DataTypeFormInner(props: {
 							<ContentEditableInput
 								style={{
 									border: "1px solid var(--bg2)",
-									padding: "0.2em 0.4em",
-									borderRadius: "0.2em",
+									padding: "4px 8px",
+									borderRadius: 4,
 									backgroundColor: "var(--bg1)",
 									color: "var(--fg0)",
 								}}

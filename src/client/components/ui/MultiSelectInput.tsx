@@ -74,7 +74,7 @@ export function MultiSelectInput(props: {
 					>
 						{value}
 						<NakedButton
-							style={{ padding: 0, fontSize: "inherit", fontFamily: "inherit", width: "1.2em" }}
+							style={{ padding: 0, fontSize: "inherit", fontFamily: "inherit", width: 22 }}
 							onClick={() => props.onChange(props.value.filter((_, j) => j !== i))}
 						>
 							x

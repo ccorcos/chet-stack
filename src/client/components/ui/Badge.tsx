@@ -11,9 +11,9 @@ export function Badge(props: {
 		<div
 			style={{
 				display: "inline-block",
-				fontSize: "0.8em",
-				padding: "0.2em 0.4em",
-				borderRadius: "0.2em",
+				fontSize: 14,
+				padding: "4px 8px",
+				borderRadius: 4,
 				backgroundColor: "var(--bg2)",
 				...props.style,
 			}}

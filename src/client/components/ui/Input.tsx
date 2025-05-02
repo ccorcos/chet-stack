@@ -15,8 +15,8 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 				// borderStyle: "solid",
 
 				border: "none",
-				borderRadius: "0.2em",
-				padding: "0.2em 0.4em",
+				padding: "4px 8px",
+				borderRadius: 4,
 				fontFamily: "inherit",
 				cursor: props.disabled ? "not-allowed" : "auto",
 				...props.style,
