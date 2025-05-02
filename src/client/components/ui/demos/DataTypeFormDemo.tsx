@@ -1,9 +1,7 @@
 import {
-	get,
 	intersection,
 	isArray,
 	isBoolean,
-	isEqual,
 	isNumber,
 	isPlainObject,
 	isString,
@@ -309,51 +307,6 @@ export function DataTypeForm(props: {
 	}
 }
 
-function OrDataTypeFormOld(props: {
-	dataType: t.OrDataType<t.DataType>
-	value: any
-	onChange: (newValue: any) => void
-}) {
-	const { dataType, value, onChange } = props
-
-	const { initialDt, discriminatingKey, discriminatingOptions } = useMemo(() => {
-		const [discriminatingKey, discriminatingOptions] = discriminateDataTypes(dataType.options)
-		const validDt = dataType.options.filter((dt) => t.is(dt, value))
-		return {
-			discriminatingKey,
-			discriminatingOptions,
-			initialDt: validDt[0] || dataType.options[0],
-		}
-	}, [props.dataType])
-
-	const [currentDt, setCurrentDt] = useState(initialDt)
-
-	return (
-		<>
-			{discriminatingKey}:
-			<ComboBoxSelect
-				style={{ width: 110 }}
-				items={discriminatingOptions}
-				value={get(currentDt, discriminatingKey)}
-				onChange={(newOption) => {
-					// // This is trickier than it seems:
-					// // object({key: or(number, string)})
-					// // discriminating path is properties.key.options.type
-					// // value needs to be coerced from 0 to "", etc.
-
-					// // Force it to conform to the new type, and everything else gets coerced in the UI.
-					// const newObj = set(cloneDeep(value), discriminatingKey, newValue)
-					// onChange(newObj)
-					const newDt = dataType.options.find((dt) => get(dt, discriminatingKey) === newOption)!
-					setCurrentDt(newDt)
-				}}
-				placeholder="Select type..."
-			/>
-			<DataTypeForm dataType={currentDt} value={value} onChange={onChange} />
-		</>
-	)
-}
-
 function coerce(dataType: t.DataType, value: any) {
 	if (t.is(dataType, value)) return value
 
@@ -415,80 +368,6 @@ function coerce(dataType: t.DataType, value: any) {
 function DataTypeInput(props: { dataType: t.DataType; onChange: (dataType: t.DataType) => void }) {
 	const { dataType, onChange } = props
 	return <DataTypeForm dataType={t.dataTypeDataType} value={dataType} onChange={onChange} />
-}
-
-type ObjPath = [string, any]
-
-export function objPaths(obj: any, maxDepth = 3): ObjPath[] {
-	if (maxDepth <= 0) return [["", obj]]
-
-	if (Array.isArray(obj)) {
-		return obj.flatMap((item, index) => {
-			const subPaths = objPaths(item, maxDepth - 1)
-			return subPaths.map(([subKey, subObj]) => {
-				const sep = subKey === "" ? "" : "."
-				return ["[" + index.toString() + "]" + sep + subKey, subObj] as ObjPath
-			})
-		})
-	}
-
-	if (isPlainObject(obj)) {
-		return Object.entries(obj).flatMap(([key, item]) => {
-			const subPaths = objPaths(item, maxDepth - 1)
-
-			return subPaths.map(([subKey, subObj]) => {
-				const sep = subKey === "" ? "" : "."
-				return [key + sep + subKey, subObj] as ObjPath
-			})
-		})
-	}
-
-	return [["", obj]]
-}
-
-export function discriminatingPaths(paths: ObjPath[][]) {
-	const [first, ...rest] = paths
-	const commonObj = Object.fromEntries(first.map(([key, value]) => [key, [value]]))
-
-	for (const group of rest) {
-		const groupObj = Object.fromEntries(group)
-		for (const key in commonObj) {
-			if (key in groupObj) {
-				if (commonObj[key].some((value) => isEqual(groupObj[key], value))) delete commonObj[key]
-				else commonObj[key].push(groupObj[key])
-			} else {
-				delete commonObj[key]
-			}
-		}
-	}
-
-	return commonObj
-}
-
-// TODO: there's definitely a more efficient way of doing objPaths and discriminatingPaths together
-// but this is simple to understand and easier.
-export function descriminatingDataTypePaths(options: t.DataType[]) {
-	const groups = options.map((opt) => objPaths(opt))
-	return discriminatingPaths(groups)
-}
-
-// TODO: cleanup all these function names and too many of them. On a plane and lazy right now.
-export function discriminateDataTypes(options: t.DataType[]) {
-	const result = descriminatingDataTypePaths(options)
-
-	let entries = Object.entries(result)
-	if (entries.length === 0) throw new Error("Cannot descriminate.")
-	if (entries.length === 1) return entries[0]
-
-	// Favor entries called "type"
-	const typeEntries = entries.filter(([k, v]) => k.endsWith(".type") || k === "type")
-	if (typeEntries.length === 1) return typeEntries[0]
-	else if (typeEntries.length > 1) entries = typeEntries
-
-	// Sort by key depth.
-	entries.sort((a, b) => a[0].split(".").length - b[0].split(".").length)
-
-	return entries[0]
 }
 
 function OrPrimativeTypePicker(props: {
