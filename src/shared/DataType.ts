@@ -102,6 +102,7 @@ export interface DataTypeDataType {
 
 /*
 
+switch
 case "string":
 case "number":
 case "boolean":
@@ -571,3 +572,61 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 }
 
 for (const value of Object.values(dataTypeDataTypes)) dataTypeDataType.options.push(value)
+
+// function coerce(dataType: t.DataType, value: any) {
+// 	if (t.is(dataType, value)) return value
+
+// 	switch (dataType.type) {
+// 		case "string": {
+// 			if (isNumber(value) || isBoolean(value)) {
+// 				return value.toString()
+// 			}
+// 			if (Array.isArray(value)) {
+// 				return value.join(",")
+// 			}
+// 			if (isPlainObject(value)) {
+// 				return JSON.stringify(value)
+// 			}
+// 			return ""
+// 		}
+
+// 		case "number": {
+// 			if (isBoolean(value)) {
+// 				return value ? 1 : 0
+// 			}
+// 			if (isString(value) || Array.isArray(value)) {
+// 				return value.length
+// 			}
+// 			if (isPlainObject(value)) {
+// 				return Object.keys(value).length
+// 			}
+// 			return 0
+// 		}
+
+// 		case "boolean": {
+// 			return Boolean(value)
+// 		}
+
+// 		case "undefined":
+// 			return undefined
+// 		case "null":
+// 			return null
+
+// 		case "datetime": {
+// 			// Hmm. Shouldn't have to do this. Should be able to be undefined...
+// 			if (isString(value)) {
+// 				return parseDate(value) || new Date().toISOString()
+// 			}
+// 		}
+
+// 		case "object":
+// 		case "literal":
+// 		case "array":
+// 		case "tuple":
+// 		case "map":
+// 		case "any":
+// 		case "or":
+// 		case "dataType":
+// 		default:
+// 	}
+// }
