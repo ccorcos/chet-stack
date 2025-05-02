@@ -18,13 +18,15 @@ export const uuid = new t.Validator<string>({
 
 */
 
+import { mapValues } from "lodash"
 import isBoolean from "lodash/isBoolean"
 import isEqual from "lodash/isEqual"
 import isNumber from "lodash/isNumber"
 import isPlainObject_ from "lodash/isPlainObject"
 import isString from "lodash/isString"
+import { parseDate } from "./dateHelpers"
 import { inspect as inspectJson } from "./inspect"
-import { Simplify } from "./typeHelpers"
+import { Simplify, unreachable } from "./typeHelpers"
 
 // ============================================================================
 // Data Types
@@ -573,60 +575,204 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 
 for (const value of Object.values(dataTypeDataTypes)) dataTypeDataType.options.push(value)
 
-// function coerce(dataType: t.DataType, value: any) {
-// 	if (t.is(dataType, value)) return value
+/**
+ * This will return undefined if we can't make a reasonable conversion.
+ * This is useful so that when converting an array, we can cleanup anything that doesnt convert.
+ */
+export function convert(dataType: DataType, value: any): any {
+	if (is(dataType, value)) return value
 
-// 	switch (dataType.type) {
-// 		case "string": {
-// 			if (isNumber(value) || isBoolean(value)) {
-// 				return value.toString()
-// 			}
-// 			if (Array.isArray(value)) {
-// 				return value.join(",")
-// 			}
-// 			if (isPlainObject(value)) {
-// 				return JSON.stringify(value)
-// 			}
-// 			return ""
-// 		}
+	const { type } = dataType
+	switch (type) {
+		case "any": {
+			return value
+		}
 
-// 		case "number": {
-// 			if (isBoolean(value)) {
-// 				return value ? 1 : 0
-// 			}
-// 			if (isString(value) || Array.isArray(value)) {
-// 				return value.length
-// 			}
-// 			if (isPlainObject(value)) {
-// 				return Object.keys(value).length
-// 			}
-// 			return 0
-// 		}
+		case "undefined":
+			return undefined
 
-// 		case "boolean": {
-// 			return Boolean(value)
-// 		}
+		case "null":
+			return null
 
-// 		case "undefined":
-// 			return undefined
-// 		case "null":
-// 			return null
+		case "literal": {
+			return dataType.value
+		}
 
-// 		case "datetime": {
-// 			// Hmm. Shouldn't have to do this. Should be able to be undefined...
-// 			if (isString(value)) {
-// 				return parseDate(value) || new Date().toISOString()
-// 			}
-// 		}
+		case "boolean": {
+			return Boolean(value)
+		}
 
-// 		case "object":
-// 		case "literal":
-// 		case "array":
-// 		case "tuple":
-// 		case "map":
-// 		case "any":
-// 		case "or":
-// 		case "dataType":
-// 		default:
-// 	}
-// }
+		case "string": {
+			if (isNumber(value) || isBoolean(value)) {
+				return value.toString()
+			}
+			if (Array.isArray(value)) {
+				return value.join(",")
+			}
+			if (isPlainObject(value)) {
+				return JSON.stringify(value)
+			}
+			return undefined
+		}
+
+		case "number": {
+			if (isBoolean(value)) {
+				return value ? 1 : 0
+			}
+			if (isString(value) || Array.isArray(value)) {
+				return value.length
+			}
+			if (isPlainObject(value)) {
+				return Object.keys(value).length
+			}
+			return undefined
+		}
+
+		case "datetime": {
+			// Hmm. Shouldn't have to do this. Should be able to be undefined...
+			if (isString(value)) {
+				return parseDate(value)
+			}
+
+			// TODO: number timestamp?
+			return undefined
+		}
+
+		case "object": {
+			const obj = {}
+			if (isPlainObject(value)) Object.assign(obj, value)
+
+			for (const [property, propertyType] of Object.entries(dataType.properties)) {
+				if (propertyType.type == "optional") {
+					if (!(property in obj)) continue
+					obj[property] = convert(propertyType.value, obj[property])
+				} else {
+					obj[property] = convert(propertyType, obj[property])
+				}
+			}
+
+			if (dataType.strict) {
+				for (const property in obj) {
+					if (!(property in dataType.properties)) delete obj[property]
+				}
+			}
+
+			return obj
+		}
+
+		case "array": {
+			if (dataType.items.type === "undefined") return []
+
+			let items = value
+			if (isString(value)) items = value.split(",")
+
+			if (Array.isArray(items)) {
+				items = items.map((item) => convert(dataType.items, item))
+			} else {
+				items = [convert(dataType.items, items)]
+			}
+
+			return items.filter((x) => x !== undefined)
+		}
+
+		case "tuple": {
+			if (Array.isArray(value)) {
+				const tuple = dataType.items.map((dt, index) => convert(dt, value[index]))
+				if (is(dataType, tuple)) return tuple
+			}
+			return undefined
+		}
+
+		case "map": {
+			if (!isPlainObject(value)) return undefined
+
+			const map = mapValues(value, (item) => convert(dataType.items, item))
+			if (dataType.items.type !== undefined) {
+				for (const key in map) if (map[key] === undefined) delete map[key]
+			}
+			return map
+		}
+
+		case "or": {
+			for (const option of dataType.options) {
+				if (option.type === "undefined") return
+				const converted = convert(option, value)
+				if (converted !== undefined) return converted
+			}
+			return
+		}
+
+		case "dataType":
+			return undefined
+
+		default: {
+			throw unreachable(type)
+		}
+	}
+}
+
+export function coerce(dataType: DataType, value: any): any {
+	if (dataType.type === undefined) return
+	const converted = convert(dataType, value)
+	if (converted !== undefined) return converted
+
+	const { type } = dataType
+	switch (type) {
+		case "any": {
+			return
+		}
+
+		case "undefined":
+			return undefined
+
+		case "null":
+			return null
+
+		case "literal": {
+			return dataType.value
+		}
+
+		case "boolean": {
+			return false
+		}
+
+		case "string": {
+			return ""
+		}
+
+		case "number": {
+			return 0
+		}
+
+		case "datetime": {
+			return new Date().toISOString()
+		}
+
+		case "object": {
+			throw new Error("Convert should have handled this already.")
+		}
+
+		case "array": {
+			return []
+		}
+
+		case "tuple": {
+			return dataType.items.map((dt) => coerce(dt, undefined))
+		}
+
+		case "map": {
+			return {}
+		}
+
+		case "or": {
+			return coerce(dataType.options[0], undefined)
+		}
+
+		case "dataType":
+			return string
+
+		default: {
+			throw unreachable(type)
+		}
+	}
+}
