@@ -215,4 +215,16 @@ describe("DataType", () => {
 		})
 		valid(t.dataType, ThingType)
 	})
+
+	it("handles infinite recursion", () => {
+		const dt = t.string as t.DataType
+		// This should not be an infinite type inference error.
+		t.is(dt, 123)
+
+		// The error message here should not cause infinite JSON.stringify recursion.
+		t.is(t.dataType, {})
+
+		// The error message here should not cause infinite inspect recursion.
+		console.log(t.inspect(t.dataTypeDataType))
+	})
 })

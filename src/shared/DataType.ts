@@ -482,7 +482,10 @@ export function formatError(error: ValidateError) {
 // Inspection.
 // ============================================================================
 
-type Inspector<T extends DataType["type"]> = (dataType: Extract<DataType, { type: T }>) => string
+type Inspector<T extends DataType["type"] = DataType["type"]> = (
+	dataType: Extract<DataType, { type: T }>,
+	recur: (dataType: DataType) => string
+) => string
 
 /** A map of DataType.type to validator functions. */
 const Inspectors: {
@@ -495,27 +498,30 @@ const Inspectors: {
 	number: (dataType) => "number",
 	boolean: (dataType) => "boolean",
 	literal: (dataType) => inspectJson(dataType.value),
-	array: (dataType) => "Array<" + inspect(dataType.items) + ">",
-	tuple: (dataType) => "[" + dataType.items.map(inspect).join(", ") + "]",
-	map: (dataType) => "{ [key: string]: " + inspect(dataType.items) + " }",
-	object: (dataType) =>
+	array: (dataType, recur) => "Array<" + recur(dataType.items) + ">",
+	tuple: (dataType, recur) => "[" + dataType.items.map(recur).join(", ") + "]",
+	map: (dataType, recur) => "{ [key: string]: " + recur(dataType.items) + " }",
+	object: (dataType, recur) =>
 		"{ " +
 		[
 			...Object.keys(dataType.properties).map((key) => {
 				const property = dataType.properties[key]
 				const isOptional = property.type === "optional"
 				const propertyToInspect = isOptional ? property.value : property
-				return key + (isOptional ? "?: " : ": ") + inspect(propertyToInspect)
+				return key + (isOptional ? "?: " : ": ") + recur(propertyToInspect)
 			}),
 		].join("; ") +
 		" }",
 	any: (dataType) => "any",
-	or: (dataType) => dataType.options.map(inspect).join(" | "),
+	or: (dataType, recur) => dataType.options.map((opt) => recur(opt)).join(" | "),
 	dataType: (dataType) => "DataType",
 }
 
-export function inspect<T extends DataType>(dataType: T): string {
-	return Inspectors[dataType.type](dataType as any)
+export function inspect<T extends DataType>(dataType: T, path?: Set<DataType>): string {
+	if (!path) path = new Set()
+	if (path.has(dataType)) return "[Circular]"
+	path.add(dataType)
+	return Inspectors[dataType.type](dataType as any, (dt) => inspect(dt, new Set(path)))
 }
 
 // ============================================================================
