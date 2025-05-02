@@ -11,9 +11,6 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 			{...props}
 			className={["feedback", props.className].filter(Boolean).join(" ")}
 			style={{
-				// borderWidth: 1,
-				// borderStyle: "solid",
-
 				border: "none",
 				padding: "4px 8px",
 				borderRadius: 4,

@@ -41,7 +41,7 @@ function fuzzyMatchHelper(
 		}
 	}
 
-	if (!/\w/.test(text[ti])) {
+	if (!/[a-zA-Z0-9]/.test(text[ti])) {
 		// If this is a symbol, then skip.
 		const item = { skip: text[ti] }
 		const rest = fuzzyMatchHelper(query, text, qi, ti + 1)
@@ -55,7 +55,10 @@ function fuzzyMatchHelper(
 	let i = ti
 	skip.push({ skip: text[i] })
 	i++
-	while (i < text.length && /\w/.test(text[i])) {
+	// Allow camelCase, snake_case, and TitleCase matching.
+	// One potential issue is that AChannel is TitleCase, and to support that UPPERCASE matching
+	// is a little bonkers. We can fix that later though.
+	while (i < text.length && /[a-z0-9]/.test(text[i])) {
 		skip.push({ skip: text[i] })
 		i++
 	}

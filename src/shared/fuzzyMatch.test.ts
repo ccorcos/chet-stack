@@ -43,4 +43,10 @@ describe("FuzzyMatch", () => {
 		assert.ok(result)
 		assert.deepEqual(result, [{ match: "a" }, { skip: "bc " }, { match: "bcd" }])
 	})
+
+	it("camelCase, snake_case, TitleCase matching", () => {
+		assert.deepEqual(fuzzyMatch("case", "TitleCase"), [{ skip: "Title" }, { match: "Case" }])
+		assert.deepEqual(fuzzyMatch("case", "camelCase"), [{ skip: "camel" }, { match: "Case" }])
+		assert.deepEqual(fuzzyMatch("case", "snake_case"), [{ skip: "snake_" }, { match: "case" }])
+	})
 })
