@@ -1,6 +1,20 @@
-import React, { useLayoutEffect, useRef } from "react"
-import { mergeRefs } from "../../helpers/mergeRefs"
+import { DOMParser, Schema } from "prosemirror-model"
+import { EditorState } from "prosemirror-state"
+import { EditorView } from "prosemirror-view"
+import React, { useEffect, useRef } from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
+
+// Create a schema that only allows plain text
+const plainTextSchema = new Schema({
+	nodes: {
+		doc: {
+			content: "text*",
+		},
+		text: {
+			group: "inline",
+		},
+	},
+})
 
 export const ContentEditableInput = passthroughRef(_ContentEditableInput)
 
@@ -12,66 +26,95 @@ function _ContentEditableInput(
 		multiline?: boolean
 	}
 ) {
-	const ref = useRef<HTMLDivElement>(null)
+	const editorRef = useRef<HTMLDivElement>(null)
+	const viewRef = useRef<EditorView | null>(null)
 
-	useLayoutEffect(() => {
-		if (!ref.current) return
-		ref.current.textContent = props.value
-		if (props.autoFocus) {
-			ref.current.focus()
-			// Set selection at the end.
-			const range = document.createRange()
-			range.selectNodeContents(ref.current)
-			range.collapse(false)
-			const selection = window.getSelection()
-			selection?.removeAllRanges()
-			selection?.addRange(range)
+	useEffect(() => {
+		if (!editorRef.current) return
+
+		// Create initial state
+		const state = EditorState.create({
+			schema: plainTextSchema,
+			doc: DOMParser.fromSchema(plainTextSchema).parse(document.createElement("div")),
+			plugins: [],
+		})
+
+		// Create view
+		const view = new EditorView(
+			{ mount: editorRef.current },
+			{
+				state,
+				dispatchTransaction(transaction) {
+					const newState = view.state.apply(transaction)
+					view.updateState(newState)
+
+					// Get plain text content
+					const content = newState.doc.textContent
+					props.onChange?.(content)
+				},
+				handleKeyDown: (view, event) => {
+					if (!props.multiline && event.key === "Enter" && !event.shiftKey) {
+						event.preventDefault()
+						view.dom.blur()
+						return true
+					}
+					if (event.key === "Escape") {
+						event.preventDefault()
+						view.dom.blur()
+						return true
+					}
+					return false
+				},
+				handleDOMEvents: {
+					blur: () => {
+						const content = view.state.doc.textContent
+						if (props.value === content) return
+						props.onSubmit?.(content)
+						return false
+					},
+				},
+			}
+		)
+
+		viewRef.current = view
+
+		// Set initial content
+		const tr = view.state.tr.insertText(props.value)
+		view.dispatch(tr)
+
+		return () => {
+			view.destroy()
 		}
 	}, [])
+
+	// Update content when value prop changes
+	useEffect(() => {
+		if (!viewRef.current) return
+		const view = viewRef.current
+		const currentContent = view.state.doc.textContent
+		if (currentContent !== props.value) {
+			const tr = view.state.tr.replaceWith(
+				0,
+				view.state.doc.content.size,
+				plainTextSchema.text(props.value)
+			)
+			view.dispatch(tr)
+		}
+	}, [props.value])
 
 	const { value, onChange, style, ...rest } = props
 
 	return (
 		<div
 			{...rest}
-			ref={mergeRefs([ref, props.ref])}
-			contentEditable
+			ref={editorRef}
 			style={{
 				whiteSpace: "normal",
 				wordBreak: "break-all",
 				cursor: "text",
 				userSelect: "text",
-				WebkitUserModify: "read-write-plaintext-only",
 				...style,
 			}}
-			onPaste={(e) => {
-				e.preventDefault()
-				const text = e.clipboardData.getData("text/plain")
-				document.execCommand("insertText", false, text)
-			}}
-			onInput={(e) => {
-				// This gets called on every keystroke, but this is not a controlled input.
-				onChange?.(e.currentTarget.textContent || "")
-			}}
-			onKeyDown={(e) => {
-				props.onKeyDown?.(e)
-				if (!props.multiline && e.key === "Enter" && !e.shiftKey) {
-					const elm = e.target as HTMLDivElement
-					e.preventDefault()
-					elm.blur()
-				} else if (e.key === "Escape") {
-					const elm = e.target as HTMLDivElement
-					e.preventDefault()
-					elm.blur()
-				}
-			}}
-			onBlur={(e) => {
-				props.onBlur?.(e)
-				const value = e.currentTarget.textContent || ""
-				if (props.value === value) return
-				props.onSubmit?.(value)
-			}}
-			suppressContentEditableWarning={true}
-		></div>
+		/>
 	)
 }

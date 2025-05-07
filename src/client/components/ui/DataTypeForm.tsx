@@ -51,6 +51,7 @@ export function DataTypeForm(props: {
 				<div style={style}>
 					<ContentEditableInput
 						style={{
+							minWidth: 100,
 							border: "1px solid var(--bg2)",
 							padding: "4px 8px",
 							borderRadius: 4,
@@ -260,9 +261,17 @@ function ArrayForm(props: {
 	else if (value !== undefined && value !== null) items.push(value)
 
 	return (
-		<div style={style}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: 8,
+				alignItems: "flex-start",
+				...style,
+			}}
+		>
 			{items.map((item, index) => (
-				<div style={{ display: "flex", alignItems: "flex-start" }}>
+				<div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
 					<DataTypeForm
 						dataType={dataType.items}
 						value={item}
@@ -443,11 +452,13 @@ function OrPrimativeTypePicker(props: {
 
 	return (
 		<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
+			primative... unused?
 			<ComboBoxSelect
 				items={types}
 				value={type}
 				onChange={(newType) => {
 					const newDataType = dataType.options.find((opt) => opt.type === newType)!
+					console.log("NEW TYPE", newType, newDataType, value, t.coerce(newDataType, value))
 					onChange(t.coerce(newDataType, value))
 				}}
 			/>
@@ -496,7 +507,10 @@ function OrObjectLiteralPicker(props: {
 					value={literalValue(type)}
 					onChange={(newValue) => {
 						// setType(dataType.options.find((opt) => literalValue(opt) === newValue)!)
-						onChange(t.coerce(t.object({ [property]: t.literal(JSON.parse(newValue)) }), value))
+						// onChange(t.coerce(t.object({ [property]: t.literal(JSON.parse(newValue)) }), value))
+						onChange(
+							t.coerce(dataType.options.find((opt) => literalValue(opt) === newValue)!, value)
+						)
 					}}
 				/>
 			</div>

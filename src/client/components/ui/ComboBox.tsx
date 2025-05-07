@@ -38,7 +38,6 @@ export function ComboBoxSelect<T extends string>(props: {
 					setOpen(false)
 				}}
 				onDismiss={() => {
-					console.log("DIsmiss")
 					setOpen(false)
 				}}
 				Input={props.Input}
