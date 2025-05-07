@@ -607,11 +607,11 @@ export function convert(dataType: DataType, value: any): any {
 				return value.toString()
 			}
 			if (Array.isArray(value)) {
-				return value.join(",")
+				return value.join(", ")
 			}
-			if (isPlainObject(value)) {
-				return JSON.stringify(value)
-			}
+			// if (isPlainObject(value)) {
+			// 	return JSON.stringify(value)
+			// }
 			return undefined
 		}
 
@@ -629,25 +629,53 @@ export function convert(dataType: DataType, value: any): any {
 		}
 
 		case "datetime": {
-			// Hmm. Shouldn't have to do this. Should be able to be undefined...
 			if (isString(value)) {
 				return parseDate(value)
 			}
 
-			// TODO: number timestamp?
 			return undefined
+		}
+
+		case "array": {
+			if (isString(value)) value = value.split(",").map((item) => item.trim())
+
+			if (Array.isArray(value)) {
+				value = value.map((item) => convert(dataType.items, item))
+			} else {
+				value = [convert(dataType.items, value)]
+			}
+
+			const array = value.filter((item) => is(dataType.items, item))
+			if (array.length === 0) return undefined
+			return array
+		}
+
+		case "map": {
+			if (!isPlainObject(value)) return undefined
+			const map = mapValues(value, (item) => convert(dataType.items, item))
+			for (const key in map) if (!is(dataType.items, map[key])) delete map[key]
+			return map
 		}
 
 		case "object": {
 			const obj = {}
 			if (isPlainObject(value)) Object.assign(obj, value)
 
+			// if (isString(value)) {
+			// 	try {
+			// 		const parsed = JSON.parse(value)
+			// 		if (isPlainObject())
+			// 	}
+			// }
+
 			for (const [property, propertyType] of Object.entries(dataType.properties)) {
 				if (propertyType.type == "optional") {
 					if (!(property in obj)) continue
 					obj[property] = convert(propertyType.value, obj[property])
 				} else {
-					obj[property] = convert(propertyType, obj[property])
+					const propertyValue = convert(propertyType, obj[property])
+					if (!is(propertyType, propertyValue)) return undefined
+					obj[property] = propertyValue
 				}
 			}
 
@@ -660,22 +688,9 @@ export function convert(dataType: DataType, value: any): any {
 			return obj
 		}
 
-		case "array": {
-			if (dataType.items.type === "undefined") return []
-
-			let items = value
-			if (isString(value)) items = value.split(",")
-
-			if (Array.isArray(items)) {
-				items = items.map((item) => convert(dataType.items, item))
-			} else {
-				items = [convert(dataType.items, items)]
-			}
-
-			return items.filter((x) => x !== undefined)
-		}
-
 		case "tuple": {
+			// There's some more thoughtful stuff we could probably do here.
+			// For example string -> ["user", string] could put the string in there.
 			if (Array.isArray(value)) {
 				const tuple = dataType.items.map((dt, index) => convert(dt, value[index]))
 				if (is(dataType, tuple)) return tuple
@@ -683,21 +698,11 @@ export function convert(dataType: DataType, value: any): any {
 			return undefined
 		}
 
-		case "map": {
-			if (!isPlainObject(value)) return undefined
-
-			const map = mapValues(value, (item) => convert(dataType.items, item))
-			if (dataType.items.type !== undefined) {
-				for (const key in map) if (map[key] === undefined) delete map[key]
-			}
-			return map
-		}
-
 		case "or": {
 			for (const option of dataType.options) {
 				if (option.type === "undefined") return
 				const converted = convert(option, value)
-				if (converted !== undefined) return converted
+				if (is(option, converted)) return converted
 			}
 			return
 		}
@@ -714,23 +719,16 @@ export function convert(dataType: DataType, value: any): any {
 export function coerce(dataType: DataType, value: any): any {
 	if (dataType.type === undefined) return
 	const converted = convert(dataType, value)
-	if (converted !== undefined) return converted
+	if (is(dataType, converted)) return converted
 
+	// We can start with the converted value and coerce it because it could be partially converted.
 	const { type } = dataType
 	switch (type) {
-		case "any": {
-			return
-		}
-
+		case "any":
 		case "undefined":
-			return undefined
-
 		case "null":
-			return null
-
-		case "literal": {
-			return dataType.value
-		}
+		case "literal":
+			return converted
 
 		case "boolean": {
 			return false
@@ -748,20 +746,41 @@ export function coerce(dataType: DataType, value: any): any {
 			return new Date().toISOString()
 		}
 
-		case "object": {
-			throw new Error("Convert should have handled this already.")
-		}
-
 		case "array": {
 			return []
 		}
 
-		case "tuple": {
-			return dataType.items.map((dt) => coerce(dt, undefined))
-		}
-
 		case "map": {
 			return {}
+		}
+
+		case "object": {
+			const obj = {}
+			if (isPlainObject(value)) Object.assign(obj, value)
+
+			for (const [property, propertyType] of Object.entries(dataType.properties)) {
+				if (propertyType.type == "optional") {
+					if (!(property in obj)) continue
+					const propertyValue = coerce(propertyType.value, obj[property])
+					if (propertyValue === undefined) continue
+					obj[property] = propertyValue
+				} else {
+					const propertyValue = coerce(propertyType, obj[property])
+					obj[property] = propertyValue
+				}
+			}
+
+			if (dataType.strict) {
+				for (const property in obj) {
+					if (!(property in dataType.properties)) delete obj[property]
+				}
+			}
+
+			return obj
+		}
+
+		case "tuple": {
+			return dataType.items.map((dt) => coerce(dt, undefined))
 		}
 
 		case "or": {

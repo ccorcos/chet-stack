@@ -8,7 +8,7 @@ import {
 	omit,
 	uniq,
 } from "lodash"
-import React, { useMemo, useState } from "react"
+import React from "react"
 import * as t from "../../../shared/DataType"
 import { inspect } from "../../../shared/inspect"
 import { unreachable } from "../../../shared/typeHelpers"
@@ -45,6 +45,8 @@ export function DataTypeForm(props: {
 			if (isString(value)) str = value
 			if (isNumber(value) || isBoolean(value) || isArray(value)) str = value.toString()
 			if (isPlainObject(value)) str = JSON.stringify(value)
+
+			// TODO: this doesnt update when value changes.
 			return (
 				<div style={style}>
 					<ContentEditableInput
@@ -118,43 +120,7 @@ export function DataTypeForm(props: {
 			)
 
 		case "array": {
-			let items: any[] = []
-			if (isArray(value)) items = value
-			else if (isString(value)) items = value.split(",").map((str) => str.trim())
-			else if (value !== undefined && value !== null) items.push(value)
-
-			return (
-				<div style={style}>
-					<span>{" ["}</span>
-					{items.map((item, index) => (
-						<div style={{ display: "flex", alignItems: "flex-start" }}>
-							<DataTypeForm
-								dataType={dataType.items}
-								value={item}
-								onChange={(newItem) => {
-									onChange(items.map((x, i) => (i === index ? newItem : x)))
-								}}
-							/>
-							<Button
-								onClick={() => {
-									onChange(items.filter((x, i) => i !== index))
-								}}
-							>
-								Delete
-							</Button>
-						</div>
-					))}
-					<Button
-						onClick={() => {
-							console.log("NEW")
-							onChange([...items, undefined])
-						}}
-					>
-						New Item
-					</Button>
-					<span>{"]"}</span>
-				</div>
-			)
+			return <ArrayForm {...props} dataType={dataType as t.ArrayDataType} />
 		}
 
 		case "tuple": {
@@ -278,6 +244,51 @@ export function DataTypeForm(props: {
 		default:
 			throw unreachable(dataType)
 	}
+}
+
+function ArrayForm(props: {
+	style?: React.CSSProperties
+	dataType: t.ArrayDataType
+	value: any
+	onChange: (value: any) => void
+}) {
+	const { dataType, value, onChange, style } = props
+
+	let items: any[] = []
+	if (isArray(value)) items = value
+	else if (isString(value)) items = value.split(",").map((str) => str.trim())
+	else if (value !== undefined && value !== null) items.push(value)
+
+	return (
+		<div style={style}>
+			{items.map((item, index) => (
+				<div style={{ display: "flex", alignItems: "flex-start" }}>
+					<DataTypeForm
+						dataType={dataType.items}
+						value={item}
+						onChange={(newItem) => {
+							onChange(items.map((x, i) => (i === index ? newItem : x)))
+						}}
+					/>
+					<Button
+						onClick={() => {
+							onChange(items.filter((x, i) => i !== index))
+						}}
+					>
+						Delete
+					</Button>
+				</div>
+			))}
+			<Button
+				onClick={() => {
+					console.log("NEW")
+					onChange([...items, undefined])
+				}}
+			>
+				New Item
+			</Button>
+		</div>
+	)
 }
 
 function OrDataTypeForm(props: {
@@ -417,18 +428,29 @@ function OrPrimativeTypePicker(props: {
 	const { dataType, value, onChange, style } = props
 	const types = dataType.options.map((opt) => opt.type)
 
-	const initialType = useMemo(() => {
-		const validOpt = dataType.options.find((opt) => t.is(opt, value))
-		if (validOpt) return validOpt.type
-		return types[0]
-	}, [])
+	// const initialType = useMemo(() => {
+	// 	const validOpt = dataType.options.find((opt) => t.is(opt, value))
+	// 	if (validOpt) return validOpt.type
+	// 	return types[0]
+	// }, [])
 
-	const [type, setType] = useState(initialType)
+	// const [type, setType] = useState(initialType)
+	// const currentDataType = dataType.options.find((opt) => opt.type === type)!
+
+	const validOpt = dataType.options.find((opt) => t.is(opt, value))
+	const type = validOpt ? validOpt.type : types[0]
 	const currentDataType = dataType.options.find((opt) => opt.type === type)!
 
 	return (
 		<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
-			<ComboBoxSelect items={types} value={type} onChange={setType} />
+			<ComboBoxSelect
+				items={types}
+				value={type}
+				onChange={(newType) => {
+					const newDataType = dataType.options.find((opt) => opt.type === newType)!
+					onChange(t.coerce(newDataType, value))
+				}}
+			/>
 			<DataTypeForm dataType={currentDataType} value={value} onChange={onChange} />
 		</div>
 	)
@@ -442,16 +464,22 @@ function OrObjectLiteralPicker(props: {
 }) {
 	const { dataType, value, onChange, property } = props
 
-	const initialType = useMemo(() => {
-		const validOpt = dataType.options.find((opt) => {
-			const partial = t.object({ [property]: opt.properties[property] }, false)
-			return t.is(partial, value)
-		})
-		if (validOpt) return validOpt
-		return dataType.options[0]
-	}, [])
+	// const initialType = useMemo(() => {
+	// 	const validOpt = dataType.options.find((opt) => {
+	// 		const partial = t.object({ [property]: opt.properties[property] }, false)
+	// 		return t.is(partial, value)
+	// 	})
+	// 	if (validOpt) return validOpt
+	// 	return dataType.options[0]
+	// }, [])
 
-	const [type, setType] = useState(initialType)
+	// const [type, setType] = useState(initialType)
+
+	let type = dataType.options.find((opt) => {
+		const partial = t.object({ [property]: opt.properties[property] }, false)
+		return t.is(partial, value)
+	})
+	if (!type) type = dataType.options[0]
 
 	const literalValue = (dt: t.ObjectDataType) =>
 		JSON.stringify((dt.properties[property] as t.LiteralDataType).value)
@@ -466,9 +494,10 @@ function OrObjectLiteralPicker(props: {
 				<ComboBoxSelect
 					items={dataType.options.map(literalValue)}
 					value={literalValue(type)}
-					onChange={(newValue) =>
-						setType(dataType.options.find((opt) => literalValue(opt) === newValue)!)
-					}
+					onChange={(newValue) => {
+						// setType(dataType.options.find((opt) => literalValue(opt) === newValue)!)
+						onChange(t.coerce(t.object({ [property]: t.literal(JSON.parse(newValue)) }), value))
+					}}
 				/>
 			</div>
 			<DataTypeForm
@@ -519,22 +548,27 @@ function OrGeneralPicker(props: {
 }) {
 	const { dataType, value, onChange } = props
 
-	const initialType = useMemo(() => {
-		const validOpt = dataType.options.find((opt) => t.is(opt, value))
-		if (validOpt) return validOpt
-		return dataType.options[0]
-	}, [])
+	// const initialType = useMemo(() => {
+	// 	const validOpt = dataType.options.find((opt) => t.is(opt, value))
+	// 	if (validOpt) return validOpt
+	// 	return dataType.options[0]
+	// }, [])
 
-	const [type, setType] = useState(initialType)
+	// const [type, setType] = useState(initialType)
 
+	let type = dataType.options.find((opt) => t.is(opt, value))
+	if (!type) type = dataType.options[0]
+
+	console.log("HERE")
 	return (
 		<>
 			<ComboBoxSelect
 				items={dataType.options.map((opt) => t.inspect(opt))}
 				value={t.inspect(type)}
-				onChange={(newValue) =>
-					setType(dataType.options.find((opt) => t.inspect(opt) === newValue)!)
-				}
+				onChange={(newValue) => {
+					const newType = dataType.options.find((opt) => t.inspect(opt) === newValue)!
+					onChange(t.coerce(newType, value))
+				}}
 			/>
 			<DataTypeForm dataType={type} value={value} onChange={onChange} />
 		</>

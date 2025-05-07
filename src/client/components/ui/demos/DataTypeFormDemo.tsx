@@ -25,13 +25,13 @@ t.or(t.number, t.object({type: "string"}), t.object({a: t.number}), t.object({b:
 export function DataTypeFormDemo() {
 	return (
 		<div style={{ display: "flex", flexDirection: "column", padding: 8, gap: 12 }}>
-			<Example init={t.null_} />
+			{/* <Example init={t.null_} />
 			<Example init={t.undefined_} />
 			<Example init={t.string} />
 			<Example init={t.number} />
 			<Example init={t.boolean} />
 			<Example init={t.datetime} />
-			<Example init={t.any} />
+			<Example init={t.any} /> */}
 			<Example init={t.literal("hello")} />
 			<Example init={t.array(t.string)} />
 			<Example init={t.map(t.string)} />
@@ -66,6 +66,8 @@ export function DataTypeFormDemo() {
 function Example(props: { init: t.DataType }) {
 	const [dataType, setDataType] = useState<t.DataType>(props.init)
 	const [value, setValue] = useState<any>()
+
+	console.log({ dataType, value })
 	return (
 		<div className="layer" style={{ padding: 8, display: "flex" }}>
 			<DataTypeForm
