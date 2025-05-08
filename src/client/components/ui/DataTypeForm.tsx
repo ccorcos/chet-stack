@@ -124,6 +124,10 @@ export function DataTypeForm(props: {
 			return <ArrayForm {...props} dataType={dataType as t.ArrayDataType} />
 		}
 
+		case "map": {
+			return <MapForm {...props} dataType={dataType as t.MapDataType} />
+		}
+
 		case "tuple": {
 			let tup: any[] = []
 			if (isArray(value)) tup = value
@@ -147,65 +151,6 @@ export function DataTypeForm(props: {
 						)
 					})}
 					<span>{"]"}</span>
-				</div>
-			)
-		}
-
-		case "map": {
-			let obj = {}
-			if (isPlainObject(value)) obj = value
-			return (
-				<div style={style}>
-					{Object.entries(obj).map(([key, value]) => (
-						<div style={{ display: "flex", alignItems: "flex-start" }}>
-							<ContentEditableInput
-								style={{
-									border: "1px solid var(--bg2)",
-									padding: "4px 8px",
-									borderRadius: 4,
-									backgroundColor: "var(--bg1)",
-									color: "var(--fg0)",
-								}}
-								value={key}
-								onChange={(newKey) => {
-									const newObj = Object.fromEntries(
-										Object.entries(obj).map(([k, v]) => (k === key ? [newKey, v] : [k, v]))
-									)
-									onChange(newObj)
-								}}
-							/>
-							<span>:</span>
-							<DataTypeForm
-								dataType={dataType.items}
-								value={value}
-								onChange={(newItem) => {
-									const newObj = Object.fromEntries(
-										Object.entries(obj).map(([k, v]) => (k === key ? [k, newItem] : [k, v]))
-									)
-									onChange(newObj)
-								}}
-							/>
-							<Button
-								onClick={() => {
-									const newObj = Object.fromEntries(
-										Object.entries(obj).filter(([k, v]) => k !== key)
-									)
-									onChange(newObj)
-								}}
-							>
-								Delete
-							</Button>
-							{/* TODO: reorder */}
-						</div>
-					))}
-					<Button
-						onClick={() => {
-							const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
-							onChange(newObj)
-						}}
-					>
-						New Item
-					</Button>
 				</div>
 			)
 		}
@@ -289,6 +234,69 @@ function ArrayForm(props: {
 				onClick={() => {
 					console.log("NEW", array)
 					onChange([...array, t.coerce(dataType.items, undefined)])
+				}}
+			>
+				New Item
+			</Button>
+		</div>
+	)
+}
+
+function MapForm(props: {
+	style?: React.CSSProperties
+	dataType: t.MapDataType
+	value: any
+	onChange: (value: any) => void
+}) {
+	const { dataType, value, onChange, style } = props
+	let obj = {}
+	if (isPlainObject(value)) obj = value
+	return (
+		<div style={style}>
+			{Object.entries(obj).map(([key, value]) => (
+				<div style={{ display: "flex", alignItems: "flex-start" }}>
+					<ContentEditableInput
+						style={{
+							border: "1px solid var(--bg2)",
+							padding: "4px 8px",
+							borderRadius: 4,
+							backgroundColor: "var(--bg1)",
+							color: "var(--fg0)",
+						}}
+						value={key}
+						onChange={(newKey) => {
+							const newObj = Object.fromEntries(
+								Object.entries(obj).map(([k, v]) => (k === key ? [newKey, v] : [k, v]))
+							)
+							onChange(newObj)
+						}}
+					/>
+					<span>:</span>
+					<DataTypeForm
+						dataType={dataType.items}
+						value={value}
+						onChange={(newItem) => {
+							const newObj = Object.fromEntries(
+								Object.entries(obj).map(([k, v]) => (k === key ? [k, newItem] : [k, v]))
+							)
+							onChange(newObj)
+						}}
+					/>
+					<Button
+						onClick={() => {
+							const newObj = Object.fromEntries(Object.entries(obj).filter(([k, v]) => k !== key))
+							onChange(newObj)
+						}}
+					>
+						Delete
+					</Button>
+					{/* TODO: reorder */}
+				</div>
+			))}
+			<Button
+				onClick={() => {
+					const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
+					onChange(newObj)
 				}}
 			>
 				New Item

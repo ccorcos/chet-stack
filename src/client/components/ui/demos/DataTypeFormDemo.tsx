@@ -33,8 +33,8 @@ export function DataTypeFormDemo() {
 			{/* <Example init={t.datetime} /> */}
 			{/* <Example init={t.any} /> */}
 			{/* <Example init={t.literal("hello")} /> */}
-			<Example init={t.array(t.string)} />
-			{/* <Example init={t.map(t.string)} /> */}
+			{/* <Example init={t.array(t.string)} /> */}
+			<Example init={t.map(t.string)} />
 			{/* <Example init={t.tuple(t.literal("user"), t.string)} /> */}
 			{/* <Example init={t.dataType} /> */}
 			{/* <Example init={t.object({ name: t.string, age: t.number, admin: t.boolean })} /> */}
