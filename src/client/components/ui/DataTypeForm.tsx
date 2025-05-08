@@ -12,7 +12,7 @@ import React from "react"
 import * as t from "../../../shared/DataType"
 import { inspect } from "../../../shared/inspect"
 import { unreachable } from "../../../shared/typeHelpers"
-import { Button } from "./Button"
+import { Button, hPadding, vPadding } from "./Button"
 import { ComboBoxSelect } from "./ComboBox"
 import { ContentEditableInput } from "./ContentEditableInput"
 import { Input } from "./Input"
@@ -30,15 +30,19 @@ export function DataTypeForm(props: {
 	switch (dataType.type) {
 		case "any":
 			// Maybe some kind of JSON editor?
-			return <div style={{ ...style, padding: "4px 0px" }}>{inspect(value)}</div>
+			return <div style={{ ...style, padding: `${vPadding}px 0px` }}>{inspect(value)}</div>
 
 		case "null":
 		case "undefined":
-			return <div style={{ ...style, padding: "4px 0px" }}>{dataType.type}</div>
+			return <div style={{ ...style, padding: `${vPadding}px 0px` }}>{dataType.type}</div>
 
 		case "literal":
 			// This probably doesn't render in most cases.
-			return <div style={{ ...style, padding: "4px 0px" }}>{JSON.stringify(dataType.value)}</div>
+			return (
+				<div style={{ ...style, padding: `${vPadding}px 0px` }}>
+					{JSON.stringify(dataType.value)}
+				</div>
+			)
 
 		case "string": {
 			let str = ""
@@ -53,7 +57,7 @@ export function DataTypeForm(props: {
 						style={{
 							minWidth: 100,
 							border: "1px solid var(--bg2)",
-							padding: "4px 8px",
+							padding: `${vPadding}px ${hPadding}px`,
 							borderRadius: 4,
 							backgroundColor: "var(--bg1)",
 							color: "var(--fg0)",
@@ -82,7 +86,7 @@ export function DataTypeForm(props: {
 		case "boolean": {
 			const bool = Boolean(value)
 			return (
-				<div style={{ ...style, padding: "4px 0px" }}>
+				<div style={{ ...style, padding: `${vPadding}px 0px` }}>
 					<Input
 						type="checkbox"
 						checked={bool}
@@ -135,22 +139,25 @@ export function DataTypeForm(props: {
 
 			return (
 				<div style={{ display: "flex", alignItems: "flex-start", ...style }}>
-					<span>{"["}</span>
+					<span style={{ marginRight: 4, paddingTop: vPadding }}>{"["}</span>
 					{dataType.items.map((itemDataType, index) => {
 						const itemValue = tup[index]
 						return (
-							<DataTypeForm
-								dataType={itemDataType}
-								value={itemValue}
-								onChange={(newValue) => {
-									const newTup = [...tup]
-									newTup[index] = newValue
-									onChange(newTup)
-								}}
-							/>
+							<>
+								{index > 0 && <span style={{ marginRight: 4, paddingTop: vPadding }}>,</span>}
+								<DataTypeForm
+									dataType={itemDataType}
+									value={itemValue}
+									onChange={(newValue) => {
+										const newTup = [...tup]
+										newTup[index] = newValue
+										onChange(newTup)
+									}}
+								/>
+							</>
 						)
 					})}
-					<span>{"]"}</span>
+					<span style={{ marginLeft: 4, paddingTop: vPadding }}>{"]"}</span>
 				</div>
 			)
 		}
@@ -160,13 +167,23 @@ export function DataTypeForm(props: {
 			if (isPlainObject(value)) obj = value
 			const entries = Object.entries(dataType.properties)
 			if (entries.length === 0) return false
+
 			return (
-				<div style={{ display: "flex", flexDirection: "column", color: debug("red"), ...style }}>
+				<div
+					style={{
+						display: "grid",
+						gridTemplateColumns: "auto 1fr",
+						gap: 8,
+						alignItems: "flex-start",
+						color: debug("red"),
+						...style,
+					}}
+				>
 					{entries.map(([key, valueDataType]) => {
 						const dt = valueDataType.type === "optional" ? valueDataType.value : valueDataType
 						return (
-							<div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-								<div style={{ padding: "4px 0px" }}>{key}:</div>
+							<>
+								<div style={{ padding: `${vPadding}px 0px` }}>{key}:</div>
 								<DataTypeForm
 									dataType={dt}
 									value={value?.[key]}
@@ -176,7 +193,7 @@ export function DataTypeForm(props: {
 										onChange(newObj)
 									}}
 								/>
-							</div>
+							</>
 						)
 					})}
 				</div>
@@ -251,17 +268,29 @@ function MapForm(props: {
 	const { dataType, value, onChange, style } = props
 	let obj = {}
 	if (isPlainObject(value)) obj = value
+
+	const entries = Object.entries(obj)
 	return (
-		<div style={style}>
-			{Object.entries(obj).map(([key, value]) => (
-				<div style={{ display: "flex", alignItems: "flex-start" }}>
+		<div
+			style={{
+				...style,
+				display: "grid",
+				gridTemplateColumns: "repeat(4, auto)",
+				gridTemplateRows: `repeat(${entries.length}, auto) auto`,
+				gap: 8,
+				alignItems: "center",
+			}}
+		>
+			{entries.map(([key, value]) => (
+				<>
 					<ContentEditableInput
 						style={{
 							border: "1px solid var(--bg2)",
-							padding: "4px 8px",
+							padding: `${vPadding}px ${hPadding}px`,
 							borderRadius: 4,
 							backgroundColor: "var(--bg1)",
 							color: "var(--fg0)",
+							minWidth: 100,
 						}}
 						value={key}
 						onChange={(newKey) => {
@@ -291,16 +320,22 @@ function MapForm(props: {
 						Delete
 					</Button>
 					{/* TODO: reorder */}
-				</div>
+				</>
 			))}
-			<Button
-				onClick={() => {
-					const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
-					onChange(newObj)
+			<div
+				style={{
+					gridColumn: "1 / -1", // spans the whole row
 				}}
 			>
-				New Item
-			</Button>
+				<Button
+					onClick={() => {
+						const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
+						onChange(newObj)
+					}}
+				>
+					New Item
+				</Button>
+			</div>
 		</div>
 	)
 }
@@ -457,16 +492,17 @@ function OrPrimativeTypePicker(props: {
 
 	return (
 		<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
-			primative... unused?
-			<ComboBoxSelect
-				items={types}
-				value={type}
-				onChange={(newType) => {
-					const newDataType = dataType.options.find((opt) => opt.type === newType)!
-					console.log("NEW TYPE", newType, newDataType, value, t.coerce(newDataType, value))
-					onChange(t.coerce(newDataType, value))
-				}}
-			/>
+			<div>
+				<ComboBoxSelect
+					items={types}
+					value={type}
+					onChange={(newType) => {
+						const newDataType = dataType.options.find((opt) => opt.type === newType)!
+						console.log("NEW TYPE", newType, newDataType, value, t.coerce(newDataType, value))
+						onChange(t.coerce(newDataType, value))
+					}}
+				/>
+			</div>
 			<DataTypeForm dataType={currentDataType} value={value} onChange={onChange} />
 		</div>
 	)
@@ -506,7 +542,7 @@ function OrObjectLiteralPicker(props: {
 	return (
 		<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 			<div style={{ display: "flex", alignItems: "flex-start", gap: 8, color: debug("blue") }}>
-				<div style={{ padding: "4px 0px" }}>{property}:</div>
+				<div style={{ padding: `${vPadding}px 0px` }}>{property}:</div>
 				<ComboBoxSelect
 					items={dataType.options.map(literalValue)}
 					value={literalValue(type)}

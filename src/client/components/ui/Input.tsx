@@ -1,6 +1,7 @@
 import React from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
 import { withStyle } from "../../helpers/withStyle"
+import { hPadding, vPadding } from "./Button"
 
 // TODO: lets use css here with colors.
 // Also dark mode force.
@@ -13,7 +14,7 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 			style={{
 				// Keep a border so its the same size as Button
 				border: "1px solid transparent",
-				padding: "4px 8px",
+				padding: `${vPadding}px ${hPadding}px`,
 				borderRadius: 4,
 				fontFamily: "inherit",
 				cursor: props.disabled ? "not-allowed" : "auto",

@@ -34,19 +34,22 @@ export function DataTypeFormDemo() {
 			{/* <Example init={t.any} /> */}
 			{/* <Example init={t.literal("hello")} /> */}
 			{/* <Example init={t.array(t.string)} /> */}
-			<Example init={t.map(t.string)} />
+			{/* <Example init={t.map(t.string)} /> */}
 			{/* <Example init={t.tuple(t.literal("user"), t.string)} /> */}
-			{/* <Example init={t.dataType} /> */}
+			{/* <Example init={t.tuple(t.literal("user"), t.map(t.string))} /> */}
 			{/* <Example init={t.object({ name: t.string, age: t.number, admin: t.boolean })} /> */}
+			{/* <Example init={t.object({ name: t.string, age: t.number, tags: t.array(t.string) })} /> */}
+
 			{/* Primitive type discrimination */}
 			{/* <Example init={t.or(t.string, t.object({ name: t.string, admin: t.boolean }))} /> */}
+
 			{/* Object literal property discrimination */}
-			{/* <Example
+			<Example
 				init={t.or(
 					t.object({ type: t.literal("user"), name: t.string, admin: t.boolean }),
 					t.object({ type: t.literal("message"), subject: t.string, body: t.string })
 				)}
-			/> */}
+			/>
 
 			{/* Can't discriminate this well yet - general or picker. */}
 			{/* <Example
@@ -59,6 +62,7 @@ export function DataTypeFormDemo() {
 					})
 				)}
 			/> */}
+			{/* <Example init={t.dataType} /> */}
 		</div>
 	)
 }
@@ -76,7 +80,7 @@ function Example(props: { init: t.DataType }) {
 				onChange={setDataType}
 				style={{ flex: 1 }}
 			/> */}
-			<DataTypeForm dataType={dataType} value={value} onChange={setValue} style={{ flex: 1 }} />
+			<DataTypeForm dataType={dataType} value={value} onChange={setValue} />
 		</div>
 	)
 }

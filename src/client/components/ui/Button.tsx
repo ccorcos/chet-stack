@@ -1,6 +1,9 @@
 import React from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
 
+export const vPadding = 4
+export const hPadding = 8
+
 function _Button(props: JSX.IntrinsicElements["button"]) {
 	return (
 		<button
@@ -9,7 +12,7 @@ function _Button(props: JSX.IntrinsicElements["button"]) {
 			style={{
 				cursor: "pointer",
 				border: "1px solid var(--bg2)",
-				padding: "4px 8px",
+				padding: `${vPadding}px ${hPadding}px`,
 				borderRadius: 4,
 				...props.style,
 			}}
