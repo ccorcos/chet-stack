@@ -1,8 +1,9 @@
-import { DOMParser, Schema } from "prosemirror-model"
+import { Schema } from "prosemirror-model"
 import { EditorState } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useLayoutEffect, useRef } from "react"
 import { passthroughRef } from "../../helpers/passthroughRef"
+import { useRefCurrent } from "../../hooks/useRefCurrent"
 
 // Create a schema that only allows plain text
 const plainTextSchema = new Schema({
@@ -18,24 +19,37 @@ const plainTextSchema = new Schema({
 
 export const ContentEditableInput = passthroughRef(_ContentEditableInput)
 
+type NodeJSON = {
+	type: string
+	text?: string
+	content?: Array<NodeJSON>
+}
+
 function _ContentEditableInput(
 	props: Omit<React.HTMLProps<HTMLDivElement>, "value" | "onChange"> & {
 		value: string
-		onChange?: (value: string) => void
-		onSubmit?: (value: string) => void
+		onChange: (value: string) => void
 		multiline?: boolean
 	}
 ) {
 	const editorRef = useRef<HTMLDivElement>(null)
 	const viewRef = useRef<EditorView | null>(null)
 
+	const textStateRef = useRef<string>(props.value)
+	const onChangeRef = useRefCurrent(props.onChange)
+
 	useEffect(() => {
 		if (!editorRef.current) return
+
+		const initialDoc: NodeJSON = {
+			type: "doc",
+			content: props.value.length ? [{ type: "text", text: props.value }] : [],
+		}
 
 		// Create initial state
 		const state = EditorState.create({
 			schema: plainTextSchema,
-			doc: DOMParser.fromSchema(plainTextSchema).parse(document.createElement("div")),
+			doc: plainTextSchema.nodeFromJSON(initialDoc),
 			plugins: [],
 		})
 
@@ -50,7 +64,10 @@ function _ContentEditableInput(
 
 					// Get plain text content
 					const content = newState.doc.textContent
-					props.onChange?.(content)
+					if (content === textStateRef.current) return
+
+					onChangeRef.current(content)
+					textStateRef.current = content
 				},
 				handleKeyDown: (view, event) => {
 					if (!props.multiline && event.key === "Enter" && !event.shiftKey) {
@@ -65,22 +82,18 @@ function _ContentEditableInput(
 					}
 					return false
 				},
-				handleDOMEvents: {
-					blur: () => {
-						const content = view.state.doc.textContent
-						if (props.value === content) return
-						props.onSubmit?.(content)
-						return false
-					},
-				},
+				// handleDOMEvents: {
+				// 	blur: () => {
+				// 		const content = view.state.doc.textContent
+				// 		if (props.value === content) return
+				// 		props.onSubmit?.(content)
+				// 		return false
+				// 	},
+				// },
 			}
 		)
 
 		viewRef.current = view
-
-		// Set initial content
-		const tr = view.state.tr.insertText(props.value)
-		view.dispatch(tr)
 
 		return () => {
 			view.destroy()
@@ -88,18 +101,18 @@ function _ContentEditableInput(
 	}, [])
 
 	// Update content when value prop changes
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (!viewRef.current) return
+		if (textStateRef.current === props.value) return
+		textStateRef.current = props.value
+
 		const view = viewRef.current
-		const currentContent = view.state.doc.textContent
-		if (currentContent !== props.value) {
-			const tr = view.state.tr.replaceWith(
-				0,
-				view.state.doc.content.size,
-				plainTextSchema.text(props.value)
-			)
-			view.dispatch(tr)
-		}
+		const tr = view.state.tr.replaceWith(
+			0,
+			view.state.doc.content.size,
+			props.value.length ? plainTextSchema.text(props.value) : []
+		)
+		view.dispatch(tr)
 	}, [props.value])
 
 	const { value, onChange, style, ...rest } = props
@@ -109,7 +122,7 @@ function _ContentEditableInput(
 			{...rest}
 			ref={editorRef}
 			style={{
-				whiteSpace: "normal",
+				whiteSpace: "pre-wrap",
 				wordBreak: "break-all",
 				cursor: "text",
 				userSelect: "text",

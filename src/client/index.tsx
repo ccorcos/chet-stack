@@ -12,6 +12,13 @@ import { Router } from "./services/Router"
 import { WebsocketPubsubClient } from "./services/WebsocketPubsubClient"
 import { createApi } from "./services/api"
 
+// Hide react errors for now.
+const error = console.error.bind(console)
+console.error = (...args) => {
+	if (args[0].includes('Warning: Each child in a list should have a unique "key" prop.')) return
+	error(...args)
+}
+
 const router = new Router()
 const api = createApi()
 

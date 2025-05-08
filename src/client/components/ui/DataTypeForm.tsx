@@ -59,7 +59,7 @@ export function DataTypeForm(props: {
 							color: "var(--fg0)",
 						}}
 						value={str}
-						onChange={(value) => onChange(value)}
+						onChange={onChange}
 					/>
 				</div>
 			)
@@ -255,10 +255,7 @@ function ArrayForm(props: {
 }) {
 	const { dataType, value, onChange, style } = props
 
-	let items: any[] = []
-	if (isArray(value)) items = value
-	else if (isString(value)) items = value.split(",").map((str) => str.trim())
-	else if (value !== undefined && value !== null) items.push(value)
+	const array = t.coerce(dataType, value)
 
 	return (
 		<div
@@ -270,18 +267,18 @@ function ArrayForm(props: {
 				...style,
 			}}
 		>
-			{items.map((item, index) => (
+			{array.map((item, index) => (
 				<div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
 					<DataTypeForm
 						dataType={dataType.items}
 						value={item}
 						onChange={(newItem) => {
-							onChange(items.map((x, i) => (i === index ? newItem : x)))
+							onChange(array.map((oldItem, i) => (i === index ? newItem : oldItem)))
 						}}
 					/>
 					<Button
 						onClick={() => {
-							onChange(items.filter((x, i) => i !== index))
+							onChange(array.filter((x, i) => i !== index))
 						}}
 					>
 						Delete
@@ -290,8 +287,8 @@ function ArrayForm(props: {
 			))}
 			<Button
 				onClick={() => {
-					console.log("NEW")
-					onChange([...items, undefined])
+					console.log("NEW", array)
+					onChange([...array, t.coerce(dataType.items, undefined)])
 				}}
 			>
 				New Item
