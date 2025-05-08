@@ -28,7 +28,8 @@ type NodeJSON = {
 function _ContentEditableInput(
 	props: Omit<React.HTMLProps<HTMLDivElement>, "value" | "onChange"> & {
 		value: string
-		onChange: (value: string) => void
+		onChange?: (value: string) => void
+		onSubmit?: (value: string) => void
 		multiline?: boolean
 	}
 ) {
@@ -66,7 +67,7 @@ function _ContentEditableInput(
 					const content = newState.doc.textContent
 					if (content === textStateRef.current) return
 
-					onChangeRef.current(content)
+					onChangeRef.current?.(content)
 					textStateRef.current = content
 				},
 				handleKeyDown: (view, event) => {
@@ -82,14 +83,14 @@ function _ContentEditableInput(
 					}
 					return false
 				},
-				// handleDOMEvents: {
-				// 	blur: () => {
-				// 		const content = view.state.doc.textContent
-				// 		if (props.value === content) return
-				// 		props.onSubmit?.(content)
-				// 		return false
-				// 	},
-				// },
+				handleDOMEvents: {
+					blur: () => {
+						const content = view.state.doc.textContent
+						if (props.value === content) return
+						props.onSubmit?.(content)
+						return false
+					},
+				},
 			}
 		)
 

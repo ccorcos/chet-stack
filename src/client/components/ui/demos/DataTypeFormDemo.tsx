@@ -44,12 +44,12 @@ export function DataTypeFormDemo() {
 			{/* <Example init={t.or(t.string, t.object({ name: t.string, admin: t.boolean }))} /> */}
 
 			{/* Object literal property discrimination */}
-			<Example
+			{/* <Example
 				init={t.or(
 					t.object({ type: t.literal("user"), name: t.string, admin: t.boolean }),
 					t.object({ type: t.literal("message"), subject: t.string, body: t.string })
 				)}
-			/>
+			/> */}
 
 			{/* Can't discriminate this well yet - general or picker. */}
 			{/* <Example
@@ -62,7 +62,8 @@ export function DataTypeFormDemo() {
 					})
 				)}
 			/> */}
-			{/* <Example init={t.dataType} /> */}
+
+			<Example init={t.dataType} />
 		</div>
 	)
 }

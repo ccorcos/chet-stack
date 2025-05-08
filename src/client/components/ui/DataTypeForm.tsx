@@ -24,8 +24,12 @@ export function DataTypeForm(props: {
 	dataType: t.DataType
 	value: any
 	onChange: (value: any) => void
+
+	gridChildren?: React.ReactNode
 }) {
 	const { dataType, value, onChange, style } = props
+
+	console.log("DataTypeForm", dataType, value)
 
 	switch (dataType.type) {
 		case "any":
@@ -114,15 +118,55 @@ export function DataTypeForm(props: {
 			)
 		}
 
-		case "dataType":
+		case "dataType": {
+			// Similar to OrPrimitiveDataType
+
+			const getType = (dt: t.DataType) => {
+				return (dt as t.ObjectDataType<{ type: t.LiteralDataType }>).properties.type.value as string
+			}
+
+			const types = t.dataTypeDataType.options.map((obj) => getType(obj))
+
+			const validOpt = t.dataTypeDataType.options.find((opt) => t.is(opt, value))
+			const type = validOpt ? getType(validOpt) : types[0]
+			const currentDataType = t.dataTypeDataType.options.find(
+				(obj) => getType(obj) === type
+			)! as t.ObjectDataType
+
 			return (
-				<DataTypeForm
-					dataType={t.dataTypeDataType}
-					value={dataType}
-					onChange={onChange}
-					style={style}
-				/>
+				<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
+					<DataTypeForm
+						dataType={currentDataType}
+						value={value}
+						onChange={onChange}
+						gridChildren={
+							<>
+								<div style={{ padding: `${vPadding}px 0px` }}>type:</div>
+								<ComboBoxSelect
+									items={types}
+									value={type}
+									onChange={(newType) => {
+										const newDataType = t.dataTypeDataType.options.find(
+											(obj) => getType(obj) === newType
+										)!
+										onChange(t.coerce(newDataType, value))
+									}}
+								/>
+							</>
+						}
+					/>
+				</div>
 			)
+
+			// return (
+			// 	<DataTypeForm
+			// 		dataType={t.dataTypeDataType}
+			// 		value={value}
+			// 		onChange={onChange}
+			// 		style={style}
+			// 	/>
+			// )
+		}
 
 		case "array": {
 			return <ArrayForm {...props} dataType={dataType as t.ArrayDataType} />
@@ -179,6 +223,7 @@ export function DataTypeForm(props: {
 						...style,
 					}}
 				>
+					{props.gridChildren}
 					{entries.map(([key, valueDataType]) => {
 						const dt = valueDataType.type === "optional" ? valueDataType.value : valueDataType
 						return (
@@ -540,28 +585,27 @@ function OrObjectLiteralPicker(props: {
 	const formType: t.ObjectDataType = { ...type, properties: omit(type.properties, [property]) }
 
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-			<div style={{ display: "flex", alignItems: "flex-start", gap: 8, color: debug("blue") }}>
-				<div style={{ padding: `${vPadding}px 0px` }}>{property}:</div>
-				<ComboBoxSelect
-					items={dataType.options.map(literalValue)}
-					value={literalValue(type)}
-					onChange={(newValue) => {
-						// setType(dataType.options.find((opt) => literalValue(opt) === newValue)!)
-						// onChange(t.coerce(t.object({ [property]: t.literal(JSON.parse(newValue)) }), value))
-						onChange(
-							t.coerce(dataType.options.find((opt) => literalValue(opt) === newValue)!, value)
-						)
-					}}
-				/>
-			</div>
-			<DataTypeForm
-				dataType={formType}
-				value={value}
-				onChange={onChange}
-				// style={{ marginLeft: 12 }}
-			/>
-		</div>
+		<DataTypeForm
+			dataType={formType}
+			value={value}
+			onChange={onChange}
+			gridChildren={
+				<>
+					<div style={{ padding: `${vPadding}px 0px`, color: debug("blue") }}>{property}:</div>
+					<ComboBoxSelect
+						items={dataType.options.map(literalValue)}
+						value={literalValue(type)}
+						onChange={(newValue) => {
+							// setType(dataType.options.find((opt) => literalValue(opt) === newValue)!)
+							// onChange(t.coerce(t.object({ [property]: t.literal(JSON.parse(newValue)) }), value))
+							onChange(
+								t.coerce(dataType.options.find((opt) => literalValue(opt) === newValue)!, value)
+							)
+						}}
+					/>
+				</>
+			}
+		/>
 	)
 }
 
@@ -614,9 +658,8 @@ function OrGeneralPicker(props: {
 	let type = dataType.options.find((opt) => t.is(opt, value))
 	if (!type) type = dataType.options[0]
 
-	console.log("HERE")
 	return (
-		<>
+		<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 			<ComboBoxSelect
 				items={dataType.options.map((opt) => t.inspect(opt))}
 				value={t.inspect(type)}
@@ -626,6 +669,6 @@ function OrGeneralPicker(props: {
 				}}
 			/>
 			<DataTypeForm dataType={type} value={value} onChange={onChange} />
-		</>
+		</div>
 	)
 }

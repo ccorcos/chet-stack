@@ -549,26 +549,25 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	}),
 	array: object({
 		type: literal("array"),
-		items: dataTypeDataType,
+		items: dataType,
 	}),
 	tuple: object({
 		type: literal("tuple"),
-		items: array(dataTypeDataType),
+		items: array(dataType),
 	}),
 	map: object({
 		type: literal("map"),
-		items: dataTypeDataType,
+		items: dataType,
 	}),
 	object: object({
 		type: literal("object"),
-		properties: map(
-			or(dataTypeDataType, object({ type: literal("optional"), value: dataTypeDataType }))
-		),
+		properties: map(or(dataType, object({ type: literal("optional"), value: dataType }))),
+		// properties: map(dataType),
 		strict: boolean,
 	}),
 	or: object({
 		type: literal("or"),
-		options: array(dataTypeDataType),
+		options: array(dataType),
 	}),
 	dataType: object({ type: literal("dataType") }),
 }
