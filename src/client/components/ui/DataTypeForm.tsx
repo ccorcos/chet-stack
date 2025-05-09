@@ -25,9 +25,12 @@ export function DataTypeForm(props: {
 	value: any
 	onChange: (value: any) => void
 
+	layer?: boolean
 	gridChildren?: React.ReactNode
 }) {
 	const { dataType, value, onChange, style } = props
+
+	const className = props.layer ? "layer" : ""
 
 	switch (dataType.type) {
 		case "any":
@@ -133,7 +136,10 @@ export function DataTypeForm(props: {
 			)! as t.ObjectDataType
 
 			return (
-				<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
+				<div
+					className={className}
+					style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}
+				>
 					<DataTypeForm
 						dataType={omit(currentDataType, ["properties.type"]) as t.DataType}
 						value={value}
@@ -181,7 +187,19 @@ export function DataTypeForm(props: {
 			else if (value !== null && value !== undefined) tup = [value]
 
 			return (
-				<div style={{ display: "flex", alignItems: "flex-start", ...style }}>
+				<div
+					className={className}
+					style={{
+						display: "flex",
+						alignItems: "flex-start",
+						...style,
+						...(props.layer && {
+							margin: -2,
+							padding: 2,
+							borderRadius: 4,
+						}),
+					}}
+				>
 					<span style={{ marginRight: 4, paddingTop: vPadding }}>{"["}</span>
 					{dataType.items.map((itemDataType, index) => {
 						const itemValue = tup[index]
@@ -196,6 +214,7 @@ export function DataTypeForm(props: {
 										newTup[index] = newValue
 										onChange(newTup)
 									}}
+									layer={true}
 								/>
 							</>
 						)
@@ -212,6 +231,7 @@ export function DataTypeForm(props: {
 
 			return (
 				<div
+					className={className}
 					style={{
 						display: "grid",
 						gridTemplateColumns: "auto 1fr",
@@ -219,6 +239,11 @@ export function DataTypeForm(props: {
 						alignItems: "flex-start",
 						color: debug("red"),
 						...style,
+						...(props.layer && {
+							margin: -2,
+							padding: 2,
+							borderRadius: 4,
+						}),
 					}}
 				>
 					{props.gridChildren}
@@ -236,6 +261,7 @@ export function DataTypeForm(props: {
 										newObj[key] = newValue
 										onChange(newObj)
 									}}
+									layer={true}
 								/>
 							</>
 						)
@@ -258,19 +284,27 @@ function ArrayForm(props: {
 	dataType: t.ArrayDataType
 	value: any
 	onChange: (value: any) => void
+	layer?: boolean
 }) {
 	const { dataType, value, onChange, style } = props
 
 	const array = t.coerce(dataType, value)
+	const className = props.layer ? "layer" : ""
 
 	return (
 		<div
+			className={className}
 			style={{
 				display: "flex",
 				flexDirection: "column",
 				gap: 8,
 				alignItems: "flex-start",
 				...style,
+				...(props.layer && {
+					margin: -2,
+					padding: 2,
+					borderRadius: 4,
+				}),
 			}}
 		>
 			{array.map((item, index) => (
@@ -281,6 +315,7 @@ function ArrayForm(props: {
 						onChange={(newItem) => {
 							onChange(array.map((oldItem, i) => (i === index ? newItem : oldItem)))
 						}}
+						layer={true}
 					/>
 					<Button
 						onClick={() => {
@@ -307,14 +342,17 @@ function MapForm(props: {
 	dataType: t.MapDataType
 	value: any
 	onChange: (value: any) => void
+	layer?: boolean
 }) {
 	const { dataType, value, onChange, style } = props
 	let obj = {}
 	if (isPlainObject(value)) obj = value
 
+	const className = props.layer ? "layer" : ""
 	const entries = Object.entries(obj)
 	return (
 		<div
+			className={className}
 			style={{
 				...style,
 				display: "grid",
@@ -322,6 +360,11 @@ function MapForm(props: {
 				gridTemplateRows: `repeat(${entries.length}, auto) auto`,
 				gap: 8,
 				alignItems: "flex-start",
+				...(props.layer && {
+					margin: -2,
+					padding: 2,
+					borderRadius: 4,
+				}),
 			}}
 		>
 			{entries.map(([key, value]) => (
@@ -353,6 +396,7 @@ function MapForm(props: {
 							)
 							onChange(newObj)
 						}}
+						layer={true}
 					/>
 					<Button
 						onClick={() => {
@@ -391,8 +435,10 @@ function OrDataTypeForm(props: {
 	dataType: t.OrDataType
 	value: any
 	onChange: (newValue: any) => void
+	layer?: boolean
 }) {
 	const { dataType, value, onChange, style } = props
+	const className = props.layer ? "layer" : ""
 
 	if (dataType.options.length === 0) {
 		// We should probably avoid this ever happening.
@@ -401,14 +447,7 @@ function OrDataTypeForm(props: {
 
 	if (dataType.options.length === 1) {
 		// Trivial case: or(number)
-		return (
-			<DataTypeForm
-				dataType={dataType.options[0]}
-				value={value}
-				onChange={onChange}
-				style={style}
-			/>
-		)
+		return <DataTypeForm {...props} dataType={dataType.options[0]} />
 	}
 
 	// Lets try to discriminate the different options.
@@ -433,28 +472,14 @@ function OrDataTypeForm(props: {
 			case "any":
 			case "dataType": {
 				// Trivial case, e.g. or(number, number) -> number
-				return (
-					<DataTypeForm
-						dataType={dataType.options[0]}
-						value={value}
-						onChange={onChange}
-						style={style}
-					/>
-				)
+				return <DataTypeForm {...props} dataType={dataType.options[0]} />
 			}
 
 			case "or": {
 				// Trivial case, e.g. or(or(...), or(...)) -> or(..., ...)
 				const options = dataType.options as t.OrDataType[]
 				const allOptions = options.flatMap((opt) => opt.options)
-				return (
-					<DataTypeForm
-						dataType={{ type: "or", options: allOptions }}
-						value={value}
-						onChange={onChange}
-						style={style}
-					/>
-				)
+				return <DataTypeForm {...props} dataType={{ type: "or", options: allOptions }} />
 			}
 
 			case "literal": {
@@ -473,12 +498,8 @@ function OrDataTypeForm(props: {
 
 			case "object": {
 				return (
-					<div style={style}>
-						<OrObjectPicker
-							dataType={dataType as t.OrDataType<t.ObjectDataType>}
-							value={value}
-							onChange={onChange}
-						/>
+					<div className={className} style={style}>
+						<OrObjectPicker {...props} dataType={dataType as t.OrDataType<t.ObjectDataType>} />
 					</div>
 				)
 			}
@@ -487,12 +508,8 @@ function OrDataTypeForm(props: {
 			case "map":
 			case "array": {
 				return (
-					<div style={style}>
-						<OrGeneralPicker
-							dataType={dataType as t.OrDataType<t.ArrayDataType>}
-							value={value}
-							onChange={onChange}
-						/>
+					<div className={className} style={style}>
+						<OrGeneralPicker {...props} />
 					</div>
 				)
 			}
@@ -504,12 +521,8 @@ function OrDataTypeForm(props: {
 
 	// Complicated case where some types are the same and some arent.
 	return (
-		<div style={style}>
-			<OrGeneralPicker
-				dataType={dataType as t.OrDataType<t.ArrayDataType>}
-				value={value}
-				onChange={onChange}
-			/>
+		<div className={className} style={style}>
+			<OrGeneralPicker {...props} />
 		</div>
 	)
 }

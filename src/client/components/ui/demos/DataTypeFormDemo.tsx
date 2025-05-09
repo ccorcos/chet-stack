@@ -34,11 +34,14 @@ export function DataTypeFormDemo() {
 			{/* <Example init={t.any} /> */}
 			{/* <Example init={t.literal("hello")} /> */}
 			{/* <Example init={t.array(t.string)} /> */}
-			<Example init={t.array(t.map(t.number))} value={[{ a: 1, b: 2 }, { c: 3 }]} />
+			{/* <Example init={t.array(t.array(t.number))} value={[{ a: 1, b: 2 }, { c: 3 }]} /> */}
 
 			{/* <Example init={t.map(t.string)} /> */}
+			{/* <Example init={t.map(t.map(t.string))} /> */}
+
 			{/* <Example init={t.tuple(t.literal("user"), t.string)} /> */}
 			{/* <Example init={t.tuple(t.literal("user"), t.map(t.string))} /> */}
+
 			{/* <Example init={t.object({ name: t.string, age: t.number, admin: t.boolean })} /> */}
 			{/* <Example init={t.object({ name: t.string, age: t.number, tags: t.array(t.string) })} /> */}
 
@@ -54,7 +57,7 @@ export function DataTypeFormDemo() {
 			/> */}
 
 			{/* Can't discriminate this well yet - general or picker. */}
-			{/* <Example
+			<Example
 				init={t.or(
 					t.object({ id: t.tuple(t.literal("user"), t.string), name: t.string, admin: t.boolean }),
 					t.object({
@@ -63,7 +66,7 @@ export function DataTypeFormDemo() {
 						body: t.string,
 					})
 				)}
-			/> */}
+			/>
 
 			<Example init={t.dataType} />
 		</div>
