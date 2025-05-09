@@ -561,8 +561,8 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	}),
 	object: object({
 		type: literal("object"),
-		properties: map(or(dataType, object({ type: literal("optional"), value: dataType }))),
-		// properties: map(dataType),
+		// Other options are pushed below.
+		properties: map(or(object({ type: literal("optional"), value: dataType }))),
 		strict: boolean,
 	}),
 	or: object({
@@ -572,13 +572,25 @@ const dataTypeDataTypes: { [K in DataType["type"]]: DataType } = {
 	dataType: object({ type: literal("dataType") }),
 }
 
-for (const value of Object.values(dataTypeDataTypes)) dataTypeDataType.options.push(value)
+for (const value of Object.values(dataTypeDataTypes))
+	dataTypeDataType.options.push(value)
+
+	// Add the other data types here so that the dataType dropdown shows all options.
+;(
+	((dataTypeDataTypes.object as ObjectDataType).properties["properties"] as MapDataType)
+		.items as OrDataType<DataType>
+).options.push(...dataTypeDataType.options)
 
 /**
  * This will return undefined if we can't make a reasonable conversion.
  * This is useful so that when converting an array, we can cleanup anything that doesnt convert.
  */
 export function convert(dataType: DataType, value: any): any {
+	// if (dataType.type === "optional") {
+	// 	if (value === undefined) return undefined
+	// 	dataType = dataType.value
+	// }
+
 	if (is(dataType, value)) return value
 
 	const { type } = dataType
@@ -716,8 +728,12 @@ export function convert(dataType: DataType, value: any): any {
 }
 
 export function coerce(dataType: DataType, value: any): any {
-	if (dataType.type === undefined) return
 	const converted = convert(dataType, value)
+
+	// if (dataType.type === "optional") {
+	// 	return converted
+	// }
+
 	if (is(dataType, converted)) return converted
 
 	// We can start with the converted value and coerce it because it could be partially converted.

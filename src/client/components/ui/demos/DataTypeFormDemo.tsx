@@ -34,7 +34,9 @@ export function DataTypeFormDemo() {
 			{/* <Example init={t.any} /> */}
 			{/* <Example init={t.literal("hello")} /> */}
 			{/* <Example init={t.array(t.string)} /> */}
-			<Example init={t.map(t.string)} />
+			<Example init={t.array(t.map(t.number))} value={[{ a: 1, b: 2 }, { c: 3 }]} />
+
+			{/* <Example init={t.map(t.string)} /> */}
 			{/* <Example init={t.tuple(t.literal("user"), t.string)} /> */}
 			{/* <Example init={t.tuple(t.literal("user"), t.map(t.string))} /> */}
 			{/* <Example init={t.object({ name: t.string, age: t.number, admin: t.boolean })} /> */}
@@ -63,14 +65,14 @@ export function DataTypeFormDemo() {
 				)}
 			/> */}
 
-			{/* <Example init={t.dataType} /> */}
+			<Example init={t.dataType} />
 		</div>
 	)
 }
 
-function Example(props: { init: t.DataType }) {
+function Example(props: { init: t.DataType; value?: any }) {
 	const [dataType, setDataType] = useState<t.DataType>(props.init)
-	const [value, setValue] = useState<any>()
+	const [value, setValue] = useState<any>(props.value)
 
 	console.log({ dataType, value })
 	return (

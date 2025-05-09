@@ -29,8 +29,6 @@ export function DataTypeForm(props: {
 }) {
 	const { dataType, value, onChange, style } = props
 
-	console.log("DataTypeForm", dataType, value)
-
 	switch (dataType.type) {
 		case "any":
 			// Maybe some kind of JSON editor?
@@ -138,10 +136,8 @@ export function DataTypeForm(props: {
 				<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
 					<DataTypeForm
 						dataType={omit(currentDataType, ["properties.type"]) as t.DataType}
-						value={omit(value, ["type"])}
-						onChange={(value) => onChange({ ...value, type })}
-						// value={value}
-						// onChange={onChange}
+						value={value}
+						onChange={onChange}
 						gridChildren={
 							<>
 								<div style={{ padding: `${vPadding}px 0px` }}>type:</div>
@@ -227,6 +223,7 @@ export function DataTypeForm(props: {
 				>
 					{props.gridChildren}
 					{entries.map(([key, valueDataType]) => {
+						// TODO: add ability for this to be optional.
 						const dt = valueDataType.type === "optional" ? valueDataType.value : valueDataType
 						return (
 							<>
@@ -296,7 +293,6 @@ function ArrayForm(props: {
 			))}
 			<Button
 				onClick={() => {
-					console.log("NEW", array)
 					onChange([...array, t.coerce(dataType.items, undefined)])
 				}}
 			>
@@ -325,7 +321,7 @@ function MapForm(props: {
 				gridTemplateColumns: "repeat(4, auto)",
 				gridTemplateRows: `repeat(${entries.length}, auto) auto`,
 				gap: 8,
-				alignItems: "center",
+				alignItems: "flex-start",
 			}}
 		>
 			{entries.map(([key, value]) => (
@@ -340,7 +336,7 @@ function MapForm(props: {
 							minWidth: 100,
 						}}
 						value={key}
-						onChange={(newKey) => {
+						onSubmit={(newKey) => {
 							const newObj = Object.fromEntries(
 								Object.entries(obj).map(([k, v]) => (k === key ? [newKey, v] : [k, v]))
 							)
@@ -376,7 +372,10 @@ function MapForm(props: {
 			>
 				<Button
 					onClick={() => {
-						const newObj = Object.fromEntries([...Object.entries(obj), ["", undefined]])
+						const newObj = Object.fromEntries([
+							...Object.entries(obj),
+							["", t.coerce(dataType.items, undefined)],
+						])
 						onChange(newObj)
 					}}
 				>
@@ -545,7 +544,6 @@ function OrPrimativeTypePicker(props: {
 					value={type}
 					onChange={(newType) => {
 						const newDataType = dataType.options.find((opt) => opt.type === newType)!
-						console.log("NEW TYPE", newType, newDataType, value, t.coerce(newDataType, value))
 						onChange(t.coerce(newDataType, value))
 					}}
 				/>

@@ -37,7 +37,7 @@ function _ContentEditableInput(
 	const viewRef = useRef<EditorView | null>(null)
 
 	const textStateRef = useRef<string>(props.value)
-	const onChangeRef = useRefCurrent(props.onChange)
+	const propsRef = useRefCurrent(props)
 
 	useEffect(() => {
 		if (!editorRef.current) return
@@ -67,11 +67,11 @@ function _ContentEditableInput(
 					const content = newState.doc.textContent
 					if (content === textStateRef.current) return
 
-					onChangeRef.current?.(content)
+					propsRef.current.onChange?.(content)
 					textStateRef.current = content
 				},
 				handleKeyDown: (view, event) => {
-					if (!props.multiline && event.key === "Enter" && !event.shiftKey) {
+					if (!propsRef.current.multiline && event.key === "Enter" && !event.shiftKey) {
 						event.preventDefault()
 						view.dom.blur()
 						return true
@@ -86,8 +86,8 @@ function _ContentEditableInput(
 				handleDOMEvents: {
 					blur: () => {
 						const content = view.state.doc.textContent
-						if (props.value === content) return
-						props.onSubmit?.(content)
+						if (propsRef.current.value === content) return
+						propsRef.current.onSubmit?.(content)
 						return false
 					},
 				},
