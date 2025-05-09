@@ -120,6 +120,7 @@ export function DataTypeForm(props: {
 
 		case "dataType": {
 			// Similar to OrPrimitiveDataType
+			// TODO: special case here for ObjectDataType so it looks better but it should still work!
 
 			const getType = (dt: t.DataType) => {
 				return (dt as t.ObjectDataType<{ type: t.LiteralDataType }>).properties.type.value as string
@@ -136,9 +137,11 @@ export function DataTypeForm(props: {
 			return (
 				<div style={{ ...style, display: "flex", flexDirection: "column", gap: 8 }}>
 					<DataTypeForm
-						dataType={currentDataType}
-						value={value}
-						onChange={onChange}
+						dataType={omit(currentDataType, ["properties.type"]) as t.DataType}
+						value={omit(value, ["type"])}
+						onChange={(value) => onChange({ ...value, type })}
+						// value={value}
+						// onChange={onChange}
 						gridChildren={
 							<>
 								<div style={{ padding: `${vPadding}px 0px` }}>type:</div>
@@ -210,7 +213,6 @@ export function DataTypeForm(props: {
 			let obj = {}
 			if (isPlainObject(value)) obj = value
 			const entries = Object.entries(dataType.properties)
-			if (entries.length === 0) return false
 
 			return (
 				<div
