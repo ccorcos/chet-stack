@@ -190,6 +190,8 @@ export function ColorTheme(props: { name: string; theme: Theme }) {
 				<FormExample theme={shiftTheme(theme)} />
 				<FormExample theme={shiftTheme(shiftTheme(theme))} />
 				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(theme)))} />
+				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(shiftTheme(theme))))} />
+				<FormExample theme={shiftTheme(shiftTheme(shiftTheme(shiftTheme(shiftTheme(theme)))))} />
 			</div>
 		</div>
 	)

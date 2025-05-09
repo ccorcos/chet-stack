@@ -57,7 +57,7 @@ export function DataTypeFormDemo() {
 			/> */}
 
 			{/* Can't discriminate this well yet - general or picker. */}
-			<Example
+			{/* <Example
 				init={t.or(
 					t.object({ id: t.tuple(t.literal("user"), t.string), name: t.string, admin: t.boolean }),
 					t.object({
@@ -66,7 +66,7 @@ export function DataTypeFormDemo() {
 						body: t.string,
 					})
 				)}
-			/>
+			/> */}
 
 			<Example init={t.dataType} />
 		</div>
@@ -79,14 +79,22 @@ function Example(props: { init: t.DataType; value?: any }) {
 
 	console.log({ dataType, value })
 	return (
-		<div className="layer" style={{ padding: 8, display: "flex" }}>
-			{/* <DataTypeForm
-				dataType={t.dataTypeDataType}
-				value={dataType}
-				onChange={setDataType}
-				style={{ flex: 1 }}
-			/> */}
-			<DataTypeForm dataType={dataType} value={value} onChange={setValue} />
+		<div className="layer" style={{ padding: 8, display: "flex", gap: 8, overflowX: "auto" }}>
+			<div style={{ minWidth: 400, flex: "0 0 auto" }}>
+				<DataTypeForm
+					dataType={t.dataTypeDataType}
+					value={dataType}
+					onChange={setDataType}
+					style={{ width: "fit-content" }}
+				/>
+			</div>
+
+			<DataTypeForm
+				dataType={dataType}
+				value={value}
+				onChange={setValue}
+				style={{ width: "fit-content", flex: "0 0 auto" }}
+			/>
 		</div>
 	)
 }

@@ -498,7 +498,10 @@ function OrDataTypeForm(props: {
 
 			case "object": {
 				return (
-					<div className={className} style={style}>
+					<div
+						className={className}
+						style={{ ...style, ...(props.layer && { margin: -2, padding: 2, borderRadius: 4 }) }}
+					>
 						<OrObjectPicker {...props} dataType={dataType as t.OrDataType<t.ObjectDataType>} />
 					</div>
 				)
@@ -508,7 +511,10 @@ function OrDataTypeForm(props: {
 			case "map":
 			case "array": {
 				return (
-					<div className={className} style={style}>
+					<div
+						className={className}
+						style={{ ...style, ...(props.layer && { margin: -2, padding: 2, borderRadius: 4 }) }}
+					>
 						<OrGeneralPicker {...props} />
 					</div>
 				)

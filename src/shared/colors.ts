@@ -18,7 +18,7 @@ function cube(
 	return cubehelix({ mode: "cubehelix", h: hue * 360, s: s, l: l, alpha: 1 })
 }
 
-const colorScheme = (scale: (i: number) => Cubehelix | Lch, n = 6) => {
+const colorScheme = (scale: (i: number) => Cubehelix | Lch, n = 8) => {
 	return Array.from({ length: n }, (_, i) => formatHex(scale((n - 1 - i) / (n - 1))))
 }
 

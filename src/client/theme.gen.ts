@@ -66,7 +66,7 @@ let themeCss = `
 `
 
 let layersCss = ""
-const maxLayers = 4
+const maxLayers = 6
 for (let i = 1; i < maxLayers; i++) {
 	let light = { ...lightTheme }
 	let dark = { ...darkTheme }
