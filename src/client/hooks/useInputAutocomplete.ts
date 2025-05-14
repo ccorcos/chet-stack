@@ -34,12 +34,14 @@ export function useInputAutocomplete<T>(props: {
 				event.preventDefault()
 				if (items[selectedIndex]) {
 					onSubmit(items[selectedIndex])
+					setSelectedIndex(0)
 				}
 				return
 			}
 			if (onDismiss && isShortcut("escape", event.nativeEvent)) {
 				event.preventDefault()
 				onDismiss()
+				setSelectedIndex(0)
 				return
 			}
 			if (isShortcut("backspace", event.nativeEvent)) {
