@@ -148,6 +148,7 @@ export function DataTypeForm(props: {
 							<>
 								<div style={{ padding: `${vPadding}px 0px` }}>type:</div>
 								<ComboBoxSelect
+									style={{ width: "fit-content" }}
 									items={types}
 									value={type}
 									onChange={(newType) => {
@@ -234,6 +235,8 @@ export function DataTypeForm(props: {
 					className={className}
 					style={{
 						display: "grid",
+						height: "fit-content",
+						width: "fit-content",
 						gridTemplateColumns: "auto 1fr",
 						gap: 8,
 						alignItems: "flex-start",
@@ -261,6 +264,7 @@ export function DataTypeForm(props: {
 										newObj[key] = newValue
 										onChange(newObj)
 									}}
+									style={{ width: "fit-content" }}
 									layer={true}
 								/>
 							</>
@@ -356,6 +360,8 @@ function MapForm(props: {
 			style={{
 				...style,
 				display: "grid",
+				height: "fit-content",
+				width: "fit-content",
 				gridTemplateColumns: "repeat(4, auto)",
 				gridTemplateRows: `repeat(${entries.length}, auto) auto`,
 				gap: 8,
@@ -488,7 +494,7 @@ function OrDataTypeForm(props: {
 				return (
 					<div style={style}>
 						<ComboBoxSelect
-							items={options.map((opt) => JSON.stringify(opt))}
+							items={options.map((opt) => JSON.stringify(opt.value))}
 							value={JSON.stringify(value)}
 							onChange={(newOption) => onChange(JSON.parse(newOption))}
 						/>
@@ -612,6 +618,7 @@ function OrObjectLiteralPicker(props: {
 				<>
 					<div style={{ padding: `${vPadding}px 0px`, color: debug("blue") }}>{property}:</div>
 					<ComboBoxSelect
+						style={{ width: "fit-content" }}
 						items={dataType.options.map(literalValue)}
 						value={literalValue(type)}
 						onChange={(newValue) => {

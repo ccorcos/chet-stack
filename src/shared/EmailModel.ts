@@ -62,14 +62,14 @@ export type TextContent = t.InferType<typeof TextContentSchema>
 
 const InviteChannelContentSchema = t.object({
 	type: t.literal("inviteChannel"),
-	role: RoleSchema,
+	value: RoleSchema,
 })
 
 export type InviteChannelContent = t.InferType<typeof InviteChannelContentSchema>
 
 const InviteMessageContentSchema = t.object({
 	type: t.literal("inviteMessage"),
-	role: RoleSchema,
+	value: RoleSchema,
 })
 
 export type InviteMessageContent = t.InferType<typeof InviteMessageContentSchema>
