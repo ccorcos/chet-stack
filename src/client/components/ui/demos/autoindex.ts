@@ -4,6 +4,7 @@ import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
+import * as CommandPromptDemo from "./CommandPromptDemo"
 import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataListDemo from "./DataListDemo"
 import * as DataTypeFormDemo from "./DataTypeFormDemo"
@@ -35,6 +36,7 @@ export {
 	ButtonDemo,
 	CalendarDemo,
 	ColorsDemo,
+	CommandPromptDemo,
 	DarkModeDemo,
 	DataListDemo,
 	DataTypeFormDemo,

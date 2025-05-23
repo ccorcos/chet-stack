@@ -5,12 +5,13 @@ import { Cache } from "../shared/database/Cache"
 import { codec } from "../shared/database/Codec"
 import { JSONValue, Tuple } from "../shared/database/types"
 import { Root } from "./components/Root"
+import { createApi } from "./services/api"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
+import { CommandService } from "./services/Command"
 import { LocalPreferences } from "./services/LocalPreferences"
 import { Router } from "./services/Router"
 import { WebsocketPubsubClient } from "./services/WebsocketPubsubClient"
-import { createApi } from "./services/api"
 
 // Hide react errors for now.
 const error = console.error.bind(console)
@@ -30,6 +31,7 @@ const pubsub = new WebsocketPubsubClient({
 
 const prefs = new LocalPreferences()
 const cache = new Cache<Tuple, JSONValue>(codec.compare)
+const cmd = new CommandService()
 
 const environment: ClientEnvironment = {
 	config: clientConfig,
@@ -38,6 +40,7 @@ const environment: ClientEnvironment = {
 	pubsub,
 	prefs,
 	cache,
+	cmd,
 }
 
 // Render the app.

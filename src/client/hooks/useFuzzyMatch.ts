@@ -21,3 +21,21 @@ export function useFuzzyMatch(args: { items: string[]; without?: string[]; filte
 
 	return filteredItems
 }
+
+export function useFuzzyMatch2<T>(args: { items: T[]; text: (item: T) => string; query: string }) {
+	const { query, items, text } = args
+
+	const filteredItems = useMemo(() => {
+		let result = items
+
+		// If the text is empty, show all items.
+		if (!query) return result.map((value) => ({ value, match: [{ skip: text(value) }] }))
+
+		// Fuzzy match items.
+		return result
+			.map((value) => ({ value, match: fuzzyMatch(query, text(value))! }))
+			.filter(({ match }) => Boolean(match))
+	}, [query, items])
+
+	return filteredItems
+}

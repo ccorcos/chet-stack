@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import React, { Suspense, useCallback, useRef, useState } from "react"
 import { useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { FuzzyString } from "./ui/FuzzyString"
@@ -8,9 +8,9 @@ import { ListBox, ListItem, useListBox } from "./ui/ListBox"
 import { clamp } from "lodash"
 import { formatRoute } from "../../shared/routeHelpers"
 import { useCounter } from "../hooks/useCounter"
-import { useDeepState } from "../hooks/useDeepState"
 import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
+import { useKeyboardMode } from "../hooks/useKeyboardMode"
 import { useRefCurrent } from "../hooks/useRefCurrent"
 import * as demos from "./ui/demos/autoindex"
 import { ContentLayout, Layout, LeftPanelLayout } from "./ui/Layout"
@@ -42,28 +42,6 @@ export function Design(props: { params: Record<string, string> }) {
 			</Suspense>
 		</Layout>
 	)
-}
-
-function useKeyboardMode() {
-	const [isKeyboardMode, setIsKeyboardMode] = useDeepState(false)
-
-	// Set keyboard mode to true on keyboard interaction and false on mouse movement
-	useEffect(() => {
-		const handleKeyDown = () => setIsKeyboardMode(true)
-		const handleMouseMove = () => setIsKeyboardMode(false)
-
-		// Add event listeners
-		document.addEventListener("keydown", handleKeyDown)
-		document.addEventListener("mousemove", handleMouseMove)
-
-		// Clean up event listeners on unmount
-		return () => {
-			document.removeEventListener("keydown", handleKeyDown)
-			document.removeEventListener("mousemove", handleMouseMove)
-		}
-	}, [])
-
-	return isKeyboardMode
 }
 
 function useClampedState(initialValue: number, range: [number, number]) {
