@@ -20,9 +20,6 @@ export function Commander() {
 		execute: () => setIsOpen(false),
 	})
 
-	// TODO: HERE
-	// - register commander keyboard shortcuts at the top-level of the document.
-
 	const { cmd } = useClientEnvironment()
 	if (!isOpen) return false
 

@@ -76,17 +76,5 @@ export class CommandService {
 			.map(({ value }) => value as Command)
 			.filter((c) => !c.hidden)
 		return commands
-
-		// if (query === "") {
-		// 	return commands
-		// }
-
-		// const matches = commands
-		// 	.map((c) => ({ command: c, match: fuzzyMatch(query, c.name) as FuzzyMatch }))
-		// 	.filter((c) => Boolean(c.match))
-
-		// const sorted = sortBy(matches, ({ match }) => -fuzzyMatchScore2(match))
-
-		// return sorted
 	}
 }

@@ -77,6 +77,7 @@ function Sidebar(props: {
 	const [searchText, setSearchText] = useState("")
 
 	const input = useRef<HTMLInputElement>(null)
+
 	useShortcut("cmd-p", () => {
 		input.current?.focus()
 	})
