@@ -4,15 +4,16 @@ import { useDarkModeSwitcher } from "../hooks/useDarkModeSwitcher"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
 import { useRouterState } from "../services/Router"
 import { App } from "./App"
+import { Commander } from "./Commander"
 import { Design } from "./Design"
 import { Spinner } from "./ui/Spinner"
 import { Throttle } from "./ui/Throttle"
 
 export function Root(props: { environment: ClientEnvironment }) {
-	useDarkModeSwitcher()
 	return (
 		<Suspense fallback={<Loading />}>
 			<ClientEnvironmentProvider value={props.environment}>
+				<Commander />
 				<Router />
 			</ClientEnvironmentProvider>
 		</Suspense>
@@ -30,6 +31,8 @@ function Loading() {
 }
 
 function Router() {
+	useDarkModeSwitcher()
+
 	const routerState = useRouterState()
 	const route = parseRoute(routerState.url)
 

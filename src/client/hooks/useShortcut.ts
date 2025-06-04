@@ -174,7 +174,7 @@ function formatShortcut(parsed: ParsedShortcut) {
 	return formatShortcutKeys(parsed).join("-")
 }
 
-function normalizeShortcut(shortcut: string) {
+export function normalizeShortcut(shortcut: string) {
 	return formatShortcut(parseShortcut(shortcut))
 }
 
@@ -199,7 +199,7 @@ function parseKeyboardEvent(event: KeyboardEvent) {
 	return parsed
 }
 
-function normalizeKeyboardShortcut(event: KeyboardEvent) {
+export function normalizeKeyboardShortcut(event: KeyboardEvent) {
 	return formatShortcut(parseKeyboardEvent(event))
 }
 

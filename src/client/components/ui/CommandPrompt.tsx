@@ -5,6 +5,7 @@ import { useClampedState } from "../../hooks/useClampedState"
 import { useFuzzyMatch2 } from "../../hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "../../hooks/useInputAutocomplete"
 import { useKeyboardMode } from "../../hooks/useKeyboardMode"
+import { displayShortcut } from "../../hooks/useShortcut"
 import { Command } from "../../services/Command"
 import { FuzzyString } from "./FuzzyString"
 import { Input } from "./Input"
@@ -98,12 +99,47 @@ export function CommandPrompt(props: {
 						style={{
 							padding: 8,
 							backgroundColor: selectedIndex === i ? "var(--accent0)" : undefined,
+							display: "flex",
+							gap: 8,
 						}}
 					>
-						<FuzzyString match={match} />
+						<div style={{ flex: 1 }}>
+							<FuzzyString match={match} />
+						</div>
+						<Shortcut shortcuts={command.shortcut} />
 					</MenuItem>
 				))}
 			</div>
 		</PopupFrame>
+	)
+}
+
+function Shortcut(props: { shortcuts: undefined | string | string[] }) {
+	const { shortcuts } = props
+	if (!shortcuts) return false
+	if (typeof shortcuts === "string") return <Token>{displayShortcut(shortcuts)}</Token>
+	return (
+		<div style={{ display: "flex", gap: 4 }}>
+			{shortcuts.map((s) => (
+				<Token>{displayShortcut(s)}</Token>
+			))}
+		</div>
+	)
+}
+
+function Token(props: { children: React.ReactNode }) {
+	return (
+		<span
+			style={{
+				background: "var(--bg2)",
+				color: "var(--fg2)",
+				fontSize: 12,
+				padding: "2px 4px",
+				borderRadius: 4,
+				alignSelf: "center",
+			}}
+		>
+			{props.children}
+		</span>
 	)
 }

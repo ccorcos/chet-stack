@@ -43,6 +43,9 @@ const environment: ClientEnvironment = {
 	cmd,
 }
 
+// Connect commander to the keyboard.
+document.addEventListener("keydown", (e) => cmd.handleKeyDown(e))
+
 // Render the app.
 const div = document.createElement("div")
 document.body.appendChild(div)

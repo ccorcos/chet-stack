@@ -7,6 +7,7 @@ import { ListBox, ListItem, useListBox } from "./ui/ListBox"
 
 import { clamp } from "lodash"
 import { formatRoute } from "../../shared/routeHelpers"
+import { useCommand } from "../hooks/useCommand"
 import { useCounter } from "../hooks/useCounter"
 import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
@@ -100,8 +101,10 @@ function Sidebar(props: {
 	})
 
 	const [isOpen, setIsOpen] = useState(true)
-	useShortcut("cmd-\\", () => {
-		setIsOpen(!isOpen)
+	useCommand({
+		name: "Toggle Sidebar",
+		shortcut: "cmd-\\",
+		execute: () => setIsOpen(!isOpen),
 	})
 
 	const keyboardMode = useKeyboardMode()
