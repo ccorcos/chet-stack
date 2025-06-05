@@ -9,6 +9,7 @@ export function Commander() {
 	useCommand({
 		name: "Open Commander",
 		shortcut: "cmd-shift-p",
+		hidden: true,
 		enabled: () => !isOpen,
 		execute: () => setIsOpen(true),
 	})
@@ -16,6 +17,7 @@ export function Commander() {
 	useCommand({
 		name: "Close Commander",
 		shortcut: "escape",
+		hidden: true,
 		enabled: () => isOpen,
 		execute: () => setIsOpen(false),
 	})
@@ -26,7 +28,7 @@ export function Commander() {
 	return (
 		<CommandPromptOverlay onDismiss={() => setIsOpen(false)}>
 			<CommandPrompt
-				commands={cmd.list()}
+				commands={cmd.list().filter((c) => !c.hidden)}
 				onSubmit={(command) => {
 					command.execute()
 					setIsOpen(false)

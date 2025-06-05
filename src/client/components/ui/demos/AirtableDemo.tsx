@@ -17,16 +17,15 @@ import { Input } from "../Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBox, ListItem, useListBox } from "../ListBox"
 
-export function RecordDbDemo() {
+export function AirtableDemo() {
 	return (
-		// <Subspace prefix={["RecordDbDemo"]}>
-		<Subspace prefix={["EmailDemo"]}>
-			<RecordDb />
+		<Subspace prefix={["AirtableDemo2"]}>
+			<Airtable />
 		</Subspace>
 	)
 }
 
-function RecordDb() {
+function Airtable() {
 	const { localResult } = useList({
 		gt: ["model", "table"],
 		lt: ["model", "table", null],
@@ -34,7 +33,10 @@ function RecordDb() {
 
 	const result = localResult.hit || localResult.prefix
 	const tables = result?.map((item) => item.value as TableDef)
+
 	const [selected, setSelected] = useState<TableDef[]>([])
+
+	// Annoying how this creates an extra render.
 	useLayoutEffect(() => {
 		if (tables && tables.length > 0) setSelected([tables[0]])
 	}, [Boolean(tables)])
@@ -74,6 +76,7 @@ function useWriteRecordDb() {
 			compare: cache.compare,
 			list: cache.listRaw,
 			write: (args) => {
+				console.log("write here", args)
 				finalize = cache.write(args)
 			},
 		})

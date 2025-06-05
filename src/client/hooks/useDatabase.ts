@@ -1,3 +1,4 @@
+import { isEqual } from "lodash"
 import { useEffect, useMemo, useRef } from "react"
 import { CacheListResult, JSONValue, ListArgs, Tuple, WriteArgs } from "../../shared/database/types"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -30,7 +31,11 @@ export function useList(_args: ListArgs<Tuple>) {
 	const [fetchCount, refetch] = useCounter()
 	useEffect(() => {
 		const unsub = cache.subscribe(args, () => {
-			localResultRef.current = cache.list(args)
+			console.log("emitted", args)
+
+			const newResult = cache.list(args)
+			if (isEqual(newResult, localResultRef.current)) return
+			localResultRef.current = newResult
 			rerender()
 			// If a use deletes a record leaving an incomplete list, then we need to refetch.
 			if (!localResultRef.current.hit) refetch()

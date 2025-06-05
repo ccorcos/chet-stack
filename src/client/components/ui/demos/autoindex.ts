@@ -1,5 +1,6 @@
 /* WARNING: this file is generated! */
 
+import * as AirtableDemo from "./AirtableDemo"
 import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
@@ -32,6 +33,7 @@ import * as TableDemo from "./TableDemo"
 import * as TableViewDemo from "./TableViewDemo"
 
 export {
+	AirtableDemo,
 	BadgeDemo,
 	ButtonDemo,
 	CalendarDemo,

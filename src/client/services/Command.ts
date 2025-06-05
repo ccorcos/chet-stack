@@ -74,7 +74,7 @@ export class CommandService {
 			.subspace(["command"])
 			.list()
 			.map(({ value }) => value as Command)
-			.filter((c) => !c.hidden)
+		// .filter((c) => !c.hidden)
 		return commands
 	}
 }

@@ -1,16 +1,20 @@
 import React, { useState } from "react"
-import { useShortcut } from "../../../hooks/useShortcut"
+import { Button } from "../Button"
 import { CommandPrompt, CommandPromptOverlay } from "../CommandPrompt"
 
 export function CommandPromptDemo() {
 	const [isOpen, setIsOpen] = useState(false)
-	useShortcut("cmd-shift-p", () => {
-		setIsOpen(true)
-	})
-	useShortcut("escape", () => setIsOpen(false))
+	// useShortcut("cmd-shift-p", () => {
+	// 	setIsOpen(true)
+	// })
+	// useShortcut("escape", () => setIsOpen(false))
 
-	if (!isOpen) return false
-
+	if (!isOpen)
+		return (
+			<div style={{ padding: 8 }}>
+				<Button onClick={() => setIsOpen(true)}>Open</Button>
+			</div>
+		)
 	return (
 		<CommandPromptOverlay onDismiss={() => setIsOpen(false)}>
 			<CommandPrompt
