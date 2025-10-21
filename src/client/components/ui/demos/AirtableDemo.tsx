@@ -1,7 +1,8 @@
 import { capitalize } from "lodash"
-import React, { useLayoutEffect, useRef, useState } from "react"
+import React, { Fragment, Suspense, useLayoutEffect, useRef, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { useGet, useList, useWrite } from "../../../hooks/useDatabase"
+import { usePref } from "../../../hooks/usePref"
 import { Subspace } from "../../Subspace"
 import { Button } from "../Button"
 import { DropdownMenu } from "../DropdownMenu"
@@ -10,10 +11,11 @@ import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
 import { ListBox, ListItem, useListBox } from "../ListBox"
 import { MenuItem } from "../MenuItem"
 import { Popup } from "../Popup"
+import { HeaderCell, Table } from "../Table"
 
 export function AirtableDemo() {
 	return (
-		<Subspace prefix={["AirtableDemo4"]}>
+		<Subspace prefix={["AirtableDemo5"]}>
 			<Airtable />
 		</Subspace>
 	)
@@ -27,13 +29,17 @@ type PrimitivePropertyType =
 
 type PropertyType = PrimitivePropertyType | { type: "list"; item: PrimitivePropertyType }
 
-type Property = { id: string; name?: string; type: PropertyType }
+type Property = { id: string; name: string; type: PropertyType }
 
 type Schema = {
 	id: string
-	name?: string
-	properties?: Property[]
+	name: string
+	properties: Property[]
 }
+
+type RecordValue = {
+	id: string
+} & Record<string, any>
 
 function Airtable() {
 	const { localResult } = useList({
@@ -64,7 +70,8 @@ function Airtable() {
 			}
 		>
 			<ContentLayout style={{ padding: 8 }}>
-				{selected.length > 0 && <SchemaEditor schemaId={selected[0]} />}
+				{/* {selected.length > 0 && <SchemaEditor schemaId={selected[0]} />} */}
+				<Suspense>{selected.length > 0 && <Records schemaId={selected[0]} />}</Suspense>
 			</ContentLayout>
 		</Layout>
 	)
@@ -87,7 +94,14 @@ function SchemaList(props: {
 	const write = useWrite()
 
 	const handleNewSchema = () => {
-		const schema: Schema = { id: randomId() }
+		const schema: Schema = {
+			id: randomId(),
+			name: "",
+			properties: [
+				{ id: "id", name: "ID", type: { type: "string" } },
+				{ id: "name", name: "Name", type: { type: "string" } },
+			],
+		}
 		write({ set: [{ key: ["schema", schema.id], value: schema }] })
 		setSelected([schema.id])
 	}
@@ -117,7 +131,6 @@ function SchemaList(props: {
 
 function SchemaEditor(props: { schemaId: string }) {
 	const { schemaId } = props
-
 	const { localResult } = useGet(["schema", schemaId])
 	if (localResult.miss) return <div>Loading...</div>
 	const schema = localResult.hit as Schema
@@ -134,13 +147,13 @@ function SchemaEditor(props: { schemaId: string }) {
 				onChange={(e) => setSchema({ ...schema, name: e.target.value })}
 			/>
 			<div>
-				{schema.properties?.map((property) => (
+				{schema.properties.map((property) => (
 					<div key={property.id}>{property.name || "Untitled"}</div>
 				))}
 			</div>
 			<NewPropertyButton
 				onNewProperty={(type) => {
-					const properties = schema.properties || []
+					const properties = schema.properties
 					const newProperty: Property = {
 						id: randomId(),
 						type,
@@ -200,53 +213,80 @@ function NewPropertyButton(props: { onNewProperty: (type: PropertyType) => void 
 	)
 }
 
-// function RecordTable() {
-// 	const [columnWidths, setColumnWidths] = usePref("TableDemo:columnWidths", [100, 200, 300])
+function Records(props: { schemaId: string }) {
+	const { schemaId } = props
+	const schemaResult = useGet(["schema", schemaId])
+	if (schemaResult.localResult.miss) throw schemaResult.remoteResult.promise
 
-// 	const gap = 12
-// 	const minWidth = 100
+	const schema = schemaResult.localResult.hit as Schema
 
-// 	const setWidth = (index: number) => (width: number) => {
-// 		const newWidths = [...columnWidths]
-// 		newWidths[index] = width
-// 		setColumnWidths(newWidths)
-// 	}
+	const initialWidths = schema.properties.map(() => 300)
+	const [savedColumnWidths, setColumnWidths] = usePref(
+		`schema/${schemaId}/columnWidths`,
+		initialWidths
+	)
+	const columnWidths = [...initialWidths]
+	for (let i = 0; i < Math.min(columnWidths.length, savedColumnWidths.length); i++)
+		columnWidths[i] = savedColumnWidths[i]
 
-// 	return (
-// 		<div style={{ height: "100%", display: "flex", padding: 12 }}>
-// 			<Table gap={gap} columnWidths={columnWidths} setColumnWidths={setColumnWidths}>
-// 				<HeaderCell
-// 					width={columnWidths[0]}
-// 					minWidth={minWidth}
-// 					setWidth={setWidth(0)}
-// 					style={{ border: "1px solid red", backgroundColor: "var(--bg0)" }}
-// 				>
-// 					Col 1
-// 				</HeaderCell>
-// 				<HeaderCell
-// 					width={columnWidths[1]}
-// 					minWidth={minWidth}
-// 					setWidth={setWidth(1)}
-// 					style={{ border: "1px solid blue", backgroundColor: "var(--bg0)" }}
-// 				>
-// 					Col 2
-// 				</HeaderCell>
-// 				<HeaderCell
-// 					width={columnWidths[2]}
-// 					minWidth={minWidth}
-// 					setWidth={setWidth(2)}
-// 					style={{ border: "1px solid green", backgroundColor: "var(--bg0)" }}
-// 				>
-// 					Col 3
-// 				</HeaderCell>
-// 				{Array.from({ length: 100 }).map((_, i) => (
-// 					<React.Fragment key={i}>
-// 						<div style={{ border: "1px solid red" }}>Row {i} Col 1</div>
-// 						<div style={{ border: "1px solid blue" }}>Row {i} Col 2</div>
-// 						<div style={{ border: "1px solid green" }}>Row {i} Col 3</div>
-// 					</React.Fragment>
-// 				))}
-// 			</Table>
-// 		</div>
-// 	)
-// }
+	const gap = 1
+	const minWidth = 100
+
+	const setWidth = (index: number) => (width: number) => {
+		const newWidths = [...columnWidths]
+		newWidths[index] = width
+		setColumnWidths(newWidths)
+	}
+
+	const recordsResult = useList({
+		gt: ["record", schemaId],
+		lt: ["record", schemaId, null],
+	})
+	if (recordsResult.localResult.miss) throw recordsResult.remoteResult.promise
+	const records: RecordValue[] = (
+		recordsResult.localResult.hit ||
+		recordsResult.localResult.prefix ||
+		[]
+	).map((x) => x.value)
+
+	const write = useWrite()
+	const newRecord = () => {
+		const record: RecordValue = { id: randomId() }
+		write({ set: [{ key: ["record", schemaId, record.id], value: record }] })
+	}
+
+	return (
+		<div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+			<Table gap={gap} columnWidths={columnWidths} setColumnWidths={setColumnWidths}>
+				{schema.properties.map((property, i) => {
+					return (
+						<HeaderCell
+							key={property.id}
+							width={columnWidths[i]}
+							minWidth={minWidth}
+							setWidth={setWidth(i)}
+							style={{ backgroundColor: "var(--bg1)", padding: 4 }}
+						>
+							{property.name}
+						</HeaderCell>
+					)
+				})}
+
+				{records.map((record) => {
+					return (
+						<Fragment key={record.id}>
+							{schema.properties.map((property) => (
+								<div key={property.id} style={{ padding: 4 }}>
+									{record[property.id]}
+								</div>
+							))}
+						</Fragment>
+					)
+				})}
+			</Table>
+			<div>
+				<Button onClick={newRecord}>New Record</Button>
+			</div>
+		</div>
+	)
+}

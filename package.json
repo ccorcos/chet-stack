@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"description": "A spiritual successor to Meteor.js",
 	"main": "index.js",
+	"engines": { "node": "22.x" },
 	"scripts": {
 		"reset": "tsx src/tools/reset.ts",
 		"autoindex": "autoindex src",
