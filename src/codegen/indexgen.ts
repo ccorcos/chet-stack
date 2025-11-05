@@ -4,58 +4,13 @@ npx tsx src/codegen/indexgen.ts <dirPath> [--watch]
 
 */
 
-import chokidar, { type FSWatcher } from "chokidar"
+import chokidar from "chokidar"
 import * as fs from "fs/promises"
 import camelCase from "lodash/camelCase"
-import debounce from "lodash/debounce"
 import * as path from "path"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
 import { formatFile } from "./formatFile"
-
-/** Watch globs and run fn whenever something changes. */
-function watchFiles(args: {
-	label: string
-	glob: string | string[]
-	filter?: (path: string) => boolean
-	run: () => Promise<void> | void
-}): FSWatcher {
-	const { label, glob, run, filter } = args
-
-	let promise = Promise.resolve()
-	const debounced = debounce(() => {
-		promise = promise.then(run)
-	}, 120)
-
-	const watcher = chokidar.watch(glob, {
-		persistent: true,
-		ignoreInitial: true, // Ignore the initial add events when booting up.
-	})
-
-	const log = (eventPath: string) => {
-		const rel = path.relative(process.cwd(), eventPath)
-		process.stdout.write(`[${label}] ${rel}\n`)
-	}
-
-	watcher
-		.on("add", (p) => {
-			if (filter && !filter(p)) return
-			log(p)
-			debounced()
-		})
-		.on("change", (p) => {
-			if (filter && !filter(p)) return
-			log(p)
-			debounced()
-		})
-		.on("unlink", (p) => {
-			if (filter && !filter(p)) return
-			log(p)
-			debounced()
-		})
-
-	return watcher
-}
 
 const outName = "index.ts"
 const validExt = new Set([".ts", ".tsx", ".js", ".jsx"])
@@ -105,17 +60,22 @@ export async function indexgen(args: { dirPath: string; watchMode: boolean }) {
 	await generateIndex(dirPath)
 
 	if (watchMode) {
-		return watchFiles({
-			label: "indexgen",
-			glob: path.join(dirPath, "*"),
-			run: () => generateIndex(dirPath),
-			filter: (p) => {
-				const fileName = path.basename(p)
-				if (fileName.startsWith(".")) return false
-				if (fileName === outName) return false
-				return true
-			},
+		const glob = path.join(dirPath, "*")
+		const watcher = chokidar.watch(glob, {
+			persistent: true,
+			ignoreInitial: true, // Ignore the initial add events when booting up.
 		})
+
+		const regenerateIndex = async (p: string) => {
+			const fileName = path.basename(p)
+			if (fileName.startsWith(".")) return
+			if (fileName === outName) return
+			await generateIndex(dirPath)
+		}
+
+		watcher.on("add", regenerateIndex).on("change", regenerateIndex).on("unlink", regenerateIndex)
+
+		return watcher
 	}
 }
 
