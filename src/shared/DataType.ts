@@ -18,7 +18,7 @@ export const uuid = new t.Validator<string>({
 
 */
 
-import { mapValues } from "lodash"
+import { mapValues } from "lodash-es"
 import isBoolean from "lodash/isBoolean"
 import isEqual from "lodash/isEqual"
 import isNumber from "lodash/isNumber"

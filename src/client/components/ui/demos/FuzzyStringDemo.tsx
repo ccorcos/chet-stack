@@ -1,4 +1,4 @@
-import { sortBy } from "lodash"
+import { sortBy } from "lodash-es"
 import React, { useState } from "react"
 import { fuzzyMatch, fuzzyMatchScore2 } from "../../../../shared/fuzzyMatch"
 import { FuzzyString } from "../FuzzyString"

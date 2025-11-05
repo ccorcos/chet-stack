@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import { useMemo, useRef, useState } from "react"
 import { Tuple } from "../../shared/database/types"
 import { useList } from "./useDatabase"

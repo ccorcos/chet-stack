@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import { useEffect, useMemo, useState } from "react"
 
 export type StoreListener<T> = (state: T) => void

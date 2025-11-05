@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import { DependencyList, useRef } from "react"
 
 export function useDeepMemo<T>(fn: () => T, deps: DependencyList) {

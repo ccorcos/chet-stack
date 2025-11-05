@@ -1,4 +1,4 @@
-import { groupBy, mapValues } from "lodash"
+import { groupBy, mapValues } from "lodash-es"
 
 export function parseCookies(cookie: string) {
 	const entries = cookie.split(";").map((line) => line.split("=").map((p) => p.trim()))

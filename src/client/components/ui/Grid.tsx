@@ -1,4 +1,4 @@
-import { clamp, debounce, isEqual, range, throttle } from "lodash"
+import { clamp, debounce, isEqual, range, throttle } from "lodash-es"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useDeepState } from "../../hooks/useDeepState"
 import { useDomEvent } from "../../hooks/useDomEvent"

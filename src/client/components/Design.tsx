@@ -5,7 +5,7 @@ import { FuzzyString } from "./ui/FuzzyString"
 import { Input } from "./ui/Input"
 import { ListBox, ListItem, useListBox } from "./ui/ListBox"
 
-import { clamp } from "lodash"
+import { clamp } from "lodash-es"
 import { formatRoute } from "../../shared/routeHelpers"
 import { useCommand } from "../hooks/useCommand"
 import { useCounter } from "../hooks/useCounter"

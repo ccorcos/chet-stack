@@ -2,7 +2,7 @@
 // The shift keycode map was removed so we can use Shift as a modifier.
 // For example: "Shift-]" instead of "}
 
-import { capitalize } from "lodash"
+import { capitalize } from "lodash-es"
 import { useEffect } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 

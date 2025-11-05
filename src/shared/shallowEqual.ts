@@ -1,4 +1,4 @@
-import { intersection, isArray, isPlainObject } from "lodash"
+import { intersection, isArray, isPlainObject } from "lodash-es"
 
 export function shallowEqual(a: any, b: any) {
 	if (a == b) return true

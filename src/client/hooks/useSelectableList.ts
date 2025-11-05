@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import { useCallback, useRef } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 import { isShortcut } from "./useShortcut"

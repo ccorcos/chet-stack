@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import React from "react"
 import { useDraggableList } from "../../hooks/useDraggableList"
 import { isShortcut } from "../../hooks/useShortcut"

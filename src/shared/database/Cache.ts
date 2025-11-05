@@ -6,7 +6,7 @@ We're going to start with just solving the problem, and then worry about perform
 https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 */
 
-import { uniqWith } from "lodash"
+import { uniqWith } from "lodash-es"
 import { compactObj } from "../compactObj"
 import { compare as cmp } from "../compare"
 import { OrderedList } from "../OrderedList"

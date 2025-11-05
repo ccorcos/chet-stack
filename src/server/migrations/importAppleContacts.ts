@@ -1,5 +1,5 @@
 import { readFileSync } from "fs"
-import { groupBy } from "lodash"
+import { groupBy } from "lodash-es"
 import { BloomFilter } from "../../shared/BloomFilter"
 import { randomId } from "../../shared/randomId"
 import { simplifyVCard, vCard } from "../../shared/vCardHelpers"

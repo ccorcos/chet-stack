@@ -1,4 +1,4 @@
-import { chunk } from "lodash"
+import { chunk } from "lodash-es"
 import md5 from "md5"
 import { v4 as uuid } from "uuid"
 

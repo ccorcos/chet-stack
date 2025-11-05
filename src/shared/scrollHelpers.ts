@@ -1,4 +1,4 @@
-import { sum } from "lodash"
+import { sum } from "lodash-es"
 
 export function getScrollableAncestors(element: Element) {
 	const scrollableAncestors: Array<Element> = []

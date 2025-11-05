@@ -1,5 +1,5 @@
 import { insert, remove, search, update } from "@ccorcos/ordered-array"
-import { identity } from "lodash"
+import { identity } from "lodash-es"
 import { compare as cmp } from "./compare"
 
 export class OrderedList<T, K = T> {

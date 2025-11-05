@@ -1,4 +1,4 @@
-import { clamp } from "lodash"
+import { clamp } from "lodash-es"
 import React from "react"
 import { sleep } from "../../../../shared/sleep"
 import { CellRange, Grid } from "../Grid"

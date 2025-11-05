@@ -1,4 +1,4 @@
-import { clamp, minBy } from "lodash"
+import { clamp, minBy } from "lodash-es"
 import { useCallback, useEffect, useState } from "react"
 import { draggingZIndex } from "../helpers/zIndexHelpers"
 import { useRefCurrent } from "./useRefCurrent"

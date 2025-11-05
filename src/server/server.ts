@@ -2,12 +2,9 @@ import express from "express"
 import helmet from "helmet"
 import http from "http"
 import morgan from "morgan"
-import * as vite from "vite"
-import type { ClientConfig } from "../client/services/ClientConfig"
 import { recordDb } from "../shared/database/RecordDb"
 import { tupleDb, tupleOkv } from "../shared/database/TupleDb"
 import { initEmailModel } from "../shared/EmailModel"
-import { path } from "../tools/path"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
 import { PubsubServer } from "./PubsubServer"
@@ -16,6 +13,7 @@ import { Database } from "./services/Database"
 import { QueueDatabase } from "./services/QueueDatabase"
 import { config } from "./services/ServerConfig"
 import { ServerEnvironment } from "./services/ServerEnvironment"
+import { WebServer } from "./WebServer"
 
 const app = express()
 
@@ -49,38 +47,7 @@ const environment: ServerEnvironment = { config, db, queue, pubsub }
 FileServer(environment, app)
 QueueServer(environment)
 ApiServer(environment, app)
-
-WEBSITE: {
-	const clientConfig: ClientConfig = { host: config.host, production: false }
-
-	if (!config.production) {
-		const viteServer = await vite.createServer({
-			root: path("src/client"),
-			server: { middlewareMode: true, hmr: true },
-			define: {
-				__CLIENT_CONFIG__: JSON.stringify(clientConfig),
-			},
-		})
-		app.use(viteServer.middlewares)
-	} else {
-		await vite.build({
-			root: path("src/client"),
-			define: {
-				__CLIENT_CONFIG__: JSON.stringify(clientConfig),
-			},
-		})
-
-		// Serve static assets.
-		app.use(express.static(path("build/client")))
-	}
-
-	// Fallback to HTML for client-side routing to work.
-	app.use("*", (req, res, next) => {
-		if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next()
-		// This will delegate to vite.middlewares or express.static.
-		res.sendFile(path.resolve("/index.html"))
-	})
-}
+await WebServer(environment, app)
 
 // TODO: configure port, also https?
 // https.createServer(options, app).listen(443)

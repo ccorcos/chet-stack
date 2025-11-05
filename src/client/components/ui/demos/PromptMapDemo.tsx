@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import pLimit from "p-limit"
 import React, { Fragment, Suspense, useLayoutEffect, useMemo, useState } from "react"
 import { Tuple } from "../../../../shared/database/types"

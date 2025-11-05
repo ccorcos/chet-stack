@@ -7,7 +7,7 @@ import {
 	isString,
 	omit,
 	uniq,
-} from "lodash"
+} from "lodash-es"
 import React from "react"
 import * as t from "../../../shared/DataType"
 import { inspect } from "../../../shared/inspect"

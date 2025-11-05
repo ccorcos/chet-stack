@@ -1,4 +1,4 @@
-import { clamp } from "lodash"
+import { clamp } from "lodash-es"
 import React, { useCallback, useState } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 

@@ -1,4 +1,4 @@
-import { capitalize } from "lodash"
+import { capitalize } from "lodash-es"
 import React, { Fragment, Suspense, useLayoutEffect, useRef, useState } from "react"
 import { randomId } from "../../../../shared/randomId"
 import { useGet, useList, useWrite } from "../../../hooks/useDatabase"

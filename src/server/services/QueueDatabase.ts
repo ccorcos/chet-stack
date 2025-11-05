@@ -1,5 +1,5 @@
 import sqlite from "better-sqlite3"
-import { isPlainObject } from "lodash"
+import { isPlainObject } from "lodash-es"
 import { SQLiteBaseOKV } from "../../shared/database/SQLiteBaseOKV"
 import { tupleDb, tupleOkv, tupleTx } from "../../shared/database/TupleDb"
 import { Tuple, TupleDb } from "../../shared/database/types"

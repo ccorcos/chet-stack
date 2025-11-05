@@ -1,4 +1,4 @@
-import { isEqual } from "lodash"
+import { isEqual } from "lodash-es"
 import { useEffect, useRef, useState } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 import { useRefPrevious } from "./useRefPrevious"
