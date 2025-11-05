@@ -24,6 +24,8 @@ export async function generateIndexFile(dirPath: string): Promise<string> {
 		.filter((parsed) => {
 			if (!validExt.has(parsed.ext)) return false
 			if (parsed.base === outName) return false
+			// Exclude generator files like *.gen.ts from the index
+			if (parsed.name.endsWith(".gen")) return false
 			return true
 		})
 		.sort((a, b) => a.name.localeCompare(b.name))
@@ -69,6 +71,7 @@ export async function indexgen(args: { dirPath: string; watchMode: boolean }) {
 		const regenerateIndex = async (p: string) => {
 			const fileName = path.basename(p)
 			if (fileName.startsWith(".")) return
+			if (fileName.includes(".gen.")) return
 			if (fileName === outName) return
 			await generateIndex(dirPath)
 		}

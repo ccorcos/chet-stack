@@ -23,12 +23,15 @@ export async function codegen(args: { rootDir: string; watchMode: boolean }) {
 
 	function start(genFile: string) {
 		const rel = path.relative(rootDir, genFile)
-		const args = watchMode ? ["watch", genFile, "--", "--watch"] : [genFile]
+		const args = watchMode ? ["tsx", genFile, "--watch"] : ["tsx", genFile]
+
+		// Using tsx watch feels a bit unnecessary and causes some other race conditions
+		// ? ["tsx", "watch", "--clear-screen=false", genFile, "--watch"]
+
 		const child = spawn("npx", args, {
 			cwd: rootDir,
 			stdio: ["ignore", "pipe", "pipe"],
 			env: process.env,
-			detached: true,
 			shell: false,
 		})
 
@@ -66,8 +69,9 @@ export async function codegen(args: { rootDir: string; watchMode: boolean }) {
 					})
 			)
 			Promise.all(promises)
-				.then(() => resolve())
 				.catch(reject)
+				.then(() => resolve())
+				.finally(() => watcher.close())
 		})
 	})
 }
