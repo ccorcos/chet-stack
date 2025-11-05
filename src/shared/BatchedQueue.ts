@@ -52,3 +52,14 @@ export class BatchedQueue<I, O> {
 		}
 	}
 }
+
+// type AsyncFn = () => any | Promise<any>
+// export class AsyncQueue extends BatchedQueue<AsyncFn, any> {
+// 	constructor(args: { maxParallel: number; delayMs: number }) {
+// 		super({
+// 			processBatch: (batch: AsyncFn[]) => batch[0](),
+// 			maxBatchSize: 1,
+// 			...args,
+// 		})
+// 	}
+// }
