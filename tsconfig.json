@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"module": "CommonJS",
-		"jsx": "react",
-		"moduleResolution": "node",
+		"lib": ["DOM", "ES2022"],
+
+		"module": "ES2022",
+		"moduleResolution": "bundler",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
+
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
 		"noImplicitThis": true,
@@ -13,10 +15,12 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"removeComments": true,
-		"sourceMap": true,
+
+		"jsx": "react",
 		"allowJs": true,
+
+		"sourceMap": true,
 		"skipLibCheck": true,
-		"lib": ["DOM", "ES2022"],
 		"noEmit": true
 	},
 	"include": ["src/**/*"],

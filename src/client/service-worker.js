@@ -1,3 +1,5 @@
+// TODO: unused since moving to vite.
+
 const ASSETS_CACHE = "app-assets-v1"
 const IMAGES_CACHE = "static-simages-v1" // TODO
 const cacheWhitelist = [ASSETS_CACHE, IMAGES_CACHE]

@@ -2,14 +2,10 @@ import cookieParser from "cookie-parser"
 import express, { Express } from "express"
 import * as t from "../shared/DataType"
 import { api } from "./api"
-import { path } from "./helpers/path"
 import { config } from "./services/ServerConfig"
 import { ServerEnvironment } from "./services/ServerEnvironment"
 
 export function ApiServer(environment: ServerEnvironment, app: Express) {
-	// Serve static assets.
-	app.use(express.static(path("build")))
-
 	// Register API endpoints.
 	for (const [name, { input, handler }] of Object.entries(api)) {
 		// express.json({ limit: "4mb" }),
@@ -37,7 +33,4 @@ export function ApiServer(environment: ServerEnvironment, app: Express) {
 			}
 		)
 	}
-
-	// Fallback to HTML for client-side routing to work.
-	app.use("*", express.static(path("build/index.html")))
 }

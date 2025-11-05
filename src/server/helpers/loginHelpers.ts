@@ -30,7 +30,7 @@ export async function setAuthCookies(
 		secure: config.production,
 		httpOnly: true,
 		expires: expiration,
-		domain: config.production ? config.domain : undefined,
+		domain: config.production ? config.host : undefined,
 	})
 
 	// Set the current logged in userId so the client knows.
@@ -38,7 +38,7 @@ export async function setAuthCookies(
 		secure: config.production,
 		httpOnly: false,
 		expires: expiration,
-		domain: config.production ? config.domain : undefined,
+		domain: config.production ? config.host : undefined,
 	})
 }
 

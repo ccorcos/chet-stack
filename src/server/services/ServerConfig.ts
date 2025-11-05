@@ -1,9 +1,9 @@
-import { path } from "../helpers/path"
+import { path } from "../../tools/path"
 
 export type ServerConfig = {
 	production: boolean
 	port: number
-	domain: string
+	host: string
 	baseUrl: string
 	passwordSalt: Buffer
 	signatureSecret: Buffer
@@ -14,9 +14,9 @@ export type ServerConfig = {
 
 const production = process.env.NODE_ENV === "production"
 const port = parseInt(process.env.PORT || "8080")
-const domain = production ? "example.com" : `localhost:${port}`
+const host = production ? "example.com" : `localhost:${port}`
 const protocol = production ? "https" : "http"
-const baseUrl = `${protocol}://${domain}`
+const baseUrl = `${protocol}://${host}`
 
 const dbPath = process.env.DB_PATH || path("db/database2.sqlite")
 console.log("DB_PATH", dbPath)
@@ -25,7 +25,7 @@ const queuePath = process.env.QUEUE_PATH || path("db/queue.json")
 export const config: ServerConfig = {
 	production,
 	port,
-	domain,
+	host,
 	baseUrl,
 
 	// Used for securely storing password hases.

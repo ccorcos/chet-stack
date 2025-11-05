@@ -1,15 +1,15 @@
-import injectLiveReload from "connect-livereload"
 import express from "express"
 import helmet from "helmet"
 import http from "http"
-import livereload from "livereload"
 import morgan from "morgan"
+import * as vite from "vite"
+import type { ClientConfig } from "../client/services/ClientConfig"
 import { recordDb } from "../shared/database/RecordDb"
 import { tupleDb, tupleOkv } from "../shared/database/TupleDb"
 import { initEmailModel } from "../shared/EmailModel"
+import { path } from "../tools/path"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
-import { path } from "./helpers/path"
 import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
 import { Database } from "./services/Database"
@@ -27,14 +27,6 @@ if (config.production) {
 // Request logging.
 // app.use(morgan("dev"))
 app.use(morgan((...args) => "express: " + morgan.dev(...args)))
-
-if (!config.production) {
-	// Injects into the html file so the browser reloads when files change.
-	app.use(injectLiveReload())
-
-	// Watch for changed to send a message over websocket.
-	livereload.createServer().watch(path("build"))
-}
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
@@ -57,6 +49,38 @@ const environment: ServerEnvironment = { config, db, queue, pubsub }
 FileServer(environment, app)
 QueueServer(environment)
 ApiServer(environment, app)
+
+WEBSITE: {
+	const clientConfig: ClientConfig = { host: config.host, production: false }
+
+	if (!config.production) {
+		const viteServer = await vite.createServer({
+			root: path("src/client"),
+			server: { middlewareMode: true, hmr: true },
+			define: {
+				__CLIENT_CONFIG__: JSON.stringify(clientConfig),
+			},
+		})
+		app.use(viteServer.middlewares)
+	} else {
+		await vite.build({
+			root: path("src/client"),
+			define: {
+				__CLIENT_CONFIG__: JSON.stringify(clientConfig),
+			},
+		})
+
+		// Serve static assets.
+		app.use(express.static(path("build/client")))
+	}
+
+	// Fallback to HTML for client-side routing to work.
+	app.use("*", (req, res, next) => {
+		if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next()
+		// This will delegate to vite.middlewares or express.static.
+		res.sendFile(path.resolve("/index.html"))
+	})
+}
 
 // TODO: configure port, also https?
 // https.createServer(options, app).listen(443)

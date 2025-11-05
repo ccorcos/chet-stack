@@ -3,7 +3,7 @@ import { groupBy } from "lodash"
 import { BloomFilter } from "../../shared/BloomFilter"
 import { randomId } from "../../shared/randomId"
 import { simplifyVCard, vCard } from "../../shared/vCardHelpers"
-import { path } from "../helpers/path"
+import { path } from "../../tools/path"
 import { Database } from "../services/Database"
 
 function logNames(cards: vCard[]) {

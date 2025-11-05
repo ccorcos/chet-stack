@@ -55,40 +55,42 @@ root.render(<Root environment={environment} />)
 // For debugging from the Console.(window as any)["environment"] = environment
 Object.assign(window as any, environment)
 
-if (environment.config.production) {
-	// Register service worker for offline caching.
-	window.addEventListener("load", function () {
-		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker
-				.register("/service-worker.js")
-				.then(function (registration) {
-					console.log("Service Worker registered with scope:", registration.scope)
-				})
-				.catch(function (err) {
-					console.log("Service Worker registration failed:", err)
-				})
-		}
-	})
-} else {
-	// Register service worker for offline caching.
-	window.addEventListener("load", function () {
-		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker
-				.getRegistrations()
-				.then((registrations) => {
-					registrations.forEach((registration) => {
-						registration.unregister().then((success) => {
-							if (success) {
-								console.log("Service worker unregistered successfully")
-							} else {
-								console.log("Failed to unregister service worker")
-							}
-						})
-					})
-				})
-				.catch((error) => {
-					console.error("Error while getting service worker registrations:", error)
-				})
-		}
-	})
-}
+// No service worker since moving to vite.
+//
+// if (environment.config.production) {
+// 	// Register service worker for offline caching.
+// 	window.addEventListener("load", function () {
+// 		if ("serviceWorker" in navigator) {
+// 			navigator.serviceWorker
+// 				.register("/service-worker.js")
+// 				.then(function (registration) {
+// 					console.log("Service Worker registered with scope:", registration.scope)
+// 				})
+// 				.catch(function (err) {
+// 					console.log("Service Worker registration failed:", err)
+// 				})
+// 		}
+// 	})
+// } else {
+// 	// Unregister service worker for offline caching.
+// 	window.addEventListener("load", function () {
+// 		if ("serviceWorker" in navigator) {
+// 			navigator.serviceWorker
+// 				.getRegistrations()
+// 				.then((registrations) => {
+// 					registrations.forEach((registration) => {
+// 						registration.unregister().then((success) => {
+// 							if (success) {
+// 								console.log("Service worker unregistered successfully")
+// 							} else {
+// 								console.log("Failed to unregister service worker")
+// 							}
+// 						})
+// 					})
+// 				})
+// 				.catch((error) => {
+// 					console.error("Error while getting service worker registrations:", error)
+// 				})
+// 		}
+// 	})
+// }
