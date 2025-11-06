@@ -1,6 +1,6 @@
 import { Assert } from "../shared/typeHelpers"
 import { ServerEnvironment } from "./services/ServerEnvironment"
-import * as queueTasks from "./tasks/autoindex"
+import * as queueTasks from "./tasks/index"
 
 type TaskHandler = (environment: ServerEnvironment, args: any) => Promise<any>
 

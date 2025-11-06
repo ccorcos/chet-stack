@@ -1,7 +1,6 @@
 import { ClientPubsubMessage, ServerPubsubMessage } from "../../shared/PubSubTypes"
 import { SecondMs } from "../../shared/dateHelpers"
 import { sleep } from "../../shared/sleep"
-import { ClientConfig } from "./ClientConfig"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
@@ -11,7 +10,6 @@ export class WebsocketPubsubClient {
 
 	constructor(
 		private args: {
-			config: ClientConfig
 			onChange: (key: string, value: any) => void
 			onStart: () => void
 		}
@@ -26,7 +24,7 @@ export class WebsocketPubsubClient {
 
 	private connect() {
 		debug("connecting...")
-		this.ws = new WebSocket(`ws://${this.args.config.host}`)
+		this.ws = new WebSocket(`ws://${location.host}`)
 
 		this.ws.onopen = () => {
 			debug("connected!")

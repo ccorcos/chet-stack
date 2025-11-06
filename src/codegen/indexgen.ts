@@ -10,7 +10,7 @@ import camelCase from "lodash/camelCase"
 import * as path from "path"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
-import { formatFile } from "./formatFile"
+import { formatTs } from "./formatFile"
 
 const outName = "index.ts"
 const validExt = new Set([".ts", ".tsx", ".js", ".jsx"])
@@ -44,9 +44,14 @@ export async function generateIndexFile(dirPath: string): Promise<string> {
 export async function generateIndex(dirPath: string): Promise<void> {
 	const contents = await generateIndexFile(dirPath)
 	const outputPath = path.join(dirPath, outName)
-	console.log(`> write ${path.relative(process.cwd(), outputPath)}`)
-	await fs.writeFile(outputPath, contents)
-	await formatFile(outputPath)
+	await writeFileIfChanged(outputPath, await formatTs(contents))
+}
+
+async function writeFileIfChanged(filePath: string, contents: string): Promise<void> {
+	const existingContents = await fs.readFile(filePath, "utf8")
+	if (existingContents === contents) return
+	console.log(`> write ${path.relative(process.cwd(), filePath)}`)
+	await fs.writeFile(filePath, contents)
 }
 
 function cleanFileName(fileName: string): string {

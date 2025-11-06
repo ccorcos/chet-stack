@@ -1,7 +1,8 @@
-import { execSync } from "child_process"
-import { writeFileSync } from "fs"
-import { dirname } from "path"
-import { fileURLToPath } from "url"
+import { exec } from "node:child_process"
+import { writeFile } from "node:fs/promises"
+import { dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+import { promisify } from "node:util"
 import { Theme, darkTheme, lightTheme, shiftTheme } from "../shared/colors"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -102,8 +103,8 @@ for (let i = 1; i < maxLayers; i++) {
 
 themeCss += layersCss
 
-writeFileSync(__dirname + "/theme.css", themeCss)
-execSync(`npx prettier --write ${__dirname + "/theme.css"}`)
+await writeFile(__dirname + "/theme.css", themeCss)
+await promisify(exec)(`npx prettier --write ${__dirname + "/theme.css"}`)
 
 // const oldLightTheme = `
 // 	/* Started with Apple variables */

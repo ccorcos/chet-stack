@@ -7,11 +7,4 @@ import * as query from "./query"
 import * as write from "./write"
 import * as writeRecordDb from "./writeRecordDb"
 
-export {
-	hello,
-	list,
-	prompt,
-	query,
-	write,
-	writeRecordDb,
-}
+export { hello, list, prompt, query, write, writeRecordDb }

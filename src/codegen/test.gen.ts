@@ -1,1 +1,1 @@
-console.log("hello from test.gen.ts")
+// console.log("hello from test.gen.ts")

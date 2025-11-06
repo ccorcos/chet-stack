@@ -1,4 +1,4 @@
-import type * as apis from "../../server/apis/autoindex"
+import type * as apis from "../../server/apis"
 import { proxyObj } from "../../shared/proxyHelpers"
 import { sleep } from "../../shared/sleep"
 

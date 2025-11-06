@@ -24,7 +24,6 @@ const router = new Router()
 const api = createApi()
 
 const pubsub = new WebsocketPubsubClient({
-	config: clientConfig,
 	onStart() {},
 	onChange(key, value) {},
 })

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express"
 import * as t from "../shared/DataType"
 import { Assert } from "../shared/typeHelpers"
-import * as api from "./apis/autoindex"
+import * as api from "./apis"
 import { ServerEnvironment } from "./services/ServerEnvironment"
 
 // Assert proper types.
