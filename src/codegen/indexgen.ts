@@ -6,7 +6,7 @@ npx tsx src/codegen/indexgen.ts <dirPath> [--watch]
 
 import chokidar from "chokidar"
 import * as fs from "fs/promises"
-import camelCase from "lodash/camelCase"
+import camelCase from "lodash-es/camelCase"
 import * as path from "path"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"

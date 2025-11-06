@@ -11,19 +11,17 @@
 		"server-watch": "tsx watch --clear-screen=false src/server/server.ts",
 		"dev": "run-p codegen-watch server-watch",
 		"clean": "rm -rf build db",
-
 		"codegen": "tsx src/codegen/codegen.ts src",
 		"build": "NODE_ENV=production vite build src/client",
 		"start": "NODE_ENV=production tsx src/server/server.ts",
-
 		"typecheck": "tsc --noEmit",
 		"test": "run-s test:unit test:e2e",
 		"test:unit": "mocha -r tsx './src/**/*.test.ts' --verbose",
 		"test:e2e": "playwright test",
-
 		"reset": "tsx src/tools/reset.ts",
 		"migrate": "tsx src/server/migrations/migrate.ts",
-		"sowell": "tsx src/tools/sowell.ts"
+		"sowell": "tsx src/tools/sowell.ts",
+		"knip": "npx knip"
 	},
 	"keywords": [],
 	"author": "",
@@ -33,7 +31,6 @@
 		"@ccorcos/ordered-array": "^0.0.4",
 		"@popperjs/core": "^2.11.8",
 		"@vitejs/plugin-react": "^5.1.0",
-		"axios": "^1.6.7",
 		"better-sqlite3": "^11.3.0",
 		"cheerio": "^1.0.0",
 		"cookie-parser": "^1.4.6",
@@ -50,6 +47,7 @@
 		"md5": "^2.3.0",
 		"morgan": "^1.10.0",
 		"openai": "^4.86.2",
+		"p-limit": "^7.2.0",
 		"prosemirror-model": "^1.25.1",
 		"prosemirror-schema-basic": "^1.2.4",
 		"prosemirror-state": "^1.4.3",
@@ -61,15 +59,13 @@
 		"uuid": "^9.0.1",
 		"vcf": "^2.1.2",
 		"vite": "^7.2.0",
-		"ws": "^8.13.0"
+		"ws": "^8.13.0",
+		"yargs": "^18.0.0"
 	},
 	"devDependencies": {
-		"@ccorcos/autoindex": "^0.0.3",
 		"@playwright/test": "^1.38.1",
-		"@types/axios": "^0.14.0",
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/cheerio": "^0.22.35",
-		"@types/chokidar": "^1.7.5",
 		"@types/culori": "^2.1.1",
 		"@types/express": "^4.17.17",
 		"@types/fs-extra": "^11.0.1",

@@ -1,0 +1,10 @@
+{
+	"entry": [
+		"src/server/server.ts",
+		"src/client/client.tsx",
+		"src/client/vite.config.ts",
+		"src/**/*.gen.ts",
+		"src/**/*.test.ts",
+		"src/**/*.e2e.ts"
+	]
+}

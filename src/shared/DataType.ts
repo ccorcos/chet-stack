@@ -18,12 +18,12 @@ export const uuid = new t.Validator<string>({
 
 */
 
-import { mapValues } from "lodash-es"
-import isBoolean from "lodash/isBoolean"
-import isEqual from "lodash/isEqual"
-import isNumber from "lodash/isNumber"
-import isPlainObject_ from "lodash/isPlainObject"
-import isString from "lodash/isString"
+import isBoolean from "lodash-es/isBoolean"
+import isEqual from "lodash-es/isEqual"
+import isNumber from "lodash-es/isNumber"
+import isPlainObject_ from "lodash-es/isPlainObject"
+import isString from "lodash-es/isString"
+import mapValues from "lodash-es/mapValues"
 import { parseDate } from "./dateHelpers"
 import { inspect as inspectJson } from "./inspect"
 import { Simplify, unreachable } from "./typeHelpers"
