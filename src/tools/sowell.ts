@@ -91,7 +91,7 @@ async function crawl() {
 }
 
 // Check if this module is being run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
 	// const args = process.argv.slice(2)
 	// const startUrl = args[0]
 	// if (!startUrl) {
@@ -100,14 +100,5 @@ if (require.main === module) {
 	// }
 
 	console.log(`Starting crawl from ${startUrl}`)
-
-	start(startUrl)
-		.then(() => {
-			console.log("Done")
-			process.exit(0)
-		})
-		.catch((error) => {
-			console.error("Error:", error)
-			process.exit(1)
-		})
+	await start(startUrl)
 }

@@ -17,4 +17,4 @@ async function reset() {
 	await queue.reset()
 }
 
-if (require.main === module) reset()
+if (import.meta.url === `file://${process.argv[1]}`) await reset()

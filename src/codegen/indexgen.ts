@@ -96,9 +96,6 @@ async function main() {
 	await indexgen({ dirPath, watchMode })
 }
 
-if (require.main === module) {
-	main().catch((error) => {
-		console.error("Error:", error)
-		process.exit(1)
-	})
+if (import.meta.url === `file://${process.argv[1]}`) {
+	await main()
 }

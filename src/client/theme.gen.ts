@@ -1,6 +1,10 @@
 import { execSync } from "child_process"
 import { writeFileSync } from "fs"
+import { dirname } from "path"
+import { fileURLToPath } from "url"
 import { Theme, darkTheme, lightTheme, shiftTheme } from "../shared/colors"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const themeVars = (theme: Theme) =>
 	Object.keys(theme)
