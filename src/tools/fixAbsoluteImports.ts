@@ -1,6 +1,8 @@
 /*
 
-npx tsx src/tools/fixImports.ts
+npx tsx src/tools/fixAbsoluteImports.ts
+
+A file in src/{package} imports from another package, it should use an absolute import rather than a relative import.
 
 */
 
