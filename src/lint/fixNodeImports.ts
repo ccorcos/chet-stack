@@ -43,7 +43,6 @@ async function fixImportsInFile(filePath: string): Promise<boolean> {
 }
 
 export async function fixNodeImports() {
-	console.log("Finding and fixing Node.js imports in source files...")
 	const results = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
 			if (await fixImportsInFile(file)) {

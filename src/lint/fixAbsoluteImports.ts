@@ -12,9 +12,6 @@ import { pLimitLazy } from "shared/pLimitLazy"
 import { path } from "tools/path"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
-const rootDir = path(".")
-const srcDir = path("src")
-
 async function fixImportsInFile(filePath: string, packages: string[]): Promise<boolean> {
 	const content = await fs.readFile(filePath, "utf-8")
 	const regex = new RegExp(`from "(\\.\\./)+(${packages.join("|")})`, "g")
@@ -27,16 +24,13 @@ async function fixImportsInFile(filePath: string, packages: string[]): Promise<b
 	return false
 }
 
-export async function fixAbsoluteImports() {
-	console.log("Discovering top-level packages in src/...")
+export async function fixAbsoluteImports(srcDir: string) {
 	const packages = await getTopLevelPackages()
-	console.log(`Found packages: ${packages.join(", ")}\n`)
 
-	console.log("Finding and fixing imports in source files...")
 	const results = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
 			if (await fixImportsInFile(file, packages)) {
-				console.log(`Fixed: ${path.relative(rootDir, file)}`)
+				console.log(`Fixed: ${path.relative(srcDir, file)}`)
 				return true
 			}
 			return false
@@ -49,5 +43,5 @@ export async function fixAbsoluteImports() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixAbsoluteImports()
+	await fixAbsoluteImports(path("src"))
 }

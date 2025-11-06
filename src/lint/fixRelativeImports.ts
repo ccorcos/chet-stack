@@ -10,20 +10,21 @@ import fs from "node:fs/promises"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
 import { path } from "tools/path"
-import { getTopLevelPackages, walkFiles } from "./helpers"
+import { walkFiles } from "./helpers"
 
-const rootDir = path(".")
-const srcDir = path("src")
-
-function getPackageForFile(filePath: string): string | null {
-	const relativePath = path.relative(srcDir, filePath)
+function getPackageForFile(args: { filePath: string; srcDir: string }): string | null {
+	const relativePath = path.relative(args.srcDir, args.filePath)
 	const parts = relativePath.split(path.sep)
 	return parts.length > 0 ? parts[0] : null
 }
 
-function getRelativePath(fromFile: string, toPackagePath: string): string {
-	const fromDir = path.dirname(fromFile)
-	const toFile = path.join(srcDir, toPackagePath)
+function getRelativePath(args: {
+	srcDir: string
+	fromFile: string
+	toPackagePath: string
+}): string {
+	const fromDir = path.dirname(args.fromFile)
+	const toFile = path.join(args.srcDir, args.toPackagePath)
 	let relativePath = path.relative(fromDir, toFile)
 
 	// Ensure the path starts with ./ or ../
@@ -37,8 +38,9 @@ function getRelativePath(fromFile: string, toPackagePath: string): string {
 	return relativePath
 }
 
-async function fixImportsInFile(filePath: string): Promise<boolean> {
-	const pkg = getPackageForFile(filePath)
+async function fixImportsInFile(args: { filePath: string; srcDir: string }): Promise<boolean> {
+	const { filePath, srcDir } = args
+	const pkg = getPackageForFile({ filePath, srcDir })
 	if (!pkg) return false
 
 	const content = await fs.readFile(filePath, "utf-8")
@@ -50,7 +52,11 @@ async function fixImportsInFile(filePath: string): Promise<boolean> {
 	const newContent = content.replace(regex, (match, packageName, restOfPath) => {
 		modified = true
 		const importPath = packageName + (restOfPath || "")
-		const relativePath = getRelativePath(filePath, importPath)
+		const relativePath = getRelativePath({
+			fromFile: filePath,
+			srcDir,
+			toPackagePath: importPath,
+		})
 		return `from "${relativePath}"`
 	})
 
@@ -61,16 +67,11 @@ async function fixImportsInFile(filePath: string): Promise<boolean> {
 	return false
 }
 
-export async function fixRelativeImports() {
-	console.log("Discovering top-level packages in src/...")
-	const packages = await getTopLevelPackages()
-	console.log(`Found packages: ${packages.join(", ")}\n`)
-
-	console.log("Finding and fixing imports in source files...")
+export async function fixRelativeImports(srcDir: string) {
 	const results = await collect(
-		pLimitLazy(10, walkFiles(srcDir), async (file) => {
-			if (await fixImportsInFile(file)) {
-				console.log(`Fixed: ${path.relative(rootDir, file)}`)
+		pLimitLazy(10, walkFiles(srcDir), async (filePath) => {
+			if (await fixImportsInFile({ filePath, srcDir })) {
+				console.log(`Fixed: ${path.relative(srcDir, filePath)}`)
 				return true
 			}
 			return false
@@ -83,5 +84,5 @@ export async function fixRelativeImports() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixRelativeImports()
+	await fixRelativeImports(path("src"))
 }
