@@ -1,5 +1,5 @@
 import type { Server } from "http"
-import WebSocket from "ws"
+import { WebSocketServer } from "ws"
 import { ClientPubsubMessage, ServerPubsubMessage } from "../../shared/PubSubTypes"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
@@ -10,11 +10,11 @@ export type PubsubApi = {
 
 // TODO: sticky sessions.
 export class WebsocketPubsubServer implements PubsubApi {
-	private wss: WebSocket.Server
+	private wss: WebSocketServer
 	private connections = new Map<WebSocket, Set<string>>()
 
 	constructor(server: Server, onSubscribe: (this: PubsubApi, key: string) => void) {
-		this.wss = new WebSocket.Server({ server })
+		this.wss = new WebSocketServer({ server })
 
 		this.wss.on("connection", (connection) => {
 			const subscriptions = new Set<string>()
