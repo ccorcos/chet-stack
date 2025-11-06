@@ -1,8 +1,8 @@
 /*
 
-npx tsx src/tools/fixAbsoluteImports.ts
+npx tsx src/tools/fixRelativeImports.ts
 
-A file in src/{package} imports from another package, it should use an absolute import rather than a relative import.
+When a file in src/{package} imports from the same package, it should use a relative import rather than an absolute import.
 
 */
 
@@ -41,12 +41,46 @@ async function* walkFiles(dir: string): AsyncGenerator<string> {
 	}
 }
 
-async function fixImportsInFile(filePath: string, packages: string[]): Promise<boolean> {
-	const content = await fs.readFile(filePath, "utf-8")
-	const regex = new RegExp(`from "(\\.\\./)+(${packages.join("|")})`, "g")
-	const newContent = content.replace(regex, 'from "$2')
+function getPackageForFile(filePath: string): string | null {
+	const relativePath = path.relative(srcDir, filePath)
+	const parts = relativePath.split(path.sep)
+	return parts.length > 0 ? parts[0] : null
+}
 
-	if (content !== newContent) {
+function getRelativePath(fromFile: string, toPackagePath: string): string {
+	const fromDir = path.dirname(fromFile)
+	const toFile = path.join(srcDir, toPackagePath)
+	let relativePath = path.relative(fromDir, toFile)
+
+	// Ensure the path starts with ./ or ../
+	if (!relativePath.startsWith(".")) {
+		relativePath = "./" + relativePath
+	}
+
+	// Remove file extension
+	relativePath = relativePath.replace(/\.(ts|tsx|js|jsx)$/, "")
+
+	return relativePath
+}
+
+async function fixImportsInFile(filePath: string): Promise<boolean> {
+	const pkg = getPackageForFile(filePath)
+	if (!pkg) return false
+
+	const content = await fs.readFile(filePath, "utf-8")
+
+	// Match imports from the same package: from "packageName/..." or from "packageName"
+	const regex = new RegExp(`from "(${pkg})(/[^"]+)?"`, "g")
+
+	let modified = false
+	const newContent = content.replace(regex, (match, packageName, restOfPath) => {
+		modified = true
+		const importPath = packageName + (restOfPath || "")
+		const relativePath = getRelativePath(filePath, importPath)
+		return `from "${relativePath}"`
+	})
+
+	if (modified) {
 		await fs.writeFile(filePath, newContent, "utf-8")
 		return true
 	}
@@ -61,7 +95,7 @@ console.log(`Found packages: ${packages.join(", ")}\n`)
 console.log("Finding and fixing imports in source files...")
 const results = await collect(
 	pLimitLazy(10, walkFiles(srcDir), async (file) => {
-		if (await fixImportsInFile(file, packages)) {
+		if (await fixImportsInFile(file)) {
 			console.log(`Fixed: ${path.relative(rootDir, file)}`)
 			return true
 		}

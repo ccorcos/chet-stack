@@ -1,13 +1,15 @@
 /*
 
-npx tsx src/tools/fixAbsoluteImports.ts
+npx tsx src/tools/fixNodeImports.ts
 
-A file in src/{package} imports from another package, it should use an absolute import rather than a relative import.
+Ensures that all native Node.js imports use the node: protocol prefix.
+For example: import fs from 'node:fs' -> import fs from 'node:fs'
 
 */
 
 import gitignore from "ignore"
 import fs from "node:fs/promises"
+import { builtinModules } from "node:module"
 import { collect } from "shared/collect"
 import { path } from "./path"
 import { pLimitLazy } from "./pLimitLazy"
@@ -17,12 +19,9 @@ const srcDir = path("src")
 
 const ignore = gitignore().add(await fs.readFile(path(".gitignore"), "utf-8"))
 
-async function* getTopLevelPackages() {
-	const entries = await fs.readdir(srcDir, { withFileTypes: true })
-	for (const entry of entries) {
-		if (entry.isDirectory()) yield entry.name
-	}
-}
+// Get Node.js built-in modules from Node.js itself
+// Filter out node:-prefixed versions that are included in the list
+const nodeBuiltins = builtinModules.filter((mod) => !mod.startsWith("node:"))
 
 async function* walkFiles(dir: string): AsyncGenerator<string> {
 	const entries = await fs.readdir(dir, { withFileTypes: true })
@@ -41,10 +40,22 @@ async function* walkFiles(dir: string): AsyncGenerator<string> {
 	}
 }
 
-async function fixImportsInFile(filePath: string, packages: string[]): Promise<boolean> {
+async function fixImportsInFile(filePath: string): Promise<boolean> {
 	const content = await fs.readFile(filePath, "utf-8")
-	const regex = new RegExp(`from "(\\.\\./)+(${packages.join("|")})`, "g")
-	const newContent = content.replace(regex, 'from "$2')
+
+	// Create regex pattern to match imports from Node.js built-ins without node: prefix
+	// Matches: from 'node:module' or from "node:module" or from 'node:module/subpath'
+	// But not: from 'node:module' or from "./..." or from "@..." or other package names
+	const builtinsPattern = nodeBuiltins.join("|")
+	const regex = new RegExp(
+		`from (["'])(?!node:)(${builtinsPattern})(\\/[^"']*)?\\1`,
+		"g"
+	)
+
+	// Replace with node: prefix
+	const newContent = content.replace(regex, (match, quote, module, subpath = "") => {
+		return `from ${quote}node:${module}${subpath}${quote}`
+	})
 
 	if (content !== newContent) {
 		await fs.writeFile(filePath, newContent, "utf-8")
@@ -53,15 +64,10 @@ async function fixImportsInFile(filePath: string, packages: string[]): Promise<b
 	return false
 }
 
-console.log("Discovering top-level packages in src/...")
-const packages: string[] = []
-for await (const pkg of getTopLevelPackages()) packages.push(pkg)
-console.log(`Found packages: ${packages.join(", ")}\n`)
-
-console.log("Finding and fixing imports in source files...")
+console.log("Finding and fixing Node.js imports in source files...")
 const results = await collect(
 	pLimitLazy(10, walkFiles(srcDir), async (file) => {
-		if (await fixImportsInFile(file, packages)) {
+		if (await fixImportsInFile(file)) {
 			console.log(`Fixed: ${path.relative(rootDir, file)}`)
 			return true
 		}

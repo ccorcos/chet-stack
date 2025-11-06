@@ -1,4 +1,4 @@
-import { strict as assert } from "assert"
+import { strict as assert } from "node:assert"
 import { omit } from "lodash-es"
 import { describe, it } from "mocha"
 import { Cache, computeCachedRange, keyToRange } from "./Cache"

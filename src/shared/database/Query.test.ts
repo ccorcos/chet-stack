@@ -1,4 +1,4 @@
-import assert from "assert"
+import assert from "node:assert"
 import { describe, it } from "mocha"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { query } from "./Query"

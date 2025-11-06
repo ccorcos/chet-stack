@@ -1,4 +1,4 @@
-import { strict as assert } from "assert"
+import { strict as assert } from "node:assert"
 import { describe, it } from "mocha"
 import { Range, compareRange, overlapsRange } from "./Range"
 

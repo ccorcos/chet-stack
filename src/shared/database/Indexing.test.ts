@@ -13,7 +13,7 @@ examples...
 
 */
 
-import { strict as assert } from "assert"
+import { strict as assert } from "node:assert"
 import { describe, it } from "mocha"
 import { codec } from "./Codec"
 import { Indexable } from "./Indexing"

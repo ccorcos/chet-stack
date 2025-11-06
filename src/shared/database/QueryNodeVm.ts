@@ -1,4 +1,4 @@
-import vm from "vm"
+import vm from "node:vm"
 import { ValidationError } from "../errors"
 import { Query, QueryCache } from "./Query"
 import { tupleDb } from "./TupleDb"
