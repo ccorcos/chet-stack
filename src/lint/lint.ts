@@ -6,7 +6,7 @@ import { fixRelativeImports } from "./fixRelativeImports"
 const srcDir = path("src")
 
 await fixAbsoluteImports(srcDir)
-await fixRelativeImports()
-await fixNodeImports()
+await fixRelativeImports(srcDir)
+await fixNodeImports(srcDir)
 
 // "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'"

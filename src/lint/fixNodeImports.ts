@@ -14,9 +14,6 @@ import { pLimitLazy } from "shared/pLimitLazy"
 import { path } from "tools/path"
 import { walkFiles } from "./helpers"
 
-const rootDir = path(".")
-const srcDir = path("src")
-
 // Get Node.js built-in modules from Node.js itself
 // Filter out node:-prefixed versions that are included in the list
 const nodeBuiltins = builtinModules.filter((mod) => !mod.startsWith("node:"))
@@ -42,11 +39,11 @@ async function fixImportsInFile(filePath: string): Promise<boolean> {
 	return false
 }
 
-export async function fixNodeImports() {
+export async function fixNodeImports(srcDir: string) {
 	const results = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
 			if (await fixImportsInFile(file)) {
-				console.log(`Fixed: ${path.relative(rootDir, file)}`)
+				console.log(`Fixed: ${path.relative(srcDir, file)}`)
 				return true
 			}
 			return false
@@ -59,5 +56,5 @@ export async function fixNodeImports() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixNodeImports()
+	await fixNodeImports(path("src"))
 }

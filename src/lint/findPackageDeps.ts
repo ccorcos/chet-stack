@@ -16,16 +16,6 @@ import { pLimitLazy } from "shared/pLimitLazy"
 import { path } from "tools/path"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
-const rootDir = path(".")
-const srcDir = path("src")
-
-// Dependency rules: packages that should not have runtime dependencies on each other
-// Type-only imports are allowed and will not trigger violations
-const DISALLOWED_DEPENDENCIES = [
-	{ from: "client", to: "server" },
-	// Add more rules here as needed
-]
-
 interface ImportInfo {
 	fromPackage: string
 	fromFile: string
@@ -44,7 +34,11 @@ interface PackageDep {
 	files: Map<string, ImportDetail[]> // fromFile -> Array of import details
 }
 
-async function analyzeImportsInFile(filePath: string, packages: string[]): Promise<ImportInfo[]> {
+async function analyzeImportsInFile(
+	filePath: string,
+	packages: string[],
+	srcDir: string
+): Promise<ImportInfo[]> {
 	const content = await fs.readFile(filePath, "utf-8")
 	const relativePath = path.relative(srcDir, filePath)
 	const fromPackage = relativePath.split(path.sep)[0]
@@ -65,7 +59,7 @@ async function analyzeImportsInFile(filePath: string, packages: string[]): Promi
 		if (toPackage !== fromPackage) {
 			imports.push({
 				fromPackage,
-				fromFile: path.relative(rootDir, filePath),
+				fromFile: relativePath,
 				toPackage,
 				importPath,
 				isTypeOnly: true,
@@ -94,7 +88,7 @@ async function analyzeImportsInFile(filePath: string, packages: string[]): Promi
 
 			imports.push({
 				fromPackage,
-				fromFile: path.relative(rootDir, filePath),
+				fromFile: relativePath,
 				toPackage,
 				importPath,
 				isTypeOnly: hasTypeSpecifiers && hasOnlyTypeSpecifiers,
@@ -172,11 +166,12 @@ function findTransitivePath(
 
 function validateDependencies(
 	depMap: Map<string, Map<string, PackageDep>>,
-	runtimeDeps: Map<string, Set<string>>
+	runtimeDeps: Map<string, Set<string>>,
+	disallowedDependencies: Array<{ from: string; to: string }>
 ): DependencyViolation[] {
 	const violations: DependencyViolation[] = []
 
-	for (const rule of DISALLOWED_DEPENDENCIES) {
+	for (const rule of disallowedDependencies) {
 		// Check direct violations
 		const deps = depMap.get(rule.from)
 		if (deps?.has(rule.to)) {
@@ -233,12 +228,15 @@ interface ViolationMaps {
 	transitiveViolationImports: Set<string>
 }
 
-async function analyzePackageDependencies(): Promise<AnalysisResult> {
+async function analyzePackageDependencies(
+	srcDir: string,
+	disallowedDependencies: Array<{ from: string; to: string }>
+): Promise<AnalysisResult> {
 	const packages = await getTopLevelPackages()
 
 	const allImports = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
-			return await analyzeImportsInFile(file, packages)
+			return await analyzeImportsInFile(file, packages, srcDir)
 		})
 	)
 
@@ -274,7 +272,7 @@ async function analyzePackageDependencies(): Promise<AnalysisResult> {
 
 	// Validate dependencies
 	const runtimeDeps = computeRuntimeDependencies(depMap)
-	const violations = validateDependencies(depMap, runtimeDeps)
+	const violations = validateDependencies(depMap, runtimeDeps, disallowedDependencies)
 
 	return { packages, imports, depMap, runtimeDeps, violations }
 }
@@ -526,9 +524,16 @@ function displayPackageDependencySummary(
 	}
 }
 
-export async function findPackageDeps(verbose = false) {
+export async function findPackageDeps(
+	srcDir: string,
+	disallowedDependencies: Array<{ from: string; to: string }>,
+	verbose = false
+) {
 	// Perform analysis
-	const { packages, imports, depMap, runtimeDeps, violations } = await analyzePackageDependencies()
+	const { packages, imports, depMap, runtimeDeps, violations } = await analyzePackageDependencies(
+		srcDir,
+		disallowedDependencies
+	)
 
 	// Build violation maps for coloring
 	const violationMaps = buildViolationMaps(violations, depMap)
@@ -558,7 +563,15 @@ export async function findPackageDeps(verbose = false) {
 }
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const verbose = process.argv.includes("--verbose")
-	const violationCount = await findPackageDeps(verbose)
+
+	// Default configuration for this project
+	const srcDir = path("src")
+	const disallowedDependencies = [
+		{ from: "client", to: "server" },
+		// Add more rules here as needed
+	]
+
+	const violationCount = await findPackageDeps(srcDir, disallowedDependencies, verbose)
 
 	if (violationCount > 0) process.exit(1)
 	else console.log("✅ No dependency violations found")
