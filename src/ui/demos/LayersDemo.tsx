@@ -6,7 +6,7 @@ import {
 	LeftPanelLayout,
 	RightPanelLayout,
 	TopbarLayout,
-} from "../Layout"
+} from "../components/Layout"
 
 // css(`
 // .layer {

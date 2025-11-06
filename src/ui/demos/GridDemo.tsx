@@ -1,7 +1,7 @@
 import { clamp } from "lodash-es"
 import React from "react"
-import { sleep } from "../../../shared/sleep"
-import { CellRange, Grid } from "../Grid"
+import { sleep } from "shared/sleep"
+import { CellRange, Grid } from "../components/Grid"
 
 // TODO:
 // - drag to re-order rows and columns

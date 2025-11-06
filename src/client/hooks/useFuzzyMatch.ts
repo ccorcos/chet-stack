@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { fuzzyMatch } from "../../shared/fuzzyMatch"
+import { fuzzyMatch } from "shared/fuzzyMatch"
 
 export function useFuzzyMatch(args: { items: string[]; without?: string[]; filter?: string }) {
 	const { filter, items, without } = args

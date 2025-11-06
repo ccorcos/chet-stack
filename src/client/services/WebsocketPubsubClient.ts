@@ -1,6 +1,6 @@
-import { ClientPubsubMessage, ServerPubsubMessage } from "../../shared/PubSubTypes"
-import { SecondMs } from "../../shared/dateHelpers"
-import { sleep } from "../../shared/sleep"
+import { ClientPubsubMessage, ServerPubsubMessage } from "shared/PubSubTypes"
+import { SecondMs } from "shared/dateHelpers"
+import { sleep } from "shared/sleep"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 

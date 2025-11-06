@@ -1,6 +1,6 @@
 import React, { useState } from "react"
-import { Button } from "../Button"
-import { CommandPrompt, CommandPromptOverlay } from "../CommandPrompt"
+import { Button } from "../components/Button"
+import { CommandPrompt, CommandPromptOverlay } from "../components/CommandPrompt"
 
 export function CommandPromptDemo() {
 	const [isOpen, setIsOpen] = useState(false)

@@ -1,8 +1,8 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { useAsync } from "client/hooks/useAsync"
 import React, { useState } from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { useAsync } from "../../client/hooks/useAsync"
-import { DeferredPromise } from "../../shared/DeferredPromise"
-import { randomId } from "../../shared/randomId"
+import { DeferredPromise } from "shared/DeferredPromise"
+import { randomId } from "shared/randomId"
 
 type Upload = {
 	id: string

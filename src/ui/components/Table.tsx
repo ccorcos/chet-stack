@@ -1,6 +1,6 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { useHover } from "client/hooks/useHover"
 import React, { useState } from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { useHover } from "../../client/hooks/useHover"
 
 export const Table = passthroughRef(_Table)
 

@@ -1,9 +1,9 @@
 import { Placement, createPopper } from "@popperjs/core"
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { dismissZIndex, overlayZIndex } from "client/helpers/zIndexHelpers"
+import { useShortcut } from "client/hooks/useShortcut"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { dismissZIndex, overlayZIndex } from "../../client/helpers/zIndexHelpers"
-import { useShortcut } from "../../client/hooks/useShortcut"
 
 export function Popup(props: {
 	open: boolean

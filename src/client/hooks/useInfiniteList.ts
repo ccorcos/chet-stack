@@ -1,6 +1,6 @@
 import { isEqual } from "lodash-es"
 import { useMemo, useRef, useState } from "react"
-import { Tuple } from "../../shared/database/types"
+import { Tuple } from "shared/database/types"
 import { useList } from "./useDatabase"
 import { pickAnchor, useInfiniteLoader } from "./useInfiniteLoader"
 
@@ -59,7 +59,7 @@ export function useInfiniteList(args: { prefix: Tuple }) {
 			: {
 					gte: cursor.anchor,
 					limit: cursor.limit,
-			  }
+				}
 	)
 
 	const loading = !localResult.hit

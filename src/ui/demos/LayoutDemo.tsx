@@ -1,6 +1,6 @@
+import { useShortcut } from "client/hooks/useShortcut"
 import React, { useState } from "react"
-import { useShortcut } from "../../../client/hooks/useShortcut"
-import { Button } from "../Button"
+import { Button } from "../components/Button"
 import {
 	BottombarLayout,
 	ContentLayout,
@@ -8,7 +8,7 @@ import {
 	LeftPanelLayout,
 	RightPanelLayout,
 	TopbarLayout,
-} from "../Layout"
+} from "../components/Layout"
 
 export function LayoutDemo() {
 	const [showTopbar, setShowTopbar] = useState(true)

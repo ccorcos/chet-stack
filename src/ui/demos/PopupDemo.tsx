@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react"
-import { Button } from "../Button"
-import { Popup, PopupFrame } from "../Popup"
+import { Button } from "../components/Button"
+import { Popup, PopupFrame } from "../components/Popup"
 
 function MiniPopup() {
 	const buttonRef = useRef<HTMLButtonElement>(null)

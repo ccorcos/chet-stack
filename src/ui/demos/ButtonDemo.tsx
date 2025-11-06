@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, NakedButton, PrimaryButton } from "../Button"
+import { Button, NakedButton, PrimaryButton } from "../components/Button"
 
 export function ButtonDemo() {
 	return (

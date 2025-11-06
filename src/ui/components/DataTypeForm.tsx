@@ -9,9 +9,9 @@ import {
 	uniq,
 } from "lodash-es"
 import React from "react"
-import * as t from "../../shared/DataType"
-import { inspect } from "../../shared/inspect"
-import { unreachable } from "../../shared/typeHelpers"
+import * as t from "shared/DataType"
+import { inspect } from "shared/inspect"
+import { unreachable } from "shared/typeHelpers"
 import { Button, hPadding, vPadding } from "./Button"
 import { ComboBoxSelect } from "./ComboBox"
 import { ContentEditableInput } from "./ContentEditableInput"

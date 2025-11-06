@@ -1,8 +1,8 @@
+import { useDeepState } from "client/hooks/useDeepState"
+import { useDomEvent } from "client/hooks/useDomEvent"
+import { useRefCurrent } from "client/hooks/useRefCurrent"
 import { clamp, debounce, isEqual, range, throttle } from "lodash-es"
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react"
-import { useDeepState } from "../../client/hooks/useDeepState"
-import { useDomEvent } from "../../client/hooks/useDomEvent"
-import { useRefCurrent } from "../../client/hooks/useRefCurrent"
 
 type GridSelection =
 	| {

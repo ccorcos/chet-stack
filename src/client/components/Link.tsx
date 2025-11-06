@@ -1,5 +1,5 @@
 import React from "react"
-import { Route, formatRoute } from "../../shared/routeHelpers"
+import { Route, formatRoute } from "shared/routeHelpers"
 import { passthroughRef } from "../helpers/passthroughRef"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 

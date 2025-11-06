@@ -1,5 +1,5 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
 import React, { useCallback } from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
 
 const GAP = 1
 const BORDER_RADIUS = 0

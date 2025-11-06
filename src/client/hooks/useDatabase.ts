@@ -1,6 +1,6 @@
 import { isEqual } from "lodash-es"
 import { useEffect, useMemo, useRef } from "react"
-import { CacheListResult, JSONValue, ListArgs, Tuple, WriteArgs } from "../../shared/database/types"
+import { CacheListResult, JSONValue, ListArgs, Tuple, WriteArgs } from "shared/database/types"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useCounter } from "./useCounter"
 import { useDeepMemo } from "./useDeepMemo"

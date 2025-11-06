@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react"
-import { LoaderPromise } from "../../shared/LoaderPromise"
+import { LoaderPromise } from "shared/LoaderPromise"
 
 const requests: { [key: string]: LoaderPromise<any> } = {}
 

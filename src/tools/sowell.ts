@@ -7,11 +7,11 @@ npx tsx src/tools/sowell.ts
 import sqlite from "better-sqlite3"
 import * as cheerio from "cheerio"
 import { URL } from "node:url"
-import { config } from "../server/services/ServerConfig"
-import { SQLiteBaseOKV } from "../shared/database/SQLiteBaseOKV"
-import { tupleDb, tupleOkv, tupleTx } from "../shared/database/TupleDb"
-import { TupleDb } from "../shared/database/types"
-import { sleep } from "../shared/sleep"
+import { config } from "server/services/ServerConfig"
+import { SQLiteBaseOKV } from "shared/database/SQLiteBaseOKV"
+import { tupleDb, tupleOkv, tupleTx } from "shared/database/TupleDb"
+import { TupleDb } from "shared/database/types"
+import { sleep } from "shared/sleep"
 
 const storage = new SQLiteBaseOKV(sqlite(config.dbPath))
 const db = tupleDb(tupleOkv(storage))

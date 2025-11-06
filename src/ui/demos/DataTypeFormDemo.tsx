@@ -1,7 +1,7 @@
 import React, { useState } from "react"
-import * as t from "../../../shared/DataType"
-import { tables } from "../../../shared/EmailModel"
-import { DataTypeForm } from "../DataTypeForm"
+import * as t from "shared/DataType"
+import { tables } from "shared/EmailModel"
+import { DataTypeForm } from "../components/DataTypeForm"
 
 /*
 

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
-import { WriteArgs } from "../../shared/database/types"
-import * as t from "../../shared/DataType"
+import { WriteArgs } from "shared/database/types"
+import * as t from "shared/DataType"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // TODO: request validation.

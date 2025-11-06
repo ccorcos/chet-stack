@@ -1,5 +1,5 @@
+import { useDraggable } from "client/hooks/useDraggable"
 import React, { useState } from "react"
-import { useDraggable } from "../../../client/hooks/useDraggable"
 
 export function DraggableDemo() {
 	const { onMouseDown, dragState } = useDraggable({

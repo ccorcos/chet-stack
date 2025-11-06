@@ -1,6 +1,6 @@
-import type * as apis from "../../server/apis"
-import { proxyObj } from "../../shared/proxyHelpers"
-import { sleep } from "../../shared/sleep"
+import type * as apis from "server/apis"
+import { proxyObj } from "shared/proxyHelpers"
+import { sleep } from "shared/sleep"
 
 type InputOutput<T extends (...any: any[]) => any> = {
 	input: Parameters<T>[1]

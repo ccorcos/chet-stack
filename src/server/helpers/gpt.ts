@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { sleep } from "../../shared/sleep"
+import { sleep } from "shared/sleep"
 
 export type GptMessage = { role: string; content: string }
 

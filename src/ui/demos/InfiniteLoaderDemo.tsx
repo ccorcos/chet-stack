@@ -1,8 +1,8 @@
+import { useInfiniteLoader } from "client/hooks/useInfiniteLoader"
+import { useLoader } from "client/hooks/useLoader"
 import React, { Suspense, useMemo, useRef, useState, useTransition } from "react"
-import { useInfiniteLoader } from "../../../client/hooks/useInfiniteLoader"
-import { useLoader } from "../../../client/hooks/useLoader"
-import { sleep } from "../../../shared/sleep"
-import { Input } from "../Input"
+import { sleep } from "shared/sleep"
+import { Input } from "../components/Input"
 
 export function InfiniteLoaderDemo(props: { params: Record<string, string> }) {
 	const [cursor, setCursor] = useState<{ anchor: number; limit: number; reverse: boolean }>({

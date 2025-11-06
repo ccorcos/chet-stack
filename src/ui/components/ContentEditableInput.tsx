@@ -1,9 +1,9 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { useRefCurrent } from "client/hooks/useRefCurrent"
 import { Schema } from "prosemirror-model"
 import { EditorState } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import React, { useEffect, useLayoutEffect, useRef } from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { useRefCurrent } from "../../client/hooks/useRefCurrent"
 
 // Create a schema that only allows plain text
 const plainTextSchema = new Schema({

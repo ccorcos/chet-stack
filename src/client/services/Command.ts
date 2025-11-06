@@ -1,7 +1,7 @@
-import { codec } from "../../shared/database/Codec"
-import { InMemoryBaseOKV } from "../../shared/database/InMemoryBaseOKV"
-import { tupleDb } from "../../shared/database/TupleDb"
-import { Tuple, TupleDb } from "../../shared/database/types"
+import { codec } from "shared/database/Codec"
+import { InMemoryBaseOKV } from "shared/database/InMemoryBaseOKV"
+import { tupleDb } from "shared/database/TupleDb"
+import { Tuple, TupleDb } from "shared/database/types"
 import { normalizeKeyboardShortcut, normalizeShortcut } from "../hooks/useShortcut"
 
 /** 0 is highest priority. */
@@ -25,7 +25,7 @@ function* indexCommand(command: Command): Generator<Tuple> {
 	yield ["command", command.name]
 
 	const shortcuts =
-		typeof command.shortcut === "string" ? [command.shortcut] : command.shortcut ?? []
+		typeof command.shortcut === "string" ? [command.shortcut] : (command.shortcut ?? [])
 	const order = (command.priority ?? 0) * -1
 
 	for (const shortcut of shortcuts) {

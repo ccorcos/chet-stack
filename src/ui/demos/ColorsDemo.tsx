@@ -13,10 +13,10 @@ To Do...
 
 */
 
+import { css } from "client/helpers/css"
 import { differenceCiede2000 } from "culori"
 import React, { useMemo } from "react"
-import { css } from "../../../client/helpers/css"
-import { darkTheme, lightTheme, shiftTheme, Theme } from "../../../shared/colors"
+import { darkTheme, lightTheme, shiftTheme, Theme } from "shared/colors"
 
 function ColorSwatch(props: { color: string; children?: React.ReactNode }) {
 	return (

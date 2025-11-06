@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { CommandPrompt, CommandPromptOverlay } from "../../ui/components/CommandPrompt"
+import { CommandPrompt, CommandPromptOverlay } from "ui/components/CommandPrompt"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 

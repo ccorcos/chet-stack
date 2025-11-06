@@ -1,5 +1,5 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
 import React from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
 
 export const vPadding = 4
 export const hPadding = 8

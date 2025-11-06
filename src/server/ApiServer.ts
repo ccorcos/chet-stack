@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser"
 import express, { Express } from "express"
-import * as t from "../shared/DataType"
+import * as t from "shared/DataType"
 import { api } from "./api"
 import { config } from "./services/ServerConfig"
 import { ServerEnvironment } from "./services/ServerEnvironment"

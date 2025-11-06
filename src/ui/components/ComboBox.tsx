@@ -1,6 +1,6 @@
+import { isShortcut } from "client/hooks/useShortcut"
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { isShortcut } from "../../client/hooks/useShortcut"
-import { FuzzyMatch, fuzzyMatch } from "../../shared/fuzzyMatch"
+import { FuzzyMatch, fuzzyMatch } from "shared/fuzzyMatch"
 import { Button } from "./Button"
 import { FuzzyString } from "./FuzzyString"
 import { Input } from "./Input"

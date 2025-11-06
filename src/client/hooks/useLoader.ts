@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { LoaderPromise } from "../../shared/LoaderPromise"
+import { LoaderPromise } from "shared/LoaderPromise"
 
 type Loaders = { [key: string]: { refs: number; loader: LoaderPromise } }
 

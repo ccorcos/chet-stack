@@ -1,6 +1,6 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { withStyle } from "client/helpers/withStyle"
 import React from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { withStyle } from "../../client/helpers/withStyle"
 import { hPadding, vPadding } from "./Button"
 
 // TODO: lets use css here with colors.

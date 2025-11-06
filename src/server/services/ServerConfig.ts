@@ -1,4 +1,4 @@
-import { path } from "../../tools/path"
+import { path } from "tools/path"
 
 export type ServerConfig = {
 	production: boolean

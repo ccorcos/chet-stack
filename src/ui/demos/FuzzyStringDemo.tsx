@@ -1,8 +1,8 @@
 import { sortBy } from "lodash-es"
 import React, { useState } from "react"
-import { fuzzyMatch, fuzzyMatchScore2 } from "../../../shared/fuzzyMatch"
-import { FuzzyString } from "../FuzzyString"
-import { Input } from "../Input"
+import { fuzzyMatch, fuzzyMatchScore2 } from "shared/fuzzyMatch"
+import { FuzzyString } from "../components/FuzzyString"
+import { Input } from "../components/Input"
 
 const books = [
 	"The Ascent of Money by Niall Ferguson",

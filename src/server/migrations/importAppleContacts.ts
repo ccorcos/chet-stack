@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs"
 import { groupBy } from "lodash-es"
-import { BloomFilter } from "../../shared/BloomFilter"
-import { randomId } from "../../shared/randomId"
-import { simplifyVCard, vCard } from "../../shared/vCardHelpers"
-import { path } from "../../tools/path"
+import { readFileSync } from "node:fs"
+import { BloomFilter } from "shared/BloomFilter"
+import { randomId } from "shared/randomId"
+import { simplifyVCard, vCard } from "shared/vCardHelpers"
+import { path } from "tools/path"
 import { Database } from "../services/Database"
 
 function logNames(cards: vCard[]) {

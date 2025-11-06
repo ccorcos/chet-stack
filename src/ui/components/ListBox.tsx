@@ -1,8 +1,8 @@
+import { passthroughRef } from "client/helpers/passthroughRef"
+import { useKeyboardArrowFocus } from "client/hooks/useKeyboardArrowFocus"
+import { useMergeCallbacks } from "client/hooks/useMergeCallbacks"
+import { useSelectableList } from "client/hooks/useSelectableList"
 import React from "react"
-import { passthroughRef } from "../../client/helpers/passthroughRef"
-import { useKeyboardArrowFocus } from "../../client/hooks/useKeyboardArrowFocus"
-import { useMergeCallbacks } from "../../client/hooks/useMergeCallbacks"
-import { useSelectableList } from "../../client/hooks/useSelectableList"
 
 export function useListBox<T>(args: {
 	list: T[]

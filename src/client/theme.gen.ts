@@ -3,7 +3,7 @@ import { writeFile } from "node:fs/promises"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
-import { Theme, darkTheme, lightTheme, shiftTheme } from "../shared/colors"
+import { Theme, darkTheme, lightTheme, shiftTheme } from "shared/colors"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 

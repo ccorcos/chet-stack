@@ -1,6 +1,6 @@
+import { usePref } from "client/hooks/usePref"
 import React from "react"
-import { usePref } from "../../../client/hooks/usePref"
-import { HeaderCell, Table } from "../Table"
+import { HeaderCell, Table } from "../components/Table"
 
 export function TableDemo() {
 	const [columnWidths, setColumnWidths] = usePref("TableDemo:columnWidths", [100, 200, 300])

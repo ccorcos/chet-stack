@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { ListBox, ListItem, useListBox } from "../ListBox"
+import { ListBox, ListItem, useListBox } from "../components/ListBox"
 
 export function ListBoxDemo() {
 	return (

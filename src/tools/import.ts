@@ -2,9 +2,9 @@
 
 import { parse } from "csv-parse/sync"
 import { readFileSync } from "node:fs"
-import { Database } from "../server/services/Database"
-import { config } from "../server/services/ServerConfig"
-import { tupleDb, tupleOkv } from "../shared/database/TupleDb"
+import { Database } from "server/services/Database"
+import { config } from "server/services/ServerConfig"
+import { tupleDb, tupleOkv } from "shared/database/TupleDb"
 
 const db = new Database(config.dbPath)
 

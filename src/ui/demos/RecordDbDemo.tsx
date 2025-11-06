@@ -1,21 +1,21 @@
+import { Subspace } from "client/components/Subspace"
+import { useGet, useList } from "client/hooks/useDatabase"
+import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React, { useLayoutEffect, useState } from "react"
-import { Subspace } from "../../../client/components/Subspace"
-import { useGet, useList } from "../../../client/hooks/useDatabase"
-import { useClientEnvironment } from "../../../client/services/ClientEnvironment"
 import {
 	applyRecordDbOperation,
 	recordDb,
 	RecordDbOperation,
 	TableDef,
-} from "../../../shared/database/RecordDb"
-import { tupleTx } from "../../../shared/database/TupleDb"
-import * as t from "../../../shared/DataType"
-import { randomId } from "../../../shared/randomId"
-import { Button } from "../Button"
-import { ComboBoxSelect } from "../ComboBox"
-import { Input } from "../Input"
-import { ContentLayout, Layout, LeftPanelLayout } from "../Layout"
-import { ListBox, ListItem, useListBox } from "../ListBox"
+} from "shared/database/RecordDb"
+import { tupleTx } from "shared/database/TupleDb"
+import * as t from "shared/DataType"
+import { randomId } from "shared/randomId"
+import { Button } from "../components/Button"
+import { ComboBoxSelect } from "../components/ComboBox"
+import { Input } from "../components/Input"
+import { ContentLayout, Layout, LeftPanelLayout } from "../components/Layout"
+import { ListBox, ListItem, useListBox } from "../components/ListBox"
 
 export function RecordDbDemo() {
 	return (

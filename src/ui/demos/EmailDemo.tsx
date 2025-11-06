@@ -1,17 +1,17 @@
 // https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083dfc1cd0c9d0465?pvs=4
 
+import { useList, useWrite } from "client/hooks/useDatabase"
+import { useInputFocus } from "client/hooks/useInputFocus"
+import { isShortcut } from "client/hooks/useShortcut"
 import React, { useCallback, useRef, useState } from "react"
-import { useList, useWrite } from "../../../client/hooks/useDatabase"
-import { useInputFocus } from "../../../client/hooks/useInputFocus"
-import { isShortcut } from "../../../client/hooks/useShortcut"
-import { randomId } from "../../../shared/randomId"
-import { Badge } from "../Badge"
-import { Button, PrimaryButton } from "../Button"
-import { Input } from "../Input"
-import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../Layout"
-import { ListBox, ListItem, useListBox } from "../ListBox"
-import { MenuItem } from "../MenuItem"
-import { Popup, PopupFrame } from "../Popup"
+import { randomId } from "shared/randomId"
+import { Badge } from "../components/Badge"
+import { Button, PrimaryButton } from "../components/Button"
+import { Input } from "../components/Input"
+import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../components/Layout"
+import { ListBox, ListItem, useListBox } from "../components/ListBox"
+import { MenuItem } from "../components/MenuItem"
+import { Popup, PopupFrame } from "../components/Popup"
 
 export function EmailDemo() {
 	const [username, setUsername] = useState<string | undefined>("chet")
@@ -307,7 +307,7 @@ function SearchUser(props: { onSubmit: (username: string) => void; onDelete: () 
 								>
 									{username}
 								</MenuItem>
-						  ))}
+							))}
 				</PopupFrame>
 			</Popup>
 		</>

@@ -7,9 +7,9 @@ import {
 	KeyEncodeRange,
 	KeyEncodeWrite,
 	TupleSubspaceEncoder,
-} from "../../shared/database/Encoder"
-import { BaseOKVCache, JSONValue, Tuple } from "../../shared/database/types"
-import { proxyObj } from "../../shared/proxyHelpers"
+} from "shared/database/Encoder"
+import { BaseOKVCache, JSONValue, Tuple } from "shared/database/types"
+import { proxyObj } from "shared/proxyHelpers"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 import { ClientApi } from "../services/api"
 

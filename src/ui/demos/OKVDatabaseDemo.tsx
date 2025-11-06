@@ -1,13 +1,13 @@
+import { Subspace } from "client/components/Subspace"
+import { useWrite } from "client/hooks/useDatabase"
+import { useInfiniteList } from "client/hooks/useInfiniteList"
+import { usePref } from "client/hooks/usePref"
+import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React, { Suspense } from "react"
-import { Subspace } from "../../../client/components/Subspace"
-import { useWrite } from "../../../client/hooks/useDatabase"
-import { useInfiniteList } from "../../../client/hooks/useInfiniteList"
-import { usePref } from "../../../client/hooks/usePref"
-import { useClientEnvironment } from "../../../client/services/ClientEnvironment"
-import { setParam } from "../../../shared/routeHelpers"
-import { ContentEditableInput } from "../ContentEditableInput"
-import { Input } from "../Input"
-import { HeaderCell, Table } from "../Table"
+import { setParam } from "shared/routeHelpers"
+import { ContentEditableInput } from "../components/ContentEditableInput"
+import { Input } from "../components/Input"
+import { HeaderCell, Table } from "../components/Table"
 
 const gap = 12
 const minWidth = 150
@@ -52,10 +52,10 @@ function Demo(props: { params: Record<string, string> }) {
 	const backgroundColor = loadingUp
 		? "red"
 		: loadingDown
-		? "green"
-		: loading
-		? "blue"
-		: "var(--bg0)"
+			? "green"
+			: loading
+				? "blue"
+				: "var(--bg0)"
 
 	return (
 		<div

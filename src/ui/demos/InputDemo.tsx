@@ -1,8 +1,8 @@
 import React, { useState } from "react"
-import { ComboBoxSelect } from "../ComboBox"
-import { ContentEditableInput } from "../ContentEditableInput"
-import { Input, NakedInput } from "../Input"
-import { MultiSelectInput, SelectInput } from "../MultiSelectInput"
+import { ComboBoxSelect } from "../components/ComboBox"
+import { ContentEditableInput } from "../components/ContentEditableInput"
+import { Input, NakedInput } from "../components/Input"
+import { MultiSelectInput, SelectInput } from "../components/MultiSelectInput"
 
 export function InputDemo() {
 	return (

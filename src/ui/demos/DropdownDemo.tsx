@@ -1,8 +1,8 @@
 import React, { useRef, useState } from "react"
-import { Button } from "../Button"
-import { DropdownMenu } from "../DropdownMenu"
-import { MenuItem } from "../MenuItem"
-import { Popup } from "../Popup"
+import { Button } from "../components/Button"
+import { DropdownMenu } from "../components/DropdownMenu"
+import { MenuItem } from "../components/MenuItem"
+import { Popup } from "../components/Popup"
 
 export function DropdownDemo() {
 	const buttonRef = useRef<HTMLButtonElement>(null)

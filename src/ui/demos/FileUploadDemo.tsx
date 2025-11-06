@@ -1,6 +1,6 @@
 import React from "react"
-import { sleep } from "../../../shared/sleep"
-import { FileUploadDropZone, UploadPreview, useFileUpload } from "../FileUpload"
+import { sleep } from "shared/sleep"
+import { FileUploadDropZone, UploadPreview, useFileUpload } from "../components/FileUpload"
 
 export function FileUploadDemo() {
 	const { uploads, handleDrop } = useFileUpload(async (upload, onProgress) => {

@@ -21,7 +21,8 @@
 		"reset": "tsx src/tools/reset.ts",
 		"migrate": "tsx src/server/migrations/migrate.ts",
 		"sowell": "tsx src/tools/sowell.ts",
-		"knip": "npx knip"
+		"knip": "npx knip",
+		"format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'"
 	},
 	"keywords": [],
 	"author": "",

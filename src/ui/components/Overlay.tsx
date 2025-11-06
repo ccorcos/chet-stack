@@ -1,7 +1,7 @@
+import { dismissZIndex, overlayZIndex } from "client/helpers/zIndexHelpers"
+import { useShortcut } from "client/hooks/useShortcut"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { dismissZIndex, overlayZIndex } from "../../client/helpers/zIndexHelpers"
-import { useShortcut } from "../../client/hooks/useShortcut"
 
 export function Overlay(props: {
 	anchor: HTMLElement

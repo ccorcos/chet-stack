@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Button } from "../../ui/components/Button"
+import { Button } from "ui/components/Button"
 import {
 	BottombarLayout,
 	ContentLayout,
@@ -7,7 +7,7 @@ import {
 	LeftPanelLayout,
 	RightPanelLayout,
 	TopbarLayout,
-} from "../../ui/components/Layout"
+} from "ui/components/Layout"
 import { useShortcut } from "../hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useRouterState } from "../services/Router"

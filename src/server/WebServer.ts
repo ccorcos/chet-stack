@@ -1,6 +1,6 @@
 import express, { Express } from "express"
+import { path } from "tools/path"
 import * as vite from "vite"
-import { path } from "../tools/path"
 import { ServerConfig } from "./services/ServerConfig"
 
 export async function WebServer(environment: { config: ServerConfig }, app: Express) {
