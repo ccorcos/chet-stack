@@ -16,6 +16,11 @@ import { pLimitLazy } from "shared/pLimitLazy"
 import { path } from "tools/path"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
+// ANSI color codes
+const RED = "\x1b[31m"
+const YELLOW = "\x1b[33m"
+const RESET = "\x1b[0m"
+
 interface ImportInfo {
 	fromPackage: string
 	fromFile: string
@@ -31,14 +36,38 @@ interface ImportDetail {
 
 interface PackageDep {
 	package: string
-	files: Map<string, ImportDetail[]> // fromFile -> Array of import details
+	files: Map<string, ImportDetail[]>
 }
 
-async function analyzeImportsInFile(
-	filePath: string,
-	packages: string[],
+interface DependencyViolation {
+	from: string
+	to: string
+	isDirect: boolean
+	path?: string[]
+}
+
+interface ViolationMaps {
+	directViolationEdges: Set<string>
+	transitiveViolationEdges: Set<string>
+	packagesInViolations: Set<string>
+	directViolationImports: Set<string>
+	transitiveViolationImports: Set<string>
+}
+
+interface AnalysisResult {
+	packages: string[]
+	imports: ImportInfo[]
+	depMap: Map<string, Map<string, PackageDep>>
+	runtimeDeps: Map<string, Set<string>>
+	violations: DependencyViolation[]
+}
+
+async function analyzeImportsInFile(args: {
+	filePath: string
+	packages: string[]
 	srcDir: string
-): Promise<ImportInfo[]> {
+}): Promise<ImportInfo[]> {
+	const { filePath, packages, srcDir } = args
 	const content = await fs.readFile(filePath, "utf-8")
 	const relativePath = path.relative(srcDir, filePath)
 	const fromPackage = relativePath.split(path.sep)[0]
@@ -79,8 +108,6 @@ async function analyzeImportsInFile(
 		const importStatement = match[0]
 
 		if (toPackage !== fromPackage) {
-			// Check if this is a mixed import with type specifiers
-			// For now, we'll mark it as runtime since it has at least some runtime imports
 			const hasTypeSpecifiers = /\btype\s+\w+/.test(importStatement)
 			const hasOnlyTypeSpecifiers =
 				importStatement.includes("{") &&
@@ -99,87 +126,79 @@ async function analyzeImportsInFile(
 	return imports
 }
 
-interface DependencyViolation {
-	from: string
-	to: string
-	isDirect: boolean
-	path?: string[] // For transitive violations: [from, intermediate1, intermediate2, ..., to]
+function hasRuntimeImports(importDetails: ImportDetail[]): boolean {
+	return importDetails.some((detail) => !detail.isTypeOnly)
 }
 
 function computeRuntimeDependencies(
 	depMap: Map<string, Map<string, PackageDep>>
 ): Map<string, Set<string>> {
-	// Build a map of direct runtime dependencies only (excluding type-only)
 	const runtimeDeps = new Map<string, Set<string>>()
 
-	for (const [fromPkg, deps] of depMap) {
+	for (const [fromPackage, dependencies] of depMap) {
 		const runtimeTargets = new Set<string>()
 
-		for (const [toPkg, depInfo] of deps) {
+		for (const [toPackage, depInfo] of dependencies) {
 			const allImports = Array.from(depInfo.files.values()).flat()
-			const hasRuntimeImports = allImports.some((imp) => !imp.isTypeOnly)
-
-			if (hasRuntimeImports) {
-				runtimeTargets.add(toPkg)
+			if (hasRuntimeImports(allImports)) {
+				runtimeTargets.add(toPackage)
 			}
 		}
 
 		if (runtimeTargets.size > 0) {
-			runtimeDeps.set(fromPkg, runtimeTargets)
+			runtimeDeps.set(fromPackage, runtimeTargets)
 		}
 	}
 
 	return runtimeDeps
 }
 
-function findTransitivePath(
-	from: string,
-	to: string,
-	runtimeDeps: Map<string, Set<string>>,
-	visited = new Set<string>(),
-	path: string[] = []
-): string[] | null {
-	if (from === to) {
-		return [...path, to]
-	}
+function findTransitivePath(args: {
+	from: string
+	to: string
+	runtimeDeps: Map<string, Set<string>>
+	visited?: Set<string>
+	path?: string[]
+}): string[] | null {
+	const { from, to, runtimeDeps, visited = new Set<string>(), path = [] } = args
 
-	if (visited.has(from)) {
-		return null
-	}
+	if (from === to) return [...path, to]
+	if (visited.has(from)) return null
 
 	visited.add(from)
-	const deps = runtimeDeps.get(from)
+	const dependencies = runtimeDeps.get(from)
+	if (!dependencies) return null
 
-	if (!deps) {
-		return null
-	}
-
-	for (const dep of deps) {
-		const result = findTransitivePath(dep, to, runtimeDeps, visited, [...path, from])
-		if (result) {
-			return result
-		}
+	for (const dependency of dependencies) {
+		const result = findTransitivePath({
+			from: dependency,
+			to,
+			runtimeDeps,
+			visited,
+			path: [...path, from],
+		})
+		if (result) return result
 	}
 
 	return null
 }
 
-function validateDependencies(
-	depMap: Map<string, Map<string, PackageDep>>,
-	runtimeDeps: Map<string, Set<string>>,
+function validateDependencies(args: {
+	depMap: Map<string, Map<string, PackageDep>>
+	runtimeDeps: Map<string, Set<string>>
 	disallowedDependencies: Array<{ from: string; to: string }>
-): DependencyViolation[] {
+}): DependencyViolation[] {
+	const { depMap, runtimeDeps, disallowedDependencies } = args
 	const violations: DependencyViolation[] = []
 
 	for (const rule of disallowedDependencies) {
 		// Check direct violations
-		const deps = depMap.get(rule.from)
-		if (deps?.has(rule.to)) {
-			const depInfo = deps.get(rule.to)!
+		const dependencies = depMap.get(rule.from)
+		if (dependencies?.has(rule.to)) {
+			const depInfo = dependencies.get(rule.to)!
 			const allImports = Array.from(depInfo.files.values()).flat()
-			const hasRuntimeImports = allImports.some((imp) => !imp.isTypeOnly)
 
-			if (hasRuntimeImports) {
+			if (hasRuntimeImports(allImports)) {
 				violations.push({
 					from: rule.from,
 					to: rule.to,
@@ -191,14 +210,13 @@ function validateDependencies(
 		// Check transitive violations (only if no direct violation)
 		const directRuntimeDeps = runtimeDeps.get(rule.from)
 		if (directRuntimeDeps && !directRuntimeDeps.has(rule.to)) {
-			// Check if there's a transitive path
-			const path = findTransitivePath(rule.from, rule.to, runtimeDeps)
-			if (path) {
+			const violationPath = findTransitivePath({ from: rule.from, to: rule.to, runtimeDeps })
+			if (violationPath) {
 				violations.push({
 					from: rule.from,
 					to: rule.to,
 					isDirect: false,
-					path,
+					path: violationPath,
 				})
 			}
 		}
@@ -207,80 +225,76 @@ function validateDependencies(
 	return violations
 }
 
-// ANSI color codes
-const RED = "\x1b[31m"
-const YELLOW = "\x1b[33m"
-const RESET = "\x1b[0m"
-
-interface AnalysisResult {
-	packages: string[]
-	imports: ImportInfo[]
-	depMap: Map<string, Map<string, PackageDep>>
-	runtimeDeps: Map<string, Set<string>>
-	violations: DependencyViolation[]
-}
-
-interface ViolationMaps {
-	directViolationEdges: Set<string>
-	transitiveViolationEdges: Set<string>
-	packagesInViolations: Set<string>
-	directViolationImports: Set<string>
-	transitiveViolationImports: Set<string>
-}
-
-async function analyzePackageDependencies(
-	srcDir: string,
+async function analyzePackageDependencies(args: {
+	srcDir: string
 	disallowedDependencies: Array<{ from: string; to: string }>
-): Promise<AnalysisResult> {
+}): Promise<AnalysisResult> {
+	const { srcDir, disallowedDependencies } = args
 	const packages = await getTopLevelPackages()
 
 	const allImports = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
-			return await analyzeImportsInFile(file, packages, srcDir)
+			return await analyzeImportsInFile({ filePath: file, packages, srcDir })
 		})
 	)
 
-	// Flatten the array of arrays
 	const imports = allImports.flat()
-
-	// Build dependency map: fromPackage -> toPackage -> files
 	const depMap = new Map<string, Map<string, PackageDep>>()
 
-	for (const imp of imports) {
-		if (!depMap.has(imp.fromPackage)) {
-			depMap.set(imp.fromPackage, new Map())
+	// Build dependency map: fromPackage -> toPackage -> files
+	for (const importInfo of imports) {
+		if (!depMap.has(importInfo.fromPackage)) {
+			depMap.set(importInfo.fromPackage, new Map())
 		}
 
-		const packageDeps = depMap.get(imp.fromPackage)!
-		if (!packageDeps.has(imp.toPackage)) {
-			packageDeps.set(imp.toPackage, {
-				package: imp.toPackage,
+		const packageDeps = depMap.get(importInfo.fromPackage)!
+		if (!packageDeps.has(importInfo.toPackage)) {
+			packageDeps.set(importInfo.toPackage, {
+				package: importInfo.toPackage,
 				files: new Map(),
 			})
 		}
 
-		const dep = packageDeps.get(imp.toPackage)!
-		if (!dep.files.has(imp.fromFile)) {
-			dep.files.set(imp.fromFile, [])
+		const depInfo = packageDeps.get(importInfo.toPackage)!
+		if (!depInfo.files.has(importInfo.fromFile)) {
+			depInfo.files.set(importInfo.fromFile, [])
 		}
 
-		dep.files.get(imp.fromFile)!.push({
-			path: imp.importPath,
-			isTypeOnly: imp.isTypeOnly,
+		depInfo.files.get(importInfo.fromFile)!.push({
+			path: importInfo.importPath,
+			isTypeOnly: importInfo.isTypeOnly,
 		})
 	}
 
-	// Validate dependencies
 	const runtimeDeps = computeRuntimeDependencies(depMap)
-	const violations = validateDependencies(depMap, runtimeDeps, disallowedDependencies)
+	const violations = validateDependencies({ depMap, runtimeDeps, disallowedDependencies })
 
 	return { packages, imports, depMap, runtimeDeps, violations }
 }
 
-function buildViolationMaps(
-	violations: DependencyViolation[],
+function markViolationImports(args: {
+	fromPackage: string
+	toPackage: string
+	depInfo: PackageDep
+	violationSet: Set<string>
+}) {
+	const { fromPackage, toPackage, depInfo, violationSet } = args
+
+	for (const [file, importDetails] of depInfo.files) {
+		for (const detail of importDetails) {
+			if (!detail.isTypeOnly) {
+				const importKey = `${fromPackage}→${toPackage}→${file}→${detail.path}`
+				violationSet.add(importKey)
+			}
+		}
+	}
+}
+
+function buildViolationMaps(args: {
+	violations: DependencyViolation[]
 	depMap: Map<string, Map<string, PackageDep>>
-): ViolationMaps {
+}): ViolationMaps {
+	const { violations, depMap } = args
 	const directViolationEdges = new Set<string>()
 	const transitiveViolationEdges = new Set<string>()
 	const packagesInViolations = new Set<string>()
@@ -294,17 +308,14 @@ function buildViolationMaps(
 			packagesInViolations.add(violation.from)
 			packagesInViolations.add(violation.to)
 
-			// Mark all runtime imports from this package to the target
 			const depInfo = depMap.get(violation.from)?.get(violation.to)
 			if (depInfo) {
-				for (const [file, importDetails] of depInfo.files) {
-					for (const detail of importDetails) {
-						if (!detail.isTypeOnly) {
-							const importKey = `${violation.from}→${violation.to}→${file}→${detail.path}`
-							directViolationImports.add(importKey)
-						}
-					}
-				}
+				markViolationImports({
+					fromPackage: violation.from,
+					toPackage: violation.to,
+					depInfo,
+					violationSet: directViolationImports,
+				})
 			}
 		} else if (violation.path) {
 			// For transitive violations, mark all edges in the path
@@ -316,17 +327,14 @@ function buildViolationMaps(
 				packagesInViolations.add(from)
 				packagesInViolations.add(to)
 
-				// Mark all runtime imports from this package to the next in path
 				const depInfo = depMap.get(from)?.get(to)
 				if (depInfo) {
-					for (const [file, importDetails] of depInfo.files) {
-						for (const detail of importDetails) {
-							if (!detail.isTypeOnly) {
-								const importKey = `${from}→${to}→${file}→${detail.path}`
-								transitiveViolationImports.add(importKey)
-							}
-						}
-					}
+					markViolationImports({
+						fromPackage: from,
+						toPackage: to,
+						depInfo,
+						violationSet: transitiveViolationImports,
+					})
 				}
 			}
 		}
@@ -343,6 +351,7 @@ function buildViolationMaps(
 
 function displayViolations(violations: DependencyViolation[]) {
 	if (violations.length === 0) return
+
 	for (const violation of violations) {
 		if (violation.isDirect) {
 			console.log(`- ${RED}${violation.from} → ${violation.to}${RESET}`)
@@ -352,13 +361,78 @@ function displayViolations(violations: DependencyViolation[]) {
 	}
 }
 
-function displayPackageDependencies(
-	packages: string[],
-	depMap: Map<string, Map<string, PackageDep>>,
-	violations: DependencyViolation[],
-	violationMaps: ViolationMaps,
+function getViolationColor(args: {
+	packageName: string
+	toPackage: string
+	directViolationEdges: Set<string>
+	transitiveViolationEdges: Set<string>
+}): { color: string; isViolation: boolean } {
+	const { packageName, toPackage, directViolationEdges, transitiveViolationEdges } = args
+	const violationKey = `${packageName}→${toPackage}`
+
+	if (directViolationEdges.has(violationKey)) {
+		return { color: RED, isViolation: true }
+	}
+	if (transitiveViolationEdges.has(violationKey)) {
+		return { color: YELLOW, isViolation: true }
+	}
+	return { color: "", isViolation: false }
+}
+
+function getDependencyTypeLabel(importDetails: ImportDetail[]): string {
+	const hasRuntime = hasRuntimeImports(importDetails)
+	const hasType = importDetails.some((detail) => detail.isTypeOnly)
+
+	if (!hasRuntime) return " (type-only)"
+	if (hasType) return " (mixed)"
+	return ""
+}
+
+function displayPackageDependencySummary(args: {
+	packages: string[]
+	depMap: Map<string, Map<string, PackageDep>>
+	violationMaps: ViolationMaps
+}) {
+	const { packages, depMap, violationMaps } = args
+	const { directViolationEdges, transitiveViolationEdges } = violationMaps
+
+	for (const packageName of packages.sort()) {
+		const dependencies = depMap.get(packageName)
+		if (!dependencies || dependencies.size === 0) {
+			console.log(`${packageName}:`)
+			continue
+		}
+
+		const depList: string[] = []
+		for (const [toPackage, depInfo] of Array.from(dependencies.entries()).sort()) {
+			const allImports = Array.from(depInfo.files.values()).flat()
+			const depType = getDependencyTypeLabel(allImports)
+
+			const { color, isViolation } = getViolationColor({
+				packageName,
+				toPackage,
+				directViolationEdges,
+				transitiveViolationEdges,
+			})
+
+			const depString = isViolation
+				? `${color}${toPackage}${depType}${RESET}`
+				: `${toPackage}${depType}`
+			depList.push(depString)
+		}
+
+		console.log(`${packageName}: ${depList.join(", ")}`)
+	}
+}
+
+function displayPackageDependencies(args: {
+	packages: string[]
+	depMap: Map<string, Map<string, PackageDep>>
+	violations: DependencyViolation[]
+	violationMaps: ViolationMaps
 	verbose: boolean
-) {
+}) {
+	const { packages, depMap, violations, violationMaps, verbose } = args
 	const {
 		directViolationEdges,
 		transitiveViolationEdges,
@@ -367,7 +441,6 @@ function displayPackageDependencies(
 		transitiveViolationImports,
 	} = violationMaps
 
-	// Only show if verbose, or if there are violations (but filter to violations only)
 	if (!verbose && violations.length === 0) return
 
 	if (violations.length > 0) {
@@ -378,201 +451,134 @@ function displayPackageDependencies(
 		console.log()
 	}
 
-	for (const pkg of packages.sort()) {
-		// Skip if not verbose and this package is not involved in violations
-		if (!verbose && violations.length > 0 && !packagesInViolations.has(pkg)) {
+	for (const packageName of packages.sort()) {
+		if (!verbose && violations.length > 0 && !packagesInViolations.has(packageName)) {
 			continue
 		}
 
-		const deps = depMap.get(pkg)
-		if (!deps || deps.size === 0) {
-			console.log(`${pkg}: no external dependencies\n`)
+		const dependencies = depMap.get(packageName)
+		if (!dependencies || dependencies.size === 0) {
+			console.log(`${packageName}: no external dependencies\n`)
 			continue
 		}
 
-		// Check if we have anything to display for this package
 		let hasDisplayedHeader = false
 
-		for (const [toPkg, depInfo] of Array.from(deps.entries()).sort()) {
-			// Check if dependency is type-only
+		for (const [toPackage, depInfo] of Array.from(dependencies.entries()).sort()) {
 			const allImports = Array.from(depInfo.files.values()).flat()
-			const hasRuntimeImports = allImports.some((imp) => !imp.isTypeOnly)
-			const hasTypeImports = allImports.some((imp) => imp.isTypeOnly)
+			const depType = getDependencyTypeLabel(allImports)
 
-			const depType = !hasRuntimeImports ? " (type-only)" : hasTypeImports ? " (mixed)" : ""
+			const { color, isViolation } = getViolationColor({
+				packageName,
+				toPackage,
+				directViolationEdges,
+				transitiveViolationEdges,
+			})
 
-			// Color the package name if it's a violation
-			const violationKey = `${pkg}→${toPkg}`
-			let displayPkg = toPkg
-			let isViolation = false
-			if (directViolationEdges.has(violationKey)) {
-				displayPkg = `${RED}${toPkg}${RESET}`
-				isViolation = true
-			} else if (transitiveViolationEdges.has(violationKey)) {
-				displayPkg = `${YELLOW}${toPkg}${RESET}`
-				isViolation = true
-			}
+			if (!verbose && !isViolation) continue
 
-			// Skip this dependency if not verbose and it's not a violation
-			if (!verbose && !isViolation) {
-				continue
-			}
-
-			// Print header only when we have something to display
 			if (!hasDisplayedHeader) {
-				console.log(`${pkg} depends on:`)
+				console.log(`${packageName} depends on:`)
 				hasDisplayedHeader = true
 			}
 
-			console.log(`  → ${displayPkg}${depType}`)
+			const displayPackage = isViolation ? `${color}${toPackage}${RESET}` : toPackage
+			console.log(`  → ${displayPackage}${depType}`)
 
-			// Show files: all files if verbose, up to 5 if not
 			const files = Array.from(depInfo.files.keys()).sort()
 			const displayFiles = verbose ? files : files.slice(0, 5)
 
 			for (const file of displayFiles) {
 				const importDetails = depInfo.files.get(file)!
 
-				// Check if any import in this file is a violation
-				let fileViolationType: "direct" | "transitive" | null = null
-
+				// Determine file violation type
+				let fileColor = ""
 				for (const detail of importDetails) {
 					if (!detail.isTypeOnly) {
-						const importKey = `${pkg}→${toPkg}→${file}→${detail.path}`
+						const importKey = `${packageName}→${toPackage}→${file}→${detail.path}`
 						if (directViolationImports.has(importKey)) {
-							fileViolationType = "direct"
+							fileColor = RED
 							break
 						} else if (transitiveViolationImports.has(importKey)) {
-							fileViolationType = "transitive"
+							fileColor = YELLOW
 						}
 					}
 				}
 
-				// Color the file path if it contains violations
-				let fileDisplay = file
-				if (fileViolationType === "direct") {
-					fileDisplay = `${RED}${file}${RESET}`
-				} else if (fileViolationType === "transitive") {
-					fileDisplay = `${YELLOW}${file}${RESET}`
-				}
-
+				const fileDisplay = fileColor ? `${fileColor}${file}${RESET}` : file
 				console.log(`      ${fileDisplay}`)
 
 				for (const detail of importDetails.sort((a, b) => a.path.localeCompare(b.path))) {
 					const typeLabel = detail.isTypeOnly ? " (type)" : ""
+					const importKey = `${packageName}→${toPackage}→${file}→${detail.path}`
 
-					// Check if this specific import is a violation
-					const importKey = `${pkg}→${toPkg}→${file}→${detail.path}`
-					let importPathDisplay = detail.path
-
+					let importDisplay = detail.path
 					if (directViolationImports.has(importKey)) {
-						importPathDisplay = `${RED}${detail.path}${RESET}`
+						importDisplay = `${RED}${detail.path}${RESET}`
 					} else if (transitiveViolationImports.has(importKey)) {
-						importPathDisplay = `${YELLOW}${detail.path}${RESET}`
+						importDisplay = `${YELLOW}${detail.path}${RESET}`
 					}
 
-					console.log(`        - ${importPathDisplay}${typeLabel}`)
+					console.log(`        - ${importDisplay}${typeLabel}`)
 				}
 			}
 
-			// Only show "more files" message when not verbose
 			if (!verbose && files.length > 5) {
 				console.log(`      ... and ${files.length - 5} more file(s)`)
 			}
 		}
 
-		// Only print newline if we displayed something
 		if (hasDisplayedHeader) {
 			console.log()
 		}
 	}
 }
 
-function displayPackageDependencySummary(
-	packages: string[],
-	depMap: Map<string, Map<string, PackageDep>>,
-	violationMaps: ViolationMaps
-) {
-	const { directViolationEdges, transitiveViolationEdges } = violationMaps
+export async function findPackageDeps(args: {
+	srcDir: string
+	disallowedDependencies: Array<{ from: string; to: string }>
+	verbose?: boolean
+}) {
+	const { srcDir, disallowedDependencies, verbose = false } = args
 
-	for (const pkg of packages.sort()) {
-		const deps = depMap.get(pkg)
-		if (!deps || deps.size === 0) {
-			console.log(`${pkg}:`)
-			continue
-		}
-
-		const depList: string[] = []
-		for (const [toPkg, depInfo] of Array.from(deps.entries()).sort()) {
-			const allImports = Array.from(depInfo.files.values()).flat()
-			const hasRuntimeImports = allImports.some((imp) => !imp.isTypeOnly)
-			const depType = !hasRuntimeImports ? " (type-only)" : ""
-
-			// Color violations in the graph
-			const violationKey = `${pkg}→${toPkg}`
-			let depString = `${toPkg}${depType}`
-			if (directViolationEdges.has(violationKey)) {
-				depString = `${RED}${depString}${RESET}`
-			} else if (transitiveViolationEdges.has(violationKey)) {
-				depString = `${YELLOW}${depString}${RESET}`
-			}
-
-			depList.push(depString)
-		}
-
-		console.log(`${pkg}: ${depList.join(", ")}`)
-	}
-}
-
-export async function findPackageDeps(
-	srcDir: string,
-	disallowedDependencies: Array<{ from: string; to: string }>,
-	verbose = false
-) {
-	// Perform analysis
-	const { packages, imports, depMap, runtimeDeps, violations } = await analyzePackageDependencies(
+	const { packages, depMap, violations } = await analyzePackageDependencies({
 		srcDir,
-		disallowedDependencies
-	)
+		disallowedDependencies,
+	})
 
-	// Build violation maps for coloring
-	const violationMaps = buildViolationMaps(violations, depMap)
+	const violationMaps = buildViolationMaps({ violations, depMap })
 
-	// Display results
 	if (violations.length > 0) {
 		console.log(`\n❌ Found ${violations.length} dependency violation(s)`)
 		displayViolations(violations)
 
 		console.log("\n=== Package Dependency Summary ===")
-		displayPackageDependencySummary(packages, depMap, violationMaps)
+		displayPackageDependencySummary({ packages, depMap, violationMaps })
 
 		console.log("\n=== Package Dependencies ===")
-		displayPackageDependencies(packages, depMap, violations, violationMaps, verbose)
+		displayPackageDependencies({ packages, depMap, violations, violationMaps, verbose })
 	} else {
 		console.log("✅ No dependency violations found")
 
 		console.log("\n=== Package Dependency Summary ===")
-		displayPackageDependencySummary(packages, depMap, violationMaps)
+		displayPackageDependencySummary({ packages, depMap, violationMaps })
 
 		console.log("\n=== Package Dependencies ===")
-		displayPackageDependencies(packages, depMap, violations, violationMaps, verbose)
+		displayPackageDependencies({ packages, depMap, violations, violationMaps, verbose })
 	}
 
-	// Return violation count for exit code
 	return violations.length
 }
+
 if (import.meta.url === `file://${process.argv[1]}`) {
 	const verbose = process.argv.includes("--verbose")
-
-	// Default configuration for this project
 	const srcDir = path("src")
 	const disallowedDependencies = [
 		{ from: "client", to: "server" },
 		// Add more rules here as needed
 	]
 
-	const violationCount = await findPackageDeps(srcDir, disallowedDependencies, verbose)
+	const violationCount = await findPackageDeps({ srcDir, disallowedDependencies, verbose })
 
 	if (violationCount > 0) process.exit(1)
-	else console.log("✅ No dependency violations found")
 }

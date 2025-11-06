@@ -4,7 +4,7 @@ import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
 import { CommandService } from "./Command"
 import { LocalPreferences } from "./LocalPreferences"
-import { Router } from "./Router"
+import type { Router } from "./Router"
 import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
 export type ClientEnvironment = {
