@@ -1,4 +1,4 @@
-import { createHmac } from "crypto"
+import { createHmac } from "node:crypto"
 import secureCompare from "secure-compare"
 
 type Data = { [key: string]: string | number }

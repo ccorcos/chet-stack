@@ -1,4 +1,4 @@
-import type { Server } from "http"
+import type { Server } from "node:http"
 import { WebSocketServer } from "ws"
 import { ClientPubsubMessage, ServerPubsubMessage } from "../../shared/PubSubTypes"
 

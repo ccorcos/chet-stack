@@ -1,4 +1,5 @@
 // TODO: unused since moving to vite.
+// https://github.com/vite-pwa/vite-plugin-pwa
 
 const ASSETS_CACHE = "app-assets-v1"
 const IMAGES_CACHE = "static-simages-v1" // TODO

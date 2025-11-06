@@ -1,4 +1,4 @@
-import { scrypt } from "crypto"
+import { scrypt } from "node:crypto"
 import type { Request, Response } from "express"
 import { ServerConfig } from "../services/ServerConfig"
 import { ServerEnvironment } from "../services/ServerEnvironment"

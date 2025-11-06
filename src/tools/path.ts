@@ -1,5 +1,5 @@
-import * as p from "path"
-import { fileURLToPath } from "url"
+import * as p from "node:path"
+import { fileURLToPath } from "node:url"
 
 const __dirname = p.dirname(fileURLToPath(import.meta.url))
 

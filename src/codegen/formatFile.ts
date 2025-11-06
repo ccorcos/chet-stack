@@ -1,4 +1,4 @@
-import { execFile } from "child_process"
+import { execFile } from "node:child_process"
 import prettier from "prettier"
 
 export async function formatFile(filePath: string): Promise<void> {

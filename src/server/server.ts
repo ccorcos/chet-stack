@@ -1,6 +1,6 @@
 import express from "express"
 import helmet from "helmet"
-import http from "http"
+import http from "node:http"
 import morgan from "morgan"
 import { recordDb } from "../shared/database/RecordDb"
 import { tupleDb, tupleOkv } from "../shared/database/TupleDb"
@@ -44,7 +44,7 @@ const pubsub = PubsubServer({ config, db }, server)
 // database or the pubsub service with minimal plumbing.
 const environment: ServerEnvironment = { config, db, queue, pubsub }
 
-FileServer(environment, app)
+await FileServer(environment, app)
 QueueServer(environment)
 ApiServer(environment, app)
 await WebServer(environment, app)

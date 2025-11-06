@@ -4,7 +4,7 @@ import { WebsocketPubsubServer } from "./services/WebsocketPubsubServer"
 // https://expressjs.com/en/guide/debugging.html
 // process.env.DEBUG = "express:*"
 
-import type { Server } from "http"
+import type { Server } from "node:http"
 
 export function PubsubServer(environment: {}, server: Server) {
 	return new WebsocketPubsubServer(server, async function (key) {

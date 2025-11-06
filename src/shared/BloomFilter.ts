@@ -1,4 +1,4 @@
-import crypto from "crypto"
+import crypto from "node:crypto"
 
 export class BloomFilter {
 	buckets: number[] // each number is between 0 and 7 (base 8, octal)

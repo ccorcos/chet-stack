@@ -2,7 +2,7 @@
 // mistral-7b-instruct-v0 hello
 // Phi-3-mini-4k-instruct
 
-import { execSync } from "child_process"
+import { execSync } from "node:child_process"
 
 // Install with `pipx install llm`
 const llmCmd = "/Users/chet/.local/bin/llm"
