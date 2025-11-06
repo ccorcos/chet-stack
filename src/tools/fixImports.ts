@@ -67,4 +67,6 @@ const results = await collect(
 	})
 )
 
-console.log(`\nDone! Fixed imports in ${results.filter(Boolean).length} file(s).`)
+const total = results.length
+const fixed = results.filter(Boolean)
+console.log(`\nDone! Fixed imports in ${fixed.length} of ${total} file(s).`)
