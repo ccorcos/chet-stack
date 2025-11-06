@@ -1,6 +1,6 @@
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { collect } from "shared/collect"
+import { collect } from "./collect"
 import { pLimitLazy } from "./pLimitLazy"
 
 // Helper function to create an async generator from an array

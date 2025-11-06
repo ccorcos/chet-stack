@@ -548,7 +548,7 @@ export async function findPackageDeps(args: {
 	const violationMaps = buildViolationMaps({ violations, depMap })
 
 	if (violations.length > 0) {
-		console.log(`\n❌ Found ${violations.length} dependency violation(s)`)
+		console.log(`❌ Found ${violations.length} dependency violation(s)`)
 		displayViolations(violations)
 
 		console.log("\n=== Package Dependency Summary ===")
@@ -574,7 +574,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 	const verbose = args.includes("--verbose")
 	const nonFlagArgs = args.filter((arg) => !arg.startsWith("--"))
 
-	const [srcArg, ...rest] = nonFlagArgs[0]
+	const [srcArg, ...rest] = nonFlagArgs
 	if (!srcArg) throw new Error("srcDir argument is required.")
 	const srcDir = path.resolve(process.cwd(), srcArg)
 

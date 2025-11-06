@@ -1,4 +1,4 @@
-import { LoaderPromise } from "shared/LoaderPromise"
+import { LoaderPromise } from "./LoaderPromise"
 
 export async function* pLimitLazy<T, R>(
 	concurrency: number,

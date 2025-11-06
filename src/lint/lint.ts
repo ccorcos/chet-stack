@@ -1,3 +1,11 @@
+/*
+
+npx tsx src/lint/lint.ts
+
+*/
+
+import { exec } from "node:child_process"
+import { promisify } from "node:util"
 import { path } from "tools/path"
 import { findCircularImports } from "./findCircularImports"
 import { findPackageDeps } from "./findPackageDeps"
@@ -11,8 +19,7 @@ const srcDir = path("src")
 await fixAbsoluteImports(srcDir)
 await fixRelativeImports(srcDir)
 await fixNodeImports(srcDir)
-// Prettify code and organize imports.
-//  "prettier --write 'src/**/*.{ts,tsx,js,jsx}'"
+await promisify(exec)(`prettier --write '${srcDir}/**/*.{ts,tsx,js,jsx}'`)
 
 const circularImports = await findCircularImports(srcDir)
 

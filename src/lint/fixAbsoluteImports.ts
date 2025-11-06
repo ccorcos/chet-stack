@@ -1,7 +1,7 @@
 /*
 
-npx tsx src/tools/fixAbsoluteImports.ts <srcDir>
-npx tsx src/tools/fixAbsoluteImports.ts src
+npx tsx src/lint/fixAbsoluteImports.ts <srcDir>
+npx tsx src/lint/fixAbsoluteImports.ts src
 
 When file in <srcDir>/{package} imports from another package, it should use an absolute import rather than a relative import.
 
@@ -40,7 +40,8 @@ export async function fixAbsoluteImports(srcDir: string) {
 
 	const total = results.length
 	const fixed = results.filter(Boolean)
-	console.log(`\nDone! Fixed imports in ${fixed.length} of ${total} file(s).`)
+
+	console.log(`✅ Fixed absolute imports in ${fixed.length} of ${total} file(s).`)
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

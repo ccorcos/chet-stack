@@ -1,7 +1,7 @@
 /*
 
-npx tsx src/tools/fixRelativeImports.ts <srcDir>
-npx tsx src/tools/fixRelativeImports.ts src
+npx tsx src/lint/fixRelativeImports.ts <srcDir>
+npx tsx src/lint/fixRelativeImports.ts src
 
 When a file in <srcDir>>/{package} imports from the same package, it should use a relative import rather than an absolute import.
 
@@ -81,7 +81,7 @@ export async function fixRelativeImports(srcDir: string) {
 
 	const total = results.length
 	const fixed = results.filter(Boolean)
-	console.log(`\nDone! Fixed imports in ${fixed.length} of ${total} file(s).`)
+	console.log(`✅ Fixed relative imports in ${fixed.length} of ${total} file(s).`)
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

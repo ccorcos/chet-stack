@@ -69,7 +69,7 @@ export async function findCircularImports(srcDir: string) {
 		return circular.length
 	}
 
-	console.log(`${GREEN}✅ No circular dependencies found${RESET}`)
+	console.log(`✅ No circular dependencies found.`)
 	return 0
 }
 

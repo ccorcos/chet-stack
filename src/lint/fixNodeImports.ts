@@ -1,10 +1,9 @@
 /*
 
-npx tsx src/tools/fixNodeImports.ts <srcDir>
-npx tsx src/tools/fixNodeImports.ts src
+npx tsx src/lint/fixNodeImports.ts <srcDir>
+npx tsx src/lint/fixNodeImports.ts src
 
 Ensures that all native Node.js imports use the node: protocol prefix.
-For example: import fs from 'fs' -> import fs from 'node:fs'
 
 */
 
@@ -53,7 +52,7 @@ export async function fixNodeImports(srcDir: string) {
 
 	const total = results.length
 	const fixed = results.filter(Boolean)
-	console.log(`\nDone! Fixed imports in ${fixed.length} of ${total} file(s).`)
+	console.log(`✅ Fixed native node imports in ${fixed.length} of ${total} file(s).`)
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
