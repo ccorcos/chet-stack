@@ -1,15 +1,16 @@
 /*
 
-npx tsx src/tools/fixAbsoluteImports.ts
+npx tsx src/tools/fixAbsoluteImports.ts <srcDir>
+npx tsx src/tools/fixAbsoluteImports.ts src
 
-A file in src/{package} imports from another package, it should use an absolute import rather than a relative import.
+When file in <srcDir>/{package} imports from another package, it should use an absolute import rather than a relative import.
 
 */
 
 import fs from "node:fs/promises"
+import { relative, resolve } from "node:path"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
-import { path } from "tools/path"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
 async function fixImportsInFile(filePath: string, packages: string[]): Promise<boolean> {
@@ -30,7 +31,7 @@ export async function fixAbsoluteImports(srcDir: string) {
 	const results = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
 			if (await fixImportsInFile(file, packages)) {
-				console.log(`Fixed: ${path.relative(srcDir, file)}`)
+				console.log(`Fixed: ${relative(srcDir, file)}`)
 				return true
 			}
 			return false
@@ -43,5 +44,9 @@ export async function fixAbsoluteImports(srcDir: string) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixAbsoluteImports(path("src"))
+	const srcArg = process.argv[2]
+	if (!srcArg) throw new Error("srcDir argument is required.")
+	const srcDir = resolve(process.cwd(), srcArg)
+
+	await fixAbsoluteImports(srcDir)
 }

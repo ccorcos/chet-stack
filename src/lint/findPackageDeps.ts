@@ -1,19 +1,18 @@
 /*
 
-npx tsx src/lint/findPackageDeps.ts [--verbose]
+npx tsx src/lint/findPackageDeps.ts <srcDir> [from-to ...] [--verbose]
+npx tsx src/lint/findPackageDeps.ts src client-server shared-server
 
-Analyzes dependencies between packages in src/ and reports which packages depend on each other through which files.
-Assumes that fixAbsoluteImports has already run so imports are properly qualified.
-
-Options:
-  --verbose    Show detailed file-level import information
+Analyzes dependencies between <srcDir>/{package} packages and reports which packages import each other..
+Assumes that fixAbsoluteImports and findRelativeImports has already run so imports are properly qualified.
+Accepts disallowed dependencies from-to to report as violations.
 
 */
 
 import fs from "node:fs/promises"
+import * as path from "node:path"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
-import { path } from "tools/path"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
 // ANSI color codes
@@ -571,12 +570,23 @@ export async function findPackageDeps(args: {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	const verbose = process.argv.includes("--verbose")
-	const srcDir = path("src")
-	const disallowedDependencies = [
-		{ from: "client", to: "server" },
-		// Add more rules here as needed
-	]
+	const args = process.argv.slice(2)
+	const verbose = args.includes("--verbose")
+	const nonFlagArgs = args.filter((arg) => !arg.startsWith("--"))
+
+	const [srcArg, ...rest] = nonFlagArgs[0]
+	if (!srcArg) throw new Error("srcDir argument is required.")
+	const srcDir = path.resolve(process.cwd(), srcArg)
+
+	const disallowedDependencies = rest.map((rule) => {
+		const [from, to] = rule.split("-")
+		if (!from || !to) {
+			console.error(`Error: Invalid dependency rule format: "${rule}"`)
+			console.error('Expected format: "from-to" (e.g., "client-server")')
+			process.exit(1)
+		}
+		return { from, to }
+	})
 
 	const violationCount = await findPackageDeps({ srcDir, disallowedDependencies, verbose })
 

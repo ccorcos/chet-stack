@@ -1,17 +1,18 @@
 /*
 
-npx tsx src/tools/fixNodeImports.ts
+npx tsx src/tools/fixNodeImports.ts <srcDir>
+npx tsx src/tools/fixNodeImports.ts src
 
 Ensures that all native Node.js imports use the node: protocol prefix.
-For example: import fs from 'node:fs' -> import fs from 'node:fs'
+For example: import fs from 'fs' -> import fs from 'node:fs'
 
 */
 
 import fs from "node:fs/promises"
 import { builtinModules } from "node:module"
+import * as path from "node:path"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
-import { path } from "tools/path"
 import { walkFiles } from "./helpers"
 
 // Get Node.js built-in modules from Node.js itself
@@ -56,5 +57,9 @@ export async function fixNodeImports(srcDir: string) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixNodeImports(path("src"))
+	const srcArg = process.argv[2]
+	if (!srcArg) throw new Error("srcDir argument is required.")
+	const srcDir = path.resolve(process.cwd(), srcArg)
+
+	await fixNodeImports(srcDir)
 }

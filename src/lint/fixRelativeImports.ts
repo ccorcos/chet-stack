@@ -1,15 +1,16 @@
 /*
 
-npx tsx src/tools/fixRelativeImports.ts
+npx tsx src/tools/fixRelativeImports.ts <srcDir>
+npx tsx src/tools/fixRelativeImports.ts src
 
-When a file in src/{package} imports from the same package, it should use a relative import rather than an absolute import.
+When a file in <srcDir>>/{package} imports from the same package, it should use a relative import rather than an absolute import.
 
 */
 
 import fs from "node:fs/promises"
+import * as path from "node:path"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
-import { path } from "tools/path"
 import { walkFiles } from "./helpers"
 
 function getPackageForFile(args: { filePath: string; srcDir: string }): string | null {
@@ -84,5 +85,9 @@ export async function fixRelativeImports(srcDir: string) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-	await fixRelativeImports(path("src"))
+	const srcArg = process.argv[2]
+	if (!srcArg) throw new Error("srcDir argument is required.")
+	const srcDir = path.resolve(process.cwd(), srcArg)
+
+	await fixRelativeImports(srcDir)
 }
