@@ -1,13 +1,13 @@
 import React, { Suspense } from "react"
 import { parseRoute } from "../../shared/routeHelpers"
+import { Spinner } from "../../ui/components/Spinner"
+import { Throttle } from "../../ui/components/Throttle"
 import { useDarkModeSwitcher } from "../hooks/useDarkModeSwitcher"
 import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
 import { useRouterState } from "../services/Router"
 import { App } from "./App"
 import { Commander } from "./Commander"
 import { Design } from "./Design"
-import { Spinner } from "./ui/Spinner"
-import { Throttle } from "./ui/Throttle"
 
 export function Root(props: { environment: ClientEnvironment }) {
 	return (

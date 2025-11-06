@@ -21,7 +21,8 @@
 
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"noEmit": true
+		"noEmit": true,
+		"baseUrl": "src"
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

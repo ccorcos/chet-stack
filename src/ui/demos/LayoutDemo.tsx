@@ -1,5 +1,6 @@
 import React, { useState } from "react"
-import { Button } from "../../ui/components/Button"
+import { useShortcut } from "../../../client/hooks/useShortcut"
+import { Button } from "../Button"
 import {
 	BottombarLayout,
 	ContentLayout,
@@ -7,16 +8,9 @@ import {
 	LeftPanelLayout,
 	RightPanelLayout,
 	TopbarLayout,
-} from "../../ui/components/Layout"
-import { useShortcut } from "../hooks/useShortcut"
-import { useClientEnvironment } from "../services/ClientEnvironment"
-import { useRouterState } from "../services/Router"
+} from "../Layout"
 
-// TODO: use the actual layout components!
-export function App() {
-	const environment = useClientEnvironment()
-	const route = useRouterState()
-
+export function LayoutDemo() {
 	const [showTopbar, setShowTopbar] = useState(true)
 	const [showSidebar, setShowSidebar] = useState(true)
 	const [showRightPanel, setShowRightPanel] = useState(true)
@@ -30,7 +24,7 @@ export function App() {
 	return (
 		<Layout
 			Topbar={
-				<TopbarLayout show={showTopbar}>
+				<TopbarLayout show={showTopbar} className="layer">
 					<div style={{ display: "flex", alignItems: "center", height: "100%", width: "100%" }}>
 						<Button onClick={() => setShowTopbar(!showTopbar)}>
 							{showTopbar ? "close" : "open"}
@@ -39,7 +33,7 @@ export function App() {
 				</TopbarLayout>
 			}
 			Bottombar={
-				<BottombarLayout show={showBottomBar}>
+				<BottombarLayout show={showBottomBar} className="layer">
 					<div
 						style={{
 							padding: 8,
@@ -55,7 +49,7 @@ export function App() {
 				</BottombarLayout>
 			}
 			LeftPanel={
-				<LeftPanelLayout show={showSidebar}>
+				<LeftPanelLayout show={showSidebar} className="layer">
 					<div style={{ padding: "16px" }}>
 						<Button onClick={() => setShowSidebar(!showSidebar)} style={{ marginTop: "16px" }}>
 							{showSidebar ? "close" : "open"}
@@ -69,7 +63,7 @@ export function App() {
 				</LeftPanelLayout>
 			}
 			RightPanel={
-				<RightPanelLayout show={showRightPanel}>
+				<RightPanelLayout show={showRightPanel} className="layer">
 					<div style={{ padding: "16px" }}>
 						<Button
 							onClick={() => setShowRightPanel(!showRightPanel)}
@@ -77,6 +71,11 @@ export function App() {
 						>
 							{showRightPanel ? "close" : "open"}
 						</Button>
+						{[...Array(200)].map((_, i) => (
+							<p key={i} style={{ marginBottom: "16px" }}>
+								Scroll content {i + 1}
+							</p>
+						))}
 					</div>
 				</RightPanelLayout>
 			}

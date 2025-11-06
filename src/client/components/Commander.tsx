@@ -1,7 +1,7 @@
 import React, { useState } from "react"
+import { CommandPrompt, CommandPromptOverlay } from "../../ui/components/CommandPrompt"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
-import { CommandPrompt, CommandPromptOverlay } from "./ui/CommandPrompt"
 
 export function Commander() {
 	const [isOpen, setIsOpen] = useState(false)
