@@ -1,5 +1,5 @@
-import { strict as assert } from "node:assert"
 import { describe, it } from "mocha"
+import { strict as assert } from "node:assert"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { Transaction } from "./Transaction"
 

@@ -1,5 +1,5 @@
-import { scrypt } from "node:crypto"
 import type { Request, Response } from "express"
+import { scrypt } from "node:crypto"
 import { ServerConfig } from "../services/ServerConfig"
 import { ServerEnvironment } from "../services/ServerEnvironment"
 

@@ -1,5 +1,5 @@
-import { strict as assert } from "node:assert"
 import { describe, it } from "mocha"
+import { strict as assert } from "node:assert"
 import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { tupleDb, tupleTx } from "./TupleDb"

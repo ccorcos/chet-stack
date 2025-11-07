@@ -160,32 +160,32 @@ type InferObject<T extends { [key: string]: DataType | Optional<DataType> }> = S
 export type InferType<T extends DataType> = T extends NullDataType
 	? null
 	: T extends UndefinedDataType
-	? undefined
-	: T extends StringDataType
-	? string
-	: T extends DatetimeDataType
-	? string
-	: T extends NumberDataType
-	? number
-	: T extends BooleanDataType
-	? boolean
-	: T extends LiteralDataType<infer U>
-	? U
-	: T extends ArrayDataType<infer U>
-	? Array<InferType<U>>
-	: T extends TupleDataType<infer U>
-	? { [K in keyof U]: InferType<U[K]> }
-	: T extends MapDataType<infer U>
-	? { [key: string]: InferType<U> }
-	: T extends ObjectDataType<infer U>
-	? InferObject<U>
-	: T extends OrDataType<infer U>
-	? InferType<U>
-	: T extends AnyDataType<infer U>
-	? U
-	: T extends DataTypeDataType
-	? DataType
-	: never
+		? undefined
+		: T extends StringDataType
+			? string
+			: T extends DatetimeDataType
+				? string
+				: T extends NumberDataType
+					? number
+					: T extends BooleanDataType
+						? boolean
+						: T extends LiteralDataType<infer U>
+							? U
+							: T extends ArrayDataType<infer U>
+								? Array<InferType<U>>
+								: T extends TupleDataType<infer U>
+									? { [K in keyof U]: InferType<U[K]> }
+									: T extends MapDataType<infer U>
+										? { [key: string]: InferType<U> }
+										: T extends ObjectDataType<infer U>
+											? InferObject<U>
+											: T extends OrDataType<infer U>
+												? InferType<U>
+												: T extends AnyDataType<infer U>
+													? U
+													: T extends DataTypeDataType
+														? DataType
+														: never
 
 // ============================================================================
 // Construction Helpers.

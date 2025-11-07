@@ -4,8 +4,7 @@ npx tsx src/lint/lint.ts
 
 */
 
-import { exec } from "node:child_process"
-import { promisify } from "node:util"
+import { spawn } from "node:child_process"
 import { path } from "tools/path"
 import { findCircularImports } from "./findCircularImports"
 import { findPackageDeps } from "./findPackageDeps"
@@ -19,8 +18,22 @@ const srcDir = path("src")
 await fixAbsoluteImports(srcDir)
 await fixRelativeImports(srcDir)
 await fixNodeImports(srcDir)
-await promisify(exec)(`prettier --write '${srcDir}/**/*.{ts,tsx,js,jsx}'`)
 
+// Prettier
+await new Promise<void>((resolve, reject) => {
+	const child = spawn("npx", ["prettier", "--write", `${srcDir}/**/*.{ts,tsx,js,jsx}`], {
+		stdio: "inherit",
+		shell: true,
+	})
+
+	child.on("error", reject)
+	child.on("exit", (code) => {
+		if (code === 0) resolve()
+		else reject(new Error(`Prettier exited with code ${code}`))
+	})
+})
+
+// Check for circular imports.
 const circularImports = await findCircularImports(srcDir)
 
 // Check for package dependencies.
