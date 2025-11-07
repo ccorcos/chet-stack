@@ -21,7 +21,7 @@ await fixNodeImports(srcDir)
 
 // Prettier
 await new Promise<void>((resolve, reject) => {
-	const child = spawn("npx", ["prettier", "--write", `${srcDir}/**/*.{ts,tsx,js,jsx}`], {
+	const child = spawn("npx", ["prettier", srcDir, "--write", "--list-different"], {
 		stdio: "inherit",
 		shell: true,
 	})
