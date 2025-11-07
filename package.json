@@ -15,14 +15,14 @@
 		"build": "NODE_ENV=production vite build src/client",
 		"start": "NODE_ENV=production tsx src/server/server.ts",
 		"typecheck": "tsc --noEmit",
+		"lint": "tsx src/lint/lint.ts",
 		"test": "run-s test:unit test:e2e",
 		"test:unit": "mocha -r tsx './src/**/*.test.ts' --verbose",
 		"test:e2e": "playwright test",
 		"reset": "tsx src/tools/reset.ts",
 		"migrate": "tsx src/server/migrations/migrate.ts",
 		"sowell": "tsx src/tools/sowell.ts",
-		"knip": "npx knip",
-		"format": "prettier --write 'src/**/*.{ts,tsx,js,jsx}'"
+		"knip": "npx knip"
 	},
 	"keywords": [],
 	"author": "",
