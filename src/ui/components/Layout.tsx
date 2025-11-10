@@ -19,7 +19,7 @@ function useIsVisible(show: boolean) {
 	return { isVisible, handleTransitionEnd }
 }
 
-export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function TopbarLayout(props: React.JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -57,7 +57,7 @@ export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: bool
 	)
 }
 
-export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function BottombarLayout(props: React.JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -96,7 +96,7 @@ export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: b
 	)
 }
 
-export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function LeftPanelLayout(props: React.JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -134,7 +134,7 @@ export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: b
 		</div>
 	)
 }
-export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function RightPanelLayout(props: React.JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -173,7 +173,7 @@ export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: 
 	)
 }
 
-export function ContentLayout(props: JSX.IntrinsicElements["div"]) {
+export function ContentLayout(props: React.JSX.IntrinsicElements["div"]) {
 	return (
 		<div
 			{...props}

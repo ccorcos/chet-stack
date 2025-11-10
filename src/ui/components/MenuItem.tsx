@@ -3,7 +3,7 @@ import React, { useLayoutEffect, useRef } from "react"
 import { scrollIntoView } from "shared/scrollHelpers"
 
 /** MenuItem is not meant to be focusable by the browser like a ListItem is, so we need to handle focus/scroll ourselves. */
-export function MenuItem(props: JSX.IntrinsicElements["div"] & { selected?: boolean }) {
+export function MenuItem(props: React.JSX.IntrinsicElements["div"] & { selected?: boolean }) {
 	const ref = useRef<HTMLDivElement>(null)
 	const merged = mergeRefs([ref, props.ref])
 

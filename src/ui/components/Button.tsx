@@ -3,7 +3,7 @@ import React from "react"
 export const vPadding = 4
 export const hPadding = 8
 
-export function Button(props: JSX.IntrinsicElements["button"]) {
+export function Button(props: React.JSX.IntrinsicElements["button"]) {
 	return (
 		<button
 			{...props}
@@ -19,11 +19,11 @@ export function Button(props: JSX.IntrinsicElements["button"]) {
 	)
 }
 
-export function PrimaryButton(props: JSX.IntrinsicElements["button"]) {
+export function PrimaryButton(props: React.JSX.IntrinsicElements["button"]) {
 	return <Button {...props} className="primary" />
 }
 
-export function NakedButton(props: JSX.IntrinsicElements["button"]) {
+export function NakedButton(props: React.JSX.IntrinsicElements["button"]) {
 	return (
 		<Button {...props} className="naked" style={{ borderColor: "transparent", ...props.style }} />
 	)

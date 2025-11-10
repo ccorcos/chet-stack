@@ -1,14 +1,14 @@
-import { withStyle } from "client/helpers/withStyle"
 import React from "react"
 import { hPadding, vPadding } from "./Button"
 
 // TODO: lets use css here with colors.
 // Also dark mode force.
 
-export function Input(props: JSX.IntrinsicElements["input"]) {
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => {
 	return (
 		<input
 			{...props}
+			ref={ref}
 			className={["feedback", props.className].filter(Boolean).join(" ")}
 			style={{
 				// Keep a border so its the same size as Button
@@ -21,19 +21,14 @@ export function Input(props: JSX.IntrinsicElements["input"]) {
 			}}
 		/>
 	)
-}
+})
 
-// export const NakedInput = passthroughRef((props: JSX.IntrinsicElements["input"]) => {
-// 	return _Input({
-// 		...props,
-// 		style: {
-// 			borderColor: "transparent",
-// 			...props.style,
-// 		},
-// 	})
-// })
-
-export const NakedInput = withStyle(Input, {
-	borderColor: "transparent",
-	backgroundColor: "transparent",
+export const NakedInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => {
+	return (
+		<input
+			{...props}
+			ref={ref}
+			style={{ borderColor: "transparent", backgroundColor: "transparent", ...props.style }}
+		/>
+	)
 })

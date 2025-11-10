@@ -13,8 +13,8 @@ export function ComboBoxSelect<T extends string>(props: {
 	value: T | undefined
 	onChange: (value: T) => void
 	style?: React.CSSProperties
-	Input?: React.FC<JSX.IntrinsicElements["input"]>
-	Button?: React.FC<JSX.IntrinsicElements["button"]>
+	Input?: React.FC<React.JSX.IntrinsicElements["input"]>
+	Button?: React.FC<React.JSX.IntrinsicElements["button"]>
 }) {
 	const [open, setOpen] = useState(false)
 
@@ -145,7 +145,7 @@ export function ComboBox(props: {
 	onDismiss?: () => void
 	autoFocus?: boolean
 	notice?: React.ReactNode
-	Input?: React.FC<JSX.IntrinsicElements["input"]>
+	Input?: React.FC<React.JSX.IntrinsicElements["input"]>
 	style?: React.CSSProperties
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)

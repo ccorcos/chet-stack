@@ -34,7 +34,7 @@ type GridData<T> = {
 export function Grid<T>(props: {
 	fetch: (range: CellRange) => FetchData<T> | Promise<FetchData<T>>
 	/** row: -1 and col: -1 are for header cells. */
-	children: (props: any, row: number, col: number, data: T | undefined) => JSX.Element
+	children: (props: any, row: number, col: number, data: T | undefined) => React.JSX.Element
 	rowHeight?: number
 	colWidth?: number
 	columnGap?: number

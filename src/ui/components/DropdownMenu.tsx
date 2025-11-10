@@ -4,7 +4,7 @@ import { MenuItem } from "./MenuItem"
 import { PopupFrame } from "./Popup"
 
 /* This is meant to be inside a <Popup>. It will focus as soon as it mounts. It's children should be <MenuItem>.*/
-export function DropdownMenu(props: { style?: React.CSSProperties; children: JSX.Element[] }) {
+export function DropdownMenu(props: { style?: React.CSSProperties; children: React.JSX.Element[] }) {
 	const menuRef = useRef<HTMLDivElement>(null)
 
 	// Focus immediately.
@@ -24,7 +24,7 @@ export function DropdownMenu(props: { style?: React.CSSProperties; children: JSX
 		return React.cloneElement(elm, {
 			selected: i === selectedIndex,
 			onMouseEnter: () => setSelectedIndex(i),
-		})
+		} as any)
 	})
 
 	const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -50,7 +50,7 @@ export function DropdownMenu(props: { style?: React.CSSProperties; children: JSX
 				if (typeof elm !== "object") continue
 				if (!("type" in elm)) continue
 				if (elm.type !== MenuItem) continue
-				if (i === selectedIndex) return elm.props.onClick?.(event)
+				if (i === selectedIndex) return (elm.props as any).onClick?.(event)
 				else i += 1
 			}
 		}

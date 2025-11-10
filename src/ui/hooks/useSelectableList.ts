@@ -14,7 +14,7 @@ export function useSelectableList<T>(args: {
 
 	const listRef = useRefCurrent(args.list)
 	const selectedRef = useRefCurrent(args.selected)
-	const prevClickRef = useRef<T | undefined>()
+	const prevClickRef = useRef<T | undefined>(undefined)
 
 	const shiftSelect = (key: T) => {
 		if (!args.multiselect) return

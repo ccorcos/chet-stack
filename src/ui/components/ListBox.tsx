@@ -15,7 +15,7 @@ export function useListBox<T>(args: {
 	return { onClick, onKeyDown }
 }
 
-export function ListBox(props: JSX.IntrinsicElements["div"]) {
+export function ListBox(props: React.JSX.IntrinsicElements["div"]) {
 	return (
 		<div {...props} role="listbox" tabIndex={0}>
 			{props.children}
@@ -23,7 +23,7 @@ export function ListBox(props: JSX.IntrinsicElements["div"]) {
 	)
 }
 
-export function ListItem(props: JSX.IntrinsicElements["div"] & { item: any; selected: boolean }) {
+export function ListItem(props: React.JSX.IntrinsicElements["div"] & { item: any; selected: boolean }) {
 	return (
 		<div
 			{...props}

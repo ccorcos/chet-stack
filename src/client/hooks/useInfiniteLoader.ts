@@ -6,10 +6,10 @@ const debug = (...args: any[]) => {
 }
 
 export function useInfiniteLoader(args: {
-	scrollRef: React.RefObject<HTMLElement>
+	scrollRef: React.RefObject<HTMLElement | HTMLDivElement | null>
 	/** References elements in the scroller so we can preserve scroll position. */
-	firstRef: React.RefObject<HTMLElement>
-	lastRef: React.RefObject<HTMLElement>
+	firstRef: React.RefObject<HTMLElement | HTMLDivElement | null>
+	lastRef: React.RefObject<HTMLElement | HTMLDivElement | null>
 
 	/** The query can contain more data than just this */
 	query: { limit: number; reverse: boolean }
@@ -61,7 +61,7 @@ export function useInfiniteLoader(args: {
  * as well, this can become relevant when scrolling from large items to smaller items.
  */
 function useLimitAdjuster(args: {
-	scrollRef: React.RefObject<HTMLElement>
+	scrollRef: React.RefObject<HTMLElement | HTMLDivElement | null>
 	currentLimit: number
 	resultCount: number
 	desiredScreens: number
@@ -106,9 +106,9 @@ function computeDesiredLimit(args: {
  * data is only used to trigger React effect deps.
  */
 function usePreserveScrollPosition(args: {
-	scrollRef: React.RefObject<HTMLElement>
-	firstRef: React.RefObject<HTMLElement>
-	lastRef: React.RefObject<HTMLElement>
+	scrollRef: React.RefObject<HTMLElement | HTMLDivElement | null>
+	firstRef: React.RefObject<HTMLElement | HTMLDivElement | null>
+	lastRef: React.RefObject<HTMLElement | HTMLDivElement | null>
 	data: any
 }) {
 	const { scrollRef, firstRef, lastRef, data } = args
@@ -163,7 +163,7 @@ export function pickAnchor<T>(list: T[], dir: "up" | "down", limit: number) {
 }
 
 function useScrollLoading(args: {
-	scrollRef: React.RefObject<HTMLElement>
+	scrollRef: React.RefObject<HTMLElement | HTMLDivElement | null>
 	query: { limit: number; reverse: boolean }
 	resultCount: number
 	desiredScreens: number

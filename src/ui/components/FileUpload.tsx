@@ -73,7 +73,7 @@ export function UploadPreview(props: Upload) {
 }
 
 export function FileUploadDropZone(
-	props: JSX.IntrinsicElements["div"] & {
+	props: React.JSX.IntrinsicElements["div"] & {
 		selected?: boolean
 	}
 ) {
