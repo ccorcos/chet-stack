@@ -187,7 +187,7 @@ export function useDraggableList(args: {
 			)
 
 			element.style.transform = `translate(${x}px, ${y}px)`
-			element.style.zIndex = draggingZIndex?.toString() ?? ""
+			element.style.zIndex = "1" // Place above its siblings.
 
 			// Find the closest drop position.
 			const hoverRect: Rect = {
