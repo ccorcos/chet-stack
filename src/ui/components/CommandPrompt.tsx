@@ -1,7 +1,6 @@
+import type { Command } from "client/services/Command"
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-
-import { Command } from "client/services/Command"
 import { displayShortcut } from "../helpers/shortcut"
 import { useClampedState } from "../hooks/useClampedState"
 import { useFuzzyMatch2 } from "../hooks/useFuzzyMatch"

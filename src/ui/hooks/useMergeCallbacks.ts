@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { mergeEvents } from "ui/helpers/mergeEvents"
+import { mergeEvents } from "../helpers/mergeEvents"
 
 export function useMergeCallbacks<T extends Event | React.UIEvent>(
 	...callbacks: ((event: T) => void)[]

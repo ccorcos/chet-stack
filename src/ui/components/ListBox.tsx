@@ -1,6 +1,6 @@
 import React from "react"
-import { useMergeCallbacks } from "ui/hooks/useMergeCallbacks"
 import { useKeyboardArrowFocus } from "../hooks/useKeyboardArrowFocus"
+import { useMergeCallbacks } from "../hooks/useMergeCallbacks"
 import { useSelectableList } from "../hooks/useSelectableList"
 
 export function useListBox<T>(args: {

@@ -1,5 +1,5 @@
 import React from "react"
-import { useOnline } from "ui/hooks/useOnline"
+import { useOnline } from "../hooks/useOnline"
 import { Badge } from "./Badge"
 
 export function OfflineBadge() {

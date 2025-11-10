@@ -1,7 +1,7 @@
 import { isEqual } from "lodash-es"
 import { useMemo, useRef, useState } from "react"
 import { Tuple } from "shared/database/types"
-import { pickAnchor, useInfiniteLoader } from "../../ui/hooks/useInfiniteLoader"
+import { pickAnchor, useInfiniteLoader } from "ui/hooks/useInfiniteLoader"
 import { useList } from "./useDatabase"
 
 type Cursor = { prefix: Tuple; anchor: Tuple; limit: number; reverse: boolean }

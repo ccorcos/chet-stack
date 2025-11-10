@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from "react"
-import { useRefCurrent } from "ui/hooks/useRefCurrent"
+import { useRefCurrent } from "./useRefCurrent"
 
 const debug = (...args: any[]) => {
 	//	console.log(...args)

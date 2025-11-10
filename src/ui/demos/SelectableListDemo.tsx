@@ -1,6 +1,6 @@
 import React, { useState } from "react"
-import { useMergeCallbacks } from "ui/hooks/useMergeCallbacks"
 import { useKeyboardArrowFocus } from "../hooks/useKeyboardArrowFocus"
+import { useMergeCallbacks } from "../hooks/useMergeCallbacks"
 import { useSelectableList } from "../hooks/useSelectableList"
 
 const initialList = [...Array(12)].map((_, i) => `Item ${i + 1} `)
