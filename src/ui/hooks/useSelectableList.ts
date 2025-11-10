@@ -1,7 +1,7 @@
 import { isEqual } from "lodash-es"
 import { useCallback, useRef } from "react"
+import { isShortcut } from "../helpers/shortcut"
 import { useRefCurrent } from "./useRefCurrent"
-import { isShortcut } from "./useShortcut"
 
 /** Listen to the list container element, not the individual items. */
 export function useSelectableList<T>(args: {

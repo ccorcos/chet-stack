@@ -2,7 +2,7 @@ import { codec } from "shared/database/Codec"
 import { InMemoryBaseOKV } from "shared/database/InMemoryBaseOKV"
 import { tupleDb } from "shared/database/TupleDb"
 import { Tuple, TupleDb } from "shared/database/types"
-import { normalizeKeyboardShortcut, normalizeShortcut } from "ui/hooks/useShortcut"
+import { normalizeKeyboardShortcut, normalizeShortcut } from "ui/helpers/shortcut"
 
 /** 0 is highest priority. */
 type Priority = 0 | 1 | 2

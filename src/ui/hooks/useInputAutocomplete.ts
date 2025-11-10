@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import { isShortcut } from "./useShortcut"
+import { isShortcut } from "../helpers/shortcut"
 
 /** Handle keyboard select for list of items. */
 export function useInputAutocomplete<T>(props: {

@@ -1,6 +1,6 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { FuzzyMatch, fuzzyMatch } from "shared/fuzzyMatch"
-import { isShortcut } from "../hooks/useShortcut"
+import { isShortcut } from "../helpers/shortcut"
 import { Button } from "./Button"
 import { FuzzyString } from "./FuzzyString"
 import { Input } from "./Input"

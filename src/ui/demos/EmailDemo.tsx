@@ -10,8 +10,8 @@ import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../compon
 import { ListBox, ListItem, useListBox } from "../components/ListBox"
 import { MenuItem } from "../components/MenuItem"
 import { Popup, PopupFrame } from "../components/Popup"
+import { isShortcut } from "../helpers/shortcut"
 import { useInputFocus } from "../hooks/useInputFocus"
-import { isShortcut } from "../hooks/useShortcut"
 
 export function EmailDemo() {
 	const [username, setUsername] = useState<string | undefined>("chet")

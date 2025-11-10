@@ -1,14 +1,14 @@
 import React from "react"
+import { useRefCurrent } from "./useRefCurrent"
 
-export function useDomEvent(
-	event: string,
-	callback: (e: Event) => void,
-	deps: React.DependencyList = []
-) {
+export function useDomEvent(eventName: string, callback: (e: Event) => void) {
+	const callbackRef = useRefCurrent(callback)
+
 	React.useEffect(() => {
-		document.addEventListener(event, callback)
+		const fn = (event) => callbackRef.current(event)
+		document.addEventListener(eventName, fn)
 		return () => {
-			document.removeEventListener(event, callback)
+			document.removeEventListener(eventName, fn)
 		}
-	}, deps)
+	}, [])
 }

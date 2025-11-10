@@ -1,7 +1,7 @@
 import { useDraggableList } from "client/hooks/useDraggableList"
 import { isEqual } from "lodash-es"
 import React from "react"
-import { isShortcut } from "../hooks/useShortcut"
+import { isShortcut } from "../helpers/shortcut"
 import { Button } from "./Button"
 import { ListBox, ListItem, useListBox } from "./ListBox"
 
