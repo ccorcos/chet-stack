@@ -1,6 +1,6 @@
 import { omit } from "lodash-es"
-import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
+import { describe, it } from "vitest"
 import { Cache, computeCachedRange, keyToRange } from "./Cache"
 import { Range } from "./Range"
 import { ListArgs } from "./types"
