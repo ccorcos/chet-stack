@@ -6,15 +6,18 @@ import { Input } from "ui/components/Input"
 import { ContentLayout, Layout, LeftPanelLayout } from "ui/components/Layout"
 import { ListBox, ListItem, useListBox } from "ui/components/ListBox"
 import { MenuItem } from "ui/components/MenuItem"
-import * as demos from "ui/demos"
+import * as uiDemos from "ui/demos"
 import { useCounter } from "ui/hooks/useCounter"
 import { useFuzzyMatch } from "ui/hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "ui/hooks/useInputAutocomplete"
 import { useKeyboardMode } from "ui/hooks/useKeyboardMode"
 import { useRefCurrent } from "ui/hooks/useRefCurrent"
 import { useShortcut } from "ui/hooks/useShortcut"
+import * as clientDemos from "../demos"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
+
+const demos = { ...uiDemos, ...clientDemos }
 
 export function Design(props: { params: Record<string, string> }) {
 	const { router } = useClientEnvironment()

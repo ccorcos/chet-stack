@@ -5,9 +5,9 @@ export function usePropRef<T>(propRef?: Ref<T>): RefObject<T | null> {
 	const innerRef = useRef<T>(null)
 	const propRefRef = useRefCurrent(propRef)
 
-	let ref: RefObject<T | null> | undefined
-	if (ref) {
-		ref = {
+	const proxyRef = useRef<RefObject<T | null>>(null)
+	if (!proxyRef.current) {
+		proxyRef.current = {
 			get current() {
 				return innerRef.current
 			},
@@ -18,7 +18,7 @@ export function usePropRef<T>(propRef?: Ref<T>): RefObject<T | null> {
 		}
 	}
 
-	return ref!
+	return proxyRef.current!
 }
 
 function setRef<T>(target: Ref<T> | undefined, value: T | null): void {
