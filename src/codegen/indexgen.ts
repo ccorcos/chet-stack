@@ -48,8 +48,16 @@ export async function generateIndex(dirPath: string): Promise<void> {
 }
 
 async function writeFileIfChanged(filePath: string, contents: string): Promise<void> {
-	const existingContents = await fs.readFile(filePath, "utf8")
-	if (existingContents === contents) return
+	const fileExists = await fs
+		.access(filePath)
+		.then(() => true)
+		.catch(() => false)
+
+	if (fileExists) {
+		const existingContents = await fs.readFile(filePath, "utf8")
+		if (existingContents === contents) return
+	}
+
 	console.log(`> write ${path.relative(process.cwd(), filePath)}`)
 	await fs.writeFile(filePath, contents)
 }

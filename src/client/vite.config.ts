@@ -1,12 +1,12 @@
 import react from "@vitejs/plugin-react"
-import { path } from "tools/path"
 import { defineConfig } from "vite"
+import tsConfigPaths from "vite-tsconfig-paths"
 
 export default defineConfig({
-	plugins: [react()],
+	plugins: [react(), tsConfigPaths()],
 	build: {
 		emptyOutDir: true,
-		outDir: path("build/client"),
+		outDir: "../../build/client",
 	},
 })
 
