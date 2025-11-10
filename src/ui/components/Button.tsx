@@ -1,10 +1,9 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
 import React from "react"
 
 export const vPadding = 4
 export const hPadding = 8
 
-function _Button(props: JSX.IntrinsicElements["button"]) {
+export function Button(props: JSX.IntrinsicElements["button"]) {
 	return (
 		<button
 			{...props}
@@ -20,19 +19,12 @@ function _Button(props: JSX.IntrinsicElements["button"]) {
 	)
 }
 
-export const Button = passthroughRef(_Button)
+export function PrimaryButton(props: JSX.IntrinsicElements["button"]) {
+	return <Button {...props} className="primary" />
+}
 
-export const PrimaryButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
-	return _Button({
-		...props,
-		className: "primary",
-	})
-})
-
-export const NakedButton = passthroughRef((props: JSX.IntrinsicElements["button"]) => {
-	return _Button({
-		...props,
-		className: "naked",
-		style: { borderColor: "transparent", ...props.style },
-	})
-})
+export function NakedButton(props: JSX.IntrinsicElements["button"]) {
+	return (
+		<Button {...props} className="naked" style={{ borderColor: "transparent", ...props.style }} />
+	)
+}

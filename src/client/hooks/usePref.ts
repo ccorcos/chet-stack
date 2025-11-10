@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
+import { Store, useStore } from "ui/hooks/useStore"
 import { useClientEnvironment } from "../services/ClientEnvironment"
-import { Store, useStore } from "./useStore"
 
 export function usePref<T = any>(key: string, defaultValue: T): [T, (value: T) => void] {
 	const { prefs } = useClientEnvironment()

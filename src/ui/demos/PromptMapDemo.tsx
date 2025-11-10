@@ -1,5 +1,4 @@
 import { useGet, useWrite } from "client/hooks/useDatabase"
-import { useRefCurrent } from "client/hooks/useRefCurrent"
 import { useClientEnvironment } from "client/services/ClientEnvironment"
 import { isEqual } from "lodash-es"
 import pLimit from "p-limit"
@@ -8,6 +7,7 @@ import { Tuple } from "shared/database/types"
 import { randomId } from "shared/randomId"
 import { DataList } from "../components/DataList"
 import { Layout, LeftPanelLayout } from "../components/Layout"
+import { useRefCurrent } from "../hooks/useRefCurrent"
 
 export function Spreadsheet(props: { id: Tuple }) {
 	const result = useGet(props.id) || []

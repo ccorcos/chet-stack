@@ -1,8 +1,6 @@
 // https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083dfc1cd0c9d0465?pvs=4
 
 import { useList, useWrite } from "client/hooks/useDatabase"
-import { useInputFocus } from "client/hooks/useInputFocus"
-import { isShortcut } from "client/hooks/useShortcut"
 import React, { useCallback, useRef, useState } from "react"
 import { randomId } from "shared/randomId"
 import { Badge } from "../components/Badge"
@@ -12,6 +10,8 @@ import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../compon
 import { ListBox, ListItem, useListBox } from "../components/ListBox"
 import { MenuItem } from "../components/MenuItem"
 import { Popup, PopupFrame } from "../components/Popup"
+import { useInputFocus } from "../hooks/useInputFocus"
+import { isShortcut } from "../hooks/useShortcut"
 
 export function EmailDemo() {
 	const [username, setUsername] = useState<string | undefined>("chet")

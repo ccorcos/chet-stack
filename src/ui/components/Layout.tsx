@@ -1,4 +1,3 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
 import React, { useCallback } from "react"
 
 const GAP = 1
@@ -20,9 +19,7 @@ function useIsVisible(show: boolean) {
 	return { isVisible, handleTransitionEnd }
 }
 
-export const TopbarLayout = passthroughRef(_TopbarLayout)
-
-function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -60,9 +57,7 @@ function _TopbarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean })
 	)
 }
 
-export const BottombarLayout = passthroughRef(_BottombarLayout)
-
-function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -101,9 +96,7 @@ function _BottombarLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean
 	)
 }
 
-export const LeftPanelLayout = passthroughRef(_LeftPanelLayout)
-
-function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 
@@ -141,9 +134,7 @@ function _LeftPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean
 		</div>
 	)
 }
-export const RightPanelLayout = passthroughRef(_RightPanelLayout)
-
-function _RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
+export function RightPanelLayout(props: JSX.IntrinsicElements["div"] & { show?: boolean }) {
 	const { show: _show, ...rest } = props
 	const show = _show ?? true
 

@@ -1,8 +1,8 @@
 import React, { useLayoutEffect, useRef, useState } from "react"
 import { FuzzyMatch } from "shared/fuzzyMatch"
 
-import { useFuzzyMatch } from "client/hooks/useFuzzyMatch"
-import { useInputAutocomplete } from "client/hooks/useInputAutocomplete"
+import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
+import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
 import { NakedButton } from "./Button"
 import { FuzzyString } from "./FuzzyString"
 import { NakedInput } from "./Input"

@@ -1,9 +1,8 @@
 import { Placement, createPopper } from "@popperjs/core"
-import { passthroughRef } from "client/helpers/passthroughRef"
 import { dismissZIndex, overlayZIndex } from "client/helpers/zIndexHelpers"
-import { useShortcut } from "client/hooks/useShortcut"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
+import { useShortcut } from "../hooks/useShortcut"
 
 export function Popup(props: {
 	open: boolean
@@ -85,7 +84,7 @@ export function Popup(props: {
 		)
 }
 
-export const PopupFrame = passthroughRef((props: React.HTMLProps<HTMLDivElement>) => {
+export function PopupFrame(props: React.HTMLProps<HTMLDivElement>) {
 	return (
 		<div
 			{...props}
@@ -99,4 +98,4 @@ export const PopupFrame = passthroughRef((props: React.HTMLProps<HTMLDivElement>
 			}}
 		/>
 	)
-})
+}

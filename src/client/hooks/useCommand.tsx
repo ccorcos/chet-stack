@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react"
+import { useRefCurrent } from "ui/hooks/useRefCurrent"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { Command } from "../services/Command"
-import { useRefCurrent } from "./useRefCurrent"
 
 function useStableCallbacks<O extends { [key: string]: any }>(obj: O) {
 	const stableObj = useRef<any>({})

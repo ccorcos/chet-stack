@@ -1,8 +1,7 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
-import { useAsync } from "client/hooks/useAsync"
 import React, { useState } from "react"
 import { DeferredPromise } from "shared/DeferredPromise"
 import { randomId } from "shared/randomId"
+import { useAsync } from "../hooks/useAsync"
 
 type Upload = {
 	id: string
@@ -73,48 +72,46 @@ export function UploadPreview(props: Upload) {
 	)
 }
 
-export const FileUploadDropZone = passthroughRef(
-	(
-		props: JSX.IntrinsicElements["div"] & {
-			selected?: boolean
-		}
-	) => {
-		const [isDragging, setIsDragging] = useState(false)
-
-		const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-			e.preventDefault()
-			setIsDragging(true)
-		}
-
-		const handleDragExit = (e: React.DragEvent<HTMLDivElement>) => {
-			e.preventDefault()
-			setIsDragging(false)
-		}
-
-		const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-			e.preventDefault()
-		}
-
-		const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-			setIsDragging(false)
-			props.onDrop?.(e)
-		}
-
-		return (
-			<div
-				{...props}
-				onDragEnter={handleDragEnter}
-				onDragExit={handleDragExit}
-				onDragOver={handleDragOver}
-				onDrop={handleDrop}
-				style={{
-					border: isDragging ? "3px dashed var(--primary0)" : "3px solid transparent",
-					...props.style,
-				}}
-			/>
-		)
+export function FileUploadDropZone(
+	props: JSX.IntrinsicElements["div"] & {
+		selected?: boolean
 	}
-)
+) {
+	const [isDragging, setIsDragging] = useState(false)
+
+	const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault()
+		setIsDragging(true)
+	}
+
+	const handleDragExit = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault()
+		setIsDragging(false)
+	}
+
+	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault()
+	}
+
+	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+		setIsDragging(false)
+		props.onDrop?.(e)
+	}
+
+	return (
+		<div
+			{...props}
+			onDragEnter={handleDragEnter}
+			onDragExit={handleDragExit}
+			onDragOver={handleDragOver}
+			onDrop={handleDrop}
+			style={{
+				border: isDragging ? "3px dashed var(--primary0)" : "3px solid transparent",
+				...props.style,
+			}}
+		/>
+	)
+}
 
 async function uploadFile(file: File, url: string, onProgress: (progress: number) => void) {
 	const xhr = new XMLHttpRequest()

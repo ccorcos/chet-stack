@@ -1,9 +1,8 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
-import { useRefCurrent } from "client/hooks/useRefCurrent"
 import { Schema } from "prosemirror-model"
 import { EditorState } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import React, { useEffect, useLayoutEffect, useRef } from "react"
+import { useRefCurrent } from "../hooks/useRefCurrent"
 
 // Create a schema that only allows plain text
 const plainTextSchema = new Schema({
@@ -17,15 +16,13 @@ const plainTextSchema = new Schema({
 	},
 })
 
-export const ContentEditableInput = passthroughRef(_ContentEditableInput)
-
 type NodeJSON = {
 	type: string
 	text?: string
 	content?: Array<NodeJSON>
 }
 
-function _ContentEditableInput(
+export function ContentEditableInput(
 	props: Omit<React.HTMLProps<HTMLDivElement>, "value" | "onChange"> & {
 		value: string
 		onChange?: (value: string) => void

@@ -1,8 +1,8 @@
 import { clamp, minBy } from "lodash-es"
 import { useCallback, useEffect, useState } from "react"
+import { useRefCurrent } from "ui/hooks/useRefCurrent"
+import { useShortcut } from "ui/hooks/useShortcut"
 import { draggingZIndex } from "../helpers/zIndexHelpers"
-import { useRefCurrent } from "./useRefCurrent"
-import { useShortcut } from "./useShortcut"
 
 type Rect = { top: number; left: number; width: number; height: number }
 

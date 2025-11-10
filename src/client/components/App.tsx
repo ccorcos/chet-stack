@@ -8,7 +8,7 @@ import {
 	RightPanelLayout,
 	TopbarLayout,
 } from "ui/components/Layout"
-import { useShortcut } from "../hooks/useShortcut"
+import { useShortcut } from "ui/hooks/useShortcut"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 import { useRouterState } from "../services/Router"
 

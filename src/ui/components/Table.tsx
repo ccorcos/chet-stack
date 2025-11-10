@@ -1,11 +1,8 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
-import { useHover } from "client/hooks/useHover"
 import React, { useState } from "react"
+import { useHover } from "../hooks/useHover"
 
-export const Table = passthroughRef(_Table)
-
-function _Table(props: {
-	ref?: React.RefObject<HTMLDivElement>
+export function Table(props: {
+	ref?: React.Ref<HTMLDivElement>
 	gap: number
 	columnWidths: number[]
 	setColumnWidths: (value: number[]) => void
@@ -32,10 +29,8 @@ function _Table(props: {
 	)
 }
 
-export const HeaderCell = passthroughRef(_HeaderCell)
-
-function _HeaderCell(props: {
-	ref?: React.RefObject<HTMLDivElement>
+export function HeaderCell(props: {
+	ref?: React.Ref<HTMLDivElement>
 	width: number
 	minWidth: number
 	setWidth: (value: number) => void

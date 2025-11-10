@@ -1,4 +1,3 @@
-import { passthroughRef } from "client/helpers/passthroughRef"
 import { withStyle } from "client/helpers/withStyle"
 import React from "react"
 import { hPadding, vPadding } from "./Button"
@@ -6,7 +5,7 @@ import { hPadding, vPadding } from "./Button"
 // TODO: lets use css here with colors.
 // Also dark mode force.
 
-function _Input(props: JSX.IntrinsicElements["input"]) {
+export function Input(props: JSX.IntrinsicElements["input"]) {
 	return (
 		<input
 			{...props}
@@ -23,8 +22,6 @@ function _Input(props: JSX.IntrinsicElements["input"]) {
 		/>
 	)
 }
-
-export const Input = passthroughRef(_Input)
 
 // export const NakedInput = passthroughRef((props: JSX.IntrinsicElements["input"]) => {
 // 	return _Input({

@@ -41,7 +41,6 @@ const disallowedDependencies = [
 	{ from: "client", to: "server" },
 	{ from: "shared", to: "server" },
 	{ from: "lint", to: "server" },
-	{ from: "lint", to: "tools" },
 ]
 const disallowedImports = await findPackageDeps({ srcDir, disallowedDependencies, verbose: false })
 
