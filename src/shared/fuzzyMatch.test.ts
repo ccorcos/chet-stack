@@ -1,5 +1,5 @@
+import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { describe, it } from "vitest"
 import { fuzzyMatch } from "./fuzzyMatch"
 
 describe("FuzzyMatch", () => {

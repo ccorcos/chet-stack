@@ -1,5 +1,5 @@
+import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { describe, it } from "vitest"
 import * as t from "../DataType"
 import { codec } from "./Codec"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"

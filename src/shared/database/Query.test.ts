@@ -1,5 +1,5 @@
+import { describe, it } from "mocha"
 import assert from "node:assert"
-import { describe, it } from "vitest"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { query } from "./Query"
 import { queryNodeVm } from "./QueryNodeVm"
