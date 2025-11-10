@@ -71,7 +71,6 @@ export class Transaction<K, V> implements BaseOKVTx<K, V> {
 	commit = () => {
 		if (this.committed) throw new Error("Transaction already committed")
 		this.committed = true
-		console.log("HERE")
 		this.db.write({
 			set: this.cache.pending.set.list(),
 			delete: this.cache.pending.delete.list().map(({ key }) => key),

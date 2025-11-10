@@ -225,6 +225,6 @@ describe("DataType", () => {
 		t.is(t.dataType, {})
 
 		// The error message here should not cause infinite inspect recursion.
-		console.log(t.inspect(t.dataTypeDataType))
+		t.inspect(t.dataTypeDataType)
 	})
 })
