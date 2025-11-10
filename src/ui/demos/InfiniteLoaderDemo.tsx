@@ -1,6 +1,6 @@
-import { useInfiniteLoader } from "client/hooks/useInfiniteLoader"
 import React, { Suspense, useMemo, useRef, useState, useTransition } from "react"
 import { sleep } from "shared/sleep"
+import { useInfiniteLoader } from "ui/hooks/useInfiniteLoader"
 import { Input } from "../components/Input"
 import { useLoader } from "../hooks/useLoader"
 

@@ -1,5 +1,5 @@
-import { useMergeCallbacks } from "client/hooks/useMergeCallbacks"
 import React from "react"
+import { useMergeCallbacks } from "ui/hooks/useMergeCallbacks"
 import { useKeyboardArrowFocus } from "../hooks/useKeyboardArrowFocus"
 import { useSelectableList } from "../hooks/useSelectableList"
 
