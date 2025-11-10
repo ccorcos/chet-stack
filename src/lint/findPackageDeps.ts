@@ -562,8 +562,10 @@ export async function findPackageDeps(args: {
 		console.log("\n=== Package Dependency Summary ===")
 		displayPackageDependencySummary({ packages, depMap, violationMaps })
 
-		console.log("\n=== Package Dependencies ===")
-		displayPackageDependencies({ packages, depMap, violations, violationMaps, verbose })
+		if (verbose) {
+			console.log("\n=== Package Dependencies ===")
+			displayPackageDependencies({ packages, depMap, violations, violationMaps, verbose })
+		}
 	}
 
 	return violations.length

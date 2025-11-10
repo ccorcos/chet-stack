@@ -1,7 +1,7 @@
-import { Subspace } from "client/components/Subspace"
-import { useGet, useWrite } from "client/hooks/useDatabase"
 import React, { useState } from "react"
-import { DataList } from "../components/DataList"
+import { DataList } from "ui/components/DataList"
+import { Subspace } from "../components/Subspace"
+import { useGet, useWrite } from "../hooks/useDatabase"
 
 // 1. Fractional indexing
 // 2. Linked list

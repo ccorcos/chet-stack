@@ -1,13 +1,13 @@
-import { Subspace } from "client/components/Subspace"
-import { useWrite } from "client/hooks/useDatabase"
-import { useInfiniteList } from "client/hooks/useInfiniteList"
-import { usePref } from "client/hooks/usePref"
-import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React, { Suspense } from "react"
 import { setParam } from "shared/routeHelpers"
-import { ContentEditableInput } from "../components/ContentEditableInput"
-import { Input } from "../components/Input"
-import { HeaderCell, Table } from "../components/Table"
+import { ContentEditableInput } from "ui/components/ContentEditableInput"
+import { Input } from "ui/components/Input"
+import { HeaderCell, Table } from "ui/components/Table"
+import { Subspace } from "../components/Subspace"
+import { useWrite } from "../hooks/useDatabase"
+import { useInfiniteList } from "../hooks/useInfiniteList"
+import { usePref } from "../hooks/usePref"
+import { useClientEnvironment } from "../services/ClientEnvironment"
 
 const gap = 12
 const minWidth = 150

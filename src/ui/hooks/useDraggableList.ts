@@ -1,8 +1,10 @@
 import { clamp, minBy } from "lodash-es"
 import { useCallback, useEffect, useState } from "react"
-import { useRefCurrent } from "ui/hooks/useRefCurrent"
-import { useShortcut } from "ui/hooks/useShortcut"
-import { draggingZIndex } from "../helpers/zIndexHelpers"
+import { useRefCurrent } from "./useRefCurrent"
+import { useShortcut } from "./useShortcut"
+
+// TODO: can we get rid of this?
+const draggingZIndex: number | undefined = undefined // 101
 
 type Rect = { top: number; left: number; width: number; height: number }
 
@@ -185,7 +187,7 @@ export function useDraggableList(args: {
 			)
 
 			element.style.transform = `translate(${x}px, ${y}px)`
-			element.style.zIndex = draggingZIndex.toString()
+			element.style.zIndex = draggingZIndex?.toString() ?? ""
 
 			// Find the closest drop position.
 			const hoverRect: Rect = {

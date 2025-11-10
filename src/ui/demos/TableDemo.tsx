@@ -1,9 +1,12 @@
-import { usePref } from "client/hooks/usePref"
 import React from "react"
 import { HeaderCell, Table } from "../components/Table"
+import { useLocalStorageState } from "../hooks/useLocalStorageState"
 
 export function TableDemo() {
-	const [columnWidths, setColumnWidths] = usePref("TableDemo:columnWidths", [100, 200, 300])
+	const [columnWidths, setColumnWidths] = useLocalStorageState(
+		"TableDemo:columnWidths",
+		[100, 200, 300]
+	)
 
 	const gap = 12
 	const minWidth = 100

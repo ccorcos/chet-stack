@@ -1,17 +1,17 @@
 // https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083dfc1cd0c9d0465?pvs=4
 
-import { useList, useWrite } from "client/hooks/useDatabase"
 import React, { useCallback, useRef, useState } from "react"
 import { randomId } from "shared/randomId"
-import { Badge } from "../components/Badge"
-import { Button, PrimaryButton } from "../components/Button"
-import { Input } from "../components/Input"
-import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "../components/Layout"
-import { ListBox, ListItem, useListBox } from "../components/ListBox"
-import { MenuItem } from "../components/MenuItem"
-import { Popup, PopupFrame } from "../components/Popup"
-import { isShortcut } from "../helpers/shortcut"
-import { useInputFocus } from "../hooks/useInputFocus"
+import { Badge } from "ui/components/Badge"
+import { Button, PrimaryButton } from "ui/components/Button"
+import { Input } from "ui/components/Input"
+import { ContentLayout, Layout, RightPanelLayout, TopbarLayout } from "ui/components/Layout"
+import { ListBox, ListItem, useListBox } from "ui/components/ListBox"
+import { MenuItem } from "ui/components/MenuItem"
+import { Popup, PopupFrame } from "ui/components/Popup"
+import { isShortcut } from "ui/helpers/shortcut"
+import { useInputFocus } from "ui/hooks/useInputFocus"
+import { useList, useWrite } from "../hooks/useDatabase"
 
 export function EmailDemo() {
 	const [username, setUsername] = useState<string | undefined>("chet")

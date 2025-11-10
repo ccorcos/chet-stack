@@ -1,6 +1,3 @@
-import { Subspace } from "client/components/Subspace"
-import { useGet, useList } from "client/hooks/useDatabase"
-import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React, { useLayoutEffect, useState } from "react"
 import {
 	applyRecordDbOperation,
@@ -11,11 +8,14 @@ import {
 import { tupleTx } from "shared/database/TupleDb"
 import * as t from "shared/DataType"
 import { randomId } from "shared/randomId"
-import { Button } from "../components/Button"
-import { ComboBoxSelect } from "../components/ComboBox"
-import { Input } from "../components/Input"
-import { ContentLayout, Layout, LeftPanelLayout } from "../components/Layout"
-import { ListBox, ListItem, useListBox } from "../components/ListBox"
+import { Button } from "ui/components/Button"
+import { ComboBoxSelect } from "ui/components/ComboBox"
+import { Input } from "ui/components/Input"
+import { ContentLayout, Layout, LeftPanelLayout } from "ui/components/Layout"
+import { ListBox, ListItem, useListBox } from "ui/components/ListBox"
+import { Subspace } from "../components/Subspace"
+import { useGet, useList } from "../hooks/useDatabase"
+import { useClientEnvironment } from "../services/ClientEnvironment"
 
 export function RecordDbDemo() {
 	return (

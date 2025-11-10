@@ -1,7 +1,10 @@
-import { dismissZIndex, overlayZIndex } from "client/helpers/zIndexHelpers"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { useShortcut } from "../hooks/useShortcut"
+
+// TODO: can we get rid of these?
+const dismissZIndex = undefined // 99
+const overlayZIndex = undefined //100
 
 export function Overlay(props: {
 	anchor: HTMLElement
