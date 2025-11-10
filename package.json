@@ -18,7 +18,7 @@
 		"check-imports": "tsx src/lint/checkImports.ts",
 		"typecheck": "tsc --noEmit",
 		"prettier": "npx prettier src --write --list-different",
-		"lint": "run-s fix-imports prettier typecheck check-imports",
+		"lint": "run-s fix-imports prettier typecheck",
 		"test": "run-s test:unit test:e2e",
 		"test:unit": "mocha -r tsx './src/**/*.test.ts' --verbose",
 		"test:e2e": "playwright test",

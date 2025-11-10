@@ -1,6 +1,6 @@
-import { toast } from "client/helpers/toast"
 import { useDraggableList } from "client/hooks/useDraggableList"
 import React, { useState } from "react"
+import { toast } from "../helpers/toast"
 
 const initialList = [...Array(12)].map((_, i) => `Item ${i + 1} ` + "-".repeat(i))
 

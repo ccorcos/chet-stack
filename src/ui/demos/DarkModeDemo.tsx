@@ -5,9 +5,9 @@
 //   /* no color variables here */
 // }
 
-import { css } from "client/helpers/css"
 import React, { useEffect, useState } from "react"
 import { ComboBoxSelect } from "../components/ComboBox"
+import { css } from "../helpers/css"
 
 css(`
 :root {

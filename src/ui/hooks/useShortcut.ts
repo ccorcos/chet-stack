@@ -3,7 +3,7 @@
 // For example: "Shift-]" instead of "}
 
 import { useEffect } from "react"
-import { isShortcut } from "ui/helpers/shortcut"
+import { isShortcut } from "../helpers/shortcut"
 import { useRefCurrent } from "./useRefCurrent"
 
 type KeyboardEventHandler = (event: KeyboardEvent) => void

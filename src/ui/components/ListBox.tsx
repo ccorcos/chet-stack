@@ -23,7 +23,9 @@ export function ListBox(props: React.JSX.IntrinsicElements["div"]) {
 	)
 }
 
-export function ListItem(props: React.JSX.IntrinsicElements["div"] & { item: any; selected: boolean }) {
+export function ListItem(
+	props: React.JSX.IntrinsicElements["div"] & { item: any; selected: boolean }
+) {
 	return (
 		<div
 			{...props}

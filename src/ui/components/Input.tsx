@@ -4,7 +4,10 @@ import { hPadding, vPadding } from "./Button"
 // TODO: lets use css here with colors.
 // Also dark mode force.
 
-export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => {
+export const Input = React.forwardRef<
+	HTMLInputElement,
+	React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => {
 	return (
 		<input
 			{...props}
@@ -23,7 +26,10 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
 	)
 })
 
-export const NakedInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => {
+export const NakedInput = React.forwardRef<
+	HTMLInputElement,
+	React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => {
 	return (
 		<input
 			{...props}
