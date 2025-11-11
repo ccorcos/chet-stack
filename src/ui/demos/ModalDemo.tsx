@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { Button } from "../components/Button"
 import { Modal, ModalFrame } from "../components/Modal"
-import { useGlobalShortcut } from "../hooks/useShortcut"
+import { useWindowShortcuts } from "../hooks/useShortcut"
 
 export function ModalDemo() {
 	const [isOpen, setIsOpen] = useState(false)
@@ -9,7 +9,9 @@ export function ModalDemo() {
 	const open = () => setIsOpen(true)
 	const close = () => setIsOpen(false)
 
-	useGlobalShortcut("escape", close)
+	useWindowShortcuts({
+		escape: close,
+	})
 	return (
 		<div>
 			<div>Modal</div>

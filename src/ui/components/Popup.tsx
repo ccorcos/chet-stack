@@ -2,7 +2,7 @@ import { Placement, createPopper } from "@popperjs/core"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { usePortal } from "../hooks/usePortal"
-import { useGlobalShortcut } from "../hooks/useShortcut"
+import { useWindowShortcuts } from "../hooks/useShortcut"
 
 // TODO: can we get rid of these?
 const dismissZIndex = undefined // 99
@@ -49,8 +49,9 @@ export function Popup(props: {
 
 	const { onDismiss } = props
 
-	// TODO: could return keydown to handle this.
-	useGlobalShortcut("escape", () => onDismiss?.())
+	useWindowShortcuts({
+		escape: onDismiss,
+	})
 
 	// Render the portal
 	if (!props.open) return false

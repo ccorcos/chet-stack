@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { createPortal } from "react-dom"
 import { usePortal } from "../hooks/usePortal"
-import { useGlobalShortcut } from "../hooks/useShortcut"
+import { useWindowShortcuts } from "../hooks/useShortcut"
 
 const dismissZIndex = undefined // 99
 const overlayZIndex = undefined //100
@@ -22,8 +22,9 @@ export function Overlay(props: {
 	// Measure the anchor
 	const rect = useMemo(() => anchor.getBoundingClientRect(), [anchor])
 
-	// TODO: could return keydown to handle this.
-	useGlobalShortcut("escape", () => onDismiss?.())
+	useWindowShortcuts({
+		escape: onDismiss,
+	})
 
 	// Render the portal
 	return createPortal(

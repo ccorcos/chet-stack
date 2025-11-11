@@ -2,31 +2,35 @@
 // The shift keycode map was removed so we can use Shift as a modifier.
 // For example: "Shift-]" instead of "}
 
-import { useEffect } from "react"
+import { useCallback } from "react"
 import { isShortcut } from "../helpers/shortcut"
 import { useRefCurrent } from "./useRefCurrent"
+import { useWindowEvent } from "./useWindowEvent"
 
-type KeyboardEventHandler = (event: KeyboardEvent) => void
+type ShortcutsArg = {
+	[key: string]: undefined | null | false | (() => void)
+}
 
-// Better API:
-// TODO: const {onKeyDown} = useKeyboardShortcut()
-// TODO: useWindowEvent("keydown", onKeyDown)
+export function useShortcuts(shortcuts: ShortcutsArg) {
+	const shortcutsRef = useRefCurrent(shortcuts)
 
-/** Use with care. Prefer to put listeners on DOM elements to work better with focus. */
-export function useGlobalShortcut(shortcut: string, fn: () => void | false) {
-	const fnRef = useRefCurrent(fn)
-	const shortcutRef = useRefCurrent(shortcut)
-
-	useEffect(() => {
-		const onKeydown: KeyboardEventHandler = (event) => {
-			if (isShortcut(shortcutRef.current, event)) {
-				const response = fnRef.current()
-				if (response !== false) event.preventDefault()
+	const onKeyDown = useCallback((event: KeyboardEvent | React.KeyboardEvent) => {
+		event = event as KeyboardEvent
+		for (const [key, value] of Object.entries(shortcutsRef.current)) {
+			if (!value) continue
+			if (isShortcut(key, event)) {
+				value()
+				event.preventDefault()
+				break
 			}
 		}
-		window.addEventListener("keydown", onKeydown)
-		return () => {
-			window.removeEventListener("keydown", onKeydown)
-		}
 	}, [])
+
+	return { onKeyDown }
+}
+
+/** Use with care. Prefer to put listeners on DOM elements to work better with focus. */
+export function useWindowShortcuts(shortcuts: ShortcutsArg) {
+	const { onKeyDown } = useShortcuts(shortcuts)
+	useWindowEvent("keydown", onKeyDown)
 }

@@ -1,7 +1,7 @@
 import { clamp, minBy } from "lodash-es"
 import { useCallback, useEffect, useState } from "react"
 import { useRefCurrent } from "./useRefCurrent"
-import { useGlobalShortcut } from "./useShortcut"
+import { useWindowShortcuts } from "./useShortcut"
 
 // TODO: can we get rid of this?
 const draggingZIndex: number | undefined = undefined // 101
@@ -277,16 +277,15 @@ export function useDraggableList(args: {
 		return () => window.removeEventListener("pointerup", onMouseUp)
 	}, [])
 
-	// TODO: could return keydown to handle this.
-	useGlobalShortcut("escape", () => {
-		const dragState = dragStateRef.current
-		if (!dragState.mousedown) return false
-
-		if (dragState.dragging) {
-			for (const { element } of dragState.rects) element.style.transform = ""
-		}
-
-		setDragState({ dragging: false, mousedown: false })
+	useWindowShortcuts({
+		escape:
+			dragState.mousedown &&
+			(() => {
+				if (dragState.dragging) {
+					for (const { element } of dragState.rects) element.style.transform = ""
+				}
+				setDragState({ dragging: false, mousedown: false })
+			}),
 	})
 
 	return { onMouseDown, dragState }

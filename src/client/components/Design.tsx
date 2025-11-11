@@ -12,7 +12,7 @@ import { useFuzzyMatch } from "ui/hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "ui/hooks/useInputAutocomplete"
 import { useKeyboardMode } from "ui/hooks/useKeyboardMode"
 import { useRefCurrent } from "ui/hooks/useRefCurrent"
-import { useGlobalShortcut } from "ui/hooks/useShortcut"
+import { useWindowShortcuts } from "ui/hooks/useShortcut"
 import * as clientDemos from "../demos"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -80,8 +80,8 @@ function Sidebar(props: {
 
 	const input = useRef<HTMLInputElement>(null)
 
-	useGlobalShortcut("cmd-p", () => {
-		input.current?.focus()
+	useWindowShortcuts({
+		"cmd-p": () => input.current?.focus(),
 	})
 
 	const filteredItems = useFuzzyMatch({

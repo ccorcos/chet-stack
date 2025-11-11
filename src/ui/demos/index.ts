@@ -1,10 +1,10 @@
 /* WARNING: this file is generated! */
 
+import * as AutocompletePromptDemo from "./AutocompletePromptDemo"
 import * as BadgeDemo from "./BadgeDemo"
 import * as ButtonDemo from "./ButtonDemo"
 import * as CalendarDemo from "./CalendarDemo"
 import * as ColorsDemo from "./ColorsDemo"
-import * as CommandPromptDemo from "./CommandPromptDemo"
 import * as DarkModeDemo from "./DarkModeDemo"
 import * as DataTypeFormDemo from "./DataTypeFormDemo"
 import * as DraggableDemo from "./DraggableDemo"
@@ -27,11 +27,11 @@ import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
 
 export {
+	AutocompletePromptDemo,
 	BadgeDemo,
 	ButtonDemo,
 	CalendarDemo,
 	ColorsDemo,
-	CommandPromptDemo,
 	DarkModeDemo,
 	DataTypeFormDemo,
 	DraggableDemo,

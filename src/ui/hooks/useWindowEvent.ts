@@ -1,12 +1,12 @@
 import { useEffect } from "react"
 import { useRefCurrent } from "./useRefCurrent"
 
-export function useDomEvent<K extends keyof DocumentEventMap>(
-	type: K,
-	listener: (this: Document, ev: DocumentEventMap[K]) => void,
+export function useWindowEvent<K extends keyof WindowEventMap>(
+	eventName: K,
+	callback: (e: WindowEventMap[K]) => void,
 	options?: AddEventListenerOptions
 )
-export function useDomEvent(
+export function useWindowEvent(
 	eventName: string,
 	callback: (e: Event) => void,
 	options?: AddEventListenerOptions
@@ -15,9 +15,9 @@ export function useDomEvent(
 
 	useEffect(() => {
 		const fn = (event) => callbackRef.current(event)
-		document.addEventListener(eventName, fn, options)
+		window.addEventListener(eventName, fn, options)
 		return () => {
-			document.removeEventListener(eventName, fn)
+			window.removeEventListener(eventName, fn)
 		}
 	}, [])
 }

@@ -8,6 +8,7 @@ export function Button(props: React.JSX.IntrinsicElements["button"]) {
 		<button
 			{...props}
 			className={["feedback", props.className].filter(Boolean).join(" ")}
+			tabIndex={0}
 			style={{
 				cursor: "pointer",
 				border: "1px solid var(--bg2)",

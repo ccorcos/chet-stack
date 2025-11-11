@@ -8,7 +8,7 @@ import {
 	RightPanelLayout,
 	TopbarLayout,
 } from "../components/Layout"
-import { useGlobalShortcut } from "../hooks/useShortcut"
+import { useWindowShortcuts } from "../hooks/useShortcut"
 
 export function LayoutDemo() {
 	const [showTopbar, setShowTopbar] = useState(true)
@@ -16,11 +16,12 @@ export function LayoutDemo() {
 	const [showRightPanel, setShowRightPanel] = useState(true)
 	const [showBottomBar, setShowBottomBar] = useState(true)
 
-	// TODO: could return keydown to handle this.
-	useGlobalShortcut("up", () => setShowTopbar(!showTopbar))
-	useGlobalShortcut("left", () => setShowSidebar(!showSidebar))
-	useGlobalShortcut("right", () => setShowRightPanel(!showRightPanel))
-	useGlobalShortcut("down", () => setShowBottomBar(!showBottomBar))
+	useWindowShortcuts({
+		up: () => setShowTopbar(!showTopbar),
+		left: () => setShowSidebar(!showSidebar),
+		right: () => setShowRightPanel(!showRightPanel),
+		down: () => setShowBottomBar(!showBottomBar),
+	})
 
 	return (
 		<Layout

@@ -14,7 +14,7 @@ import { useClampedState } from "./hooks/useClampedState"
 import { useFuzzyMatch } from "./hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "./hooks/useInputAutocomplete"
 import { useKeyboardMode } from "./hooks/useKeyboardMode"
-import { useGlobalShortcut } from "./hooks/useShortcut"
+import { useWindowShortcuts } from "./hooks/useShortcut"
 import { Router, useRouterState } from "./services/Router"
 
 const root = createRoot(document.body)
@@ -63,8 +63,8 @@ function Sidebar(props: {
 
 	const input = useRef<HTMLInputElement>(null)
 
-	useGlobalShortcut("cmd-p", () => {
-		input.current?.focus()
+	useWindowShortcuts({
+		"cmd-p": () => input.current?.focus(),
 	})
 
 	const filteredItems = useFuzzyMatch({
@@ -88,7 +88,9 @@ function Sidebar(props: {
 
 	// Toggle sidebar.
 	const [isOpen, setIsOpen] = useState(true)
-	useGlobalShortcut("cmd-\\", () => setIsOpen(!isOpen))
+	useWindowShortcuts({
+		"cmd-\\": () => setIsOpen(!isOpen),
+	})
 
 	const keyboardMode = useKeyboardMode()
 

@@ -1,19 +1,20 @@
-import { useLayoutEffect, useMemo } from "react"
+import { useLayoutEffect, useRef } from "react"
 
 export function usePortal() {
 	// Create the portal div.
-	const div = useMemo(() => {
+	let divRef = useRef<HTMLDivElement>(null)
+	if (!divRef.current) {
 		const div = document.createElement("div")
-		document.body.appendChild(div)
-		return div
-	}, [])
+		divRef.current = div
+	}
 
-	// Cleanup the portal div.
 	useLayoutEffect(() => {
+		const div = divRef.current
+		if (!div) return
+		document.body.appendChild(div)
 		return () => {
 			document.body.removeChild(div)
 		}
 	}, [])
-
-	return div
+	return divRef.current
 }

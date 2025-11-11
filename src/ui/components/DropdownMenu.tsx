@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from "react"
-import { isShortcut } from "../helpers/shortcut"
+import { useShortcuts } from "ui/hooks/useShortcut"
 import { MenuItem } from "./MenuItem"
 import { PopupFrame } from "./Popup"
 
@@ -30,37 +30,36 @@ export function DropdownMenu(props: {
 		} as any)
 	})
 
-	const handleKeyDown = (event: React.KeyboardEvent) => {
-		if (isShortcut("down", event.nativeEvent)) {
-			event.preventDefault()
-			return setSelectedIndex((i) => {
+	const { onKeyDown } = useShortcuts({
+		down: () => {
+			setSelectedIndex((i) => {
 				if (i === count - 1) return i
 				else return i + 1
 			})
-		}
-		if (isShortcut("up", event.nativeEvent)) {
-			event.preventDefault()
-			return setSelectedIndex((i) => {
+		},
+		up: () => {
+			setSelectedIndex((i) => {
 				if (i === 0) return i
 				else return i - 1
 			})
-		}
-		// Simulate focused where enter triggers a click.
-		if (isShortcut("enter", event.nativeEvent)) {
-			event.preventDefault()
+		},
+		enter: () => {
 			let i = 0
 			for (const elm of children) {
 				if (typeof elm !== "object") continue
 				if (!("type" in elm)) continue
 				if (elm.type !== MenuItem) continue
-				if (i === selectedIndex) return (elm.props as any).onClick?.(event)
-				else i += 1
+				if (i === selectedIndex) {
+					;(elm.props as any).onClick?.()
+					return
+				}
+				i += 1
 			}
-		}
-	}
+		},
+	})
 
 	return (
-		<PopupFrame ref={menuRef} tabIndex={-1} onKeyDown={handleKeyDown} style={props.style}>
+		<PopupFrame ref={menuRef} tabIndex={-1} onKeyDown={onKeyDown} style={props.style}>
 			{children}
 		</PopupFrame>
 	)

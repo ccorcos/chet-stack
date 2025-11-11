@@ -8,7 +8,7 @@ import {
 	RightPanelLayout,
 	TopbarLayout,
 } from "ui/components/Layout"
-import { useGlobalShortcut } from "ui/hooks/useShortcut"
+import { useWindowShortcuts } from "ui/hooks/useShortcut"
 import { useRouterState } from "ui/services/Router"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 
@@ -22,10 +22,12 @@ export function App() {
 	const [showRightPanel, setShowRightPanel] = useState(true)
 	const [showBottomBar, setShowBottomBar] = useState(true)
 
-	useGlobalShortcut("up", () => setShowTopbar(!showTopbar))
-	useGlobalShortcut("left", () => setShowSidebar(!showSidebar))
-	useGlobalShortcut("right", () => setShowRightPanel(!showRightPanel))
-	useGlobalShortcut("down", () => setShowBottomBar(!showBottomBar))
+	useWindowShortcuts({
+		up: () => setShowTopbar(!showTopbar),
+		left: () => setShowSidebar(!showSidebar),
+		right: () => setShowRightPanel(!showRightPanel),
+		down: () => setShowBottomBar(!showBottomBar),
+	})
 
 	return (
 		<Layout
