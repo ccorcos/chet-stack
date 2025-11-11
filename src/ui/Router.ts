@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react"
-import { useClientEnvironment } from "./ClientEnvironment"
-
 const ORIGIN = window.location.origin
 
 function isExternalLink(url: string) {
@@ -82,13 +79,4 @@ export class Router {
 	forward = () => {
 		window.history.forward()
 	}
-}
-
-export function useRouterState() {
-	const { router } = useClientEnvironment()
-	const [state, setState] = useState(router.state)
-	useEffect(() => {
-		return router.addListener(setState)
-	}, [])
-	return state
 }

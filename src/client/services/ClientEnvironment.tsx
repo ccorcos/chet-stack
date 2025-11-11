@@ -1,10 +1,10 @@
 import React, { createContext, useContext } from "react"
 import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
+import type { Router } from "../../ui/Router"
 import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
 import { CommandService } from "./Command"
 import { LocalPreferences } from "./LocalPreferences"
-import type { Router } from "./Router"
 import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
 
 export type ClientEnvironment = {

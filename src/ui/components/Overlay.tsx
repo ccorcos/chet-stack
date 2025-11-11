@@ -3,10 +3,13 @@ import { createPortal } from "react-dom"
 import { usePortal } from "ui/hooks/usePortal"
 import { useShortcut } from "../hooks/useShortcut"
 
-// TODO: can we get rid of these?
 const dismissZIndex = undefined // 99
 const overlayZIndex = undefined //100
 
+/**
+ * Use this for rendering on top of something else.
+ * In Notion or Excel table cells are not editble, then we you click, an input is overlaid on top to edit.
+ */
 export function Overlay(props: {
 	anchor: HTMLElement
 	children?: React.ReactNode
