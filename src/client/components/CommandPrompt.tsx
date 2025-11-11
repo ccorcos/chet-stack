@@ -1,10 +1,11 @@
 import React, { useState } from "react"
-import { CommandPrompt } from "ui/components/CommandPrompt"
+import { AutocompletePrompt } from "ui/components/AutocompletePrompt"
 import { Modal } from "ui/components/Modal"
+import { Shortcut } from "ui/components/Shortcut"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 
-export function Commander() {
+export function CommandPrompt() {
 	const [isOpen, setIsOpen] = useState(false)
 
 	useCommand({
@@ -28,12 +29,18 @@ export function Commander() {
 
 	return (
 		<Modal onDismiss={() => setIsOpen(false)}>
-			<CommandPrompt
-				commands={cmd.list().filter((c) => !c.hidden)}
+			<AutocompletePrompt
+				items={cmd.list().filter((c) => !c.hidden)}
 				onSubmit={(command) => {
 					command.execute()
 					setIsOpen(false)
 				}}
+				render={({ item, children }) => (
+					<>
+						<div style={{ display: "flex", flex: 1 }}>{children}</div>
+						<Shortcut shortcut={item.shortcut} />
+					</>
+				)}
 			/>
 		</Modal>
 	)

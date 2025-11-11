@@ -10,14 +10,14 @@ import {
 	useClientEnvironment,
 } from "../services/ClientEnvironment"
 import { App } from "./App"
-import { Commander } from "./Commander"
+import { CommandPrompt } from "./CommandPrompt"
 import { Design } from "./Design"
 
 export function Root(props: { environment: ClientEnvironment }) {
 	return (
 		<Suspense fallback={<Loading />}>
 			<ClientEnvironmentProvider value={props.environment}>
-				<Commander />
+				<CommandPrompt />
 				<Router />
 			</ClientEnvironmentProvider>
 		</Suspense>
