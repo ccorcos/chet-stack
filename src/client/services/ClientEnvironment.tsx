@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from "react"
 import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
-import type { Router } from "../../ui/Router"
+import type { Router } from "../../ui/services/Router"
 import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
 import { CommandService } from "./Command"

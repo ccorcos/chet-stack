@@ -1,8 +1,19 @@
-export type RootRoute = { type: "root" }
-export type DesignRoute = { type: "design"; params: Record<string, string> }
-export type UnknownRoute = { type: "unknown"; url: string }
+/*
 
-export type Route = RootRoute | DesignRoute | UnknownRoute
+Simple tools for dealing with urls. Often on the client, we're dealing with relative urls, but
+native new URL always requires a fully qualified url so we use `tmpOrigin` to make it work.
+*/
+
+export type Route = {
+	/** e.g. "/design" */
+	path: string
+	/** e.g. {id: "123"} */
+	params: Record<string, string>
+	/** e.g. "#123" */
+	hash: string
+}
+
+const tmpOrigin = "https://example.com"
 
 function parseSearchParams(url: URL) {
 	const params: Record<string, string> = {}
@@ -21,26 +32,19 @@ function formatSearchParams(params: Record<string, string>) {
 }
 
 export function parseRoute(url: string): Route {
-	const parsed = new URL(url.startsWith("/") ? "https://example.com" + url : url)
-	if (parsed.pathname === "/") return { type: "root" }
-	if (parsed.pathname === "/design") {
-		return { type: "design", params: parseSearchParams(parsed) }
-	}
-	return { type: "unknown", url }
+	const parsed = new URL(url.startsWith("/") ? tmpOrigin + url : url)
+	return { path: parsed.pathname, params: parseSearchParams(parsed), hash: parsed.hash }
 }
 
-export function formatRoute(route: Route) {
-	if (route.type === "root") return "/"
-	if (route.type === "design") {
-		if (route.params) {
-			return "/design?" + formatSearchParams(route.params)
-		}
-		return "/design"
-	}
-	throw new Error("Unknown route:" + JSON.stringify(route))
+export function formatRoute(route: Partial<Route>) {
+	let url = route.path || "/"
+	if (!route.params) return url
+	if (Object.keys(route.params).length === 0) return url
+	url += "?" + formatSearchParams(route.params)
+	if (route.hash) url += route.hash
+	return url
 }
 
-const tmpOrigin = "https://example.com"
 export function setParam(url: string, key: string, value: string | undefined) {
 	const parsed = new URL(url.startsWith("/") ? tmpOrigin + url : url)
 	if (value === undefined) parsed.searchParams.delete(key)
@@ -51,7 +55,7 @@ export function setParam(url: string, key: string, value: string | undefined) {
 }
 
 // `/thread/:threadId` will return {threadId: string}
-function matchRoutePath(pattern: string, urlPath: string) {
+export function matchRoutePath(pattern: string, urlPath: string) {
 	const patternSegments = pattern.split("/")
 	const urlSegments = urlPath.split("/")
 

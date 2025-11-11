@@ -1,22 +1,6 @@
 import { clamp } from "lodash-es"
-import React, { useCallback, useState } from "react"
-import { useRefCurrent } from "./useRefCurrent"
+import { useTransformedState } from "./useTransformedState"
 
 export function useClampedState(initialValue: number, range: [number, number]) {
-	const rangeRef = useRefCurrent(range)
-	const [state, _setState] = useState(clamp(initialValue, ...range))
-
-	// Create a clamped setState function that ensures values stay within the specified range
-	const setState = useCallback((value: React.SetStateAction<number>) => {
-		return _setState((prevState) => {
-			prevState = clamp(prevState, ...rangeRef.current)
-			const newValue = typeof value === "function" ? value(prevState) : value
-			return clamp(newValue, ...rangeRef.current)
-		})
-	}, [])
-
-	return [clamp(state, ...range), setState] as [
-		number,
-		React.Dispatch<React.SetStateAction<number>>,
-	]
+	return useTransformedState(initialValue, (value) => clamp(value, ...range))
 }

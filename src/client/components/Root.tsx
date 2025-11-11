@@ -1,10 +1,14 @@
-import { useRouterState } from "client/services/useRouterState"
 import React, { Suspense } from "react"
 import { parseRoute } from "shared/routeHelpers"
 import { Spinner } from "ui/components/Spinner"
 import { Throttle } from "ui/components/Throttle"
+import { useRouterState } from "ui/services/Router"
 import { useDarkModeSwitcher } from "../hooks/useDarkModeSwitcher"
-import { ClientEnvironment, ClientEnvironmentProvider } from "../services/ClientEnvironment"
+import {
+	ClientEnvironment,
+	ClientEnvironmentProvider,
+	useClientEnvironment,
+} from "../services/ClientEnvironment"
 import { App } from "./App"
 import { Commander } from "./Commander"
 import { Design } from "./Design"
@@ -33,10 +37,11 @@ function Loading() {
 function Router() {
 	useDarkModeSwitcher()
 
-	const routerState = useRouterState()
+	const { router } = useClientEnvironment()
+	const routerState = useRouterState(router)
 	const route = parseRoute(routerState.url)
 
-	if (route.type === "root") return <App />
-	if (route.type === "design") return <Design params={route.params} />
-	return <div>Unknown route: {route.url}</div>
+	if (route.path === "/") return <App />
+	if (route.path === "/design") return <Design params={route.params} />
+	return <div>Unknown route: {routerState.url}</div>
 }
