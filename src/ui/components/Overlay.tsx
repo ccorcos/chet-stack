@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useMemo } from "react"
+import React, { useMemo } from "react"
 import { createPortal } from "react-dom"
+import { usePortal } from "ui/hooks/usePortal"
 import { useShortcut } from "../hooks/useShortcut"
 
 // TODO: can we get rid of these?
@@ -13,19 +14,7 @@ export function Overlay(props: {
 }) {
 	const { anchor, onDismiss, children } = props
 
-	// Create the portal div.
-	const container = useMemo(() => {
-		const div = document.createElement("div")
-		document.body.appendChild(div)
-		return div
-	}, [])
-
-	// Cleanup the portal div.
-	useLayoutEffect(() => {
-		return () => {
-			document.body.removeChild(container)
-		}
-	}, [])
+	const div = usePortal()
 
 	// Measure the anchor
 	const rect = useMemo(() => anchor.getBoundingClientRect(), [anchor])
@@ -54,6 +43,6 @@ export function Overlay(props: {
 				{children}
 			</div>
 		</>,
-		container
+		div
 	)
 }

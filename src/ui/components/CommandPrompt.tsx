@@ -1,33 +1,20 @@
 import type { Command } from "client/services/Command"
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react"
+import React, { useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { displayShortcut } from "../helpers/shortcut"
 import { useClampedState } from "../hooks/useClampedState"
 import { useFuzzyMatch2 } from "../hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
 import { useKeyboardMode } from "../hooks/useKeyboardMode"
+import { usePortal } from "../hooks/usePortal"
 import { FuzzyString } from "./FuzzyString"
 import { Input } from "./Input"
 import { MenuItem } from "./MenuItem"
 import { PopupFrame } from "./Popup"
 
 export function CommandPromptOverlay(props: { children: React.ReactNode; onDismiss: () => void }) {
-	// Create the portal div.
-	const container = useMemo(() => {
-		const div = document.createElement("div")
-		document.body.appendChild(div)
-		return div
-	}, [])
-
-	// Cleanup the portal div.
-	useLayoutEffect(() => {
-		return () => {
-			document.body.removeChild(container)
-		}
-	}, [])
-
+	const div = usePortal()
 	const width = 540
-	// Render the portal
 	return createPortal(
 		<>
 			<div
@@ -38,7 +25,7 @@ export function CommandPromptOverlay(props: { children: React.ReactNode; onDismi
 				{props.children}
 			</div>
 		</>,
-		container
+		div
 	)
 }
 

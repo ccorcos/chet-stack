@@ -1,6 +1,7 @@
 import { Placement, createPopper } from "@popperjs/core"
 import React, { useLayoutEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
+import { usePortal } from "ui/hooks/usePortal"
 import { useShortcut } from "../hooks/useShortcut"
 
 // TODO: can we get rid of these?
@@ -16,31 +17,18 @@ export function Popup(props: {
 	onDismiss?: () => void
 }) {
 	// Create the overlay div.
-	const container = useMemo(() => {
-		const div = document.createElement("div")
-		document.body.appendChild(div)
-		return div
-	}, [])
+	const div = usePortal()
 
 	useMemo(() => {
-		container.style.visibility = props.open ? "visible" : "hidden"
+		div.style.visibility = props.open ? "visible" : "hidden"
 	}, [props.open])
-
-	// Cleanup
-	useLayoutEffect(() => {
-		return () => {
-			document.body.removeChild(container)
-		}
-	}, [])
 
 	// Render the popup
 	useLayoutEffect(() => {
 		if (!props.anchor) return
 		if (!props.open) return
 
-		const popupDiv = (
-			props.onDismiss ? container.children[1] : container.children[0]
-		) as HTMLElement
+		const popupDiv = (props.onDismiss ? div.children[1] : div.children[0]) as HTMLElement
 
 		const popper = createPopper(props.anchor, popupDiv, {
 			placement: props.placement || "bottom-start",
@@ -83,7 +71,7 @@ export function Popup(props: {
 				)}
 				{props.children}
 			</>,
-			container
+			div
 		)
 }
 
