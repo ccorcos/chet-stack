@@ -13,7 +13,7 @@ type KeyboardEventHandler = (event: KeyboardEvent) => void
 // TODO: useWindowEvent("keydown", onKeyDown)
 
 /** Use with care. Prefer to put listeners on DOM elements to work better with focus. */
-export function useShortcut(shortcut: string, fn: () => void | false) {
+export function useGlobalShortcut(shortcut: string, fn: () => void | false) {
 	const fnRef = useRefCurrent(fn)
 	const shortcutRef = useRefCurrent(shortcut)
 

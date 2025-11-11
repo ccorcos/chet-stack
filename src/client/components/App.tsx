@@ -1,4 +1,3 @@
-import { useRouterState } from "client/services/useRouterState"
 import React, { useState } from "react"
 import { Button } from "ui/components/Button"
 import {
@@ -9,23 +8,24 @@ import {
 	RightPanelLayout,
 	TopbarLayout,
 } from "ui/components/Layout"
-import { useShortcut } from "ui/hooks/useShortcut"
+import { useGlobalShortcut } from "ui/hooks/useShortcut"
+import { useRouterState } from "ui/services/Router"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 
 // TODO: use the actual layout components!
 export function App() {
 	const environment = useClientEnvironment()
-	const route = useRouterState()
+	const route = useRouterState(environment.router)
 
 	const [showTopbar, setShowTopbar] = useState(true)
 	const [showSidebar, setShowSidebar] = useState(true)
 	const [showRightPanel, setShowRightPanel] = useState(true)
 	const [showBottomBar, setShowBottomBar] = useState(true)
 
-	useShortcut("up", () => setShowTopbar(!showTopbar))
-	useShortcut("left", () => setShowSidebar(!showSidebar))
-	useShortcut("right", () => setShowRightPanel(!showRightPanel))
-	useShortcut("down", () => setShowBottomBar(!showBottomBar))
+	useGlobalShortcut("up", () => setShowTopbar(!showTopbar))
+	useGlobalShortcut("left", () => setShowSidebar(!showSidebar))
+	useGlobalShortcut("right", () => setShowRightPanel(!showRightPanel))
+	useGlobalShortcut("down", () => setShowBottomBar(!showBottomBar))
 
 	return (
 		<Layout

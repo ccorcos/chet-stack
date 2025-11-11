@@ -1,6 +1,6 @@
 import React from "react"
 import { createPortal } from "react-dom"
-import { usePortal } from "ui/hooks/usePortal"
+import { usePortal } from "../hooks/usePortal"
 import { PopupFrame } from "./Popup"
 
 export function Modal(props: { children: React.ReactNode; onDismiss: () => void }) {

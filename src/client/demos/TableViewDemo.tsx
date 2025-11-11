@@ -1,7 +1,7 @@
 import React from "react"
-import { ContentEditableInput } from "../components/ContentEditableInput"
-import { Input } from "../components/Input"
-import { SelectInput, tokenStyle } from "../components/MultiSelectInput"
+import { ContentEditableInput } from "ui/components/ContentEditableInput"
+import { Input } from "ui/components/Input"
+import { SelectInput, tokenStyle } from "ui/components/MultiSelectInput"
 
 type StringPropertyType = { id: string; name?: string; type: "string" }
 type NumberPropertyType = { id: string; name?: string; type: "number" }

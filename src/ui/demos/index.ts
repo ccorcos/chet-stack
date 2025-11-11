@@ -24,7 +24,6 @@ import * as PopupDemo from "./PopupDemo"
 import * as SelectableListDemo from "./SelectableListDemo"
 import * as SpinnerDemo from "./SpinnerDemo"
 import * as TableDemo from "./TableDemo"
-import * as TableViewDemo from "./TableViewDemo"
 
 export {
 	BadgeDemo,
@@ -51,5 +50,4 @@ export {
 	SelectableListDemo,
 	SpinnerDemo,
 	TableDemo,
-	TableViewDemo,
 }

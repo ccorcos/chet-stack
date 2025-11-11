@@ -4,17 +4,17 @@ import "ui/theme.css"
 import React, { Suspense, useRef, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { formatRoute, parseRoute } from "shared/routeHelpers"
-import { FuzzyString } from "ui/components/FuzzyString"
-import { Input } from "ui/components/Input"
-import { ContentLayout, Layout, LeftPanelLayout } from "ui/components/Layout"
-import { ListBox, ListItem, useListBox } from "ui/components/ListBox"
-import { MenuItem } from "ui/components/MenuItem"
-import * as demos from "ui/demos"
-import { useFuzzyMatch } from "ui/hooks/useFuzzyMatch"
-import { useInputAutocomplete } from "ui/hooks/useInputAutocomplete"
-import { useKeyboardMode } from "ui/hooks/useKeyboardMode"
-import { useShortcut } from "ui/hooks/useShortcut"
+import { FuzzyString } from "./components/FuzzyString"
+import { Input } from "./components/Input"
+import { ContentLayout, Layout, LeftPanelLayout } from "./components/Layout"
+import { ListBox, ListItem, useListBox } from "./components/ListBox"
+import { MenuItem } from "./components/MenuItem"
+import * as demos from "./demos"
 import { useClampedState } from "./hooks/useClampedState"
+import { useFuzzyMatch } from "./hooks/useFuzzyMatch"
+import { useInputAutocomplete } from "./hooks/useInputAutocomplete"
+import { useKeyboardMode } from "./hooks/useKeyboardMode"
+import { useGlobalShortcut } from "./hooks/useShortcut"
 import { Router, useRouterState } from "./services/Router"
 
 const root = createRoot(document.body)
@@ -63,7 +63,7 @@ function Sidebar(props: {
 
 	const input = useRef<HTMLInputElement>(null)
 
-	useShortcut("cmd-p", () => {
+	useGlobalShortcut("cmd-p", () => {
 		input.current?.focus()
 	})
 
@@ -86,12 +86,9 @@ function Sidebar(props: {
 		onSubmit: ({ value }) => onSubmit(value),
 	})
 
+	// Toggle sidebar.
 	const [isOpen, setIsOpen] = useState(true)
-	useCommand({
-		name: "Toggle Sidebar",
-		shortcut: "cmd-\\",
-		execute: () => setIsOpen(!isOpen),
-	})
+	useGlobalShortcut("cmd-\\", () => setIsOpen(!isOpen))
 
 	const keyboardMode = useKeyboardMode()
 

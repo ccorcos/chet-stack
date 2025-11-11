@@ -12,7 +12,7 @@ import { useFuzzyMatch } from "ui/hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "ui/hooks/useInputAutocomplete"
 import { useKeyboardMode } from "ui/hooks/useKeyboardMode"
 import { useRefCurrent } from "ui/hooks/useRefCurrent"
-import { useShortcut } from "ui/hooks/useShortcut"
+import { useGlobalShortcut } from "ui/hooks/useShortcut"
 import * as clientDemos from "../demos"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
@@ -25,7 +25,7 @@ export function Design(props: { params: Record<string, string> }) {
 
 	const currentPage = params.page || Object.keys(demos)[0]
 	const setCurrentPage = (page: string | undefined) =>
-		router.navigate(formatRoute({ type: "design", params: page ? { page } : {} }))
+		router.navigate(formatRoute({ path: "/design", params: page ? { page } : {} }))
 
 	// Layout is a full-page demo.
 	if (currentPage === "LayoutDemo") {
@@ -80,7 +80,7 @@ function Sidebar(props: {
 
 	const input = useRef<HTMLInputElement>(null)
 
-	useShortcut("cmd-p", () => {
+	useGlobalShortcut("cmd-p", () => {
 		input.current?.focus()
 	})
 

@@ -10,6 +10,7 @@
 		"codegen-watch": "tsx src/codegen/codegen.ts src --watch",
 		"server-watch": "tsx watch --clear-screen=false src/server/server.ts",
 		"dev": "run-p codegen-watch server-watch",
+		"ui": "vite src/ui",
 		"clean": "rm -rf build db",
 		"codegen": "tsx src/codegen/codegen.ts src",
 		"build": "NODE_ENV=production vite build src/client",
