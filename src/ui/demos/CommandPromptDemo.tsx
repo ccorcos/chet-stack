@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Button } from "../components/Button"
-import { CommandPrompt, CommandPromptOverlay } from "../components/CommandPrompt"
+import { CommandPrompt } from "../components/CommandPrompt"
+import { Modal } from "../components/Modal"
 
 export function CommandPromptDemo() {
 	const [isOpen, setIsOpen] = useState(false)
@@ -16,7 +17,7 @@ export function CommandPromptDemo() {
 			</div>
 		)
 	return (
-		<CommandPromptOverlay onDismiss={() => setIsOpen(false)}>
+		<Modal onDismiss={() => setIsOpen(false)}>
 			<CommandPrompt
 				commands={[
 					{
@@ -37,6 +38,6 @@ export function CommandPromptDemo() {
 					setIsOpen(false)
 				}}
 			/>
-		</CommandPromptOverlay>
+		</Modal>
 	)
 }

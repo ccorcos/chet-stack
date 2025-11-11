@@ -19,6 +19,7 @@ import * as InputDemo from "./InputDemo"
 import * as LayersDemo from "./LayersDemo"
 import * as LayoutDemo from "./LayoutDemo"
 import * as ListBoxDemo from "./ListBoxDemo"
+import * as ModalDemo from "./ModalDemo"
 import * as PlaygroundDemo from "./PlaygroundDemo"
 import * as PopupDemo from "./PopupDemo"
 import * as SelectableListDemo from "./SelectableListDemo"
@@ -45,6 +46,7 @@ export {
 	LayersDemo,
 	LayoutDemo,
 	ListBoxDemo,
+	ModalDemo,
 	PlaygroundDemo,
 	PopupDemo,
 	SelectableListDemo,

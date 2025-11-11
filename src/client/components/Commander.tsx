@@ -1,5 +1,6 @@
 import React, { useState } from "react"
-import { CommandPrompt, CommandPromptOverlay } from "ui/components/CommandPrompt"
+import { CommandPrompt } from "ui/components/CommandPrompt"
+import { Modal } from "ui/components/Modal"
 import { useCommand } from "../hooks/useCommand"
 import { useClientEnvironment } from "../services/ClientEnvironment"
 
@@ -26,7 +27,7 @@ export function Commander() {
 	if (!isOpen) return false
 
 	return (
-		<CommandPromptOverlay onDismiss={() => setIsOpen(false)}>
+		<Modal onDismiss={() => setIsOpen(false)}>
 			<CommandPrompt
 				commands={cmd.list().filter((c) => !c.hidden)}
 				onSubmit={(command) => {
@@ -34,6 +35,6 @@ export function Commander() {
 					setIsOpen(false)
 				}}
 			/>
-		</CommandPromptOverlay>
+		</Modal>
 	)
 }
