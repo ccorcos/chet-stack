@@ -1,5 +1,5 @@
 import { Database, Transaction } from "better-sqlite3"
-import { compare } from "../compare"
+import { compare } from "shared/compare"
 import { BaseOKV } from "./types"
 
 type K = string

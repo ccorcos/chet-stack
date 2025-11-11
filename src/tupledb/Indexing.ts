@@ -4,7 +4,7 @@ TODO: this is more general than RecordDb but we're probably going to dump this a
 
 */
 
-import { reifyFn } from "../reifyFn"
+import { reifyFn } from "shared/reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"
 import { tupleDb } from "./TupleDb"

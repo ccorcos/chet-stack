@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react"
-import { BaseOKVCache, JSONValue, Tuple } from "shared/database/types"
+import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
 import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
 import { CommandService } from "./Command"

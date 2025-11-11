@@ -1,13 +1,8 @@
 import React, { useLayoutEffect, useState } from "react"
-import {
-	applyRecordDbOperation,
-	recordDb,
-	RecordDbOperation,
-	TableDef,
-} from "shared/database/RecordDb"
-import { tupleTx } from "shared/database/TupleDb"
 import * as t from "shared/DataType"
 import { randomId } from "shared/randomId"
+import { applyRecordDbOperation, recordDb, RecordDbOperation, TableDef } from "tupledb/RecordDb"
+import { tupleTx } from "tupledb/TupleDb"
 import { Button } from "ui/components/Button"
 import { ComboBoxSelect } from "ui/components/ComboBox"
 import { Input } from "ui/components/Input"

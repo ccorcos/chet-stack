@@ -1,5 +1,5 @@
 import { insert, remove, search } from "@ccorcos/ordered-array"
-import { compare as cmp } from "../compare"
+import { compare as cmp } from "shared/compare"
 import { BaseOKV } from "./types"
 
 export class InMemoryBaseOKV<K = string | number, V = any> implements BaseOKV<K, V> {

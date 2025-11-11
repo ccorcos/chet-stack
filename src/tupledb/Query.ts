@@ -1,4 +1,3 @@
-import { ValidationError } from "../errors"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import { Range } from "./Range"
 import { tupleDb } from "./TupleDb"
@@ -45,7 +44,7 @@ export function query(db: BaseTupleOKV, query: string) {
 		result = fn(tupleDb(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)
-		throw new ValidationError("Sandbox error")
+		throw new Error("Sandbox error")
 	}
 
 	const data = cache.data.data

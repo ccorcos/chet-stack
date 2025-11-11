@@ -1,7 +1,7 @@
 import type { Request, Response } from "express"
-import { applyRecordDbOperation, recordDb, RecordDbOperation } from "shared/database/RecordDb"
-import { tupleDb, tupleTx } from "shared/database/TupleDb"
 import * as t from "shared/DataType"
+import { applyRecordDbOperation, recordDb, RecordDbOperation } from "tupledb/RecordDb"
+import { tupleDb, tupleTx } from "tupledb/TupleDb"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // TODO: request validation.

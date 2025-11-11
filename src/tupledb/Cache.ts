@@ -7,10 +7,10 @@ https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 */
 
 import { uniqWith } from "lodash-es"
-import { compactObj } from "../compactObj"
-import { compare as cmp } from "../compare"
-import { OrderedList } from "../OrderedList"
-import { reverse } from "../reverse"
+import { compactObj } from "shared/compactObj"
+import { compare as cmp } from "shared/compare"
+import { OrderedList } from "shared/OrderedList"
+import { reverse } from "shared/reverse"
 import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
 import {
 	Bound,
@@ -26,6 +26,10 @@ import {
 import { RangeEmitter } from "./RangeEmitter"
 import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
 
+/**
+ * The Cache keeps track of which data ranges are in the cache and respond with hit/miss/prefix.
+ * It also handles reactivity and optimistic writes.
+ */
 export class Cache<K, V> implements BaseOKVCache<K, V> {
 	data: InMemoryBaseOKV<K, V>
 	emitter: RangeEmitter<K>
@@ -215,7 +219,7 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		this.emit(ranges)
 
 		return () => {
-			// Cleanup pending write reference count so that new data can overwrite it from the server.
+			// Finalize pending write reference count so that new data can overwrite it from the server.
 			const deref: K[] = []
 			for (const key of allKeys) {
 				this.refs.update(key, (existing) => {

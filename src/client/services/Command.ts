@@ -1,7 +1,7 @@
-import { codec } from "shared/database/Codec"
-import { InMemoryBaseOKV } from "shared/database/InMemoryBaseOKV"
-import { tupleDb } from "shared/database/TupleDb"
-import { Tuple, TupleDb } from "shared/database/types"
+import { codec } from "tupledb/Codec"
+import { InMemoryBaseOKV } from "tupledb/InMemoryBaseOKV"
+import { tupleDb } from "tupledb/TupleDb"
+import { Tuple, TupleDb } from "tupledb/types"
 import { normalizeKeyboardShortcut, normalizeShortcut } from "ui/helpers/shortcut"
 
 /** 0 is highest priority. */

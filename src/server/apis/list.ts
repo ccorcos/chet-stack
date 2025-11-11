@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
-import { ListArgs } from "shared/database/types"
 import * as t from "shared/DataType"
+import { ListArgs } from "tupledb/types"
 import type { ServerEnvironment } from "../services/ServerEnvironment"
 
 // TODO: request validation.

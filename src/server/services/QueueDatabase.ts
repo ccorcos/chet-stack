@@ -1,10 +1,10 @@
 import sqlite from "better-sqlite3"
 import { isPlainObject } from "lodash-es"
-import { SQLiteBaseOKV } from "shared/database/SQLiteBaseOKV"
-import { tupleDb, tupleOkv, tupleTx } from "shared/database/TupleDb"
-import { Tuple, TupleDb } from "shared/database/types"
 import { randomId } from "shared/randomId"
 import { Simplify } from "shared/typeHelpers"
+import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
+import { tupleDb, tupleOkv, tupleTx } from "tupledb/TupleDb"
+import { Tuple, TupleDb } from "tupledb/types"
 import { TaskName, Tasks } from "../tasks"
 
 type QueueTaskArgs = {

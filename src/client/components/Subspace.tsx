@@ -1,4 +1,5 @@
 import React, { useMemo } from "react"
+import { proxyObj } from "shared/proxyHelpers"
 import {
 	EncodeSubspaceListArgs,
 	KeyDecodeCacheListResult,
@@ -7,9 +8,8 @@ import {
 	KeyEncodeRange,
 	KeyEncodeWrite,
 	TupleSubspaceEncoder,
-} from "shared/database/Encoder"
-import { BaseOKVCache, JSONValue, Tuple } from "shared/database/types"
-import { proxyObj } from "shared/proxyHelpers"
+} from "tupledb/Encoder"
+import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 import { ClientApi } from "../services/api"
 

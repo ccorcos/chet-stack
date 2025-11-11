@@ -1,5 +1,4 @@
 import vm from "node:vm"
-import { ValidationError } from "../errors"
 import { Query, QueryCache } from "./Query"
 import { tupleDb } from "./TupleDb"
 import { BaseTupleOKV } from "./types"
@@ -21,7 +20,7 @@ export function queryNodeVm(db: BaseTupleOKV, query: string) {
 		result = fn(tupleDb(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)
-		throw new ValidationError("Sandbox error")
+		throw new Error("Sandbox error")
 	}
 
 	const data = cache.data.data

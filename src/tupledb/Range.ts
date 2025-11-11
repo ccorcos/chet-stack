@@ -1,4 +1,18 @@
-import { Compare, compare, compoundCompare } from "../compare"
+/*
+
+One trick for comparing overlapping ranges that are potentially open or closed on each end
+is to encode the range bounds as a tuple, called a "bound" and then comparing the bounds.
+
+For example:
+- (10, 11) -> [0, 10, 1], [0, 11, -1]
+- [10, 11] -> [0, 10, 0], [0, 11, 0]
+- (∞, ∞) -> [0], [1]
+
+This makes it much easier to write compareRange and overlapsRange.
+
+*/
+
+import { Compare, compare, compoundCompare } from "shared/compare"
 
 export type Range<K> = { gt?: K; gte?: K; lt?: K; lte?: K }
 

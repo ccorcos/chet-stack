@@ -1,4 +1,10 @@
-import { compactObj } from "../compactObj"
+/*
+
+These functions wrap BaseOKV to encode and decode keys and values.
+
+*/
+
+import { compactObj } from "shared/compactObj"
 import { Range } from "./Range"
 import { BaseOKV, CacheListResult, ListArgs, Tuple, WriteArgs } from "./types"
 

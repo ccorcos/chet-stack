@@ -9,9 +9,9 @@ Principle: records must be able to identify themselves (e.g. include table and i
 
 */
 
-import * as t from "../DataType"
-import { formatError, validate } from "../DataType"
-import { reifyFn } from "../reifyFn"
+import * as t from "shared/DataType"
+import { formatError, validate } from "shared/DataType"
+import { reifyFn } from "shared/reifyFn"
 import { readOnlyTupleDb, tupleDb } from "./TupleDb"
 import { BaseTupleOKV, ReadOnlyTupleDb, TupleDb } from "./types"
 

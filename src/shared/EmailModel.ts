@@ -5,7 +5,7 @@ https://www.notion.so/chetcorcos/Email-App-Comms-Design-Doc-1c88d4136624801083df
 
 */
 
-import { RecordDb } from "./database/RecordDb"
+import { RecordDb } from "tupledb/RecordDb"
 import * as t from "./DataType"
 
 const UserSchema = t.object({

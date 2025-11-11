@@ -1,4 +1,4 @@
-import { compare } from "../compare"
+import { compare } from "shared/compare"
 import { BranchNode, InMemoryReducerTree, LeafNode, TreeReducer } from "./InMemoryReducerTree"
 
 export class InMemoryIntervalTree<

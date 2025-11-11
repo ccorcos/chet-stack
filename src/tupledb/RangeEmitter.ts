@@ -1,6 +1,6 @@
-import { compare } from "../compare"
-import { OrderedList } from "../OrderedList"
-import { randomId } from "../randomId"
+import { compare } from "shared/compare"
+import { OrderedList } from "shared/OrderedList"
+import { randomId } from "shared/randomId"
 import { compareRange, overlapsRange, Range } from "./Range"
 
 export type RangeListener<K> = { range: Range<K>; id: string; fn: () => void }

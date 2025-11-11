@@ -1,3 +1,11 @@
+/*
+
+Uses a cache under the hood to leverage the optimistic writes logic.
+It's going to cache all the data read during a transaction so that could blow up memory.
+When the cache returns a prefix, we'll transparently read the rest of the data from the database.
+
+*/
+
 import { Cache } from "./Cache"
 import { BaseOKV, BaseOKVTx, ListArgs, WriteArgs } from "./types"
 
@@ -34,7 +42,6 @@ export class Transaction<K, V> implements BaseOKVTx<K, V> {
 
 				// Don't return yet, because we may have pending writes in the new range.
 				// Instead, we'll call list again from the cache.
-				// return [...result.prefix, ...restResult]
 			} else {
 				const restArgs = { ...args }
 				delete restArgs.gt
@@ -47,7 +54,6 @@ export class Transaction<K, V> implements BaseOKVTx<K, V> {
 
 				// Don't return yet, because we may have pending writes in the new range.
 				// Instead, we'll call list again from the cache.
-				// return [...result.prefix, ...restResult]
 			}
 		}
 

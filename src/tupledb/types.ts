@@ -15,7 +15,7 @@ export type ListArgs<K> = Range<K> & ListOptions
 
 /**
  * Compare is important so that we can do other in-memory things, e.g. caching reads
- * and writes in a transaction.
+ * and writes in a transaction. Otherwise it's just read and write.
  */
 export type BaseOKV<K, V> = {
 	compare: (a: K, b: K) => number
