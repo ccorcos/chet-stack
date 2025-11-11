@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from "react"
-import { useShortcuts } from "ui/hooks/useShortcut"
+import { useShortcuts } from "../hooks/useShortcut"
 import { MenuItem } from "./MenuItem"
 import { PopupFrame } from "./Popup"
 

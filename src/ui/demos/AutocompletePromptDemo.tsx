@@ -1,9 +1,9 @@
 import React, { useState } from "react"
-import { AutocompletePrompt } from "ui/components/AutocompletePrompt"
-import { Shortcut } from "ui/components/Shortcut"
-import { useWindowShortcuts } from "ui/hooks/useShortcut"
+import { AutocompletePrompt } from "../components/AutocompletePrompt"
 import { Button } from "../components/Button"
 import { Modal, ModalFrame } from "../components/Modal"
+import { Shortcut } from "../components/Shortcut"
+import { useWindowShortcuts } from "../hooks/useShortcut"
 
 type Command = {
 	name: string

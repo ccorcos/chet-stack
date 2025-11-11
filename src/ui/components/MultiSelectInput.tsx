@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react"
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react"
 import { FuzzyMatch } from "shared/fuzzyMatch"
 
 import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
@@ -140,10 +140,13 @@ function useSelectInput(props: {
 	const [text, setText] = useState("")
 	const [selectedIndex, setSelectedIndex] = useState(0)
 
+	const queryItems = useMemo(
+		() => props.items.filter((item) => !props.value.includes(item)),
+		[props.value, props.items]
+	)
 	const filteredItems = useFuzzyMatch({
-		items: props.items,
-		without: props.value,
-		filter: text,
+		items: queryItems,
+		query: text,
 	})
 
 	const onSubmit = (value: string) => {

@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react"
 import { useClampedState } from "../hooks/useClampedState"
-import { useFuzzyMatch2 } from "../hooks/useFuzzyMatch"
+import { useFuzzyMatch } from "../hooks/useFuzzyMatch"
 import { useInputAutocomplete } from "../hooks/useInputAutocomplete"
 import { useKeyboardMode } from "../hooks/useKeyboardMode"
 import { FuzzyString } from "./FuzzyString"
@@ -18,9 +18,10 @@ export function AutocompletePrompt<T extends { name: string }>(props: {
 	}, [])
 
 	const [searchText, setSearchText] = useState("")
-	const filteredItems = useFuzzyMatch2({
+
+	const filteredItems = useFuzzyMatch({
 		items: props.items,
-		text: (c) => c.name,
+		text: (item) => item.name,
 		query: searchText,
 	})
 

@@ -19,7 +19,7 @@ type ApiResponse<Body> = { status: 200; body: Body } | ErrorResponse
 
 const debug = (...args: any[]) => console.log("api:", ...args)
 
-export async function apiRequest<T extends keyof ApiSchema>(
+async function apiRequest<T extends keyof ApiSchema>(
 	name: T,
 	args: ApiSchema[T]["input"]
 ): Promise<ApiResponse<Awaited<ApiSchema[T]["output"]>>> {
@@ -61,7 +61,7 @@ export function formatResponseError(response: ErrorResponse) {
 export type HttpResponse<Body = any> = { status: 200; body: Body } | { status: number; body?: any }
 
 // Only POST requests for now because this is only used for the API.
-export async function httpRequest(url: string, args: any): Promise<HttpResponse> {
+async function httpRequest(url: string, args: any): Promise<HttpResponse> {
 	let response: Response
 	try {
 		response = await fetch(url, {

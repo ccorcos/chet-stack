@@ -86,7 +86,7 @@ function Sidebar(props: {
 
 	const filteredItems = useFuzzyMatch({
 		items: pageNames,
-		filter: searchText,
+		query: searchText,
 	})
 
 	const onSubmit = (value: string) => {

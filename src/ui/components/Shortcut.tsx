@@ -1,5 +1,5 @@
 import React from "react"
-import { displayShortcut } from "ui/helpers/shortcut"
+import { displayShortcut } from "../helpers/shortcut"
 
 export function Shortcut(props: { shortcut?: string | string[] }) {
 	const { shortcut } = props
