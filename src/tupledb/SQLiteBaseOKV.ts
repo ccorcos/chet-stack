@@ -5,7 +5,7 @@ import { BaseOKV } from "./types"
 type K = string
 type V = string
 
-export class SQLiteBaseOKV implements BaseOKV<string, string> {
+export class SQLiteBaseOKV implements BaseOKV<K, V> {
 	/**
 	 * import sqlite from "better-sqlite3"
 	 * new SQLiteDatabase(sqlite("path/to.db"))

@@ -5,6 +5,10 @@ import { TaskError } from "./services/QueueDatabase"
 import { ServerEnvironment } from "./services/ServerEnvironment"
 import { tasks } from "./tasks"
 
+/**
+ * This only makes sense to run in the same process while the database is embedded.
+ * One day the database can be another process and this queue server can be another process.
+ */
 export function QueueServer(environment: ServerEnvironment) {
 	let running = true
 

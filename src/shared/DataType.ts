@@ -199,6 +199,9 @@ export const number: NumberDataType = { type: "number" }
 export const boolean: BooleanDataType = { type: "boolean" }
 export const any: AnyDataType = { type: "any" }
 
+// TODO: implement this.
+export const uuid = string
+
 // It's important we don't actually use dataTypeDataType externally because it is circular
 // and will not serialize.
 export const dataType: DataTypeDataType = { type: "dataType" }
