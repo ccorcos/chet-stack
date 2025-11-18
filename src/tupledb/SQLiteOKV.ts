@@ -5,7 +5,7 @@ import { SyncOKV } from "./types"
 type K = string
 type V = string
 
-export class SQLiteBaseOKV implements SyncOKV<K, V> {
+export class SQLiteOKV implements SyncOKV<K, V> {
 	/**
 	 * import sqlite from "better-sqlite3"
 	 * new SQLiteDatabase(sqlite("path/to.db"))

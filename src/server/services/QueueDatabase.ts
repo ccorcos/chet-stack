@@ -2,7 +2,7 @@ import sqlite from "better-sqlite3"
 import { isPlainObject } from "lodash-es"
 import { randomId } from "shared/randomId"
 import { Simplify } from "shared/typeHelpers"
-import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
+import { SQLiteOKV } from "tupledb/SQLiteOKV"
 import { tupleDb, tupleOkv, tupleTx } from "tupledb/sync"
 import { SyncTupleDb, Tuple } from "tupledb/types"
 import { TaskName, Tasks } from "../tasks"
@@ -81,7 +81,7 @@ export class QueueDatabase {
 	private db: SyncTupleDb
 
 	constructor(private dbPath: string) {
-		this.db = tupleDb(tupleOkv(new SQLiteBaseOKV(sqlite(this.dbPath))))
+		this.db = tupleDb(tupleOkv(new SQLiteOKV(sqlite(this.dbPath))))
 		this.createEnqueueProxy()
 	}
 

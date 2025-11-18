@@ -9,11 +9,11 @@ import * as cheerio from "cheerio"
 import { URL } from "node:url"
 import { config } from "server/services/ServerConfig"
 import { sleep } from "shared/sleep"
-import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
+import { SQLiteOKV } from "tupledb/SQLiteOKV"
 import { tupleDb, tupleOkv, tupleTx } from "tupledb/sync"
 import { SyncTupleDb } from "tupledb/types"
 
-const storage = new SQLiteBaseOKV(sqlite(config.dbPath))
+const storage = new SQLiteOKV(sqlite(config.dbPath))
 const db = tupleDb(tupleOkv(storage))
 
 const startUrl = "https://www.tsfreemind.com"
