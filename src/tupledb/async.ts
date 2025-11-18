@@ -17,7 +17,7 @@ import {
 	ListArgs,
 	Tuple,
 	WriteArgs,
-} from "./types2"
+} from "./types"
 
 function KeyEncode<I, O, V>(db: AsyncOKV<O, V>, encoder: KeyEncoder<I, O>): AsyncOKV<I, V> {
 	return {

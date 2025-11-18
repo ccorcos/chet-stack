@@ -9,7 +9,7 @@ import {
 	KeyEncodeWrite,
 	TupleSubspaceEncoder,
 } from "./Encoder"
-import { JSONValue, ListArgs, SyncOKV, SyncTupleDb, SyncTupleTx, Tuple, WriteArgs } from "./types2"
+import { JSONValue, ListArgs, SyncOKV, SyncTupleDb, SyncTupleTx, Tuple, WriteArgs } from "./types"
 
 function KeyEncode<I, O, V>(db: SyncOKV<O, V>, encoder: KeyEncoder<I, O>): SyncOKV<I, V> {
 	return {
@@ -88,7 +88,7 @@ export function tupleDb(db: SyncOKV<Tuple, JSONValue>): SyncTupleDb {
 	}
 }
 
-class SyncTransaction<K, V> implements SyncOKV<K, V> {
+export class SyncTransaction<K, V> implements SyncOKV<K, V> {
 	committed = false
 	cache: Cache<K, V>
 

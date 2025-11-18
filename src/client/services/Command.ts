@@ -1,7 +1,7 @@
 import { codec } from "tupledb/Codec"
-import { InMemoryBaseOKV } from "tupledb/InMemoryBaseOKV"
-import { tupleDb } from "tupledb/TupleDb"
-import { Tuple, TupleDb } from "tupledb/types"
+import { InMemoryOKV } from "tupledb/InMemoryOKV"
+import { tupleDb } from "tupledb/sync"
+import { SyncTupleDb, Tuple } from "tupledb/types"
 import { normalizeKeyboardShortcut, normalizeShortcut } from "ui/helpers/shortcut"
 
 /** 0 is highest priority. */
@@ -33,7 +33,7 @@ function* indexCommand(command: Command): Generator<Tuple> {
 	}
 }
 
-function register(db: TupleDb, command: Command) {
+function register(db: SyncTupleDb, command: Command) {
 	if (db.get(["command", command.name]))
 		throw new Error("Command already registered: " + command.name)
 
@@ -41,13 +41,13 @@ function register(db: TupleDb, command: Command) {
 	db.write({ set: indexes.map((index) => ({ key: index, value: command })) })
 }
 
-function unregister(db: TupleDb, command: Command) {
+function unregister(db: SyncTupleDb, command: Command) {
 	const indexes = [...indexCommand(command)]
 	db.write({ delete: indexes })
 }
 
 export class CommandService {
-	private db = tupleDb(new InMemoryBaseOKV(codec.compare))
+	private db = tupleDb(new InMemoryOKV(codec.compare))
 
 	register(command: Command) {
 		register(this.db, command)

@@ -2,9 +2,7 @@ import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
 import http from "node:http"
-import { initEmailModel } from "shared/EmailModel"
-import { recordDb } from "tupledb/RecordDb"
-import { tupleDb, tupleOkv } from "tupledb/TupleDb"
+import { tupleOkv } from "tupledb/sync"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
 import { PubsubServer } from "./PubsubServer"
@@ -31,7 +29,7 @@ const base = new Database(config.dbPath)
 const db = tupleOkv(base)
 
 INIT: {
-	initEmailModel(recordDb(tupleDb(db).subspace(["EmailDemo"])))
+	// initEmailModel(recordDb(tupleDb(db).subspace(["EmailDemo"])))
 }
 
 const queue = new QueueDatabase(config.queuePath)

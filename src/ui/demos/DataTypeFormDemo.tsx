@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import * as t from "shared/DataType"
-import { tables } from "shared/EmailModel"
+// import { tables } from "shared/EmailModel"
 import { DataTypeForm } from "../components/DataTypeForm"
 
 /*
@@ -71,12 +71,12 @@ export function DataTypeFormDemo() {
 
 			{/* <Example init={t.dataType} /> */}
 
-			{Object.entries(tables).map(([name, schema]) => (
+			{/* {Object.entries(tables).map(([name, schema]) => (
 				<div key={name}>
 					<div>{name}</div>
 					<Example init={schema} />
 				</div>
-			))}
+			))} */}
 		</div>
 	)
 }

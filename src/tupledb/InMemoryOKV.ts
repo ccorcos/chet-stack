@@ -1,6 +1,6 @@
 import { insert, remove, search } from "@ccorcos/ordered-array"
 import { compare as cmp } from "shared/compare"
-import { SyncOKV } from "./types2"
+import { SyncOKV } from "./types"
 
 export class InMemoryOKV<K = string | number, V = any> implements SyncOKV<K, V> {
 	data: { key: K; value: V }[] = []

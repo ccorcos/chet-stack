@@ -1,13 +1,13 @@
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
 import { codec } from "./Codec"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
-import { tupleDb, tupleTx } from "./TupleDb"
-import { TupleDb } from "./types"
+import { InMemoryOKV } from "./InMemoryOKV"
+import { SyncTransaction, tupleDb, tupleTx } from "./sync"
+import { SyncTupleDb } from "./types"
 
 describe("TupleDb", () => {
 	it("tupledb subspace", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOKV(codec.compare))
 
 		db.set(["foo"], "bar")
 		assert.equal(db.get(["foo"]), "bar")
@@ -27,7 +27,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb transact basics", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOKV(codec.compare))
 
 		const tx = tupleTx(db)
 		tx.set(["foo"], "bar")
@@ -43,7 +43,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb transact then subspace", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOKV(codec.compare))
 
 		const tx = tupleTx(db)
 		const person = tx.subspace(["person"])
@@ -63,7 +63,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb subspace then transact", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOKV(codec.compare))
 		const person = db.subspace(["person"])
 
 		const tx = tupleTx(person)
@@ -90,15 +90,15 @@ describe("TupleDb", () => {
 	})
 
 	it("transact composition", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOKV(codec.compare))
 
-		const createPerson = (tx: TupleDb, person: { name: string; age: number }) => {
+		const createPerson = (tx: SyncTupleDb, person: { name: string; age: number }) => {
 			const people = tx.subspace(["people"])
 			people.set(["name", person.name], null)
 			people.set(["age", person.age], null)
 		}
 
-		const createPersonTwoPlaces = (tx: TupleDb, person: { name: string; age: number }) => {
+		const createPersonTwoPlaces = (tx: SyncTupleDb, person: { name: string; age: number }) => {
 			createPerson(tx.subspace(["A"]), person)
 			createPerson(tx.subspace(["B"]), person)
 		}
@@ -122,5 +122,62 @@ describe("TupleDb", () => {
 			{ key: ["B", "people", "name", "chet"], value: null },
 			{ key: ["B", "people", "name", "simon"], value: null },
 		])
+	})
+})
+
+/** Includes end value! */
+function kv(start: number, end?: number) {
+	if (end === undefined) end = start
+	return Array.from({ length: end - start + 1 }, (_, i) => i + start)
+		.map((i) => i.toString().padStart(2, "0"))
+		.map((i) => ({ key: i, value: i }))
+}
+
+describe("SyncTransaction", () => {
+	it("reads through to the database", () => {
+		const db = new InMemoryOKV()
+		db.write({ set: kv(0, 10) })
+		const tx = new SyncTransaction(db)
+		assert.deepEqual(tx.list(), kv(0, 10))
+	})
+
+	it("reads it own writes", () => {
+		const db = new InMemoryOKV()
+		db.write({ set: kv(0, 10) })
+
+		const tx = new SyncTransaction(db)
+
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+
+		// Db hasnt changed uet.
+		assert.deepEqual(db.list(), kv(0, 10))
+		tx.commit()
+		// Now it has.
+		assert.deepEqual(db.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+	})
+
+	it("prefix results combine correctly", () => {
+		const db = new InMemoryOKV()
+		db.write({ set: kv(0, 10) })
+
+		const tx = new SyncTransaction(db)
+		tx.list({ gte: "00", lte: "05" })
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+	})
+
+	it("overwriting pending sets and deletes", () => {
+		const db = new InMemoryOKV()
+		db.write({ set: kv(0, 10) })
+
+		const tx = new SyncTransaction(db)
+		tx.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		assert.deepEqual(tx.list(), [{ key: "00", value: "xx" }, ...kv(1, 9)])
+		tx.write({ set: [{ key: "10", value: "xx" }], delete: ["00"] })
+		assert.deepEqual(tx.list(), [...kv(1, 9), { key: "10", value: "xx" }])
+
+		tx.commit()
+		assert.deepEqual(db.list(), [...kv(1, 9), { key: "10", value: "xx" }])
 	})
 })

@@ -6,7 +6,7 @@ These functions wrap BaseOKV to encode and decode keys and values.
 
 import { compactObj } from "shared/compactObj"
 import { Range } from "./Range"
-import { BaseOKV, CacheListResult, ListArgs, Tuple, WriteArgs } from "./types"
+import { CacheListResult, ListArgs, Tuple, WriteArgs } from "./types"
 
 export type KeyEncoder<I, O> = {
 	compare: (a: I, b: I) => number
@@ -59,36 +59,6 @@ export function KeyEncodeWrite<K, V, O>(
 	return {
 		set: args.set ? KeyEncodeList(args.set, encoder) : undefined,
 		delete: args.delete?.map((key) => encoder.encode(key)),
-	}
-}
-
-export function KeyEncodeOKV<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>): BaseOKV<I, V> {
-	return {
-		compare: encoder.compare,
-		list(args) {
-			const newArgs = KeyEncodeListArgs(args || {}, encoder)
-			const results = db.list(newArgs)
-			return KeyDecodeList(results, encoder)
-		},
-		write(args) {
-			const newArgs = KeyEncodeWrite(args, encoder)
-			return db.write(newArgs)
-		},
-	}
-}
-
-export function ValueEncodeOKV<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>): BaseOKV<K, I> {
-	return {
-		compare: db.compare,
-		list(args) {
-			return db.list(args).map(({ key, value }) => ({ key, value: encoder.decode(value) }))
-		},
-		write(tx: { set?: { key: K; value: I }[]; delete?: K[] }) {
-			return db.write({
-				set: tx.set?.map(({ key, value }) => ({ key, value: encoder.encode(value) })),
-				delete: tx.delete,
-			})
-		},
 	}
 }
 

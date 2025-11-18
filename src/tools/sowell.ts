@@ -10,8 +10,8 @@ import { URL } from "node:url"
 import { config } from "server/services/ServerConfig"
 import { sleep } from "shared/sleep"
 import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
-import { tupleDb, tupleOkv, tupleTx } from "tupledb/TupleDb"
-import { TupleDb } from "tupledb/types"
+import { tupleDb, tupleOkv, tupleTx } from "tupledb/sync"
+import { SyncTupleDb } from "tupledb/types"
 
 const storage = new SQLiteBaseOKV(sqlite(config.dbPath))
 const db = tupleDb(tupleOkv(storage))
@@ -55,13 +55,13 @@ async function start(url: string) {
 	await crawl()
 }
 
-const enqueue = (db: TupleDb, url) => {
+const enqueue = (db: SyncTupleDb, url) => {
 	if (db.has(["queue", url])) return
 	if (db.has(["link", url])) return
 	db.set(["queue", url], null)
 }
 
-const next = (db: TupleDb) => {
+const next = (db: SyncTupleDb) => {
 	const queue = db.list({ gt: ["queue"], lt: ["queue", null], limit: 1 })
 	if (queue.length === 1) {
 		const url = queue[0].key.at(-1)

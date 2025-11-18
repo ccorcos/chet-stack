@@ -3,8 +3,8 @@ import { isPlainObject } from "lodash-es"
 import { randomId } from "shared/randomId"
 import { Simplify } from "shared/typeHelpers"
 import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
-import { tupleDb, tupleOkv, tupleTx } from "tupledb/TupleDb"
-import { Tuple, TupleDb } from "tupledb/types"
+import { tupleDb, tupleOkv, tupleTx } from "tupledb/sync"
+import { SyncTupleDb, Tuple } from "tupledb/types"
 import { TaskName, Tasks } from "../tasks"
 
 type QueueTaskArgs = {
@@ -34,13 +34,13 @@ type TaskDatabaseSchema =
 	| { key: ["running", { started_at: string }, { id: string }]; value: null }
 	| { key: ["failed", { started_at: string }, { id: string }]; value: Task }
 
-function enqueueTask(db: TupleDb, task: Task) {
+function enqueueTask(db: SyncTupleDb, task: Task) {
 	const { id, run_at } = task
 	db.set(["task", { id }], task)
 	db.set(["waiting", { run_at }, { id }], null)
 }
 
-function dequeueTask(db: TupleDb, now: string) {
+function dequeueTask(db: SyncTupleDb, now: string) {
 	const waiting = db.subspace(["waiting"])
 	const running = db.subspace(["running"])
 	const tasks = db.subspace(["task"])
@@ -59,7 +59,7 @@ function dequeueTask(db: TupleDb, now: string) {
 	return { ...task, started_at: now }
 }
 
-function finishTask(db: TupleDb, task: Task, error?: TaskError) {
+function finishTask(db: SyncTupleDb, task: Task, error?: TaskError) {
 	const tasks = db.subspace(["task"])
 	const running = db.subspace(["running"])
 	const failed = db.subspace(["failed"])
@@ -78,7 +78,7 @@ function finishTask(db: TupleDb, task: Task, error?: TaskError) {
 const debug = (...args: any[]) => console.log("queue:", ...args)
 
 export class QueueDatabase {
-	private db: TupleDb
+	private db: SyncTupleDb
 
 	constructor(private dbPath: string) {
 		this.db = tupleDb(tupleOkv(new SQLiteBaseOKV(sqlite(this.dbPath))))

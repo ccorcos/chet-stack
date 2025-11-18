@@ -23,7 +23,7 @@ import {
 	TupleDb,
 	WriteArgs,
 	WriteOp,
-} from "./types2"
+} from "./types"
 
 // ============================================================================
 // Generator placeholders for the actual storage.

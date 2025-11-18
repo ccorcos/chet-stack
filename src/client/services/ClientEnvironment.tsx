@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react"
-import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
+import { CacheOKV, JSONValue, Tuple } from "tupledb/types"
 import type { Router } from "ui/services/Router"
 import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
@@ -13,7 +13,7 @@ export type ClientEnvironment = {
 	api: ClientApi
 	pubsub: WebsocketPubsubClient
 	prefs: LocalPreferences
-	cache: BaseOKVCache<Tuple, JSONValue>
+	cache: CacheOKV<Tuple, JSONValue>
 	cmd: CommandService
 }
 
