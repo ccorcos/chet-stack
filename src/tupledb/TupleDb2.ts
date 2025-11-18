@@ -7,15 +7,6 @@ BaseOKV -> BaseTupleOKV -> TupleDb -> TupleTx
 const db = tupleDb(tupleOkv(stringOkv))
 const tx = tupleTx(db)
 
-One day, I can imagine having ReadOnly vs ReadWrite types to make it clear what's happening
-when you pass a db into a function.
-We could also have nested transactions which would allow db.transact() instead of tupleTx(db)
-
-
-TODO:
-- Nested transactions and db.transact()
-
-
 */
 
 import { codec } from "./Codec"

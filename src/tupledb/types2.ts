@@ -41,30 +41,6 @@ export type QueryOKV<K, V> = {
 }
 
 // ==========================================================================
-// Cache
-// ==========================================================================
-
-export type CacheListResult<K, V> = {
-	miss?: true
-	hit?: { key: K; value: V }[]
-	prefix?: { key: K; value: V }[]
-}
-
-/**
- * This type is useful for implementing subspace. We intentionally don't include the
- * data or the ranges of the cache on this type so we can create a subspace without
- * copying all that data.
- */
-export type CacheOKV<K, V> = {
-	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
-	compare: (a: K, b: K) => number
-	list: (args: ListArgs<K>) => CacheListResult<K, V>
-	listRaw: (args: ListArgs<K>) => { key: K; value: V }[]
-	write: (args: WriteArgs<K, V>) => () => void
-	subscribe: (range: Range<K>, fn: () => void) => () => void
-}
-
-// ==========================================================================
 // Tx
 // ==========================================================================
 
@@ -86,6 +62,30 @@ export type AsyncOKVTx<K, V> = AsyncOKV<K, V> & {
 export type QueryOKVTx<K, V> = QueryOKV<K, V> & {
 	committed: boolean
 	commit: () => Generator<any, void, any>
+}
+
+// ==========================================================================
+// Cache
+// ==========================================================================
+
+export type CacheListResult<K, V> = {
+	miss?: true
+	hit?: { key: K; value: V }[]
+	prefix?: { key: K; value: V }[]
+}
+
+/**
+ * This type is useful for implementing subspace. We intentionally don't include the
+ * data or the ranges of the cache on this type so we can create a subspace without
+ * copying all that data.
+ */
+export type CacheOKV<K, V> = {
+	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
+	compare: (a: K, b: K) => number
+	list: (args: ListArgs<K>) => CacheListResult<K, V>
+	listRaw: (args: ListArgs<K>) => { key: K; value: V }[]
+	write: (args: WriteArgs<K, V>) => () => void
+	subscribe: (range: Range<K>, fn: () => void) => () => void
 }
 
 // ==========================================================================
