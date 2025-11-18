@@ -14,6 +14,14 @@ export type ListOptions = {
 export type ListArgs<K> = Range<K> & ListOptions
 
 // ==========================================================================
+// Operation Types (for generator-based API)
+// ==========================================================================
+
+export type ListOp<K> = { fn: "list"; args: [] | [ListArgs<K>] }
+export type WriteOp<K, V> = { fn: "write"; args: [WriteArgs<K, V>] }
+export type Op<K, V> = ListOp<K> | WriteOp<K, V> | Generator<Op<K, V>, any, any>[]
+
+// ==========================================================================
 // OKV
 // ==========================================================================
 
@@ -34,10 +42,27 @@ export type AsyncOKV<K, V> = {
 }
 
 export type QueryOKV<K, V> = {
+	list(args?: ListArgs<K>): Generator<Op<K, V>, { key: K; value: V }[], any>
+	write: (tx: WriteArgs<K, V>) => Generator<Op<K, V>, void, any>
+	all: <T>(args: Array<Generator<Op<K, V>, T, any>>) => Generator<Op<K, V>, Awaited<T>[], any>
+}
+
+// ==========================================================================
+// Storage Interfaces (with run methods for executing generators)
+// ==========================================================================
+
+export type SyncStorageOKV<K, V> = {
 	compare: (a: K, b: K) => number
-	list(args?: ListArgs<K>): Generator<any, { key: K; value: V }[], any>
-	write: (tx: WriteArgs<K, V>) => Generator<any, void, any>
-	all: <T>(args: Array<Generator<any, T, any>>) => Generator<any, Awaited<T>[], any>
+	list(args?: ListArgs<K>): { key: K; value: V }[]
+	write(tx: WriteArgs<K, V>): void
+	run<T>(gen: Generator<Op<K, V>, T, unknown>): T
+}
+
+export type AsyncStorageOKV<K, V> = {
+	compare: (a: K, b: K) => number
+	list(args?: ListArgs<K>): Promise<{ key: K; value: V }[]>
+	write(tx: WriteArgs<K, V>): Promise<void>
+	run<T>(gen: Generator<Op<K, V>, T, unknown>): Promise<T>
 }
 
 // ==========================================================================
