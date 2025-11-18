@@ -1,3 +1,4 @@
+import { compare as cmp } from "shared/compare"
 import { codec } from "./Codec"
 import {
 	Encoder,
@@ -10,12 +11,16 @@ import {
 } from "./Encoder"
 import {
 	AsyncOKV,
+	AsyncTupleDb,
 	JSONValue,
 	ListArgs,
 	ListOp,
+	OKV,
 	Op,
 	SyncOKV,
+	SyncTupleDb,
 	Tuple,
+	TupleDb,
 	WriteArgs,
 	WriteOp,
 } from "./types2"
@@ -24,14 +29,9 @@ import {
 // Generator placeholders for the actual storage.
 // ============================================================================
 
-export type OKV<K, V, SK = K, SV = V> = {
-	list(args?: ListArgs<K>): Generator<Op<SK, SV>, { key: K; value: V }[], any>
-	write: (tx: WriteArgs<K, V>) => Generator<Op<SK, SV>, void, any>
-	all: <T>(args: Array<Generator<Op<SK, SV>, T, any>>) => Generator<Op<SK, SV>, Awaited<T>[], any>
-}
-
-export function okv<K, V>(): OKV<K, V> {
+export function okv<K, V>(compare = cmp): OKV<K, V> {
 	return {
+		compare,
 		*list(args?: ListArgs<K>) {
 			const op: ListOp<K> = {
 				fn: "list",
@@ -103,11 +103,12 @@ export async function runAsync<K, V, T>(
 // Encoders for generators.
 // ============================================================================
 
-export function ValueEncode<K, I, O, SK, SV>(
+function ValueEncode<K, I, O, SK, SV>(
 	db: OKV<K, O, SK, SV>,
 	encoder: Encoder<I, O>
 ): OKV<K, I, SK, SV> {
 	return {
+		compare: db.compare,
 		*list(args): Generator<Op<SK, SV>, { key: K; value: I }[], any> {
 			const results = yield* db.list(args)
 			return results.map(({ key, value }) => ({
@@ -131,11 +132,12 @@ export function ValueEncode<K, I, O, SK, SV>(
 	}
 }
 
-export function KeyEncode<I, O, V, SK, SV>(
+function KeyEncode<I, O, V, SK, SV>(
 	db: OKV<O, V, SK, SV>,
 	encoder: KeyEncoder<I, O>
 ): OKV<I, V, SK, SV> {
 	return {
+		compare: encoder.compare,
 		*list(args): any {
 			const newArgs = KeyEncodeListArgs(args || {}, encoder)
 			const results = yield* db.list(newArgs)
@@ -151,19 +153,28 @@ export function KeyEncode<I, O, V, SK, SV>(
 	}
 }
 
-export function tupleOkv(okv: OKV<string, string>): OKV<Tuple, JSONValue, string, string> {
-	return ValueEncode(KeyEncode(okv, codec), {
+export function encodeTupleKey<V, SK, SV>(okv: OKV<string, V, SK, SV>): OKV<Tuple, V, SK, SV> {
+	return KeyEncode(okv, codec)
+}
+
+export function encodeJsonValue<K, SK, SV>(okv: OKV<K, string, SK, SV>): OKV<K, JSONValue, SK, SV> {
+	return ValueEncode(okv, {
 		encode: (value) => JSON.stringify(value),
 		decode: (value) => JSON.parse(value),
 	})
 }
 
-function subspace<SK, SV>(
+export function tupleOkv(okv: OKV<string, string>): OKV<Tuple, JSONValue, string, string> {
+	return encodeJsonValue(encodeTupleKey(okv))
+}
+
+export function subspace<SK, SV>(
 	db: OKV<Tuple, JSONValue, SK, SV>,
 	prefix: Tuple
 ): OKV<Tuple, JSONValue, SK, SV> {
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
+		compare: db.compare,
 		*list(args): Generator<Op<SK, SV>, { key: Tuple; value: JSONValue }[], any> {
 			const newArgs = EncodeSubspaceListArgs(args || {}, prefix)
 			const result = yield* db.list(newArgs)
@@ -177,17 +188,10 @@ function subspace<SK, SV>(
 	}
 }
 
-export type TupleDb<SK, SV> = OKV<Tuple, JSONValue, SK, SV> & {
-	get: (key: Tuple) => Generator<Op<SK, SV>, JSONValue | undefined, any>
-	has: (key: Tuple) => Generator<Op<SK, SV>, boolean, any>
-	set: (key: Tuple, value: JSONValue) => Generator<Op<SK, SV>, void, any>
-	delete: (key: Tuple) => Generator<Op<SK, SV>, void, any>
-	subspace: (prefix: Tuple) => TupleDb<SK, SV>
-}
-
 export function tupleDb<SK, SV>(db: OKV<Tuple, JSONValue, SK, SV>): TupleDb<SK, SV> {
 	const { list, write } = db
 	return {
+		compare: db.compare,
 		list,
 		write,
 		all: db.all,
@@ -208,6 +212,32 @@ export function tupleDb<SK, SV>(db: OKV<Tuple, JSONValue, SK, SV>): TupleDb<SK, 
 		subspace(prefix: Tuple) {
 			return tupleDb(subspace(db, prefix))
 		},
+	}
+}
+
+export function reifySync<SK, SV>(okv: SyncOKV<SK, SV>, db: TupleDb<SK, SV>): SyncTupleDb {
+	return {
+		compare: db.compare,
+		list: (args) => runSync(okv, db.list(args)),
+		write: (tx) => runSync(okv, db.write(tx)),
+		get: (key) => runSync(okv, db.get(key)),
+		has: (key) => runSync(okv, db.has(key)),
+		set: (key, value) => runSync(okv, db.set(key, value)),
+		delete: (key) => runSync(okv, db.delete(key)),
+		subspace: (prefix) => reifySync(okv, db.subspace(prefix)),
+	}
+}
+
+export function reifyAsync<SK, SV>(okv: AsyncOKV<SK, SV>, db: TupleDb<SK, SV>): AsyncTupleDb {
+	return {
+		compare: db.compare,
+		list: (args) => runAsync(okv, db.list(args)),
+		write: (tx) => runAsync(okv, db.write(tx)),
+		get: (key) => runAsync(okv, db.get(key)),
+		has: (key) => runAsync(okv, db.has(key)),
+		set: (key, value) => runAsync(okv, db.set(key, value)),
+		delete: (key) => runAsync(okv, db.delete(key)),
+		subspace: (prefix) => reifyAsync(okv, db.subspace(prefix)),
 	}
 }
 

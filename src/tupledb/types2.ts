@@ -14,21 +14,9 @@ export type ListOptions = {
 export type ListArgs<K> = Range<K> & ListOptions
 
 // ==========================================================================
-// Operation Types (for generator-based API)
+// Base OKV types.
 // ==========================================================================
 
-export type ListOp<K> = { fn: "list"; args: [] | [ListArgs<K>] }
-export type WriteOp<K, V> = { fn: "write"; args: [WriteArgs<K, V>] }
-export type Op<K, V> = ListOp<K> | WriteOp<K, V> | Generator<Op<K, V>, any, any>[]
-
-// ==========================================================================
-// OKV
-// ==========================================================================
-
-/**
- * Compare is important so that we can do other in-memory things, e.g. caching reads
- * and writes in a transaction. Otherwise it's just read and write.
- */
 export type SyncOKV<K, V> = {
 	compare: (a: K, b: K) => number
 	list(args?: ListArgs<K>): { key: K; value: V }[]
@@ -41,33 +29,64 @@ export type AsyncOKV<K, V> = {
 	write: (tx: WriteArgs<K, V>) => Promise<void>
 }
 
-export type QueryOKV<K, V> = {
-	list(args?: ListArgs<K>): Generator<Op<K, V>, { key: K; value: V }[], any>
-	write: (tx: WriteArgs<K, V>) => Generator<Op<K, V>, void, any>
-	all: <T>(args: Array<Generator<Op<K, V>, T, any>>) => Generator<Op<K, V>, Awaited<T>[], any>
+export type SyncTupleDb = SyncOKV<Tuple, JSONValue> & {
+	get: (key: Tuple) => JSONValue | undefined
+	has: (key: Tuple) => boolean
+	set: (key: Tuple, value: JSONValue) => void
+	delete: (key: Tuple) => void
+	subspace: (prefix: Tuple) => SyncTupleDb
+}
+
+export type AsyncTupleDb = AsyncOKV<Tuple, JSONValue> & {
+	get: (key: Tuple) => Promise<JSONValue | undefined>
+	has: (key: Tuple) => Promise<boolean>
+	set: (key: Tuple, value: JSONValue) => Promise<void>
+	delete: (key: Tuple) => Promise<void>
+	subspace: (prefix: Tuple) => AsyncTupleDb
 }
 
 // ==========================================================================
-// Storage Interfaces (with run methods for executing generators)
+// Generator OKV.
 // ==========================================================================
 
-export type SyncStorageOKV<K, V> = {
+export type ListOp<K> = { fn: "list"; args: [] | [ListArgs<K>] }
+export type WriteOp<K, V> = { fn: "write"; args: [WriteArgs<K, V>] }
+export type Op<K, V> = ListOp<K> | WriteOp<K, V> | Generator<Op<K, V>, any, any>[]
+
+/** SK and SV are the persisted types. */
+export type OKV<K, V, SK = K, SV = V> = {
 	compare: (a: K, b: K) => number
-	list(args?: ListArgs<K>): { key: K; value: V }[]
-	write(tx: WriteArgs<K, V>): void
-	run<T>(gen: Generator<Op<K, V>, T, unknown>): T
+	list(args?: ListArgs<K>): Generator<Op<SK, SV>, { key: K; value: V }[], any>
+	write: (tx: WriteArgs<K, V>) => Generator<Op<SK, SV>, void, any>
+	all: <T>(args: Array<Generator<Op<SK, SV>, T, any>>) => Generator<Op<SK, SV>, Awaited<T>[], any>
 }
 
-export type AsyncStorageOKV<K, V> = {
-	compare: (a: K, b: K) => number
-	list(args?: ListArgs<K>): Promise<{ key: K; value: V }[]>
-	write(tx: WriteArgs<K, V>): Promise<void>
-	run<T>(gen: Generator<Op<K, V>, T, unknown>): Promise<T>
+export type TupleDb<SK, SV> = OKV<Tuple, JSONValue, SK, SV> & {
+	get: (key: Tuple) => Generator<Op<SK, SV>, JSONValue | undefined, any>
+	has: (key: Tuple) => Generator<Op<SK, SV>, boolean, any>
+	set: (key: Tuple, value: JSONValue) => Generator<Op<SK, SV>, void, any>
+	delete: (key: Tuple) => Generator<Op<SK, SV>, void, any>
+	subspace: (prefix: Tuple) => TupleDb<SK, SV>
 }
 
 // ==========================================================================
 // Tx
 // ==========================================================================
+
+export type SyncTupleTx = SyncTupleDb & {
+	subspace: (prefix: Tuple) => SyncTupleDb
+	commit: () => void
+	committed: boolean
+}
+
+export type AsyncTupleTx = AsyncTupleDb & {
+	subspace: (prefix: Tuple) => AsyncTupleDb
+	commit: () => Promise<void>
+	committed: boolean
+	// Writes are local within the transaction.
+	set: (key: Tuple, value: JSONValue) => void
+	delete: (key: Tuple) => void
+}
 
 /**
  * Similar to CacheOKC, this is useful for building compositional abstractions.
@@ -84,7 +103,7 @@ export type AsyncOKVTx<K, V> = AsyncOKV<K, V> & {
 	commit: () => Promise<void>
 }
 
-export type QueryOKVTx<K, V> = QueryOKV<K, V> & {
+export type QueryOKVTx<K, V> = OKV<K, V> & {
 	committed: boolean
 	commit: () => Generator<any, void, any>
 }
@@ -117,85 +136,35 @@ export type CacheOKV<K, V> = {
 // TupleDb
 // ==========================================================================
 
-export type SyncTupleOKV = SyncOKV<Tuple, JSONValue>
-export type SyncTupleOKVTx = SyncOKVTx<Tuple, JSONValue>
+// export type ReadOnlySyncTupleDb = {
+// 	compare: (a: Tuple, b: Tuple) => number
+// 	list(args?: ListArgs<Tuple>): { key: Tuple; value: JSONValue }[]
+// 	get: (key: Tuple) => JSONValue | undefined
+// 	has: (key: Tuple) => boolean
+// 	subspace: (prefix: Tuple) => ReadOnlySyncTupleDb
+// }
 
-export type AsyncTupleOKV = AsyncOKV<Tuple, JSONValue>
-export type AsyncTupleOKVTx = AsyncOKVTx<Tuple, JSONValue>
+// export type ReadOnlyAsyncTupleDb = {
+// 	compare: (a: Tuple, b: Tuple) => number
+// 	list(args?: ListArgs<Tuple>): Promise<{ key: Tuple; value: JSONValue }[]>
+// 	get: (key: Tuple) => Promise<JSONValue | undefined>
+// 	has: (key: Tuple) => Promise<boolean>
+// 	subspace: (prefix: Tuple) => ReadOnlyAsyncTupleDb
+// }
 
-export type QueryTupleOKV = QueryOKV<Tuple, JSONValue>
-export type QueryTupleOKVTx = QueryOKVTx<Tuple, JSONValue>
+// export type ReadOnlyQueryTupleDb = {
+// 	compare: (a: Tuple, b: Tuple) => number
+// 	list(args?: ListArgs<Tuple>): Generator<any, { key: Tuple; value: JSONValue }[], any>
+// 	get: (key: Tuple) => Generator<any, JSONValue | undefined, any>
+// 	has: (key: Tuple) => Generator<any, boolean, any>
+// 	subspace: (prefix: Tuple) => ReadOnlyQueryTupleDb
+// }
 
-export type SyncTupleDb = SyncTupleOKV & {
-	get: (key: Tuple) => JSONValue | undefined
-	has: (key: Tuple) => boolean
-	set: (key: Tuple, value: JSONValue) => void
-	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => SyncTupleDb
-}
-
-export type AsyncTupleDb = AsyncTupleOKV & {
-	get: (key: Tuple) => Promise<JSONValue | undefined>
-	has: (key: Tuple) => Promise<boolean>
-	set: (key: Tuple, value: JSONValue) => Promise<void>
-	delete: (key: Tuple) => Promise<void>
-	subspace: (prefix: Tuple) => AsyncTupleDb
-}
-
-export type QueryTupleDb = QueryTupleOKV & {
-	get: (key: Tuple) => Generator<any, JSONValue | undefined, any>
-	has: (key: Tuple) => Generator<any, boolean, any>
-	set: (key: Tuple, value: JSONValue) => Generator<any, void, any>
-	delete: (key: Tuple) => Generator<any, void, any>
-	subspace: (prefix: Tuple) => QueryTupleDb
-}
-
-export type ReadOnlySyncTupleDb = {
-	compare: (a: Tuple, b: Tuple) => number
-	list(args?: ListArgs<Tuple>): { key: Tuple; value: JSONValue }[]
-	get: (key: Tuple) => JSONValue | undefined
-	has: (key: Tuple) => boolean
-	subspace: (prefix: Tuple) => ReadOnlySyncTupleDb
-}
-
-export type ReadOnlyAsyncTupleDb = {
-	compare: (a: Tuple, b: Tuple) => number
-	list(args?: ListArgs<Tuple>): Promise<{ key: Tuple; value: JSONValue }[]>
-	get: (key: Tuple) => Promise<JSONValue | undefined>
-	has: (key: Tuple) => Promise<boolean>
-	subspace: (prefix: Tuple) => ReadOnlyAsyncTupleDb
-}
-
-export type ReadOnlyQueryTupleDb = {
-	compare: (a: Tuple, b: Tuple) => number
-	list(args?: ListArgs<Tuple>): Generator<any, { key: Tuple; value: JSONValue }[], any>
-	get: (key: Tuple) => Generator<any, JSONValue | undefined, any>
-	has: (key: Tuple) => Generator<any, boolean, any>
-	subspace: (prefix: Tuple) => ReadOnlyQueryTupleDb
-}
-
-export type SyncTupleTx = SyncTupleOKVTx & {
-	get: (key: Tuple) => JSONValue | undefined
-	has: (key: Tuple) => boolean
-	set: (key: Tuple, value: JSONValue) => void
-	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => SyncTupleOKVTx
-}
-
-export type AsyncTupleTx = AsyncTupleOKVTx & {
-	get: (key: Tuple) => Promise<JSONValue | undefined>
-	has: (key: Tuple) => Promise<boolean>
-	// These are cached locally in the transaction.
-	set: (key: Tuple, value: JSONValue) => void
-	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => AsyncTupleOKVTx
-}
-
-export type QueryTupleTx = QueryTupleOKVTx & {
-	get: (key: Tuple) => Generator<any, JSONValue | undefined, any>
-	has: (key: Tuple) => Generator<any, boolean, any>
-	// These are cached locally in the transaction.
-	set: (key: Tuple, value: JSONValue) => void
-	delete: (key: Tuple) => void
-	subspace: (prefix: Tuple) => QueryTupleOKVTx
-}
+// export type QueryTupleTx = QueryTupleOKVTx & {
+// 	get: (key: Tuple) => Generator<any, JSONValue | undefined, any>
+// 	has: (key: Tuple) => Generator<any, boolean, any>
+// 	// These are cached locally in the transaction.
+// 	set: (key: Tuple, value: JSONValue) => void
+// 	delete: (key: Tuple) => void
+// 	subspace: (prefix: Tuple) => QueryTupleOKVTx
+// }
