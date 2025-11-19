@@ -10,6 +10,6 @@ export function randomId(seed?: string) {
 
 	const hash = md5(seed)
 	const hexBytes = chunk(hash, 2).map((pair) => pair.join(""))
-	const random = hexBytes.map((hex) => parseInt(hex, 16))
+	const random = new Uint8Array(hexBytes.map((hex) => parseInt(hex, 16)))
 	return uuid({ random })
 }

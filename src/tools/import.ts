@@ -25,7 +25,7 @@ const records = parse(csvContent, {
 console.log(records)
 
 for (const record of records) {
-	const name = record["﻿Common Name"]
+	const name = (record as Record<string, any>)["﻿Common Name"]
 	plants.set([name], record)
 }
 

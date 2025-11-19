@@ -5,7 +5,7 @@ import { GptMessage, retryFetchGpt } from "./gpt"
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 type OpenAIMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam
 
-const OpenAiModel: OpenAI.Chat.ChatModel = "gpt-4.5-preview" //"gpt-4o-mini";
+const OpenAiModel = "gpt-4.5-preview" as const //"gpt-4o-mini";
 
 const DEBUG = true
 const debug = (...args: any[]) => {
