@@ -22,7 +22,7 @@ export async function handler(
 	// if (!user) throw new NotFoundError(`User not found: ${username}`)
 
 	// const passwordRecord = await db.getPassword(user.id)
-	// if (!passwordRecord) throw new BrokenError("Found a user without a password record.")
+	// if (!passwordRecord) throw new FailedDependencyError("Found a user without a password record.")
 
 	// // Secure compare to prevent timing attacks.
 	// if (!secureCompare(passwordHash, passwordRecord.password_hash))

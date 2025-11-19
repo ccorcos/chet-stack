@@ -1,3 +1,4 @@
+import compression from "compression"
 import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
@@ -7,6 +8,7 @@ import { recordDb } from "tupledb/RecordDb"
 import { tupleDb, tupleOkv } from "tupledb/TupleDb"
 import { ApiServer } from "./ApiServer"
 import { FileServer } from "./FileServer"
+import { errorHandler } from "./helpers/errorHandler"
 import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
 import { Database } from "./services/Database"
@@ -44,12 +46,15 @@ const pubsub = PubsubServer({ config, db }, server)
 // database or the pubsub service with minimal plumbing.
 const environment: ServerEnvironment = { config, db, queue, pubsub }
 
+app.use(compression())
+
 await FileServer(environment, app)
 QueueServer(environment)
 ApiServer(environment, app)
 await WebServer(environment, app)
 
+errorHandler(environment, app)
+
 // TODO: configure port, also https?
 // https.createServer(options, app).listen(443)
-
 server.listen(config.port, () => console.log("Listening: http://localhost:8080"))
