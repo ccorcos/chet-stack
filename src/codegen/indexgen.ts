@@ -75,8 +75,12 @@ export async function indexgen(args: { dirPath: string; watchMode: boolean }) {
 	await generateIndex(dirPath)
 
 	if (watchMode) {
-		const glob = path.join(dirPath, "*")
-		const watcher = chokidar.watch(glob, {
+		const watcher = chokidar.watch(dirPath, {
+			ignored: (p, stats) => {
+				// Ignore subdirectories - only watch direct children
+				const rel = path.relative(dirPath, p)
+				return rel.includes(path.sep)
+			},
 			persistent: true,
 			ignoreInitial: true, // Ignore the initial add events when booting up.
 		})

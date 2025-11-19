@@ -12,9 +12,15 @@ import { hideBin } from "yargs/helpers"
 
 export async function codegen(args: { rootDir: string; watchMode: boolean }) {
 	const { rootDir, watchMode } = args
-	const glob = path.resolve(rootDir, "**/*.gen.ts")
 
-	const watcher = chokidar.watch(glob, {
+	const watcher = chokidar.watch(rootDir, {
+		ignored: (p, stats) => {
+			// Ignore directories
+			if (stats?.isDirectory()) return true
+			// Only watch files that end with .gen.ts
+			if (stats?.isFile() && !p.endsWith(".gen.ts")) return true
+			return false
+		},
 		ignoreInitial: false,
 		persistent: watchMode,
 	})
