@@ -17,7 +17,6 @@ export class TransactionConflictError extends Error {
 	statusCode = 409
 }
 
-/** The request failed due to failure of a previous request. */
-export class FailedDependencyError extends Error {
-	statusCode = 424
+export class BrokenError extends Error {
+	statusCode = 500
 }

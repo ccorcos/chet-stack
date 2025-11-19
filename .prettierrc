@@ -2,6 +2,6 @@
 	"semi": false,
 	"useTabs": true,
 	"trailingComma": "es5",
-	"printWidth": 90,
+	"printWidth": 100,
 	"plugins": ["prettier-plugin-organize-imports"]
 }

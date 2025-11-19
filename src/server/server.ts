@@ -1,4 +1,5 @@
 import compression from "compression"
+import { Database } from "database/Database"
 import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
@@ -11,7 +12,6 @@ import { FileServer } from "./FileServer"
 import { errorHandler } from "./helpers/errorHandler"
 import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
-import { Database } from "./services/Database"
 import { QueueDatabase } from "./services/QueueDatabase"
 import { config } from "./services/ServerConfig"
 import { ServerEnvironment } from "./services/ServerEnvironment"
@@ -30,7 +30,7 @@ app.use(morgan((...args) => "express: " + morgan.dev(...args)))
 
 // Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
-const db = tupleOkv(base)
+const db = tupleDb(tupleOkv(base))
 
 INIT: {
 	initEmailModel(recordDb(tupleDb(db).subspace(["EmailDemo"])))
