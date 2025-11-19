@@ -1,8 +1,8 @@
 import sqlite from "better-sqlite3"
-import { SQLiteBaseOKV } from "tupledb/SQLiteBaseOKV"
-import { BaseOKV, JSONValue, Tuple } from "tupledb/types"
+import { SQLiteOkv } from "tupledb/SQLiteOkv"
+import { JSONValue, Okv, Tuple } from "tupledb/types"
 
-export class Database extends SQLiteBaseOKV {
+export class Database extends SQLiteOkv {
 	constructor(public dbPath: string) {
 		super(sqlite(dbPath))
 	}
@@ -11,4 +11,4 @@ export class Database extends SQLiteBaseOKV {
 	}
 }
 
-export type DatabaseApi = BaseOKV<Tuple, JSONValue>
+export type DatabaseApi = Okv<Tuple, JSONValue>

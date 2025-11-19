@@ -11,7 +11,7 @@ import { compactObj } from "shared/compactObj"
 import { compare as cmp } from "shared/compare"
 import { OrderedList } from "shared/OrderedList"
 import { reverse } from "shared/reverse"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import {
 	Bound,
 	compareBound,
@@ -24,31 +24,31 @@ import {
 	Range,
 } from "./Range"
 import { RangeEmitter } from "./RangeEmitter"
-import { BaseOKVCache, CacheListResult, ListArgs, WriteArgs } from "./types"
+import { CacheListResult, ListArgs, OkvCache, WriteArgs } from "./types"
 
 /**
  * The Cache keeps track of which data ranges are in the cache and respond with hit/miss/prefix.
  * It also handles reactivity and optimistic writes.
  */
-export class Cache<K, V> implements BaseOKVCache<K, V> {
-	data: InMemoryBaseOKV<K, V>
+export class Cache<K, V> implements OkvCache<K, V> {
+	data: InMemoryOkv<K, V>
 	emitter: RangeEmitter<K>
 	ranges: OrderedList<Range<K>>
 
 	refs: OrderedList<{ key: K; ref: number }, K>
 	pending: {
-		set: InMemoryBaseOKV<K, V>
-		delete: InMemoryBaseOKV<K, null>
+		set: InMemoryOkv<K, V>
+		delete: InMemoryOkv<K, null>
 	}
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
-		this.data = new InMemoryBaseOKV<K, V>(compare)
+		this.data = new InMemoryOkv<K, V>(compare)
 		this.emitter = new RangeEmitter(compare)
 		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
 
 		this.pending = {
-			set: new InMemoryBaseOKV(compare),
-			delete: new InMemoryBaseOKV(compare),
+			set: new InMemoryOkv(compare),
+			delete: new InMemoryOkv(compare),
 		}
 
 		this.refs = new OrderedList<{ key: K; ref: number }, K>([], compare, ({ key }) => key)
@@ -68,12 +68,12 @@ export class Cache<K, V> implements BaseOKVCache<K, V> {
 		const optimisticSets = this.pending.set.list(range)
 		const optimisticDeletes = this.pending.delete.list(range).map(({ key }) => key)
 
-		const slice = new InMemoryBaseOKV<K, V>(this.compare)
+		const slice = new InMemoryOkv<K, V>(this.compare)
 		slice.write({ set: result })
 		slice.write({ set: optimisticSets, delete: optimisticDeletes })
 
 		// Delete any previous data in that range.
-		const existing = new InMemoryBaseOKV<K, V>(this.compare)
+		const existing = new InMemoryOkv<K, V>(this.compare)
 		existing.data = this.data.list(range)
 		for (const { key } of existing.list()) {
 			if (slice.list({ gte: key, lte: key }).length === 1) existing.write({ delete: [key] })

@@ -13,7 +13,7 @@ import * as t from "shared/DataType"
 import { formatError, validate } from "shared/DataType"
 import { reifyFn } from "shared/reifyFn"
 import { readOnlyTupleDb, tupleDb } from "./TupleDb"
-import { BaseTupleOKV, ReadOnlyTupleDb, TupleDb } from "./types"
+import { ReadOnlyTupleDb, TupleDb, TupleOkv } from "./types"
 
 const TableDefSchema = t.object({
 	table: t.string,
@@ -184,7 +184,7 @@ export type RecordDb = {
 	data: ReadOnlyTupleDb
 }
 
-export function recordDb(base: BaseTupleOKV, mode: ValidationMode = "strict"): RecordDb {
+export function recordDb(base: TupleOkv, mode: ValidationMode = "strict"): RecordDb {
 	const db = tupleDb(base)
 	const recordDb: RecordDb = {
 		setTable: (args) => setTable(db, args),

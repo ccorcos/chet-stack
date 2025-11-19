@@ -1,14 +1,14 @@
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { Range } from "./Range"
 import { tupleDb } from "./TupleDb"
-import { BaseOKV, BaseTupleOKV, ListArgs, TupleDb, WriteArgs } from "./types"
+import { ListArgs, Okv, TupleDb, TupleOkv, WriteArgs } from "./types"
 
-export class QueryCache<K, V> implements BaseOKV<K, V> {
-	data: InMemoryBaseOKV<K, V>
+export class QueryCache<K, V> implements Okv<K, V> {
+	data: InMemoryOkv<K, V>
 	reads: Range<K>[] = []
 
-	constructor(public db: BaseOKV<K, V>) {
-		this.data = new InMemoryBaseOKV<K, V>(this.db.compare)
+	constructor(public db: Okv<K, V>) {
+		this.data = new InMemoryOkv<K, V>(this.db.compare)
 	}
 
 	compare = (a: K, b: K) => this.db.compare(a, b)
@@ -27,7 +27,7 @@ export class QueryCache<K, V> implements BaseOKV<K, V> {
 
 export type Query = (db: TupleDb) => any
 
-export function query(db: BaseTupleOKV, query: string) {
+export function query(db: TupleOkv, query: string) {
 	const cache = new QueryCache(db)
 
 	const context = {

@@ -1,9 +1,9 @@
 import vm from "node:vm"
 import { Query, QueryCache } from "./Query"
 import { tupleDb } from "./TupleDb"
-import { BaseTupleOKV } from "./types"
+import { TupleOkv } from "./types"
 
-export function queryNodeVm(db: BaseTupleOKV, query: string) {
+export function queryNodeVm(db: TupleOkv, query: string) {
 	const cache = new QueryCache(db)
 
 	const context = vm.createContext({

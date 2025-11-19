@@ -1,11 +1,11 @@
 import { Database, Transaction } from "better-sqlite3"
 import { compare } from "shared/compare"
-import { BaseOKV } from "./types"
+import { Okv } from "./types"
 
 type K = string
 type V = string
 
-export class SQLiteBaseOKV implements BaseOKV<K, V> {
+export class SQLiteOkv implements Okv<K, V> {
 	/**
 	 * import sqlite from "better-sqlite3"
 	 * new SQLiteDatabase(sqlite("path/to.db"))

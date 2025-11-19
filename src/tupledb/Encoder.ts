@@ -6,7 +6,7 @@ These functions wrap BaseOKV to encode and decode keys and values.
 
 import { compactObj } from "shared/compactObj"
 import { Range } from "./Range"
-import { BaseOKV, CacheListResult, ListArgs, Tuple, WriteArgs } from "./types"
+import { CacheListResult, ListArgs, Okv, Tuple, WriteArgs } from "./types"
 
 export type KeyEncoder<I, O> = {
 	compare: (a: I, b: I) => number
@@ -62,7 +62,7 @@ export function KeyEncodeWrite<K, V, O>(
 	}
 }
 
-export function KeyEncodeOKV<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, O>): BaseOKV<I, V> {
+export function KeyEncodeOKV<I, O, V>(db: Okv<O, V>, encoder: KeyEncoder<I, O>): Okv<I, V> {
 	return {
 		compare: encoder.compare,
 		list(args) {
@@ -77,7 +77,7 @@ export function KeyEncodeOKV<I, O, V>(db: BaseOKV<O, V>, encoder: KeyEncoder<I, 
 	}
 }
 
-export function ValueEncodeOKV<K, I, O>(db: BaseOKV<K, O>, encoder: Encoder<I, O>): BaseOKV<K, I> {
+export function ValueEncodeOKV<K, I, O>(db: Okv<K, O>, encoder: Encoder<I, O>): Okv<K, I> {
 	return {
 		compare: db.compare,
 		list(args) {

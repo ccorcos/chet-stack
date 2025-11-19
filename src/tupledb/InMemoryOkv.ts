@@ -1,8 +1,8 @@
 import { insert, remove, search } from "@ccorcos/ordered-array"
 import { compare as cmp } from "shared/compare"
-import { BaseOKV } from "./types"
+import { Okv } from "./types"
 
-export class InMemoryBaseOKV<K = string | number, V = any> implements BaseOKV<K, V> {
+export class InMemoryOkv<K = string | number, V = any> implements Okv<K, V> {
 	data: { key: K; value: V }[] = []
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {}

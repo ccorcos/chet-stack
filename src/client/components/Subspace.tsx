@@ -9,7 +9,7 @@ import {
 	KeyEncodeWrite,
 	TupleSubspaceEncoder,
 } from "tupledb/Encoder"
-import { BaseOKVCache, JSONValue, Tuple } from "tupledb/types"
+import { JSONValue, OkvCache, Tuple } from "tupledb/types"
 import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 import { ClientApi } from "../services/api"
 
@@ -46,9 +46,9 @@ function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
 }
 
 function CacheSubspace(
-	cache: BaseOKVCache<Tuple, JSONValue>,
+	cache: OkvCache<Tuple, JSONValue>,
 	prefix: Tuple
-): BaseOKVCache<Tuple, JSONValue> {
+): OkvCache<Tuple, JSONValue> {
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
 		compare: cache.compare,

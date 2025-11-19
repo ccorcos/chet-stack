@@ -2,12 +2,12 @@ import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
 import * as t from "shared/DataType"
 import { codec } from "./Codec"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { recordDb } from "./RecordDb"
 
 describe("RecordDb", () => {
 	it("validates schema", () => {
-		const db = recordDb(new InMemoryBaseOKV(codec.compare))
+		const db = recordDb(new InMemoryOkv(codec.compare))
 		db.setTable({
 			table: "user",
 			dataType: t.object({
@@ -22,7 +22,7 @@ describe("RecordDb", () => {
 	})
 
 	it("validates optionally", () => {
-		const db = recordDb(new InMemoryBaseOKV(codec.compare), "optional")
+		const db = recordDb(new InMemoryOkv(codec.compare), "optional")
 		db.setTable({
 			table: "user",
 			dataType: t.object({
@@ -38,7 +38,7 @@ describe("RecordDb", () => {
 	})
 
 	it("doesn't validate", () => {
-		const db = recordDb(new InMemoryBaseOKV(codec.compare), "none")
+		const db = recordDb(new InMemoryOkv(codec.compare), "none")
 		db.setTable({
 			table: "user",
 			dataType: t.object({
@@ -54,7 +54,7 @@ describe("RecordDb", () => {
 	})
 
 	it("indexes", () => {
-		const db = recordDb(new InMemoryBaseOKV(codec.compare))
+		const db = recordDb(new InMemoryOkv(codec.compare))
 
 		db.setTable({
 			table: "user",

@@ -1,6 +1,6 @@
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { Transaction } from "./Transaction"
 
 /** Includes end value! */
@@ -13,14 +13,14 @@ function kv(start: number, end?: number) {
 
 describe("Transaction", () => {
 	it("reads through to the database", () => {
-		const db = new InMemoryBaseOKV()
+		const db = new InMemoryOkv()
 		db.write({ set: kv(0, 10) })
 		const tx = new Transaction(db)
 		assert.deepEqual(tx.list(), kv(0, 10))
 	})
 
 	it("reads it own writes", () => {
-		const db = new InMemoryBaseOKV()
+		const db = new InMemoryOkv()
 		db.write({ set: kv(0, 10) })
 
 		const tx = new Transaction(db)
@@ -36,7 +36,7 @@ describe("Transaction", () => {
 	})
 
 	it("prefix results combine correctly", () => {
-		const db = new InMemoryBaseOKV()
+		const db = new InMemoryOkv()
 		db.write({ set: kv(0, 10) })
 
 		const tx = new Transaction(db)
@@ -46,7 +46,7 @@ describe("Transaction", () => {
 	})
 
 	it("overwriting pending sets and deletes", () => {
-		const db = new InMemoryBaseOKV()
+		const db = new InMemoryOkv()
 		db.write({ set: kv(0, 10) })
 
 		const tx = new Transaction(db)

@@ -1,6 +1,6 @@
 import { describe, it } from "mocha"
 import assert from "node:assert"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { query } from "./Query"
 import { queryNodeVm } from "./QueryNodeVm"
 import { tupleDb, tupleOkv } from "./TupleDb"
@@ -15,7 +15,7 @@ describe("query", () => {
 	for (const key in modes) {
 		const query = modes[key]
 		it("works " + key, () => {
-			const base = new InMemoryBaseOKV<string, string>()
+			const base = new InMemoryOkv<string, string>()
 			const db = tupleDb(tupleOkv(base))
 
 			db.set(["a"], 1)

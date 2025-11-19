@@ -1,13 +1,13 @@
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
 import { codec } from "./Codec"
-import { InMemoryBaseOKV } from "./InMemoryBaseOKV"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { tupleDb, tupleTx } from "./TupleDb"
 import { TupleDb } from "./types"
 
 describe("TupleDb", () => {
 	it("tupledb subspace", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOkv(codec.compare))
 
 		db.set(["foo"], "bar")
 		assert.equal(db.get(["foo"]), "bar")
@@ -27,7 +27,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb transact basics", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOkv(codec.compare))
 
 		const tx = tupleTx(db)
 		tx.set(["foo"], "bar")
@@ -43,7 +43,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb transact then subspace", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOkv(codec.compare))
 
 		const tx = tupleTx(db)
 		const person = tx.subspace(["person"])
@@ -63,7 +63,7 @@ describe("TupleDb", () => {
 	})
 
 	it("tupledb subspace then transact", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOkv(codec.compare))
 		const person = db.subspace(["person"])
 
 		const tx = tupleTx(person)
@@ -90,7 +90,7 @@ describe("TupleDb", () => {
 	})
 
 	it("transact composition", () => {
-		const db = tupleDb(new InMemoryBaseOKV(codec.compare))
+		const db = tupleDb(new InMemoryOkv(codec.compare))
 
 		const createPerson = (tx: TupleDb, person: { name: string; age: number }) => {
 			const people = tx.subspace(["people"])

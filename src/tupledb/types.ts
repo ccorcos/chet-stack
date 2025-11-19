@@ -17,7 +17,7 @@ export type ListArgs<K> = Range<K> & ListOptions
  * Compare is important so that we can do other in-memory things, e.g. caching reads
  * and writes in a transaction. Otherwise it's just read and write.
  */
-export type BaseOKV<K, V> = {
+export type Okv<K, V> = {
 	compare: (a: K, b: K) => number
 	list(args?: ListArgs<K>): { key: K; value: V }[]
 	write: (tx: WriteArgs<K, V>) => void
@@ -34,7 +34,7 @@ export type CacheListResult<K, V> = {
  * data or the ranges of the cache on this type so we can create a subspace without
  * copying all that data.
  */
-export type BaseOKVCache<K, V> = {
+export type OkvCache<K, V> = {
 	insert: (args: ListArgs<K>, result: { key: K; value: V }[]) => void
 	compare: (a: K, b: K) => number
 	list: (args: ListArgs<K>) => CacheListResult<K, V>
@@ -48,7 +48,7 @@ export type BaseOKVCache<K, V> = {
  * But in other situations you're going to want the actual Transaction class so that
  * you can inspect the pending writes, etc.
  */
-export type BaseOKVTx<K, V> = BaseOKV<K, V> & {
+export type OkvTx<K, V> = Okv<K, V> & {
 	committed: boolean
 	commit: () => void
 }
@@ -57,8 +57,8 @@ export type BaseOKVTx<K, V> = BaseOKV<K, V> & {
 // TupleDb
 // ==========================================================================
 
-export type BaseTupleOKV = BaseOKV<Tuple, JSONValue>
-export type BaseTupleOKVTx = BaseOKVTx<Tuple, JSONValue>
+export type TupleOkv = Okv<Tuple, JSONValue>
+export type TupleOkvTx = OkvTx<Tuple, JSONValue>
 
 export type ReadOnlyTupleDb = {
 	compare: (a: Tuple, b: Tuple) => number
@@ -68,7 +68,7 @@ export type ReadOnlyTupleDb = {
 	subspace: (prefix: Tuple) => ReadOnlyTupleDb
 }
 
-export type TupleDb = BaseTupleOKV & {
+export type TupleDb = TupleOkv & {
 	get: (key: Tuple) => JSONValue | undefined
 	has: (key: Tuple) => boolean
 	set: (key: Tuple, value: JSONValue) => void
@@ -76,7 +76,7 @@ export type TupleDb = BaseTupleOKV & {
 	subspace: (prefix: Tuple) => TupleDb
 }
 
-export type TupleTx = BaseTupleOKVTx & {
+export type TupleTx = TupleOkvTx & {
 	get: (key: Tuple) => JSONValue | undefined
 	has: (key: Tuple) => boolean
 	set: (key: Tuple, value: JSONValue) => void
@@ -86,13 +86,15 @@ export type TupleTx = BaseTupleOKVTx & {
 }
 
 // ==========================================================================
+// TODO: maybe remove this...
+
 export type Index = {
 	id: string
 	// secondary indexes are 0, tertiary indexes are 1.
 	order: number
 	range: ListArgs<Tuple>
-	set: (db: BaseTupleOKV, key: Tuple, value: JSONValue) => void
-	delete: (db: BaseTupleOKV, key: Tuple) => void
+	set: (db: TupleOkv, key: Tuple, value: JSONValue) => void
+	delete: (db: TupleOkv, key: Tuple) => void
 }
 
 export type IndexableOKV = {

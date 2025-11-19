@@ -7,13 +7,13 @@ When the cache returns a prefix, we'll transparently read the rest of the data f
 */
 
 import { Cache } from "./Cache"
-import { BaseOKV, BaseOKVTx, ListArgs, WriteArgs } from "./types"
+import { ListArgs, Okv, OkvTx, WriteArgs } from "./types"
 
-export class Transaction<K, V> implements BaseOKVTx<K, V> {
+export class Transaction<K, V> implements OkvTx<K, V> {
 	committed = false
 	cache: Cache<K, V>
 
-	constructor(public db: BaseOKV<K, V>) {
+	constructor(public db: Okv<K, V>) {
 		this.cache = new Cache<K, V>(this.db.compare)
 	}
 

@@ -8,7 +8,7 @@ import { reifyFn } from "shared/reifyFn"
 import { codec } from "./Codec"
 import { Range, rangeContains } from "./Range"
 import { tupleDb } from "./TupleDb"
-import { BaseTupleOKV, JSONValue, ReadOnlyTupleDb, Tuple, TupleDb, WriteArgs } from "./types"
+import { JSONValue, ReadOnlyTupleDb, Tuple, TupleDb, TupleOkv, WriteArgs } from "./types"
 
 export type Index = {
 	id: string
@@ -20,7 +20,7 @@ export type Index = {
 
 export type SerializedIndex = Omit<Index, "set" | "delete"> & { set: string; delete: string }
 
-type IndexableBaseTupleOKV = BaseTupleOKV & {
+type IndexableBaseTupleOKV = TupleOkv & {
 	createIndex(index: Index): void
 	deleteIndex(id: string): void
 }
@@ -108,7 +108,7 @@ const deleteIndex = (db: TupleDb, index: Index) => {
 	internal.delete(["index", index.id])
 }
 
-export function Indexable(base: BaseTupleOKV) {
+export function Indexable(base: TupleOkv) {
 	const db = tupleDb(base)
 	const idb: IndexableBaseTupleOKV = {
 		compare: db.compare,
