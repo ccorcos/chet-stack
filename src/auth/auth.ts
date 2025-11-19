@@ -1,5 +1,9 @@
+import { getAuthToken } from "database/authToken"
+import { getUser } from "database/user"
 import type { Request, Response } from "express"
 import { scrypt } from "node:crypto"
+import { BrokenError, PermissionError } from "shared/errors"
+import { TupleDb } from "tupledb/types"
 
 export async function getPasswordHash(args: { passwordSalt: Buffer; password: string }) {
 	const { passwordSalt, password } = args
@@ -52,13 +56,20 @@ export function clearAuthCookies(res: Response) {
 	res.clearCookie("userId")
 }
 
-// export async function getCurrentUserId(environment: { db: DatabaseApi }, req: express.Request) {
-// 	const authTokenId = req.cookies.authToken as string | undefined
-// 	if (!authTokenId) return
+export function getCurrentUserId(environment: { db: TupleDb }, req: Request) {
+	const token = getAuthTokenCookie(req)
+	if (token) {
+		const authToken = getAuthToken(environment.db, token)
+		if (!authToken) throw new PermissionError("Invalid authToken.")
+		return authToken.userId
+	}
+}
 
-// 	const authToken = await environment.db.getRecord({ table: "auth_token", id: authTokenId })
-// 	if (!authToken) return
-// 	if (new Date().toISOString() > authToken.expires_at) return
-
-// 	return authToken.user_id
-// }
+export function getCurrentUser(environment: { db: TupleDb }, req: Request) {
+	const userId = getCurrentUserId(environment, req)
+	if (userId) {
+		const user = getUser(environment.db, userId)
+		if (!user) throw new BrokenError("User not found for authToken.")
+		return user
+	}
+}

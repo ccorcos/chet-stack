@@ -10,6 +10,7 @@ import {
 	useClientEnvironment,
 } from "../services/ClientEnvironment"
 import { App } from "./App"
+import { Auth } from "./Auth"
 import { CommandPrompt } from "./CommandPrompt"
 import { Design } from "./Design"
 
@@ -41,6 +42,7 @@ function Router() {
 	const routerState = useRouterState(router)
 	const route = parseRoute(routerState.url)
 
+	if (route.path === "/auth") return <Auth />
 	if (route.path === "/") return <App />
 	if (route.path === "/design") return <Design params={route.params} />
 	return <div>Unknown route: {routerState.url}</div>

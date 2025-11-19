@@ -1,4 +1,4 @@
-import type * as apis from "server/apis"
+import type { ApiType } from "server/api"
 import { proxyObj } from "shared/proxyHelpers"
 import { sleep } from "shared/sleep"
 
@@ -7,8 +7,7 @@ type InputOutput<T extends (...any: any[]) => any> = {
 	output: ReturnType<T>
 }
 
-type Apis = typeof apis
-type ApiSchema = { [K in keyof Apis]: InputOutput<Apis[K]["handler"]> }
+type ApiSchema = { [K in keyof ApiType]: InputOutput<ApiType[K]["handler"]> }
 
 // https://github.com/microsoft/TypeScript/issues/55095
 type StatusCode = 0 | 200 | 400 | 409 | 424 | 403 | 500
