@@ -6,6 +6,7 @@ import * as DataListDemo from "./DataListDemo"
 import * as EmailDemo from "./EmailDemo"
 import * as OKVDatabaseDemo from "./OKVDatabaseDemo"
 import * as PromptMapDemo from "./PromptMapDemo"
+import * as PubsubDemo from "./PubsubDemo"
 import * as RecordDbDemo from "./RecordDbDemo"
 import * as TableViewDemo from "./TableViewDemo"
 import * as UploadDemo from "./UploadDemo"
@@ -17,6 +18,7 @@ export {
 	EmailDemo,
 	OKVDatabaseDemo,
 	PromptMapDemo,
+	PubsubDemo,
 	RecordDbDemo,
 	TableViewDemo,
 	UploadDemo,
