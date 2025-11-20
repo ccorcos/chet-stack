@@ -1,93 +1,53 @@
 import { ClientMessage, ServerMessage } from "pubsub/types"
-import { SecondMs } from "shared/dateHelpers"
-import { sleep } from "shared/sleep"
+import { WebsocketClient } from "./WebsocketClient"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
-// type WebsocketState =
-// 	| {
-// 			state: "online"
-// 	  }
-// 	| {
-// 			state: "offline"
-// 			connecting: boolean
-// 	  }
+type Listener = (key: string, value: any) => void
 
 export class WebsocketPubsubClient {
-	private ws: WebSocket
-	private reconnectAttempt = 1
+	private client: WebsocketClient
 
-	constructor(
-		private args: {
-			onChange: (key: string, value: any) => void
-			onOpen?: () => void
-			onClose?: () => void
-		}
-	) {}
-
-	// state = new Store<WebsocketState>({ state: "offline", connecting: false })
-
-	start() {
-		this.connect()
-		this.reconnectAttempt = 1
-
-		window.addEventListener("online", () => {
-			this.reconnectAttempt = 1
-			this.connect()
+	constructor() {
+		this.client = new WebsocketClient({
+			onMessage: (input: string) => {
+				const { type, key, value } = JSON.parse(input) as ServerMessage
+				debug("<", type, key, value)
+				this.emit(key, value)
+			},
 		})
 	}
 
-	private connect() {
-		debug("connecting...")
-		this.ws = new WebSocket(`ws://${location.host}`)
-		// this.state.setState({ state: "offline", connecting: true })
+	private listeners: Set<Listener> = new Set()
 
-		this.ws.onopen = () => {
-			debug("connected!")
-			this.reconnectAttempt = 1
-			// this.state.setState({ state: "online" })
-		}
-
-		this.ws.onmessage = (event) => {
-			const message = JSON.parse(event.data) as ServerMessage
-			debug("<", message.type, message.key, message.value)
-			this.args.onChange(message.key, message.value)
-		}
-
-		this.ws.onerror = (error) => {
-			debug("error", error)
-		}
-		this.ws.onclose = () => {
-			debug("closed")
-			// this.state.setState({ state: "offline", connecting: true })
-			this.attemptReconnect()
+	onMessage(listener: Listener) {
+		this.listeners.add(listener)
+		return () => {
+			this.listeners.delete(listener)
 		}
 	}
 
-	private async attemptReconnect() {
-		if (!navigator.onLine) return
-		const waitForMs = Math.min(30 * SecondMs, 2 ** this.reconnectAttempt * SecondMs)
-		await sleep(waitForMs)
-		this.reconnectAttempt += 1
-		this.connect()
+	private emit(key: string, value: any) {
+		for (const listener of this.listeners) listener(key, value)
 	}
 
-	private send(message: ClientMessage) {
-		if (this.ws.readyState === WebSocket.OPEN) {
-			debug(">", message.type, message.key)
-			this.ws.send(JSON.stringify(message))
-		}
+	start() {
+		this.client.start()
+	}
+
+	private sendJson(obj: ClientMessage) {
+		this.client.send(JSON.stringify(obj))
 	}
 
 	subscribe(key: string) {
-		this.send({ type: "subscribe", key })
+		this.sendJson({ type: "subscribe", key })
 	}
 
 	unsubscribe(key: string) {
-		this.send({ type: "unsubscribe", key })
+		this.sendJson({ type: "unsubscribe", key })
 	}
 
 	publish(key: string, value: any) {
-		this.send({ type: "publish", key, value })
+		this.sendJson({ type: "publish", key, value })
 	}
 }

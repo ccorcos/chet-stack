@@ -26,11 +26,8 @@ console.error = (...args) => {
 const router = new Router()
 const api = createApi()
 
-const pubsub = new WebsocketPubsubClient({
-	onOpen() {},
-	onClose() {},
-	onChange(key, value) {},
-})
+const pubsub = new WebsocketPubsubClient()
+pubsub.start()
 
 const prefs = new LocalPreferences()
 const cache = new Cache<Tuple, JSONValue>(codec.compare)

@@ -1,8 +1,7 @@
 /* WARNING: this file is generated! */
 
-import * as login from "./login";
-import * as logout from "./logout";
-import * as signup from "./signup";
-import * as types from "./types";
+import * as login from "./login"
+import * as logout from "./logout"
+import * as signup from "./signup"
 
-export { login, logout, signup, types };
+export { login, logout, signup }

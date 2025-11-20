@@ -9,7 +9,7 @@ import { DayMs } from "shared/dateHelpers"
 import { BrokenError, NotFoundError, ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { getPasswordHash, setAuthCookies } from "../server"
-import { AuthEnvironment } from "./types"
+import { AuthEnvironment } from "../types"
 
 export const input = t.object({
 	username: t.string,

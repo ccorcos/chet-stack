@@ -2,7 +2,7 @@ import { deleteAuth } from "database/auth"
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
 import { clearAuthCookies, getAuthTokenCookie } from "../server"
-import { AuthEnvironment } from "./types"
+import { AuthEnvironment } from "../types"
 
 export const input = t.any
 

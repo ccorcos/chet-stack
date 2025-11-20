@@ -7,8 +7,8 @@ import { ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { tupleTx } from "tupledb/TupleDb"
 import { getPasswordHash } from "../server"
+import { AuthEnvironment } from "../types"
 import { handler as login } from "./login"
-import { AuthEnvironment } from "./types"
 
 export const input = t.object({
 	username: t.string,

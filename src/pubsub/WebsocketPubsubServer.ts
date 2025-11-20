@@ -1,5 +1,5 @@
 import type { Server } from "node:http"
-import { ClientMessageSchema, ServerMessage } from "pubsub/types"
+import { ClientMessage, ClientMessageSchema, ServerMessage } from "pubsub/types"
 import * as t from "shared/DataType"
 import { WebSocketServer } from "ws"
 
@@ -22,7 +22,7 @@ export class WebsocketPubsubServer {
 			})
 
 			connection.on("message", (data: string) => {
-				const message = JSON.parse(data)
+				const message = JSON.parse(data) as ClientMessage
 				if (!t.is(ClientMessageSchema, message)) {
 					console.error("Invalid message format", message)
 					return
