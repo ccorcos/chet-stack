@@ -4,6 +4,15 @@ import { sleep } from "shared/sleep"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
+// type WebsocketState =
+// 	| {
+// 			state: "online"
+// 	  }
+// 	| {
+// 			state: "offline"
+// 			connecting: boolean
+// 	  }
+
 export class WebsocketPubsubClient {
 	private ws: WebSocket
 	private reconnectAttempt = 1
@@ -14,23 +23,29 @@ export class WebsocketPubsubClient {
 			onOpen?: () => void
 			onClose?: () => void
 		}
-	) {
+	) {}
+
+	// state = new Store<WebsocketState>({ state: "offline", connecting: false })
+
+	start() {
 		this.connect()
+		this.reconnectAttempt = 1
 
 		window.addEventListener("online", () => {
+			this.reconnectAttempt = 1
 			this.connect()
 		})
 	}
 
 	private connect() {
 		debug("connecting...")
-		this.reconnectAttempt = 1
-
 		this.ws = new WebSocket(`ws://${location.host}`)
+		// this.state.setState({ state: "offline", connecting: true })
 
 		this.ws.onopen = () => {
 			debug("connected!")
-			this.args.onOpen?.()
+			this.reconnectAttempt = 1
+			// this.state.setState({ state: "online" })
 		}
 
 		this.ws.onmessage = (event) => {
@@ -44,7 +59,7 @@ export class WebsocketPubsubClient {
 		}
 		this.ws.onclose = () => {
 			debug("closed")
-			this.args.onClose?.()
+			// this.state.setState({ state: "offline", connecting: true })
 			this.attemptReconnect()
 		}
 	}
