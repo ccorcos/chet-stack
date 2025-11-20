@@ -2,24 +2,20 @@ import { createPassword } from "database/password"
 import { User } from "database/schema"
 import { createUser, getUserByUsername } from "database/user"
 import type { Request, Response } from "express"
-import { ServerConfig } from "server/services/ServerConfig"
 import * as t from "shared/DataType"
 import { ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { tupleTx } from "tupledb/TupleDb"
-import { TupleDb } from "tupledb/types"
 import { getPasswordHash } from "../server"
 import { handler as login } from "./login"
+import { AuthEnvironment } from "./types"
 
 export const input = t.object({
 	username: t.string,
 	password: t.string,
 })
 
-export async function signup(
-	environment: { config: ServerConfig; db: TupleDb },
-	args: t.InferType<typeof input>
-) {
+export async function signup(environment: AuthEnvironment, args: t.InferType<typeof input>) {
 	const { db, config } = environment
 	const { username, password } = args
 
@@ -56,7 +52,7 @@ export async function signup(
 }
 
 export async function handler(
-	environment: { config: ServerConfig; db: TupleDb },
+	environment: AuthEnvironment,
 	args: t.InferType<typeof input>,
 	req: Request,
 	res: Response

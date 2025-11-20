@@ -4,23 +4,19 @@ import { Auth } from "database/schema"
 import { getUserByUsername } from "database/user"
 import type { Request, Response } from "express"
 import secureCompare from "secure-compare"
-import { ServerConfig } from "server/services/ServerConfig"
 import * as t from "shared/DataType"
 import { DayMs } from "shared/dateHelpers"
 import { BrokenError, NotFoundError, ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
-import { TupleDb } from "tupledb/types"
 import { getPasswordHash, setAuthCookies } from "../server"
+import { AuthEnvironment } from "./types"
 
 export const input = t.object({
 	username: t.string,
 	password: t.string,
 })
 
-export async function login(
-	environment: { config: ServerConfig; db: TupleDb },
-	args: t.InferType<typeof input>
-) {
+export async function login(environment: AuthEnvironment, args: t.InferType<typeof input>) {
 	const { db, config } = environment
 	const { username, password } = args
 
@@ -49,7 +45,7 @@ export async function login(
 }
 
 export async function handler(
-	environment: { config: ServerConfig; db: TupleDb },
+	environment: AuthEnvironment,
 	args: t.InferType<typeof input>,
 	req: Request,
 	res: Response
