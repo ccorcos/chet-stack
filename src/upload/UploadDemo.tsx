@@ -1,7 +1,6 @@
 import { formatResponseError } from "client/services/api"
 import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React from "react"
-import { sleep } from "shared/sleep"
 import {
 	FileUploadDropZone,
 	uploadFile,
@@ -37,13 +36,11 @@ export function useUpload() {
 				}
 				try {
 					// Make things slower for demo purposes
-					await sleep(Math.random() * 10_000)
 					await uploadFile(upload.file, uploadUrl, (progress) =>
 						upload.setState({ progress: scaleProgress(progress) })
 					)
 					upload.setState({ uploaded: true })
 				} catch (error) {
-					console.error(error)
 					upload.setState({ error: error.message })
 				}
 			})

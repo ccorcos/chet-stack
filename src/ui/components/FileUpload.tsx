@@ -68,7 +68,7 @@ export function UploadPreview(props: Upload) {
 			<div style={{ flex: 1, textOverflow: "ellipsis", overflow: "hidden", fontSize: 14 }}>
 				{file.name}
 			</div>
-			<div>{uploaded ? "✅" : error ? "❌" : `${progress}%`}</div>
+			<div>{uploaded ? "✅" : error ? `❌ ${error}` : `${progress}%`}</div>
 		</div>
 	)
 }
@@ -137,7 +137,8 @@ export async function uploadFile(file: File, url: string, onProgress: (progress:
 			if (xhr.status === 200) {
 				deferred.resolve()
 			} else {
-				const error = new Error(`UploadError: ${xhr.status} ${xhr.statusText}`)
+				// const error = new Error(`UploadError: ${xhr.status} ${xhr.statusText}`)
+				const error = new Error(xhr.statusText || "Unknown error")
 				deferred.reject(error)
 			}
 		}
