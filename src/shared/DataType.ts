@@ -447,8 +447,8 @@ export function validate<T extends DataType>(dataType: T, value: any): ValidateE
 }
 
 // Function overload to prevent infinite recursie type inference.
-export function is(dataType: DataType, value: any): boolean
-export function is<T extends DataType>(dataType: T, value: any): value is InferType<T> {
+export function is<T extends DataType>(dataType: T, value: any): value is InferType<T>
+export function is(dataType: DataType, value: any): boolean {
 	return !validate(dataType, value)
 }
 

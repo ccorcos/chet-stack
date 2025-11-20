@@ -1,19 +1,22 @@
 import type { Server } from "node:http"
-import { ClientPubsubMessage, ServerPubsubMessage } from "shared/PubSubTypes"
+import { ClientMessageSchema, ServerMessage } from "pubsub/types"
+import * as t from "shared/DataType"
 import { WebSocketServer } from "ws"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
-export type PubsubApi = {
-	publish(items: { key: string; value: any }[]): Promise<void>
-}
-
-// TODO: sticky sessions.
-export class WebsocketPubsubServer implements PubsubApi {
+/** Basic pubsub with no authentication. */
+export class WebsocketPubsubServer {
 	private wss: WebSocketServer
 	private connections = new Map<WebSocket, Set<string>>()
 
-	constructor(server: Server, onSubscribe: (this: PubsubApi, key: string) => void) {
+	constructor(
+		server: Server,
+		args: {
+			onSubscribe?: (this: WebsocketPubsubServer, key: string) => void
+			onUnsubscribe?: (this: WebsocketPubsubServer, key: string) => void
+		} = {}
+	) {
 		this.wss = new WebSocketServer({ server })
 
 		this.wss.on("connection", (connection) => {
@@ -25,18 +28,22 @@ export class WebsocketPubsubServer implements PubsubApi {
 			})
 
 			connection.on("message", (data: string) => {
-				const message = JSON.parse(data) as ClientPubsubMessage
+				const message = JSON.parse(data)
+				if (!t.is(ClientMessageSchema, message)) {
+					console.error("Invalid message format", message)
+					return
+				}
 
 				debug("<", message.type, message.key)
 
-				// TODO: validate incoming data.
 				if (message.type === "subscribe") {
 					subscriptions.add(message.key)
-					onSubscribe.call(this, message.key)
+					args.onSubscribe?.call(this, message.key)
 					return
 				}
 				if (message.type === "unsubscribe") {
 					subscriptions.delete(message.key)
+					args.onUnsubscribe?.call(this, message.key)
 					return
 				}
 			})
@@ -45,14 +52,11 @@ export class WebsocketPubsubServer implements PubsubApi {
 
 	async publish(items: { key: string; value: any }[]) {
 		for (const { key, value } of items) {
-			const message: ServerPubsubMessage = { type: "update", key, value }
+			const message: ServerMessage = { type: "update", key, value }
 			debug(">", message.type, message.key, message.value)
 			const data = JSON.stringify(message)
-
 			for (const [connection, subscriptions] of this.connections.entries()) {
-				if (subscriptions.has(key)) {
-					connection.send(data)
-				}
+				if (subscriptions.has(key)) connection.send(data)
 			}
 		}
 	}

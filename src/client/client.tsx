@@ -8,13 +8,13 @@ import { Cache } from "tupledb/Cache"
 import { codec } from "tupledb/Codec"
 import { JSONValue, Tuple } from "tupledb/types"
 import { Router } from "ui/services/Router"
+import { WebsocketPubsubClient } from "../pubsub/WebsocketPubsubClient"
 import { Root } from "./components/Root"
 import { createApi } from "./services/api"
 import { clientConfig } from "./services/ClientConfig"
 import { ClientEnvironment } from "./services/ClientEnvironment"
 import { CommandService } from "./services/Command"
 import { LocalPreferences } from "./services/LocalPreferences"
-import { WebsocketPubsubClient } from "./services/WebsocketPubsubClient"
 
 // Hide react errors for now.
 const error = console.error.bind(console)
@@ -27,7 +27,8 @@ const router = new Router()
 const api = createApi()
 
 const pubsub = new WebsocketPubsubClient({
-	onStart() {},
+	onOpen() {},
+	onClose() {},
 	onChange(key, value) {},
 })
 

@@ -5,13 +5,13 @@ import type { ClientApi } from "./api"
 import type { ClientConfig } from "./ClientConfig"
 import { CommandService } from "./Command"
 import { LocalPreferences } from "./LocalPreferences"
-import type { WebsocketPubsubClient } from "./WebsocketPubsubClient"
+import { PubsubApi } from "./Pubsub"
 
 export type ClientEnvironment = {
 	config: ClientConfig
 	router: Router
 	api: ClientApi
-	pubsub: WebsocketPubsubClient
+	pubsub: PubsubApi
 	prefs: LocalPreferences
 	cache: OkvCache<Tuple, JSONValue>
 	cmd: CommandService

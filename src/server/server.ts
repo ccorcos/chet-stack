@@ -8,9 +8,9 @@ import { initEmailModel } from "shared/EmailModel"
 import { recordDb } from "tupledb/RecordDb"
 import { tupleDb, tupleOkv } from "tupledb/TupleDb"
 import { UploadServer } from "upload/UploadServer"
+import { WebsocketPubsubServer } from "../pubsub/WebsocketPubsubServer"
 import { ApiServer } from "./ApiServer"
 import { errorHandler } from "./helpers/errorHandler"
-import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
 import { ServerEnvironment } from "./ServerEnvironment"
 import { QueueDatabase } from "./services/QueueDatabase"
@@ -39,7 +39,7 @@ INIT: {
 const queue = new QueueDatabase(config.queuePath)
 
 const server = http.createServer(app)
-const pubsub = PubsubServer({ config, db }, server)
+const pubsub = new WebsocketPubsubServer(server)
 
 // Setup the server environment. This thing gets passed around everywhere and defines
 // the interface between differnet services so we can swap out things like the
