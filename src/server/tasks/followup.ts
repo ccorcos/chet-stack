@@ -4,7 +4,7 @@ This Task is a template.
 
 */
 
-import { ServerEnvironment } from "../services/ServerEnvironment"
+import { ServerEnvironment } from "../ServerEnvironment"
 
 // This task can be enqueued and run in the background by enqueuing on the QueueDatabase.
 //

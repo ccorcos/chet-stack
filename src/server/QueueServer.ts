@@ -1,8 +1,8 @@
 import { serializeError } from "serialize-error"
 import { SecondMs } from "shared/dateHelpers"
 import { sleep } from "shared/sleep"
+import { ServerEnvironment } from "./ServerEnvironment"
 import { TaskError } from "./services/QueueDatabase"
-import { ServerEnvironment } from "./services/ServerEnvironment"
 import { tasks } from "./tasks"
 
 /**

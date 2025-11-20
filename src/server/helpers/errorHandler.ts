@@ -1,6 +1,6 @@
 import { Express, NextFunction, Request, Response } from "express"
-import { ServerConfig } from "server/services/ServerConfig"
 import { randomId } from "shared/randomId"
+import { ServerConfig } from "../services/ServerConfig"
 
 type HttpError = { statusCode?: number; status?: number; message: string }
 

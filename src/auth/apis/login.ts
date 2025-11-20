@@ -1,7 +1,6 @@
-import { getPasswordHash, setAuthCookies } from "auth/server"
-import { createAuthToken } from "database/authToken"
+import { createAuth } from "database/auth"
 import { getPasswordForUserId } from "database/password"
-import { AuthToken } from "database/schema"
+import { Auth } from "database/schema"
 import { getUserByUsername } from "database/user"
 import type { Request, Response } from "express"
 import secureCompare from "secure-compare"
@@ -11,6 +10,7 @@ import { DayMs } from "shared/dateHelpers"
 import { BrokenError, NotFoundError, ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { TupleDb } from "tupledb/types"
+import { getPasswordHash, setAuthCookies } from "../server"
 
 export const input = t.object({
 	username: t.string,
@@ -37,13 +37,13 @@ export async function login(
 	if (!secureCompare(passwordHash, passwordRecord.passwordHash))
 		throw new ValidationError("Invalid password.")
 
-	const authToken: AuthToken = {
-		authToken: randomId(),
+	const authToken: Auth = {
+		token: randomId(),
 		userId: user.id,
 		createdAt: new Date().toISOString(),
 	}
 
-	createAuthToken(db, authToken)
+	createAuth(db, authToken)
 
 	return authToken
 }
@@ -59,7 +59,7 @@ export async function handler(
 	await setAuthCookies(
 		{
 			userId: authToken.userId,
-			authToken: authToken.authToken,
+			authToken: authToken.token,
 			expires: new Date(Date.now() + 120 * DayMs),
 			secure: config.production,
 			domain: config.production ? config.host : undefined,

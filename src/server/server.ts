@@ -7,14 +7,14 @@ import http from "node:http"
 import { initEmailModel } from "shared/EmailModel"
 import { recordDb } from "tupledb/RecordDb"
 import { tupleDb, tupleOkv } from "tupledb/TupleDb"
+import { UploadServer } from "upload/UploadServer"
 import { ApiServer } from "./ApiServer"
-import { FileServer } from "./FileServer"
 import { errorHandler } from "./helpers/errorHandler"
 import { PubsubServer } from "./PubsubServer"
 import { QueueServer } from "./QueueServer"
+import { ServerEnvironment } from "./ServerEnvironment"
 import { QueueDatabase } from "./services/QueueDatabase"
 import { config } from "./services/ServerConfig"
-import { ServerEnvironment } from "./services/ServerEnvironment"
 import { WebServer } from "./WebServer"
 
 const app = express()
@@ -48,7 +48,7 @@ const environment: ServerEnvironment = { config, db, queue, pubsub }
 
 app.use(compression())
 
-await FileServer(environment, app)
+await UploadServer(environment, app)
 QueueServer(environment)
 ApiServer(environment, app)
 await WebServer(environment, app)

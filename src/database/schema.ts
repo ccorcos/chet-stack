@@ -16,9 +16,17 @@ export type Password = {
 	updatedAt: string
 }
 
-export type AuthToken = {
-	authToken: string
+export type Auth = {
+	token: string
 	userId: string
 	/** ISO date string */
 	createdAt: string
+}
+
+export type Upload = {
+	id: string
+	filename: string
+	/** ISO date string */
+	createdAt: string
+	userId: string
 }

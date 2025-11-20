@@ -10,7 +10,6 @@ import * as DataTypeFormDemo from "./DataTypeFormDemo"
 import * as DraggableDemo from "./DraggableDemo"
 import * as DraggableListDemo from "./DraggableListDemo"
 import * as DropdownDemo from "./DropdownDemo"
-import * as FileUploadDemo from "./FileUploadDemo"
 import * as FormsDemo from "./FormsDemo"
 import * as FuzzyStringDemo from "./FuzzyStringDemo"
 import * as GridDemo from "./GridDemo"
@@ -37,7 +36,6 @@ export {
 	DraggableDemo,
 	DraggableListDemo,
 	DropdownDemo,
-	FileUploadDemo,
 	FormsDemo,
 	FuzzyStringDemo,
 	GridDemo,

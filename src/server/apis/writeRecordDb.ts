@@ -2,7 +2,7 @@ import type { Request, Response } from "express"
 import * as t from "shared/DataType"
 import { applyRecordDbOperation, recordDb, RecordDbOperation } from "tupledb/RecordDb"
 import { tupleDb, tupleTx } from "tupledb/TupleDb"
-import type { ServerEnvironment } from "../services/ServerEnvironment"
+import type { ServerEnvironment } from "../ServerEnvironment"
 
 // TODO: request validation.
 export const input = t.object({

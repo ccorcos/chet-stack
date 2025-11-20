@@ -1,4 +1,4 @@
-import { getAuthToken } from "database/authToken"
+import { getAuth } from "database/auth"
 import { getUser } from "database/user"
 import type { Request, Response } from "express"
 import { scrypt } from "node:crypto"
@@ -28,7 +28,7 @@ export async function setAuthCookies(
 ) {
 	const { userId, authToken, expires, secure, domain } = args
 
-	// Set the cookie on the response.
+	// Visible only to the server to prevent XSS attacks.
 	res.cookie("authToken", authToken, {
 		httpOnly: true,
 		secure,
@@ -36,7 +36,7 @@ export async function setAuthCookies(
 		domain,
 	})
 
-	// Set the current logged in userId so the client knows.
+	// Visible on the client so the client knows the userId.
 	res.cookie("userId", userId, {
 		httpOnly: false,
 		secure,
@@ -59,7 +59,7 @@ export function clearAuthCookies(res: Response) {
 export function getCurrentUserId(environment: { db: TupleDb }, req: Request) {
 	const token = getAuthTokenCookie(req)
 	if (token) {
-		const authToken = getAuthToken(environment.db, token)
+		const authToken = getAuth(environment.db, token)
 		if (!authToken) throw new PermissionError("Invalid authToken.")
 		return authToken.userId
 	}

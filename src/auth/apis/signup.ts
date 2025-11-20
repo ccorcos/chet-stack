@@ -1,4 +1,3 @@
-import { getPasswordHash } from "auth/server"
 import { createPassword } from "database/password"
 import { User } from "database/schema"
 import { createUser, getUserByUsername } from "database/user"
@@ -9,6 +8,7 @@ import { ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { tupleTx } from "tupledb/TupleDb"
 import { TupleDb } from "tupledb/types"
+import { getPasswordHash } from "../server"
 import { handler as login } from "./login"
 
 export const input = t.object({

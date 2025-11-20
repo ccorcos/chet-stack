@@ -1,8 +1,8 @@
-import { clearAuthCookies, getAuthTokenCookie } from "auth/server"
-import { deleteAuthToken } from "database/authToken"
+import { deleteAuth } from "database/auth"
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
 import { TupleDb } from "tupledb/types"
+import { clearAuthCookies, getAuthTokenCookie } from "../server"
 
 export const input = t.any
 
@@ -16,5 +16,5 @@ export async function handler(
 	const authTokenId = getAuthTokenCookie(req)
 	if (!authTokenId) return
 	clearAuthCookies(res)
-	deleteAuthToken(db, authTokenId)
+	deleteAuth(db, authTokenId)
 }

@@ -10,7 +10,7 @@ type InputOutput<T extends (...any: any[]) => any> = {
 type ApiSchema = { [K in keyof ApiType]: InputOutput<ApiType[K]["handler"]> }
 
 // https://github.com/microsoft/TypeScript/issues/55095
-type StatusCode = 0 | 200 | 400 | 409 | 424 | 403 | 500
+type StatusCode = 0 | 200 | 400 | 409 | 403 | 500
 type ErrorStatusCode = Exclude<StatusCode, 200>
 type ErrorResponse = { status: ErrorStatusCode; body?: unknown }
 

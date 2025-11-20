@@ -7,7 +7,7 @@ This API is a template.
 import { getCurrentUser } from "auth/server"
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
-import type { ServerEnvironment } from "../services/ServerEnvironment"
+import type { ServerEnvironment } from "../ServerEnvironment"
 
 // Used for request validation.
 export const input = t.object({ message: t.string })

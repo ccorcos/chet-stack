@@ -13,7 +13,7 @@ export class NotFoundError extends Error {
 	statusCode = 404
 }
 
-export class TransactionConflictError extends Error {
+export class ConflictError extends Error {
 	statusCode = 409
 }
 

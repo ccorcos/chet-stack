@@ -6,17 +6,18 @@ import { useAsync } from "../hooks/useAsync"
 type Upload = {
 	id: string
 	file: File
+} & UploadStatus
+
+type UploadStatus = {
+	/** 0-100 */
 	progress: number
 	error?: string
 	uploaded?: boolean
 }
 
-export function useFileUpload(
-	handleUpload: (
-		upload: { id: string; file: File },
-		onProgress: (progress: number) => void
-	) => Promise<void>
-) {
+type UploadArg = { id: string; file: File; setState: (status: Partial<UploadStatus>) => void }
+
+export function useFileUpload(handleUploads: (uploads: UploadArg[]) => Promise<void>) {
 	const [uploads, setUploads] = useState<Upload[]>([])
 
 	const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -29,14 +30,14 @@ export function useFileUpload(
 
 		setUploads((ups) => [...ups, ...uploads])
 
-		for (const upload of uploads) {
-			const update = (obj: Partial<Upload>) =>
-				setUploads((ups) => ups.map((up) => (up.id === upload.id ? { ...up, ...obj } : up)))
-
-			handleUpload(upload, (progress) => update({ progress }))
-				.catch((error) => update({ error: error.toString() }))
-				.then(() => update({ uploaded: true }))
-		}
+		handleUploads(
+			uploads.map((upload) => {
+				const setState = (obj: Partial<UploadStatus>) =>
+					setUploads((ups) => ups.map((up) => (up.id === upload.id ? { ...up, ...obj } : up)))
+				const arg: UploadArg = { id: upload.id, file: upload.file, setState }
+				return arg
+			})
+		)
 	}
 
 	const reset = () => setUploads([])
@@ -113,7 +114,7 @@ export function FileUploadDropZone(
 	)
 }
 
-async function uploadFile(file: File, url: string, onProgress: (progress: number) => void) {
+export async function uploadFile(file: File, url: string, onProgress: (progress: number) => void) {
 	const xhr = new XMLHttpRequest()
 	xhr.open("PUT", url, true)
 

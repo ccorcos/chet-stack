@@ -1,7 +1,7 @@
+import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React, { useState } from "react"
-import { useClientEnvironment } from "../client/services/ClientEnvironment"
-import { Button } from "../ui/components/Button"
-import { Input } from "../ui/components/Input"
+import { Button } from "ui/components/Button"
+import { Input } from "ui/components/Input"
 import { getCurrentUserId } from "./client"
 
 export function AuthDemo() {

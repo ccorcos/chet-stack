@@ -1,7 +1,7 @@
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
 import { ListArgs } from "tupledb/types"
-import type { ServerEnvironment } from "../services/ServerEnvironment"
+import type { ServerEnvironment } from "../ServerEnvironment"
 
 // TODO: request validation.
 export const input = t.any

@@ -6,7 +6,7 @@ export type ServerConfig = {
 	host: string
 	baseUrl: string
 	passwordSalt: Buffer
-	signatureSecret: Buffer
+	uploadKey: Buffer
 	adminUserId: string
 	dbPath: string
 	queuePath: string
@@ -34,7 +34,7 @@ export const config: ServerConfig = {
 
 	// Used for securely signing file urls.
 	// > node -e 'console.log(require("crypto").randomBytes(128).toString("base64"))'
-	signatureSecret: Buffer.from(
+	uploadKey: Buffer.from(
 		"4BwkW2TpsYjWt5i6pg8jDt6AA6iz+UAFjSmIeCboLXfln81sud1aLu3jA3vCVdUyTsXFoHijg1RgZ2NNHMMpdO+Fvmsill+2dh8QFgvzhqqm8txmsmC9rkg9FnbIrYG9g7Nom17g/afg/bk7JHGBpEDgWsLZQ3537w81b7dP2HI=",
 		"base64"
 	),

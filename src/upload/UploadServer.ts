@@ -1,14 +1,13 @@
-import { Express, Request, Response } from "express"
+import { Express, raw, Request, Response } from "express"
 import { createWriteStream } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { DayS } from "shared/dateHelpers"
 import { path } from "tools/path"
-import { FileSignatureData } from "./helpers/fileHelpers"
-import { verifySignature } from "./helpers/signatureHelpers"
-import { ServerConfig } from "./services/ServerConfig"
+import { verifySignature } from "./signatureHelpers"
+import { UploadConfig, UploadSignatureData } from "./types"
 
 function verifyRequest(
-	environment: { config: ServerConfig },
+	config: UploadConfig,
 	req: Request<{ id: string; filename: string }>,
 	res: Response
 ) {
@@ -34,9 +33,9 @@ function verifyRequest(
 	}
 
 	const method = req.method.toLowerCase().trim() as "get" | "put"
-	const data: FileSignatureData = { method, id, filename, expirationMs }
+	const data: UploadSignatureData = { method, id, filename, expirationMs }
 
-	const secretKey = environment.config.signatureSecret
+	const secretKey = config.uploadKey
 	const validSignature = verifySignature({ data, signature, secretKey })
 
 	if (!validSignature) {
@@ -47,39 +46,39 @@ function verifyRequest(
 	return true
 }
 
-export async function FileServer(environment: { config: ServerConfig }, app: Express) {
+/**
+ * This behavior is similar to S3 where you use signatures to upload and download files.
+ */
+export async function UploadServer(environment: { config: UploadConfig }, app: Express) {
+	const { config } = environment
 	const uploadDir = path("uploads")
 	await mkdir(uploadDir, { recursive: true })
 
 	const MB = 1024 * 1024
 
-	app.put(
-		`/uploads/:id/:filename`,
-		// express.raw({ limit: 100 * MB, type: "*/*" }),
-		async (req, res) => {
-			if (!verifyRequest(environment, req, res)) return
+	app.put(`/uploads/:id/:filename`, raw({ limit: 100 * MB, type: "*/*" }), async (req, res) => {
+		if (!verifyRequest(config, req, res)) return
 
-			const { id, filename } = req.params
-			const fileDir = path.join(uploadDir, id)
-			const filePath = path.join(fileDir, filename)
-			await mkdir(fileDir, { recursive: true })
+		const { id, filename } = req.params
+		const fileDir = path.join(uploadDir, id)
+		const filePath = path.join(fileDir, filename)
+		await mkdir(fileDir, { recursive: true })
 
-			const writeStream = createWriteStream(filePath)
-			req.pipe(writeStream)
+		const writeStream = createWriteStream(filePath)
+		req.pipe(writeStream)
 
-			writeStream.on("finish", () => {
-				res.status(200).send("File uploaded.")
-			})
+		writeStream.on("finish", () => {
+			res.status(200).send("File uploaded.")
+		})
 
-			writeStream.on("error", (error) => {
-				console.error(error)
-				res.status(500).send("File upload failed.")
-			})
-		}
-	)
+		writeStream.on("error", (error) => {
+			console.error(error)
+			res.status(500).send("File upload failed.")
+		})
+	})
 
 	app.get(`/uploads/:id/:filename`, async (req, res) => {
-		if (!verifyRequest(environment, req, res)) return
+		if (!verifyRequest(config, req, res)) return
 
 		const { id, filename } = req.params
 		const fileDir = path.join(uploadDir, id)

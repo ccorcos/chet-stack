@@ -2,7 +2,7 @@ import cookieParser from "cookie-parser"
 import express, { Express } from "express"
 import * as t from "shared/DataType"
 import { api } from "./api"
-import { ServerEnvironment } from "./services/ServerEnvironment"
+import { ServerEnvironment } from "./ServerEnvironment"
 
 export function ApiServer(environment: ServerEnvironment, app: Express) {
 	// Register API endpoints.

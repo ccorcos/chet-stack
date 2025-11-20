@@ -21,6 +21,7 @@ export function verifySignature(args: {
 	return secureCompare(validSiganture, signature)
 }
 
+/** Make sure JSON serialization is deterministic key order. */
 function serialize(data: Data) {
 	return JSON.stringify(
 		Object.keys(data)

@@ -15,8 +15,8 @@ export async function codegen(args: { rootDir: string; watchMode: boolean }) {
 
 	const watcher = chokidar.watch(rootDir, {
 		ignored: (p, stats) => {
-			// Ignore directories
-			if (stats?.isDirectory()) return true
+			// Don't ignore directories - we need to traverse them
+			if (stats?.isDirectory()) return false
 			// Only watch files that end with .gen.ts
 			if (stats?.isFile() && !p.endsWith(".gen.ts")) return true
 			return false
@@ -35,7 +35,7 @@ export async function codegen(args: { rootDir: string; watchMode: boolean }) {
 		// ? ["tsx", "watch", "--clear-screen=false", genFile, "--watch"]
 
 		const child = spawn("npx", args, {
-			cwd: rootDir,
+			cwd: process.cwd(),
 			stdio: ["ignore", "pipe", "pipe"],
 			env: process.env,
 			shell: false,
@@ -103,11 +103,15 @@ async function main() {
 	const argv = yargs(hideBin(process.argv)).argv as any
 	const helpMode = argv.help || argv.h
 	const watchMode = argv.watch || argv.w
-	const [rootDir] = argv["_"] as unknown[] as string[]
+	let [rootDir] = argv["_"] as unknown[] as string[]
 
 	if (helpMode || !rootDir) {
 		console.log(`USAGE: tsx codegen.ts <dirPath> [--watch]`)
 		process.exit(0)
+	}
+
+	if (!path.isAbsolute(rootDir)) {
+		rootDir = path.resolve(process.cwd(), rootDir)
 	}
 
 	await codegen({ rootDir, watchMode })
