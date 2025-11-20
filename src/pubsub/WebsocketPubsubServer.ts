@@ -10,13 +10,7 @@ export class WebsocketPubsubServer {
 	private wss: WebSocketServer
 	private connections = new Map<WebSocket, Set<string>>()
 
-	constructor(
-		server: Server,
-		args: {
-			onSubscribe?: (this: WebsocketPubsubServer, key: string) => void
-			onUnsubscribe?: (this: WebsocketPubsubServer, key: string) => void
-		} = {}
-	) {
+	constructor(server: Server) {
 		this.wss = new WebSocketServer({ server })
 
 		this.wss.on("connection", (connection) => {
@@ -38,12 +32,14 @@ export class WebsocketPubsubServer {
 
 				if (message.type === "subscribe") {
 					subscriptions.add(message.key)
-					args.onSubscribe?.call(this, message.key)
 					return
 				}
 				if (message.type === "unsubscribe") {
 					subscriptions.delete(message.key)
-					args.onUnsubscribe?.call(this, message.key)
+					return
+				}
+				if (message.type === "publish") {
+					this.publish([{ key: message.key, value: message.value }])
 					return
 				}
 			})
@@ -52,7 +48,7 @@ export class WebsocketPubsubServer {
 
 	async publish(items: { key: string; value: any }[]) {
 		for (const { key, value } of items) {
-			const message: ServerMessage = { type: "update", key, value }
+			const message: ServerMessage = { type: "publish", key, value }
 			debug(">", message.type, message.key, message.value)
 			const data = JSON.stringify(message)
 			for (const [connection, subscriptions] of this.connections.entries()) {

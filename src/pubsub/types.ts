@@ -1,12 +1,23 @@
 import * as t from "shared/DataType"
 
-export const ClientMessageSchema = t.object({
-	type: t.or(t.literal("subscribe"), t.literal("unsubscribe")),
-	key: t.string,
-})
+export const ClientMessageSchema = t.or(
+	t.object({
+		type: t.literal("subscribe"),
+		key: t.string,
+	}),
+	t.object({
+		type: t.literal("unsubscribe"),
+		key: t.string,
+	}),
+	t.object({
+		type: t.literal("publish"),
+		key: t.string,
+		value: t.any,
+	})
+)
 
 export const ServerMessageSchema = t.object({
-	type: t.literal("update"),
+	type: t.literal("publish"),
 	key: t.string,
 	value: t.any,
 })

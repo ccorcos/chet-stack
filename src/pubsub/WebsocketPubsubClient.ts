@@ -71,4 +71,8 @@ export class WebsocketPubsubClient {
 	unsubscribe(key: string) {
 		this.send({ type: "unsubscribe", key })
 	}
+
+	publish(key: string, value: any) {
+		this.send({ type: "publish", key, value })
+	}
 }
