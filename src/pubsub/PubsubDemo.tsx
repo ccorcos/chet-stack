@@ -9,57 +9,57 @@ type Message = {
 	timestamp: number
 }
 
+function useDebounce<T>(value: T, delay: number): T {
+	const [debouncedValue, setDebouncedValue] = useState(value)
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			setDebouncedValue(value)
+		}, delay)
+
+		return () => clearTimeout(timeoutId)
+	}, [value, delay])
+
+	return debouncedValue
+}
+
 export function PubsubDemo() {
 	const { pubsub } = useClientEnvironment()
 	const [name, setName] = useState("anonymous")
 	const [room, setRoom] = useState("")
-	const [currentRoom, setCurrentRoom] = useState<string | null>(null)
 	const [messages, setMessages] = useState<Message[]>([])
 	const [messageInput, setMessageInput] = useState("")
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 
-	// Debounced room subscription
+	const debouncedRoom = useDebounce(room.trim() || "default", 300)
+
+	// Subscribe to debounced room
 	useEffect(() => {
-		// Treat empty room as "default"
-		const targetRoom = room.trim() || "default"
+		pubsub.subscribe(debouncedRoom)
 
-		// Debounce subscription changes
-		const timeoutId = setTimeout(() => {
-			// Unsubscribe from old room if different
-			if (currentRoom && currentRoom !== targetRoom) {
-				pubsub.unsubscribe(currentRoom)
-			}
-
-			// Subscribe to new room
-			if (currentRoom !== targetRoom) {
-				pubsub.subscribe(targetRoom)
-				setCurrentRoom(targetRoom)
-				setMessages([])
-			}
-		}, 300)
-
-		// Cleanup timeout on room change
-		return () => clearTimeout(timeoutId)
-	}, [room, pubsub, currentRoom])
-
-	// Cleanup subscription on unmount
-	useEffect(() => {
 		return () => {
-			if (currentRoom) {
-				pubsub.unsubscribe(currentRoom)
-			}
+			pubsub.unsubscribe(debouncedRoom)
 		}
-	}, [pubsub, currentRoom])
+	}, [debouncedRoom])
+
+	// Clear messages when room changes
+	const prevRoomRef = useRef<string | null>(null)
+	useEffect(() => {
+		if (debouncedRoom !== prevRoomRef.current) {
+			setMessages([])
+			prevRoomRef.current = debouncedRoom
+		}
+	}, [debouncedRoom])
 
 	// Listen for messages
 	useEffect(() => {
 		const unsubscribe = pubsub.onMessage((key: string, value: any) => {
-			if (key === currentRoom) {
+			if (key === debouncedRoom) {
 				setMessages((prev) => [...prev, value])
 			}
 		})
 		return unsubscribe
-	}, [pubsub, currentRoom])
+	}, [debouncedRoom])
 
 	// Auto-scroll to bottom
 	useEffect(() => {
