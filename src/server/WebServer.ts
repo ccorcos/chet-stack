@@ -22,7 +22,7 @@ export async function WebServer(environment: { config: ServerConfig }, app: Expr
 	}
 
 	// Fallback to HTML for client-side routing to work.
-	app.use("*", (req, res, next) => {
+	app.use((req, res, next) => {
 		if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next()
 		// This will delegate to vite.middlewares or express.static.
 		res.sendFile(path.resolve("/index.html"))

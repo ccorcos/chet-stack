@@ -1,4 +1,4 @@
-import { clearAuthCookies, getAuthTokenCookie } from "auth/auth"
+import { clearAuthCookies, getAuthTokenCookie } from "auth/server"
 import { deleteAuthToken } from "database/authToken"
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"

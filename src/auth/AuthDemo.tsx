@@ -1,12 +1,14 @@
 import React, { useState } from "react"
-import { getCurrentUserId } from "../../auth/client"
-import { useClientEnvironment } from "../services/ClientEnvironment"
+import { useClientEnvironment } from "../client/services/ClientEnvironment"
+import { Button } from "../ui/components/Button"
+import { Input } from "../ui/components/Input"
+import { getCurrentUserId } from "./client"
 
-export function Auth() {
+export function AuthDemo() {
 	const [userId, setUserId] = useState<string | undefined>(getCurrentUserId())
 
 	return (
-		<div>
+		<div style={{ margin: 12 }}>
 			<div>{userId ? `Logged in as ${userId}` : "Logged out"}</div>
 			<hr />
 			<Logout setUserId={setUserId} />
@@ -32,6 +34,8 @@ function Login(props: { setUserId: (userId: string) => void }) {
 			const response = await api.login({ username, password })
 			if (response.status === 200) {
 				props.setUserId(getCurrentUserId())
+				setUsername("")
+				setPassword("")
 			} else {
 				setError("Invalid username or password")
 			}
@@ -47,7 +51,7 @@ function Login(props: { setUserId: (userId: string) => void }) {
 			<form onSubmit={handleSubmit}>
 				<div>
 					<label>Username</label>
-					<input
+					<Input
 						type="text"
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
@@ -56,14 +60,14 @@ function Login(props: { setUserId: (userId: string) => void }) {
 				</div>
 				<div>
 					<label>Password</label>
-					<input
+					<Input
 						type="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
 					/>
 				</div>
-				<button type="submit">Login</button>
+				<Button type="submit">Login</Button>
 			</form>
 		</div>
 	)
@@ -83,6 +87,8 @@ function Signup(props: { setUserId: (userId: string) => void }) {
 			const response = await api.signup({ username, password })
 			if (response.status === 200) {
 				props.setUserId(getCurrentUserId())
+				setUsername("")
+				setPassword("")
 			} else {
 				setError("Signup failed. Username may already exist.")
 			}
@@ -98,7 +104,7 @@ function Signup(props: { setUserId: (userId: string) => void }) {
 			<form onSubmit={handleSubmit}>
 				<div>
 					<label>Username</label>
-					<input
+					<Input
 						type="text"
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
@@ -107,14 +113,14 @@ function Signup(props: { setUserId: (userId: string) => void }) {
 				</div>
 				<div>
 					<label>Password</label>
-					<input
+					<Input
 						type="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
 					/>
 				</div>
-				<button type="submit">Signup</button>
+				<Button type="submit">Signup</Button>
 			</form>
 		</div>
 	)
@@ -143,7 +149,7 @@ function Logout(props: { setUserId: (userId: string | undefined) => void }) {
 		<div>
 			<h1>Logout</h1>
 			{error && <div>{error}</div>}
-			<button onClick={handleLogout}>Logout</button>
+			<Button onClick={handleLogout}>Logout</Button>
 		</div>
 	)
 }

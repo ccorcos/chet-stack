@@ -1,4 +1,4 @@
-import { getPasswordHash, setAuthCookies } from "auth/auth"
+import { getPasswordHash, setAuthCookies } from "auth/server"
 import { createAuthToken } from "database/authToken"
 import { getPasswordForUserId } from "database/password"
 import { AuthToken } from "database/schema"

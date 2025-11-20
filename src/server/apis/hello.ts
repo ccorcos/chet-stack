@@ -4,7 +4,7 @@ This API is a template.
 
 */
 
-import { getCurrentUser } from "auth/auth"
+import { getCurrentUser } from "auth/server"
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
 import type { ServerEnvironment } from "../services/ServerEnvironment"

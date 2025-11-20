@@ -1,4 +1,4 @@
-import { getPasswordHash } from "auth/auth"
+import { getPasswordHash } from "auth/server"
 import { createPassword } from "database/password"
 import { User } from "database/schema"
 import { createUser, getUserByUsername } from "database/user"
@@ -9,6 +9,7 @@ import { ValidationError } from "shared/errors"
 import { randomId } from "shared/randomId"
 import { tupleTx } from "tupledb/TupleDb"
 import { TupleDb } from "tupledb/types"
+import { handler as login } from "./login"
 
 export const input = t.object({
 	username: t.string,
@@ -51,7 +52,7 @@ export async function signup(
 
 	tx.commit()
 
-	return { user }
+	return user
 }
 
 export async function handler(
@@ -60,5 +61,6 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	return await signup(environment, args)
+	await signup(environment, args)
+	await login(environment, args, req, res)
 }
