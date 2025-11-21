@@ -1,4 +1,4 @@
-import { ClientMessage, ServerMessage } from "pubsub/types"
+import { ClientMessage, ServerMessage } from "./types"
 import { WebsocketClient } from "./WebsocketClient"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)

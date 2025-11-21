@@ -1,7 +1,7 @@
 import type { Server } from "node:http"
-import { ClientMessage, ClientMessageSchema, ServerMessage } from "pubsub/types"
 import * as t from "shared/DataType"
 import { WebSocketServer } from "ws"
+import { ClientMessage, ClientMessageSchema, ServerMessage } from "./types"
 
 const debug = (...args: any[]) => console.log("pubsub:", ...args)
 
