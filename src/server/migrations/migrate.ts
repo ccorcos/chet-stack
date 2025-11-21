@@ -4,7 +4,7 @@
 
 */
 
-import { Database } from "../services/Database"
+import { Database } from "database/Database"
 import { config } from "../services/ServerConfig"
 
 const db = new Database(config.dbPath)

@@ -1,15 +1,19 @@
 import { serializeError } from "serialize-error"
 import { SecondMs } from "shared/dateHelpers"
 import { sleep } from "shared/sleep"
-import { ServerEnvironment } from "./ServerEnvironment"
-import { TaskError } from "./services/QueueDatabase"
-import { tasks } from "./tasks"
+import { Task, TaskError, TaskHandlers } from "./types"
 
 /**
- * This only makes sense to run in the same process while the database is embedded.
- * One day the database can be another process and this queue server can be another process.
+ * Processes tasks from the queue.
  */
-export function QueueServer(environment: ServerEnvironment) {
+export function QueueServer<T>(
+	queue: {
+		dequeueTask: (now: string) => Task | undefined
+		finishTask: (task: Task, error?: TaskError) => void
+	},
+	environment: T,
+	handlers: TaskHandlers<T>
+) {
 	let running = true
 
 	const stop = () => {
@@ -17,7 +21,6 @@ export function QueueServer(environment: ServerEnvironment) {
 	}
 
 	;(async () => {
-		const { queue } = environment
 		const intervalMs = SecondMs
 
 		while (running) {
@@ -31,7 +34,7 @@ export function QueueServer(environment: ServerEnvironment) {
 			// TODO: timeout after 30 seconds.
 			let taskError: TaskError | undefined
 			try {
-				const fn = tasks[task.name]
+				const fn = handlers[task.name]
 				await fn(environment, task.args)
 			} catch (error) {
 				taskError = serializeError(error) as TaskError

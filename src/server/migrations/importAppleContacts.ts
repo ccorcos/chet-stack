@@ -1,10 +1,10 @@
+import { Database } from "database/Database"
 import { groupBy } from "lodash-es"
 import { readFileSync } from "node:fs"
 import { BloomFilter } from "shared/BloomFilter"
 import { randomId } from "shared/randomId"
 import { simplifyVCard, vCard } from "shared/vCardHelpers"
 import { path } from "tools/path"
-import { Database } from "../services/Database"
 
 function logNames(cards: vCard[]) {
 	for (const card of cards) console.log(card.data.fn?.toString())

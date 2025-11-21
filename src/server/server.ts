@@ -4,6 +4,9 @@ import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
 import http from "node:http"
+import { enqueueApi } from "queue/enqueue"
+import { QueueDatabase } from "queue/QueueDatabase"
+import { QueueServer } from "queue/QueueServer"
 import { initEmailModel } from "shared/EmailModel"
 import { recordDb } from "tupledb/RecordDb"
 import { tupleDb, tupleOkv } from "tupledb/TupleDb"
@@ -11,10 +14,9 @@ import { UploadServer } from "upload/UploadServer"
 import { WebsocketPubsubServer } from "../pubsub/WebsocketPubsubServer"
 import { ApiServer } from "./ApiServer"
 import { errorHandler } from "./helpers/errorHandler"
-import { QueueServer } from "./QueueServer"
 import { ServerEnvironment } from "./ServerEnvironment"
-import { QueueDatabase } from "./services/QueueDatabase"
 import { config } from "./services/ServerConfig"
+import { tasks } from "./tasks"
 import { WebServer } from "./WebServer"
 
 const app = express()
@@ -28,7 +30,6 @@ if (config.production) {
 // app.use(morgan("dev"))
 app.use(morgan((...args) => "express: " + morgan.dev(...args)))
 
-// Databases currently use the local filesystem, but eventually they'll be their own postgres/redis.
 const base = new Database(config.dbPath)
 const db = tupleDb(tupleOkv(base))
 
@@ -36,7 +37,8 @@ INIT: {
 	initEmailModel(recordDb(tupleDb(db).subspace(["EmailDemo"])))
 }
 
-const queue = new QueueDatabase(config.queuePath)
+const queueDb = new QueueDatabase(config.queuePath)
+const enqueue = enqueueApi(queueDb)
 
 const server = http.createServer(app)
 const pubsub = new WebsocketPubsubServer(server)
@@ -44,12 +46,12 @@ const pubsub = new WebsocketPubsubServer(server)
 // Setup the server environment. This thing gets passed around everywhere and defines
 // the interface between differnet services so we can swap out things like the
 // database or the pubsub service with minimal plumbing.
-const environment: ServerEnvironment = { config, db, queue, pubsub }
+const environment: ServerEnvironment = { config, db, enqueue, pubsub }
 
 app.use(compression())
 
 await UploadServer(environment, app)
-QueueServer(environment)
+QueueServer(queueDb, environment, tasks)
 ApiServer(environment, app)
 await WebServer(environment, app)
 

@@ -5,8 +5,8 @@ npm run reset
 
 */
 
-import { Database } from "server/services/Database"
-import { QueueDatabase } from "server/services/QueueDatabase"
+import { Database } from "database/Database"
+import { QueueDatabase } from "queue/QueueDatabase"
 import { config } from "server/services/ServerConfig"
 
 async function reset() {

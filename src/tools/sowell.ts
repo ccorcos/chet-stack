@@ -4,17 +4,15 @@ npx tsx src/tools/sowell.ts
 
 */
 
-import sqlite from "better-sqlite3"
 import * as cheerio from "cheerio"
+import { Database } from "database/Database"
 import { URL } from "node:url"
 import { config } from "server/services/ServerConfig"
 import { sleep } from "shared/sleep"
-import { SQLiteOkv } from "tupledb/SQLiteOkv"
 import { tupleDb, tupleOkv, tupleTx } from "tupledb/TupleDb"
 import { TupleDb } from "tupledb/types"
 
-const storage = new SQLiteOkv(sqlite(config.dbPath))
-const db = tupleDb(tupleOkv(storage))
+const db = tupleDb(tupleOkv(new Database(config.dbPath)))
 
 const startUrl = "https://www.tsfreemind.com"
 
