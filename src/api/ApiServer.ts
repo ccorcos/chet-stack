@@ -1,10 +1,9 @@
 import cookieParser from "cookie-parser"
 import express, { Express } from "express"
 import * as t from "shared/DataType"
-import { api } from "./api"
-import { ServerEnvironment } from "./ServerEnvironment"
+import { ApiHandlers } from "./types"
 
-export function ApiServer(environment: ServerEnvironment, app: Express) {
+export function ApiServer<E>(environment: E, app: Express, api: ApiHandlers<E>) {
 	// Register API endpoints.
 	for (const [name, { input, handler }] of Object.entries(api)) {
 		app.post(
@@ -20,4 +19,9 @@ export function ApiServer(environment: ServerEnvironment, app: Express) {
 			}
 		)
 	}
+
+	// 404 so we don't fall back to sending the index.html file.
+	app.post("/api/*", (req, res) => {
+		res.status(404).json({ message: "API not found." })
+	})
 }

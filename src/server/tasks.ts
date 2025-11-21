@@ -4,6 +4,7 @@ import { ServerEnvironment } from "./ServerEnvironment"
 import * as queueTasks from "./tasks/index"
 
 type TasksIndex = typeof queueTasks
+
 // Assert proper types.
 type A1 = Assert<
 	TasksIndex,

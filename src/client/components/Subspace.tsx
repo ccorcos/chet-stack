@@ -10,13 +10,12 @@ import {
 	TupleSubspaceEncoder,
 } from "tupledb/Encoder"
 import { JSONValue, OkvCache, Tuple } from "tupledb/types"
-import { ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
-import { ClientApi } from "../services/api"
+import { Api, ClientEnvironmentProvider, useClientEnvironment } from "../services/ClientEnvironment"
 
-function ApiSubspace(api: ClientApi, prefix: Tuple): ClientApi {
+function ApiSubspace(api: Api, prefix: Tuple): Api {
 	const encoder = TupleSubspaceEncoder(prefix)
 
-	return proxyObj(async (key: keyof ClientApi, ...args) => {
+	return proxyObj(async (key: keyof Api, ...args) => {
 		if (key === "list") {
 			const newArgs = EncodeSubspaceListArgs(args[0], prefix)
 			const response = await api.list(newArgs)

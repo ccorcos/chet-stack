@@ -1,4 +1,4 @@
-import { formatResponseError } from "client/services/api"
+import { formatResponseError } from "api/client"
 import { useClientEnvironment } from "client/services/ClientEnvironment"
 import React from "react"
 import {

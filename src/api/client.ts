@@ -1,13 +1,20 @@
-import type { ApiType } from "server/api"
 import { proxyObj } from "shared/proxyHelpers"
 import { sleep } from "shared/sleep"
+import { ApiHandlers } from "./types"
 
-type InputOutput<T extends (...any: any[]) => any> = {
-	input: Parameters<T>[1]
-	output: ReturnType<T>
+export type ClientApi<T extends ApiHandlers<any>> = {
+	[K in keyof T]: (
+		args: Parameters<T[K]["handler"]>[1]
+	) => Promise<ApiResponse<Awaited<ReturnType<T[K]["handler"]>>>>
 }
 
-type ApiSchema = { [K in keyof ApiType]: InputOutput<ApiType[K]["handler"]> }
+export function createApi(): ClientApi<any> {
+	return proxyObj((key, args) => apiRequest(key, args))
+}
+
+// ============================================================================
+// HTTP requests
+// ============================================================================
 
 // https://github.com/microsoft/TypeScript/issues/55095
 type StatusCode = 0 | 200 | 400 | 409 | 403 | 500
@@ -18,10 +25,7 @@ type ApiResponse<Body> = { status: 200; body: Body } | ErrorResponse
 
 const debug = (...args: any[]) => console.log("api:", ...args)
 
-async function apiRequest<T extends keyof ApiSchema>(
-	name: T,
-	args: ApiSchema[T]["input"]
-): Promise<ApiResponse<Awaited<ApiSchema[T]["output"]>>> {
+async function apiRequest(name: string, args: any): Promise<any> {
 	debug(name, JSON.stringify(args))
 
 	const result = await httpRequest("/api/" + name, args)
@@ -30,16 +34,6 @@ async function apiRequest<T extends keyof ApiSchema>(
 	await sleep(500)
 
 	return result as ApiResponse<any>
-}
-
-export type ClientApi = {
-	[ApiName in keyof ApiSchema]: (
-		args: ApiSchema[ApiName]["input"]
-	) => Promise<ApiResponse<Awaited<ApiSchema[ApiName]["output"]>>>
-}
-
-export function createApi() {
-	return proxyObj((key, args) => apiRequest(key, args)) as ClientApi
 }
 
 export type HttpResponse<Body = any> = { status: 200; body: Body } | { status: number; body?: any }

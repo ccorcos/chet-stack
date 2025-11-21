@@ -1,3 +1,4 @@
+import { ApiServer } from "api/ApiServer"
 import compression from "compression"
 import { Database } from "database/Database"
 import express from "express"
@@ -12,7 +13,7 @@ import { recordDb } from "tupledb/RecordDb"
 import { tupleDb, tupleOkv } from "tupledb/TupleDb"
 import { UploadServer } from "upload/UploadServer"
 import { WebsocketPubsubServer } from "../pubsub/WebsocketPubsubServer"
-import { ApiServer } from "./ApiServer"
+import { api } from "./api"
 import { errorHandler } from "./helpers/errorHandler"
 import { ServerEnvironment } from "./ServerEnvironment"
 import { config } from "./services/ServerConfig"
@@ -52,7 +53,8 @@ app.use(compression())
 
 await UploadServer(environment, app)
 QueueServer(queueDb, environment, tasks)
-ApiServer(environment, app)
+ApiServer(environment, app, api)
+
 await WebServer(environment, app)
 
 errorHandler(environment, app)
