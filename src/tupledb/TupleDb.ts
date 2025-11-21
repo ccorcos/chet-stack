@@ -2,7 +2,7 @@
 
 Use functional composition to build the layers.
 
-BaseOKV -> BaseTupleOKV -> TupleDb -> TupleTx
+OKV -> TupleOKV -> TupleDb -> TupleTx
 
 const db = tupleDb(tupleOkv(stringOkv))
 const tx = tupleTx(db)

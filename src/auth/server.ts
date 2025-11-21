@@ -5,6 +5,10 @@ import { scrypt } from "node:crypto"
 import { BrokenError, PermissionError } from "shared/errors"
 import { TupleDb } from "tupledb/types"
 
+/**
+ * Generate a passwordSalt for securely storing password hases.
+ * > node -e 'console.log(require("crypto").randomBytes(32).toString("base64"))'
+ */
 export async function getPasswordHash(args: { passwordSalt: Buffer; password: string }) {
 	const { passwordSalt, password } = args
 	const passwordHash = await new Promise<string>((resolve, reject) => {
