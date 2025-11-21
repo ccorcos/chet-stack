@@ -8,15 +8,38 @@ When file in <srcDir>/{package} imports from another package, it should use an a
 */
 
 import fs from "node:fs/promises"
-import { relative, resolve } from "node:path"
+import { dirname, relative, resolve } from "node:path"
 import { collect } from "shared/collect"
 import { pLimitLazy } from "shared/pLimitLazy"
 import { getTopLevelPackages, walkFiles } from "./helpers"
 
-async function fixImportsInFile(filePath: string, packages: string[]): Promise<boolean> {
+async function fixImportsInFile(
+	filePath: string,
+	packages: string[],
+	srcDir: string
+): Promise<boolean> {
 	const content = await fs.readFile(filePath, "utf-8")
-	const regex = new RegExp(`from "(\\.\\./)+(${packages.join("|")})`, "g")
-	const newContent = content.replace(regex, 'from "$2')
+	const fileDir = dirname(filePath)
+	const currentPackage = relative(srcDir, filePath).split("/")[0]
+
+	// Match any relative import that goes up directories
+	const regex = /from ["'](\.\..+?)(?=["'])/g
+	let newContent = content
+
+	for (const match of content.matchAll(regex)) {
+		const [fullMatch, relativePath] = match
+
+		// Resolve the import to see which package it targets
+		const resolved = resolve(fileDir, relativePath)
+		const relativeToSrc = relative(srcDir, resolved)
+		const targetPackage = relativeToSrc.split("/")[0]
+
+		// Only replace if it's a cross-package import to a known package
+		if (packages.includes(targetPackage) && targetPackage !== currentPackage) {
+			// Replace ../../package with just package (or ../../package/subpath with package/subpath)
+			newContent = newContent.replace(fullMatch, `from "${relativeToSrc}`)
+		}
+	}
 
 	if (content !== newContent) {
 		await fs.writeFile(filePath, newContent, "utf-8")
@@ -30,7 +53,7 @@ export async function fixAbsoluteImports(srcDir: string) {
 
 	const results = await collect(
 		pLimitLazy(10, walkFiles(srcDir), async (file) => {
-			if (await fixImportsInFile(file, packages)) {
+			if (await fixImportsInFile(file, packages, srcDir)) {
 				console.log(`Fixed: ${relative(srcDir, file)}`)
 				return true
 			}
