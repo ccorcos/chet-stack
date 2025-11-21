@@ -42,21 +42,6 @@ export function createApi() {
 	return proxyObj((key, args) => apiRequest(key, args)) as ClientApi
 }
 
-export function formatResponseError(response: ErrorResponse) {
-	const { status, body } = response
-	if (body === null) return `${status}: Unkown error.`
-	if (body === undefined) return `${status}: Unkown error.`
-	if (typeof body === "string") return body
-	if (typeof body === "object") {
-		if ("message" in body) {
-			if (typeof body.message === "string") {
-				return body.message
-			}
-		}
-	}
-	return `${status}: ${JSON.stringify(body)}`
-}
-
 export type HttpResponse<Body = any> = { status: 200; body: Body } | { status: number; body?: any }
 
 // Only POST requests for now because this is only used for the API.
@@ -97,4 +82,19 @@ async function httpRequest(url: string, args: any): Promise<HttpResponse> {
 	}
 
 	return { status: response.status, body }
+}
+
+export function formatResponseError(response: ErrorResponse) {
+	const { status, body } = response
+	if (body === null) return `${status}: Unkown error.`
+	if (body === undefined) return `${status}: Unkown error.`
+	if (typeof body === "string") return body
+	if (typeof body === "object") {
+		if ("message" in body) {
+			if (typeof body.message === "string") {
+				return body.message
+			}
+		}
+	}
+	return `${status}: ${JSON.stringify(body)}`
 }
