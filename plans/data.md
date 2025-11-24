@@ -158,3 +158,48 @@ Perhaps each user gets their own queue to subscribe to as we can out either to e
 
 Sorry for the ramble. I'd like you to help me clarify my thinking and work through this problem step by step, considering the different trade-offs and acklowedging what assumptions are being made. The thing is, I'd like this architecture to support as many types of applications as possible so i want to know what we're excluding along the way. Whether its a chat application, a calendar, a wiki-style Notion application, or somethign more like Airtable, I want to be able to build it all with this general architecture without having to anything bespoke until we really have to consider scaling...
 
+
+---
+
+
+There's a changelog for rooms and potentially a changelog for users too.
+
+When you fetch, you get a snapshot count which tells you version of that index. And you can subscribe to changes as well.
+
+
+Let's get more concrete with a chatroom example.
+
+type User = {
+	id: string
+	name: string
+}
+
+type Room = {
+	id: string
+	name: string
+}
+
+type Message = {
+	id: string
+	roomId: string
+	userId: string
+	createdAt: string
+	text: string
+}
+
+function createMessage(db: TupleDb, message: Message) {
+	db.set(["message.id", message.id], message)
+	// So we can fetch messages
+	db.set(["room.id/messages", message.roomId, message.createdAt, message.id], null)
+	// So we can fetch user's current rooms
+	db.set(["user.id/rooms", message.userId, message.roomId], null)
+
+	// What changelogs are we keeping track of per-user and per-room?
+}
+
+
+
+TODO:
+- the "room" repo has a list of records and a list of changes.
+
+- the "user" repo has its own list of records and list of changes.

@@ -14,7 +14,7 @@ export type ServerConfig = {
 
 const production = process.env.NODE_ENV === "production"
 const port = parseInt(process.env.PORT || "8080")
-const host = production ? "example.com" : `localhost:${port}`
+const host = production ? "renegate.chat" : `localhost:${port}`
 const protocol = production ? "https" : "http"
 const baseUrl = `${protocol}://${host}`
 
