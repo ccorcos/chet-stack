@@ -21,7 +21,7 @@ export function ApiServer<E>(environment: E, app: Express, api: ApiHandlers<E>) 
 	}
 
 	// 404 so we don't fall back to sending the index.html file.
-	app.post("/api/*", (req, res) => {
+	app.post("/api/*name", (req, res) => {
 		res.status(404).json({ message: "API not found." })
 	})
 }

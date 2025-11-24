@@ -15,4 +15,3 @@ This server does a bunch of things all in one process. At some point, you maybe 
 - And we're running a web server serving the `client` package.
 - Create new apis by adding them to `src/server/apis`
 - Create new background tasks by adding them to `src/server/tasks`
-

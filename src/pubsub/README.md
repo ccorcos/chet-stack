@@ -9,7 +9,7 @@ Handles subscriptions and publishing to connected clients.
 ```ts
 import express from "express"
 import http from "node:http"
-import {WebsocketPubsubServer} from "pubsub/WebsocketPubsubServer"
+import { WebsocketPubsubServer } from "pubsub/WebsocketPubsubServer"
 
 const app = express()
 
@@ -17,7 +17,10 @@ const server = http.createServer(app)
 const pubsub = new WebsocketPubsubServer(server)
 
 // Publish multiple items
-pubsub.publish([{key, value}, {key, value}])
+pubsub.publish([
+	{ key, value },
+	{ key, value },
+])
 ```
 
 ## WebsocketPubsubClient
@@ -25,14 +28,14 @@ pubsub.publish([{key, value}, {key, value}])
 The websocket client handle connecting and reconnecting when the connection drops from the browser.
 
 ```ts
-import {WebsocketPubsubClient} from "pubsub/WebsocketPubsubClient"
+import { WebsocketPubsubClient } from "pubsub/WebsocketPubsubClient"
 
 const pubsub = new WebsocketPubsubClient()
 
 pubsub.subscribe(key)
 pubsub.unsubscribe(key)
-pubsub.publish({key, value})
-pubsub.onMessage(({key, value}) => {
+pubsub.publish({ key, value })
+pubsub.onMessage(({ key, value }) => {
 	// handle message
 })
 ```

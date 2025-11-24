@@ -38,13 +38,13 @@ The base tupleDb is great for building abstractions on top of, but it's a bit cu
 ```ts
 const db = tupleDb(base)
 
-db.set(["users", 1], {id: 1, name: "Chet"})
+db.set(["users", 1], { id: 1, name: "Chet" })
 db.has(["users", 1])
 db.get(["users", 1])
 db.delete(["users", 1])
 
 const users = db.subspace(["users"])
-users.set(2, {id: 2, name: "Simon"})
+users.set(2, { id: 2, name: "Simon" })
 ```
 
 ## Cache
@@ -54,19 +54,19 @@ The `Cache` is the workhorse of the client-side database.
 ```ts
 const cache = new Cache<Tuple, JSONValue>(codec.compare)
 
-const listUsersArg = {gt: ["users"], lt: ["users", "\xff"], limit: 100}
+const listUsersArg = { gt: ["users"], lt: ["users", "\xff"], limit: 100 }
 const data = db.list(listUsersArg)
 
 // Insert data into the cache overwriting any previous data in that range.
 cache.insert(listUsersArg, data)
 
 // Optimistically write data into the cache.
-const finalize = cache.write({key, value})
+const finalize = cache.write({ key, value })
 
 // Write to the database
-db.write({key, value})
+db.write({ key, value })
 // Once the write succeeds, we can insert it into the cache and finalize the optimistic write
-cache.insert({gte:key, lte: key}, [{key, value}])
+cache.insert({ gte: key, lte: key }, [{ key, value }])
 finalize()
 
 // Subscribe to a query.
@@ -92,4 +92,3 @@ const tx = tupleTx(db)
 tx.set(...)
 tx.commit()
 ```
-

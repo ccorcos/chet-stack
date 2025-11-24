@@ -15,6 +15,7 @@ On login, we use `secure-compare` to prevent timing attacks.
 ## Cookies
 
 We set two cookies.
+
 - `authToken` is just a UUID stored in a database. It's set to httpOnly so that it is not available via JavaScript preventing cross-site scripting (XSS) attacks.
 - `userId` is the current logged in user's id. This is available on the client and lets the client know what the current user is.
 

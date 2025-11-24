@@ -2,7 +2,6 @@
 
 A simple way to all APIs as typed functions.
 
-
 ## Server API Handlers
 
 We're using DataType to validate arguments. The request and response objects are there for managing cookies and authentication. The returned object will be JSON serialized.
@@ -25,7 +24,7 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	return {reply: `Hello ${args.name}`}
+	return { reply: `Hello ${args.name}` }
 }
 ```
 
@@ -58,7 +57,7 @@ The client give a typed interface for making these api requests. To do this, you
 
 ```ts
 import type * as hello from "server/apis/hello"
-import {clientApi, formatResponseError} from "api/client"
+import { clientApi, formatResponseError } from "api/client"
 
 type ApiType = { hello }
 type Api = ClientApi<ApiType>
@@ -74,4 +73,3 @@ if (response.status === 200) {
 	console.error(formatResponseError(response))
 }
 ```
-

@@ -7,7 +7,7 @@ It's common to offload computationally intensive tasks to a queue for workers to
 A simple database for enqueuing and dequeuing tasks. You likely don't need to interact with this directly. One nice feature is `runAt` which allows you to schedule tasks to be run in the future.
 
 ```ts
-import {QueueDatabase} from "queue/QueueDatabase"
+import { QueueDatabase } from "queue/QueueDatabase"
 const queueDb = new QueueDatabase("queue.db")
 
 // Enqueue a task to run immediately
@@ -16,7 +16,7 @@ queueDb.enqueueTask({
 	id: "task-123",
 	name: "followup",
 	args: { message: "Hello" },
-	runAt: now
+	runAt: now,
 })
 
 // Dequeue the next task that's ready to run
@@ -51,12 +51,12 @@ const TasksType = typeof tasks
 And then we can use the `enqueueApi` to give is a clean typed interface.
 
 ```ts
-import {enqueueApi, EnqueueApi} from "queue/enqueue"
+import { enqueueApi, EnqueueApi } from "queue/enqueue"
 
 const enqueue: EnqueueApi<TasksType> = enqueueApi(queueDb)
 
-const inOneHour = new Date(Date.now() + 60*60*1000).toISOString()
-enqueue.followup({message: "Thanks for signing up!"}, {runAt: inOneHour})
+const inOneHour = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+enqueue.followup({ message: "Thanks for signing up!" }, { runAt: inOneHour })
 ```
 
 ## QueueServer

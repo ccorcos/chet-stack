@@ -10,8 +10,8 @@ import { UploadServer } from "upload/UploadServer"
 // The upload key is just a string used for creating secure signatures. Create your own with:
 // > node -e 'console.log(require("crypto").randomBytes(128).toString("base64"))'
 const config = {
-  uploadKey: Buffer.from(process.env.UPLOAD_KEY),
-  baseUrl: "https://your-app.com"
+	uploadKey: Buffer.from(process.env.UPLOAD_KEY),
+	baseUrl: "https://your-app.com",
 }
 
 await UploadServer({ config }, app)
@@ -25,31 +25,27 @@ You need to integrate `getDownloadUrls` and `getUploadUrls` into your API.
 import { useFileUpload, uploadFile } from "ui/components/FileUpload"
 
 const { uploads, handleDrop } = useFileUpload(async (uploads) => {
-
 	// Get signed upload URLs from your API
-  const response = await api.getUploadUrls({
-    files: uploads.map((upload) => ({
-      id: upload.id,
-      filename: upload.file.name
-    })),
-  })
+	const response = await api.getUploadUrls({
+		files: uploads.map((upload) => ({
+			id: upload.id,
+			filename: upload.file.name,
+		})),
+	})
 
-  if (response.status !== 200) {
-    for (const upload of uploads)
-      upload.setState({ error: "Failed to get upload URL" })
-    return
-  }
+	if (response.status !== 200) {
+		for (const upload of uploads) upload.setState({ error: "Failed to get upload URL" })
+		return
+	}
 
-  // Upload each file to its signed URL
-  await Promise.all(
-    uploads.map(async (upload) => {
-      const uploadUrl = response.body.urls[upload.id]
-      await uploadFile(upload.file, uploadUrl, (progress) =>
-        upload.setState({ progress })
-      )
-      upload.setState({ uploaded: true })
-    })
-  )
+	// Upload each file to its signed URL
+	await Promise.all(
+		uploads.map(async (upload) => {
+			const uploadUrl = response.body.urls[upload.id]
+			await uploadFile(upload.file, uploadUrl, (progress) => upload.setState({ progress }))
+			upload.setState({ uploaded: true })
+		})
+	)
 })
 ```
 
