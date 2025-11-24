@@ -8,8 +8,11 @@ This server does a bunch of things all in one process. At some point, you maybe 
 
 ## All-in-one
 
-We're using an embedded tupledb database.
-we're running a queue database along with a queue server to process the queue.
-We're running an upload server for managing user uploads.
-We're running an api server.
-And we're running a web server.
+- We're using an embedded tupledb database.
+- we're running a queue database along with a queue server to process the queue.
+- We're running an upload server for managing user uploads.
+- We're running an api server.
+- And we're running a web server serving the `client` package.
+- Create new apis by adding them to `src/server/apis`
+- Create new background tasks by adding them to `src/server/tasks`
+
