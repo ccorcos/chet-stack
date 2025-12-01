@@ -28,7 +28,7 @@ export function tupleOkv(okv: Okv<string, string>): TupleOkv {
 	})
 }
 
-function subspace(db: TupleOkv, prefix: Tuple): TupleOkv {
+export function subspace(db: TupleOkv, prefix: Tuple): TupleOkv {
 	const encoder = TupleSubspaceEncoder(prefix)
 	return {
 		compare: db.compare,

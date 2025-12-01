@@ -1,7 +1,56 @@
-import { Range } from "./Range"
+import { KeyEncodeList, TupleSubspaceEncoder } from "./Encoder"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { tupleDb, tupleTx } from "./TupleDb"
 import { JSONValue, Okv, Tuple, TupleDb, TupleTx, WriteArgs } from "./types"
 
+type Pubsub<K = any, V = any> = {
+	publish(items: { key: K; value: V }[]): void
+}
+
+type TupleOkv = Okv<Tuple, JSONValue>
+type TuplePubsub = Pubsub<Tuple, JSONValue>
+
+type SyncOkv = TupleOkv & TuplePubsub
+
+type SyncDb = Omit<TupleDb, "subspace"> & TuplePubsub & { subspace: (prefix: Tuple) => SyncDb }
+
+type SyncTx = Omit<TupleTx, "subspace"> & TuplePubsub & { subspace: (prefix: Tuple) => SyncDb }
+
+function syncOkv(db: TupleOkv, pubsub: TuplePubsub): SyncOkv {
+	return { ...db, ...pubsub }
+}
+
+function syncDb(db: SyncOkv): SyncDb {
+	const tdb = tupleDb(db)
+	return {
+		...db,
+		...tdb,
+		subspace(prefix: Tuple) {
+			const encoder = TupleSubspaceEncoder(prefix)
+			return syncDb({
+				...tdb.subspace(prefix),
+				publish: (items) => db.publish(KeyEncodeList(items, encoder)),
+			})
+		},
+	}
+}
+
+function syncTx(db: SyncOkv): SyncTx {
+	const tx = tupleTx(db)
+
+	const pubs = new InMemoryOkv(db.compare)
+
+	return {
+		...syncDb({ ...tx, publish: (args) => pubs.write({ set: args }) }),
+		commit: () => {
+			tx.commit()
+			db.publish(pubs.list())
+		},
+		get committed() {
+			return tx.committed
+		},
+	}
+}
 
 function writeSyncDb(db: TupleDb, args: WriteArgs<Tuple, JSONValue>) {
 	const clock = db.get(["clock"]) ?? 0
@@ -9,25 +58,6 @@ function writeSyncDb(db: TupleDb, args: WriteArgs<Tuple, JSONValue>) {
 	db.set(["clock"], clock + 1)
 	db.subspace(["value"]).write(args)
 }
-
-
-// This part is super simple, doesnt work create with teh publish side-effect though.
-function serverSyncDb(db: TupleDb, pubsub: Pubsub) {
-	return tupleDb({
-		compare: db.compare,
-		list(args) {
-			return db.subspace(["value"]).list(args)
-		},
-		write(args) {
-			const clock = db.get(["clock"]) ?? 0
-			db.set(["history", clock], args)
-			db.set(["clock"], clock + 1)
-			db.subspace(["value"]).write(args)
-			pubsub.publish(["clock"], clock + 1)
-		},
-	})
-}
-
 
 function serverApi(db: TupleDb, pubsub: Pubsub) {
 	return {
@@ -48,29 +78,10 @@ function serverApi(db: TupleDb, pubsub: Pubsub) {
 	}
 }
 
-type TupleOkv = Okv<Tuple, JSONValue>
-
-type Pubsub<K=any, V=any> = {
-	publish(items: { key: K; value: V }[]): void
-	subscribe(range: Range<K>): () => void
-	onMessage(fn: (items: { key: K; value: V }[]) => void): () => void
-}
-
-type TuplePubsub = Pubsub<Tuple, JSONValue>
-
-type SyncOkv = TupleOkv & TuplePubsub
-
-type SyncDb = Omit<TupleDb, "subspace"> & TuplePubsub & { subspace: (prefix: Tuple) => SyncDb }
-
-type SyncTx = Omit<TupleTx, "subspace"> {
-	// wait til commit to publish.
-}
-
 // Thinking aloud...
 // - pubsub subspace...
 // - publishing in a transaction should be deferred until commit.
 // -
-
 
 function clientSyncDb(server: TupleDb) {
 	// ["clock"]: number
