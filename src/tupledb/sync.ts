@@ -11,6 +11,11 @@ TODO:
 
 */
 
+import { codec } from "./Codec"
+import { InMemoryOkv } from "./InMemoryOkv"
+import { tupleDb } from "./TupleDb"
+import { TupleDb } from "./types"
+
 type Tx<O> = {
 	id: string
 	ops: O[]
@@ -38,19 +43,37 @@ const numberCrdt: Crdt<number, { type: "set" | "increment"; value: number }> = {
 type SyncState<V, O> = {
 	clock: number
 	value: V
-	history: Record<number, Tx<O>>
+	history: (since: number) => Tx<O>[]
+	reset: (args: { clock: number; value: V }) => void
 	apply: (tx: Tx<O>) => void
 }
 
-export function syncState<V, O>(crdt: Crdt<V, O>): SyncState<V, O> {
+export function syncState<V, O>(crdt: Crdt<V, O>, db: TupleDb): SyncState<V, O> {
 	return {
-		clock: 0,
-		value: crdt.initial,
-		history: {},
+		get clock(): number {
+			return db.get(["clock"]) ?? 0
+		},
+		set clock(value: number) {
+			db.set(["clock"], value)
+		},
+		get value(): V {
+			return db.get(["value"]) ?? crdt.initial
+		},
+		set value(value: V) {
+			db.set(["value"], value)
+		},
+		history(since: number): Tx<O>[] {
+			return db.list({ gte: ["history", since] }).map(({ value }) => value as Tx<O>)
+		},
+		reset(args: { clock: number; value: V }) {
+			this.clock = args.clock
+			this.value = args.value
+			for (const { key } of db.subspace(["history"]).list()) db.delete(key)
+		},
 		apply(tx: Tx<O>) {
-			this.history[this.clock] = tx
-			this.value = crdt.apply(this.value, tx.ops)
+			db.set(["history", this.clock], tx)
 			this.clock += 1
+			this.value = crdt.apply(this.value, tx.ops)
 		},
 	}
 }
@@ -67,10 +90,7 @@ function serverSync<V, O>(state: SyncState<V, O>, maxBehind: number = 5) {
 		async sync(args: {
 			since: number
 			write: Tx<O>[]
-		}): Promise<
-			| { clock: number; updates: Record<number, Tx<O>>; value?: undefined }
-			| { clock: number; value: V; updates?: undefined }
-		> {
+		}): Promise<{ updates: Tx<O>[] } | { updates?: undefined; clock: number; value: V }> {
 			const { since, write: txs } = args
 
 			await this.write({ txs })
@@ -79,9 +99,8 @@ function serverSync<V, O>(state: SyncState<V, O>, maxBehind: number = 5) {
 
 			// Client is behind by a little bit, send history updates.
 			if (behind <= maxBehind) {
-				const updates: Record<number, Tx<O>> = {}
-				for (let i = since; i < this.state.clock; i++) updates[i] = this.state.history[i]
-				return { clock: this.state.clock, updates }
+				const updates = this.state.history(since)
+				return { updates }
 			}
 
 			// Client is behind by a lot, just send the current value.
@@ -90,12 +109,16 @@ function serverSync<V, O>(state: SyncState<V, O>, maxBehind: number = 5) {
 	}
 }
 
+function InMemoryTupleDb() {
+	return tupleDb(new InMemoryOkv(codec.compare))
+}
+
 // const server = serverSync(syncState(numberCrdt))
 
 function client<V, O>(crdt: Crdt<V, O>, server: ReturnType<typeof serverSync<V, O>>) {
 	return {
-		remote: syncState(crdt),
-		local: syncState(crdt),
+		remote: syncState(crdt, InMemoryTupleDb()),
+		local: syncState(crdt, InMemoryTupleDb()),
 
 		get value() {
 			return this.local.value
@@ -119,13 +142,9 @@ function client<V, O>(crdt: Crdt<V, O>, server: ReturnType<typeof serverSync<V, 
 			})
 
 			if (response.updates) {
-				while (this.remote.clock < response.clock) {
-					this.remote.apply(response.updates[this.remote.clock])
-				}
+				for (const tx of response.updates) this.remote.apply(tx)
 			} else {
-				this.remote.clock = response.clock
-				this.remote.history = []
-				this.remote.value = response.value
+				this.remote.reset({ clock: response.clock, value: response.value })
 			}
 
 			// Remaining writes on top.
@@ -139,18 +158,3 @@ function client<V, O>(crdt: Crdt<V, O>, server: ReturnType<typeof serverSync<V, 
 		},
 	}
 }
-
-// Think about...
-// - pubsub for the clock -> call client.sync()
-// - how does this work for chat messages
-// - how does this work for y.map, y.array, and okv
-
-/*
-
-I'd like to use my minimal counter example and create 4 different extensions
-1. counter sync model so it can work p2p with lamport clocks
-2. a map instead of a number, similar to y.Map
-3. a list/array instead of a number, similar to y.Array
-4. a chat room instead of a number, where messages can be edited and deleted, but they're displayed in clock order.
-
-*/
