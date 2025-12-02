@@ -393,7 +393,10 @@ export function counter(id: string) {
 			}
 		},
 
-		async sync(other: { heads: () => Promise<T[]>; send: (ops: Op[], ourHeads: T[]) => Promise<Op[]> }) {
+		async sync(other: {
+			heads: () => Promise<any[]>
+			send: (ops: Op[], ourHeads: any[]) => Promise<Op[]>
+		}) {
 			// Get their heads
 			const theirHeads = await other.heads()
 
@@ -411,7 +414,7 @@ export function counter(id: string) {
 		},
 
 		// Server-side handler for receiving sync requests
-		async handleSync(theirOps: Op[], theirHeads: T[]): Promise<Op[]> {
+		async handleSync(theirOps: Op[], theirHeads: any[]): Promise<Op[]> {
 			// Merge their operations (applies them incrementally)
 			this.mergeOps(theirOps)
 
@@ -459,28 +462,78 @@ async function main() {
 	peer3.set(20) // key=[0, peer3], parents=[]
 
 	console.log("Before sync:")
-	console.log("peer1:", peer1.value, "history:", peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer2:", peer2.value, "history:", peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer3:", peer3.value, "history:", peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
+	console.log(
+		"peer1:",
+		peer1.value,
+		"history:",
+		peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer2:",
+		peer2.value,
+		"history:",
+		peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer3:",
+		peer3.value,
+		"history:",
+		peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
 
 	// Sync peer1 with peer2
 	await peer1.sync(createPeerAPI(peer2))
 	console.log("\nAfter peer1.sync(peer2):")
-	console.log("peer1:", peer1.value, "history:", peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer2:", peer2.value, "history:", peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
+	console.log(
+		"peer1:",
+		peer1.value,
+		"history:",
+		peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer2:",
+		peer2.value,
+		"history:",
+		peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
 
 	// Sync peer3 with peer1
 	await peer3.sync(createPeerAPI(peer1))
 	console.log("\nAfter peer3.sync(peer1):")
-	console.log("peer1:", peer1.value, "history:", peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer3:", peer3.value, "history:", peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
+	console.log(
+		"peer1:",
+		peer1.value,
+		"history:",
+		peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer3:",
+		peer3.value,
+		"history:",
+		peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
 
 	// Sync peer2 with peer3 to get full convergence
 	await peer2.sync(createPeerAPI(peer3))
 	console.log("\nAfter peer2.sync(peer3) - all converged:")
-	console.log("peer1:", peer1.value, "history:", peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer2:", peer2.value, "history:", peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
-	console.log("peer3:", peer3.value, "history:", peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`))
+	console.log(
+		"peer1:",
+		peer1.value,
+		"history:",
+		peer1.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer2:",
+		peer2.value,
+		"history:",
+		peer2.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
+	console.log(
+		"peer3:",
+		peer3.value,
+		"history:",
+		peer3.dag.topoSortedArray().map((o) => `${o.key[1]}:${o.key[0]}`)
+	)
 
 	console.log("\n=== Diamond Merge Test ===")
 	// Test explicit diamond merge pattern
@@ -492,41 +545,60 @@ async function main() {
 	peerB.set(200) // b0
 
 	console.log("Before merge:")
-	console.log("peerA:", peerA.value, "heads:", peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`))
-	console.log("peerB:", peerB.value, "heads:", peerB.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`))
+	console.log(
+		"peerA:",
+		peerA.value,
+		"heads:",
+		peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`)
+	)
+	console.log(
+		"peerB:",
+		peerB.value,
+		"heads:",
+		peerB.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`)
+	)
 
 	// Sync: peerA learns about peerB
 	await peerA.sync(createPeerAPI(peerB))
 
 	console.log("\nAfter peerA.sync(peerB):")
-	console.log("peerA:", peerA.value, "heads:", peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`))
+	console.log(
+		"peerA:",
+		peerA.value,
+		"heads:",
+		peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`)
+	)
 	console.log(
 		"peerA history:",
 		peerA.dag
 			.topoSortedArray()
-			.map(
-				(o) => `${o.key[1]}:${o.key[0]}[${o.parents.map((p) => `${p[1]}:${p[0]}`).join(",")}]`
-			)
+			.map((o) => `${o.key[1]}:${o.key[0]}[${o.parents.map((p) => `${p[1]}:${p[0]}`).join(",")}]`)
 	)
 
 	// peerA creates new operation - should point to both heads (merge)
 	peerA.increment(1) // a1, parents=[a0, b0]
 
 	console.log("\nAfter peerA.increment(1) - creates merge operation:")
-	console.log("peerA:", peerA.value, "heads:", peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`))
+	console.log(
+		"peerA:",
+		peerA.value,
+		"heads:",
+		peerA.dag.getHeads().map((h) => `${h.key[1]}:${h.key[0]}`)
+	)
 	console.log(
 		"peerA history:",
 		peerA.dag
 			.topoSortedArray()
-			.map(
-				(o) => `${o.key[1]}:${o.key[0]}[${o.parents.map((p) => `${p[1]}:${p[0]}`).join(",")}]`
-			)
+			.map((o) => `${o.key[1]}:${o.key[0]}[${o.parents.map((p) => `${p[1]}:${p[0]}`).join(",")}]`)
 	)
 
 	// Verify merge operation has two parents
 	const sorted = peerA.dag.topoSortedArray()
 	const mergeOp = sorted.find((o) => o.key[1] === "peerA" && o.key[0] === 1)
-	console.log("\nMerge operation parents:", mergeOp?.parents.map((p) => `${p[1]}:${p[0]}`))
+	console.log(
+		"\nMerge operation parents:",
+		mergeOp?.parents.map((p) => `${p[1]}:${p[0]}`)
+	)
 }
 
 // Run example

@@ -29,6 +29,17 @@ export function KeyEncodeListArgs<K, O>(args: ListArgs<K>, encoder: Encoder<K, O
 	})
 }
 
+/** Uncommon to use this */
+export function KeyDecodeListArgs<K, O>(args: ListArgs<O>, encoder: Encoder<K, O>): ListArgs<K> {
+	return compactObj({
+		...args,
+		gt: args?.gt === undefined ? undefined : encoder.decode(args.gt),
+		gte: args?.gte === undefined ? undefined : encoder.decode(args.gte),
+		lt: args?.lt === undefined ? undefined : encoder.decode(args.lt),
+		lte: args?.lte === undefined ? undefined : encoder.decode(args.lte),
+	})
+}
+
 export function KeyEncodeRange<K, O>(args: Range<K>, encoder: Encoder<K, O>): Range<O> {
 	return compactObj({
 		gt: args?.gt === undefined ? undefined : encoder.encode(args.gt),

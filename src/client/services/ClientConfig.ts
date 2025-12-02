@@ -1,6 +1,5 @@
 export type ClientConfig = {
 	production: boolean
-	baseUrl: string
 }
 
 export const clientConfig = {

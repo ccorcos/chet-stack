@@ -1,11 +1,10 @@
 import { InMemoryOkv } from "./InMemoryOkv"
-import { Range } from "./Range"
 import { tupleDb } from "./TupleDb"
 import { ListArgs, Okv, TupleDb, TupleOkv, WriteArgs } from "./types"
 
 export class QueryCache<K, V> implements Okv<K, V> {
 	data: InMemoryOkv<K, V>
-	reads: Range<K>[] = []
+	reads: ListArgs<K>[] = []
 
 	constructor(public db: Okv<K, V>) {
 		this.data = new InMemoryOkv<K, V>(this.db.compare)

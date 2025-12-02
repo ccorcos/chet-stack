@@ -1,6 +1,5 @@
 import { KeyEncodeList, TupleSubspaceEncoder } from "./Encoder"
-import { InMemoryOkv } from "./InMemoryOkv"
-import { tupleDb, tupleTx } from "./TupleDb"
+import { subspace, tupleDb, tupleTx } from "./TupleDb"
 import { JSONValue, Okv, Tuple, TupleDb, TupleTx, WriteArgs } from "./types"
 
 type Pubsub<K = any, V = any> = {
@@ -12,20 +11,34 @@ type TuplePubsub = Pubsub<Tuple, JSONValue>
 
 type SyncOkv = TupleOkv & TuplePubsub
 
-type SyncDb = Omit<TupleDb, "subspace"> & TuplePubsub & { subspace: (prefix: Tuple) => SyncDb }
+type SyncDb = Omit<TupleDb, "subspace"> &
+	TuplePubsub & {
+		subspace: (prefix: Tuple) => SyncDb
+		emit: (key: Tuple, value: JSONValue) => void
+	}
 
-type SyncTx = Omit<TupleTx, "subspace"> & TuplePubsub & { subspace: (prefix: Tuple) => SyncDb }
+type SyncTx = Omit<TupleTx, "subspace"> & SyncDb
 
-function syncOkv(db: TupleOkv, pubsub: TuplePubsub): SyncOkv {
-	return { ...db, ...pubsub }
+// Lets now imagine that publishing involve writing to the db... and we pull it out elsewhere.
+
+function syncOkv(db: TupleOkv): SyncOkv {
+	return {
+		...subspace(db, ["data"]),
+		publish: (items) => subspace(db, ["pubsub"]).write({ set: items }),
+	}
 }
+
+// function syncOkv(db: TupleOkv, pubsub: TuplePubsub): SyncOkv {
+// 	return { ...db, ...pubsub }
+// }
 
 function syncDb(db: SyncOkv): SyncDb {
 	const tdb = tupleDb(db)
 	return {
-		...db,
 		...tdb,
-		subspace(prefix: Tuple) {
+		publish: db.publish,
+		emit: (key, value) => db.publish([{ key, value }]),
+		subspace(prefix) {
 			const encoder = TupleSubspaceEncoder(prefix)
 			return syncDb({
 				...tdb.subspace(prefix),
@@ -35,13 +48,24 @@ function syncDb(db: SyncOkv): SyncDb {
 	}
 }
 
+const pubs: any = {}
 function syncTx(db: SyncOkv): SyncTx {
-	const tx = tupleTx(db)
-
-	const pubs = new InMemoryOkv(db.compare)
+	const tx = tupleTx({
+		compare: db.compare,
+		list: db.list,
+		write: (args) => {
+			// get data
+			// get pubsub
+		},
+	})
 
 	return {
-		...syncDb({ ...tx, publish: (args) => pubs.write({ set: args }) }),
+		...syncDb({
+			compare: tx.compare,
+			list: tx.subspace(["data"]).list,
+			write: tx.subspace(["data"]).write,
+			publish: (items) => tx.subspace(["pubsub"]).write({ set: items }),
+		}),
 		commit: () => {
 			tx.commit()
 			db.publish(pubs.list())
@@ -59,7 +83,7 @@ function writeSyncDb(db: TupleDb, args: WriteArgs<Tuple, JSONValue>) {
 	db.subspace(["value"]).write(args)
 }
 
-function serverApi(db: TupleDb, pubsub: Pubsub) {
+function serverApi(db: TupleDb, pubsub: any) {
 	return {
 		write(writes: WriteArgs<Tuple, JSONValue>[]) {
 			const tx = tupleTx(db)
