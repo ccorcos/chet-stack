@@ -62,6 +62,11 @@ export function encodeRange<K>(args: Range<K>): [Bound<K>, Bound<K>] {
 	return [encodeStartBound(args), encodeEndBound(args)]
 }
 
+export function decodeRange<K>(args: [Bound<K>, Bound<K>]): Range<K> {
+	const [start, end] = args
+	return { ...decodeStartBound(start), ...decodeEndBound(end) }
+}
+
 export function compareBound<K>(a: Bound<K>, b: Bound<K>, compareKey: Compare<K> = compare) {
 	return compoundCompare(a, b, (x, y) => {
 		if (typeof x === "number" || typeof y === "number") return compare(x, y)
