@@ -15,10 +15,8 @@ examples...
 
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { codec } from "./Codec"
 import { Indexable } from "./Indexing"
-import { InMemoryOkv } from "./InMemoryOkv"
-import { tupleDb } from "./TupleDb"
+import { tupleDb, tupleOkv } from "./TupleDb"
 
 type Person = {
 	id: string
@@ -82,7 +80,7 @@ const example: Person[] = [john, jane, robert, emily]
 
 describe("Indexing", () => {
 	it("seconary index", () => {
-		const { createIndex, deleteIndex, ...base } = Indexable(new InMemoryOkv(codec.compare))
+		const { createIndex, deleteIndex, ...base } = Indexable(tupleOkv())
 		const db = tupleDb(base)
 
 		db.set(["person", john.id], john)
@@ -149,7 +147,7 @@ describe("Indexing", () => {
 			content: string
 		}
 
-		const { createIndex, deleteIndex, ...base } = Indexable(new InMemoryOkv(codec.compare))
+		const { createIndex, deleteIndex, ...base } = Indexable(tupleOkv())
 		const db = tupleDb(base)
 
 		// Secondary indexes

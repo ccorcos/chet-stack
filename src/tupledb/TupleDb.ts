@@ -18,10 +18,12 @@ import {
 	TupleSubspaceEncoder,
 	ValueEncodeOKV,
 } from "./Encoder"
+import { InMemoryOkv } from "./InMemoryOkv"
 import { Transaction } from "./Transaction"
 import { Okv, ReadOnlyTupleDb, Tuple, TupleDb, TupleOkv, TupleTx } from "./types"
 
-export function tupleOkv(okv: Okv<string, string>): TupleOkv {
+export function tupleOkv(okv?: Okv<string, string>): TupleOkv {
+	if (!okv) okv = new InMemoryOkv(codec.compare)
 	return ValueEncodeOKV(KeyEncodeOKV(okv, codec), {
 		encode: (value) => JSON.stringify(value),
 		decode: (value) => JSON.parse(value),
@@ -46,7 +48,8 @@ export function subspace(db: TupleOkv, prefix: Tuple): TupleOkv {
  * Separating the sugar from the base api makes it a lot easier to build compositional
  * abstractions because the base layer is the only two functions we need to wrap.
  */
-export function tupleDb(db: TupleOkv): TupleDb {
+export function tupleDb(db?: TupleOkv): TupleDb {
+	if (!db) db = tupleOkv()
 	const { compare, list, write } = db
 	return {
 		compare,

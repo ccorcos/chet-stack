@@ -1,5 +1,3 @@
-import { codec } from "tupledb/Codec"
-import { InMemoryOkv } from "tupledb/InMemoryOkv"
 import { tupleDb } from "tupledb/TupleDb"
 import { Tuple, TupleDb } from "tupledb/types"
 import { normalizeKeyboardShortcut, normalizeShortcut } from "ui/helpers/shortcut"
@@ -47,7 +45,7 @@ function unregister(db: TupleDb, command: Command) {
 }
 
 export class CommandService {
-	private db = tupleDb(new InMemoryOkv(codec.compare))
+	private db = tupleDb()
 
 	register(command: Command) {
 		register(this.db, command)

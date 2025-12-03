@@ -67,4 +67,28 @@ describe("RangeTree", () => {
 			{ range: { gt: 5, lt: 15 }, key: 2, value: 2 },
 		])
 	})
+
+	it("multiple ranges for a single key", () => {
+		const tree = new RangeTree<number, number, number>()
+
+		const items = [
+			{ range: { gt: 0, lt: 10 }, key: 1, value: 1 },
+			{ range: { gt: 5, lt: 15 }, key: 1, value: 2 },
+			{ range: { gt: 10, lt: 20 }, key: 1, value: 3 },
+			{ range: { gt: 15, lt: 25 }, key: 2, value: 4 },
+			{ range: { gt: 20, lt: 30 }, key: 2, value: 5 },
+		]
+		for (const item of items) tree.set(item)
+
+		assert.deepEqual(tree.overlap(), items)
+		assert.deepEqual(tree.overlap({ gte: 10, lte: 10 }), items.slice(1, 2))
+
+		// Delete a specific range.
+		tree.delete({ key: 1, range: { gt: 5, lt: 15 } })
+		assert.deepEqual(tree.overlap({ gte: 10, lte: 10 }), [])
+
+		// Delete an entire key.
+		tree.delete({ key: 2 })
+		assert.deepEqual(tree.overlap(), [items[0], items[2]])
+	})
 })

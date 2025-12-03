@@ -11,8 +11,6 @@ TODO:
 
 */
 
-import { codec } from "./Codec"
-import { InMemoryOkv } from "./InMemoryOkv"
 import { tupleDb } from "./TupleDb"
 import { TupleDb } from "./types"
 
@@ -109,16 +107,12 @@ function serverSync<V, O>(state: SyncState<V, O>, maxBehind: number = 5) {
 	}
 }
 
-function InMemoryTupleDb() {
-	return tupleDb(new InMemoryOkv(codec.compare))
-}
-
 // const server = serverSync(syncState(numberCrdt))
 
 function client<V, O>(crdt: Crdt<V, O>, server: ReturnType<typeof serverSync<V, O>>) {
 	return {
-		remote: syncState(crdt, InMemoryTupleDb()),
-		local: syncState(crdt, InMemoryTupleDb()),
+		remote: syncState(crdt, tupleDb()),
+		local: syncState(crdt, tupleDb()),
 
 		get value() {
 			return this.local.value
