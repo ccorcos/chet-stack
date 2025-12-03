@@ -1,3 +1,4 @@
+import { compare } from "shared/compare"
 import { randomId } from "shared/randomId"
 import { Range } from "./Range"
 import { RangeTree } from "./RangeTree"
@@ -5,10 +6,9 @@ import { RangeTree } from "./RangeTree"
 export type RangeListener<K> = { range: Range<K>; id: string; fn: () => void }
 
 export class RangeEmitter<K> {
-	/** Assumption that K is comparable in tupleDb. */
 	listeners: RangeTree<K, string, () => void>
 
-	constructor() {
+	constructor(public compareKey: (a: K, b: K) => number = compare) {
 		this.listeners = new RangeTree<K, string, () => void>()
 	}
 

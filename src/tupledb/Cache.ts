@@ -7,12 +7,10 @@ https://www.notion.so/chetcorcos/Local-Caching-1698d4136624809a876ddfb66d16ef35
 */
 
 import { uniqWith } from "lodash-es"
-import plimit from "p-limit"
 import { compactObj } from "shared/compactObj"
 import { compare as cmp } from "shared/compare"
 import { OrderedList } from "shared/OrderedList"
 import { reverse } from "shared/reverse"
-import { Transaction } from "tupledb/Transaction"
 import { InMemoryOkv } from "./InMemoryOkv"
 import {
 	Bound,
@@ -34,20 +32,24 @@ import { CacheListResult, ListArgs, OkvCache, WriteArgs } from "./types"
  */
 export class Cache<K, V> implements OkvCache<K, V> {
 	data: InMemoryOkv<K, V>
-	pending: Transaction<K, V>
-
+	emitter: RangeEmitter<K>
 	ranges: OrderedList<Range<K>>
 
-	emitter: RangeEmitter<K>
-
 	refs: OrderedList<{ key: K; ref: number }, K>
+	pending: {
+		set: InMemoryOkv<K, V>
+		delete: InMemoryOkv<K, null>
+	}
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryOkv<K, V>(compare)
-		this.pending = new Transaction(this.data)
-
-		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
 		this.emitter = new RangeEmitter(compare)
+		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
+
+		this.pending = {
+			set: new InMemoryOkv(compare),
+			delete: new InMemoryOkv(compare),
+		}
 
 		this.refs = new OrderedList<{ key: K; ref: number }, K>([], compare, ({ key }) => key)
 	}
@@ -59,24 +61,32 @@ export class Cache<K, V> implements OkvCache<K, V> {
 	// Helpers for dealing with ordered arrays.
 	// ==========================================================================
 
-	/** Insert data underneath any pending writes. */
 	insert = (args: ListArgs<K>, result: { key: K; value: V }[]) => {
 		const range = cachedRange(args, result)
 		this.ranges.insert(range)
 
-		const tx = new Transaction(this.data)
-		// Delete existing data in that range.
-		tx.write({ delete: tx.list(range).map(({ key }) => key) })
-		// Overwrite with the new data.
-		tx.write({ set: result })
-		tx.commit()
+		const optimisticSets = this.pending.set.list(range)
+		const optimisticDeletes = this.pending.delete.list(range).map(({ key }) => key)
 
-		// NOTE: this.pending will have the same pending writes on top of this underlying database.
+		const slice = new InMemoryOkv<K, V>(this.compare)
+		slice.write({ set: result })
+		slice.write({ set: optimisticSets, delete: optimisticDeletes })
 
+		// Delete any previous data in that range.
+		const existing = new InMemoryOkv<K, V>(this.compare)
+		existing.data = this.data.list(range)
+		for (const { key } of existing.list()) {
+			if (slice.list({ gte: key, lte: key }).length === 1) existing.write({ delete: [key] })
+		}
+
+		this.data.write({
+			set: slice.list(),
+			delete: existing.list().map(({ key }) => key),
+		})
 		this.emitter.emit([range])
 	}
 
-	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.pending.list(args)
+	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.data.list(args)
 
 	list = (args: ListArgs<K>): CacheListResult<K, V> => {
 		const range = encodeRange(args)
@@ -96,7 +106,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 				const [left, right] = encodeRange(range)
 				if (gt(left, cursor)) return { miss: true }
 				if (lt(right, cursor)) continue
-				const result = this.pending.list(args)
+				const result = this.data.list(args)
 				return { hit: result }
 			}
 		}
@@ -126,7 +136,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 			// PREFIX
 			if (gt(cursor, range[0])) {
 				const { gt, gte } = decodeStartBound(cursor)
-				const result = this.pending.list({ ...args, gt, gte })
+				const result = this.data.list({ ...args, gt, gte })
 
 				if (args.limit !== undefined && result.length === args.limit) {
 					// COVERED
@@ -137,7 +147,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 			}
 
 			// HIT
-			return { hit: this.pending.list(args) }
+			return { hit: this.data.list(args) }
 		}
 
 		// FORWARD
@@ -165,7 +175,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		// PREFIX
 		if (lt(cursor, range[1])) {
 			const { lt, lte } = decodeEndBound(cursor)
-			const result = this.pending.list({ ...args, lt, lte })
+			const result = this.data.list({ ...args, lt, lte })
 
 			if (args.limit !== undefined && result.length === args.limit) {
 				// COVERED
@@ -176,16 +186,30 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		}
 
 		// HIT
-		return { hit: this.pending.list(args) }
+		return { hit: this.data.list(args) }
 	}
 
 	write = (args: WriteArgs<K, V>) => {
 		// Optimistic write
-		this.pending.write(args)
+		this.data.write(args)
 
+		// Track pending writes.
 		const setKeys = args.set?.map(({ key }) => key) ?? []
 		const deleteKeys = args.delete ?? []
+		this.pending.set.write({ set: args.set, delete: deleteKeys })
+		this.pending.delete.write({
+			set: args.delete?.map((key) => ({ key, value: null })),
+			delete: setKeys,
+		})
+
+		// Reference count pending writes.
 		const allKeys = uniqWith([...setKeys, ...deleteKeys], (a, b) => this.compare(a, b) === 0)
+		for (const key of allKeys) {
+			this.refs.update(key, (existing) => {
+				if (existing === undefined) return { key, ref: 1 }
+				return { key, ref: existing.ref + 1 }
+			})
+		}
 
 		// Write cache ranges so we can read our writes.
 		const ranges = allKeys.map(keyToRange)
@@ -193,35 +217,23 @@ export class Cache<K, V> implements OkvCache<K, V> {
 
 		// Emit
 		this.emit(ranges)
-	}
 
-	private limit = plimit(1)
-
-	commit = async (write: (args: WriteArgs<K, V>) => Promise<void>) => {
-		// This must only happen serially.
-		await this.limit(async () => {
-			const current = this.pending
-			const args: WriteArgs<K, V> = {
-				set: current.pending.set.list(),
-				delete: current.pending.delete.list().map(({ key }) => key),
-			}
-
-			const next = new Transaction(this.pending)
-			this.pending = next
-			try {
-				await write(args)
-				// Eliminate the current transaction.
-				current.commit()
-				next.db = current.db
-			} catch (error) {
-				// Merge the next transaction back into current.
-				current.write({
-					set: next.pending.set.list(),
-					delete: next.pending.delete.list().map(({ key }) => key),
+		return () => {
+			// Finalize pending write reference count so that new data can overwrite it from the server.
+			const deref: K[] = []
+			for (const key of allKeys) {
+				this.refs.update(key, (existing) => {
+					if (existing === undefined) return console.warn("Ref count is should be non-zero!")
+					if (existing.ref === 1) {
+						deref.push(key)
+						return undefined
+					}
+					return { key, ref: existing.ref - 1 }
 				})
-				this.pending = current
 			}
-		})
+			this.pending.set.write({ delete: deref })
+			this.pending.delete.write({ delete: deref })
+		}
 	}
 }
 

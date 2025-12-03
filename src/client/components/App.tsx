@@ -6,8 +6,7 @@ import { ClientEnvironment, useClientEnvironment } from "../services/ClientEnvir
 
 const cache: any = {}
 
-// Cache needs a way to finding all the ranges in some overlap.
-// Needs some way of
+class Atom {}
 
 function atom(environment: ClientEnvironment, path: Tuple) {
 	const { api, pubsub } = environment
