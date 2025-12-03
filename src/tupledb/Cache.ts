@@ -24,6 +24,7 @@ import {
 	Range,
 } from "./Range"
 import { RangeEmitter } from "./RangeEmitter"
+import { Transaction } from "./Transaction"
 import { CacheListResult, ListArgs, OkvCache, WriteArgs } from "./types"
 
 /**
@@ -36,20 +37,15 @@ export class Cache<K, V> implements OkvCache<K, V> {
 	ranges: OrderedList<Range<K>>
 
 	refs: OrderedList<{ key: K; ref: number }, K>
-	pending: {
-		set: InMemoryOkv<K, V>
-		delete: InMemoryOkv<K, null>
-	}
+
+	pending: Transaction<K, V>
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryOkv<K, V>(compare)
 		this.emitter = new RangeEmitter(compare)
 		this.ranges = new OrderedList<Range<K>>([], (a, b) => compareRange(a, b, this.compare))
 
-		this.pending = {
-			set: new InMemoryOkv(compare),
-			delete: new InMemoryOkv(compare),
-		}
+		this.pending = new Transaction(this.data)
 
 		this.refs = new OrderedList<{ key: K; ref: number }, K>([], compare, ({ key }) => key)
 	}
@@ -65,28 +61,18 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		const range = cachedRange(args, result)
 		this.ranges.insert(range)
 
-		const optimisticSets = this.pending.set.list(range)
-		const optimisticDeletes = this.pending.delete.list(range).map(({ key }) => key)
+		const tx = new Transaction(this.data)
+		// Delete the existing range.
+		tx.write({ delete: tx.list(range).map(({ key }) => key) })
+		// Overwrite with new data.
+		tx.write({ set: result })
+		tx.commit()
 
-		const slice = new InMemoryOkv<K, V>(this.compare)
-		slice.write({ set: result })
-		slice.write({ set: optimisticSets, delete: optimisticDeletes })
-
-		// Delete any previous data in that range.
-		const existing = new InMemoryOkv<K, V>(this.compare)
-		existing.data = this.data.list(range)
-		for (const { key } of existing.list()) {
-			if (slice.list({ gte: key, lte: key }).length === 1) existing.write({ delete: [key] })
-		}
-
-		this.data.write({
-			set: slice.list(),
-			delete: existing.list().map(({ key }) => key),
-		})
+		// Optimistic writes are still in this.pending sitting on top of this.data.
 		this.emitter.emit([range])
 	}
 
-	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.data.list(args)
+	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.pending.list(args)
 
 	list = (args: ListArgs<K>): CacheListResult<K, V> => {
 		const range = encodeRange(args)
@@ -106,7 +92,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 				const [left, right] = encodeRange(range)
 				if (gt(left, cursor)) return { miss: true }
 				if (lt(right, cursor)) continue
-				const result = this.data.list(args)
+				const result = this.pending.list(args)
 				return { hit: result }
 			}
 		}
@@ -136,7 +122,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 			// PREFIX
 			if (gt(cursor, range[0])) {
 				const { gt, gte } = decodeStartBound(cursor)
-				const result = this.data.list({ ...args, gt, gte })
+				const result = this.pending.list({ ...args, gt, gte })
 
 				if (args.limit !== undefined && result.length === args.limit) {
 					// COVERED
@@ -147,7 +133,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 			}
 
 			// HIT
-			return { hit: this.data.list(args) }
+			return { hit: this.pending.list(args) }
 		}
 
 		// FORWARD
@@ -175,7 +161,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		// PREFIX
 		if (lt(cursor, range[1])) {
 			const { lt, lte } = decodeEndBound(cursor)
-			const result = this.data.list({ ...args, lt, lte })
+			const result = this.pending.list({ ...args, lt, lte })
 
 			if (args.limit !== undefined && result.length === args.limit) {
 				// COVERED
@@ -186,23 +172,16 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		}
 
 		// HIT
-		return { hit: this.data.list(args) }
+		return { hit: this.pending.list(args) }
 	}
 
 	write = (args: WriteArgs<K, V>) => {
 		// Optimistic write
-		this.data.write(args)
-
-		// Track pending writes.
-		const setKeys = args.set?.map(({ key }) => key) ?? []
-		const deleteKeys = args.delete ?? []
-		this.pending.set.write({ set: args.set, delete: deleteKeys })
-		this.pending.delete.write({
-			set: args.delete?.map((key) => ({ key, value: null })),
-			delete: setKeys,
-		})
+		this.pending.write(args)
 
 		// Reference count pending writes.
+		const setKeys = args.set?.map(({ key }) => key) ?? []
+		const deleteKeys = args.delete ?? []
 		const allKeys = uniqWith([...setKeys, ...deleteKeys], (a, b) => this.compare(a, b) === 0)
 		for (const key of allKeys) {
 			this.refs.update(key, (existing) => {
@@ -231,8 +210,20 @@ export class Cache<K, V> implements OkvCache<K, V> {
 					return { key, ref: existing.ref - 1 }
 				})
 			}
-			this.pending.set.write({ delete: deref })
-			this.pending.delete.write({ delete: deref })
+
+			// NOTE: we aren't committing the transaction because there could have been more writes
+			// in the meantime.
+
+			// Commit to the underlying database.
+			const sets = deref.flatMap((key) => this.pending.pending.set.list({ gte: key, lte: key }))
+			const deletes = deref.flatMap((key) =>
+				this.pending.pending.delete.list({ gte: key, lte: key }).map(({ key }) => key)
+			)
+			this.data.write({ set: sets, delete: deletes })
+
+			// Clear pending writes from the transaction.
+			this.pending.pending.set.write({ delete: deref })
+			this.pending.pending.delete.write({ delete: deref })
 		}
 	}
 }
