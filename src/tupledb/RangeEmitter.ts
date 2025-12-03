@@ -8,8 +8,8 @@ export type RangeListener<K> = { range: Range<K>; id: string; fn: () => void }
 export class RangeEmitter<K> {
 	listeners: RangeTree<K, string, () => void>
 
-	constructor(public compareKey: (a: K, b: K) => number = compare) {
-		this.listeners = new RangeTree<K, string, () => void>()
+	constructor(public compareBound: (a: K, b: K) => number = compare) {
+		this.listeners = new RangeTree<K, string, () => void>(compareBound)
 	}
 
 	subscribe = (range: Range<K>, value: () => void) => {
