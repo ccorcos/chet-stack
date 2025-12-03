@@ -1,6 +1,7 @@
 import { omit } from "lodash-es"
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
+import { sleep } from "shared/sleep"
 import { Cache, cachedRange, keyToRange } from "./Cache"
 import { Range } from "./Range"
 import { ListArgs } from "./types"
@@ -179,12 +180,16 @@ describe("Cache", () => {
 		assert.deepEqual(cache.list({ limit: 5, reverse: true }), { prefix: kv(0, 3).reverse() })
 	})
 
-	it("Optimistic writes", () => {
+	it("Optimistic writes", async () => {
 		// writing to a cache, then inserting on top of it doesn't overwrite the pending writes.
 		const cache = new Cache()
 
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
-		const cleanup1 = cache.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+		cache.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
+
+		let cleanup1: any
+		cache.commit(async (args) => new Promise((resolve) => (cleanup1 = resolve)))
+
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "xx" }, ...kv(1, 9)],
 		})
@@ -196,7 +201,11 @@ describe("Cache", () => {
 		})
 
 		// Adds another reference count.
-		const cleanup2 = cache.write({ set: [{ key: "00", value: "yy" }] })
+		cache.write({ set: [{ key: "00", value: "yy" }] })
+
+		let cleanup2: any
+		cache.commit(async (args) => new Promise((resolve) => (cleanup2 = resolve)))
+
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
@@ -209,6 +218,7 @@ describe("Cache", () => {
 
 		// Removes reference count on 10, but we still have a reference count on 00.
 		// console.log("REFS", cache.refs.items)
+		await sleep(1)
 		cleanup1()
 		// console.log("REFS", cache.refs.items)
 
