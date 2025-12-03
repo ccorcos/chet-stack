@@ -9,6 +9,5 @@ tmp
 .devcontainer
 playwright-report
 test-results
-TODO.md
 data
 .env
