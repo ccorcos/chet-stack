@@ -1,7 +1,7 @@
 import { omit } from "lodash-es"
 import { describe, it } from "mocha"
 import { strict as assert } from "node:assert"
-import { Cache, computeCachedRange, keyToRange } from "./Cache"
+import { Cache, cachedRange, keyToRange } from "./Cache"
 import { Range } from "./Range"
 import { ListArgs } from "./types"
 
@@ -18,7 +18,7 @@ describe("computeCachedRange", () => {
 		result: { key: string; value: string }[],
 		expected?: Range<string>
 	) => {
-		const range = computeCachedRange(args, result)
+		const range = cachedRange(args, result)
 		assert.deepEqual(
 			range,
 			expected === undefined ? omit(args, "limit", "reverse") : expected,

@@ -6,80 +6,83 @@ When the cache returns a prefix, we'll transparently read the rest of the data f
 
 */
 
-import { Cache } from "./Cache"
+import { InMemoryOkv } from "./InMemoryOkv"
+import { Range } from "./Range"
 import { ListArgs, Okv, OkvTx, WriteArgs } from "./types"
 
 export class Transaction<K, V> implements OkvTx<K, V> {
 	committed = false
-	cache: Cache<K, V>
+
+	pending: {
+		set: InMemoryOkv<K, V>
+		delete: InMemoryOkv<K, null>
+	}
 
 	constructor(public db: Okv<K, V>) {
-		this.cache = new Cache<K, V>(this.db.compare)
+		this.pending = {
+			set: new InMemoryOkv(this.db.compare),
+			delete: new InMemoryOkv(this.db.compare),
+		}
 	}
 
 	get compare() {
 		return this.db.compare
 	}
 
+	/**
+	 * This version will overfetch as needed to satisfy the limit in a single request.
+	 * An alternative approach would not overfetch but will need to make multiple requests.
+	 */
 	list = (args: ListArgs<K> = {}): { key: K; value: V }[] => {
 		if (this.committed) throw new Error("Transaction already committed")
-		const result = this.cache.list(args)
 
-		if (result.hit) {
-			return result.hit
+		const range: Range<K> = {
+			gt: args.gt,
+			gte: args.gte,
+			lt: args.lt,
+			lte: args.lte,
 		}
 
-		if (result.prefix && result.prefix.length > 0) {
-			if (args.reverse) {
-				const restArgs = { ...args }
-				delete restArgs.lt
-				delete restArgs.lte
-				if (restArgs.limit) restArgs.limit -= result.prefix.length
-				restArgs.lt = result.prefix.at(-1)!.key
-
-				const restResult = this.db.list(restArgs)
-				this.cache.insert(restArgs, restResult)
-
-				// Don't return yet, because we may have pending writes in the new range.
-				// Instead, we'll call list again from the cache.
-			} else {
-				const restArgs = { ...args }
-				delete restArgs.gt
-				delete restArgs.gte
-				if (restArgs.limit) restArgs.limit -= result.prefix.length
-				restArgs.gt = result.prefix.at(-1)!.key
-
-				const restResult = this.db.list(restArgs)
-				this.cache.insert(restArgs, restResult)
-
-				// Don't return yet, because we may have pending writes in the new range.
-				// Instead, we'll call list again from the cache.
-			}
+		const fetchArgs = { ...args }
+		if (fetchArgs.limit !== undefined) {
+			// If fetching range [A,B] with limit N, then all the delete could be at the beginning
+			// of that range and all the sets could be at the end of the range, after the limit.
+			// Thus in the worst case, we need to overfetch the number of deletes in that range.
+			const deletes = this.pending.delete.list(range)
+			fetchArgs.limit += deletes.length
 		}
 
-		if (result.miss) {
-			const data = this.db.list(args)
-			this.cache.insert(args, data)
+		// First read the data from the database.
+		const data = this.db.list(fetchArgs)
 
-			// Don't return data, because we may have pending writes in the new range.
-		}
+		// Overwrite with pending data.
+		const slice = new InMemoryOkv<K, V>(this.db.compare)
+		slice.write({ set: data })
+		slice.write({
+			// Only select from the range we actually need.
+			set: this.pending.set.list(range),
+			delete: this.pending.delete.list(range).map(({ key }) => key),
+		})
 
-		const again = this.cache.list(args)
-		if (!again.hit) throw new Error("Cache should have hit")
-		return again.hit
+		// Select what we need from the slice.
+		return slice.list(args)
 	}
 
 	write = (args: WriteArgs<K, V>) => {
 		if (this.committed) throw new Error("Transaction already committed")
-		this.cache.write(args)
+		this.pending.set.write({ set: args.set, delete: args.delete })
+		this.pending.delete.write({
+			set: args.delete?.map((key) => ({ key, value: null })),
+			delete: args.set?.map(({ key }) => key) ?? [],
+		})
 	}
 
 	commit = () => {
 		if (this.committed) throw new Error("Transaction already committed")
 		this.committed = true
 		this.db.write({
-			set: this.cache.pending.set.list(),
-			delete: this.cache.pending.delete.list().map(({ key }) => key),
+			set: this.pending.set.list(),
+			delete: this.pending.delete.list().map(({ key }) => key),
 		})
 	}
 }

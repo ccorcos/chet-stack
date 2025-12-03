@@ -62,7 +62,7 @@ export class Cache<K, V> implements OkvCache<K, V> {
 	// ==========================================================================
 
 	insert = (args: ListArgs<K>, result: { key: K; value: V }[]) => {
-		const range = computeCachedRange(args, result)
+		const range = cachedRange(args, result)
 		this.ranges.insert(range)
 
 		const optimisticSets = this.pending.set.list(range)
@@ -241,10 +241,11 @@ export function keyToRange<K>(key: K) {
 	return { gte: key, lte: key }
 }
 
-export function computeCachedRange<K, V>(
-	args: ListArgs<K>,
-	result: { key: K; value: V }[]
-): Range<K> {
+/**
+ * List args can have a limit. And so we need to consider the results of the request in order to
+ * determine what range of data we actually read into the cache.
+ */
+export function cachedRange<K, V>(args: ListArgs<K>, result: { key: K; value: V }[]): Range<K> {
 	const { gt, gte, lt, lte, limit, reverse } = args
 
 	if (limit === undefined) {

@@ -123,4 +123,21 @@ describe("TupleDb", () => {
 			{ key: ["B", "people", "name", "simon"], value: null },
 		])
 	})
+
+	it("Transaction overfetch for deletes", () => {
+		const db = tupleDb(new InMemoryOkv(codec.compare))
+		for (let i = 0; i < 20; i++) db.set([i], i)
+
+		const tx = tupleTx(db)
+		tx.delete([0])
+		tx.delete([20])
+		// These aren't necessary, but it's important to make sure that we aren't
+		// assuming that these writes are at the beginning of the range before
+		// the limit.
+		tx.set([21], 21)
+
+		// The tx should fetch limit 3 instead of limit 1, overwrite the pending deletes,
+		// and end up with the [1].
+		assert.deepEqual(tx.list({ limit: 1 }), [{ key: [1], value: 1 }])
+	})
 })
