@@ -1,23 +1,23 @@
-import vm from "node:vm"
 import { QueryCache } from "./QueryCache"
-import { Query } from "./QueryFunction"
 import { tupleDb } from "./TupleDb"
-import { TupleOkv } from "./types"
+import { TupleDb, TupleOkv } from "./types"
 
-export function queryNodeVm(db: TupleOkv, query: string) {
+export type Query = (db: TupleDb) => any
+
+export function queryFunction(db: TupleOkv, query: string) {
 	const cache = new QueryCache(db)
 
-	const context = vm.createContext({
-		require: undefined,
-		process: undefined,
-		global: undefined,
+	const context = {
 		console: { log: (msg: string) => console.log("[Sandbox]", msg) },
-	})
-	const code = `(function() { return ${query.trim()} })();`
+	}
 
 	let result: any
 	try {
-		const fn: Query = vm.runInContext(code, context, { timeout: 1000 })
+		const fn: Query = new Function(
+			...Object.keys(context),
+			`return (function() { return ${query.trim()} })();`
+		)(...Object.values(context))
+
 		result = fn(tupleDb(cache))
 	} catch (err) {
 		console.error("Sandbox error:", err)

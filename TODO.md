@@ -7,6 +7,12 @@ CommandPrompt is a piece of that, but not the whole thing. Need dynamic args. El
 
 ---
 
+Files...
+- QueryCache
+- syncDb2
+- App
+- api.listAtom
+
 Where are we now?
 - There's still a lingering question of how pubsub and sync work with the cache from the client.
 
@@ -30,6 +36,11 @@ Whats after that? Phase 2: multiple stores but a single unified cache.
 		N: we don't want to define an indexing language do we? Or maybe we do.
 		N: we need some way for the cache to know that we have the full set of data for a specific index range.
 
+---
+
+Phase 1 then...
+
+Play with gemini in making this!
 
 
 

@@ -1,17 +1,17 @@
 import { describe, it } from "mocha"
 import assert from "node:assert"
 import { InMemoryOkv } from "./InMemoryOkv"
-import { query } from "./Query"
+import { queryFunction } from "./QueryFunction"
 import { queryNodeVm } from "./QueryNodeVm"
 import { tupleDb, tupleOkv } from "./TupleDb"
 import { TupleDb } from "./types"
 
 const modes = {
-	query,
+	query: queryFunction,
 	queryNodeVm,
 }
 
-describe("query", () => {
+describe("queryFunction", () => {
 	for (const key in modes) {
 		const query = modes[key]
 		it("works " + key, () => {

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
-import { QueryCache } from "tupledb/Query"
+import { QueryCache } from "tupledb/QueryCache"
 import { tupleDb } from "tupledb/TupleDb"
 import { ListArgs, Tuple } from "tupledb/types"
 import type { ServerEnvironment } from "../ServerEnvironment"
