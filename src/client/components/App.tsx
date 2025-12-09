@@ -12,13 +12,11 @@ function atom(environment: ClientEnvironment, path: Tuple) {
 	const { api, pubsub } = environment
 
 	async function fetch(args: ListArgs<any[]>) {
-		const response = await api.listAtom({ atomPath: path, listArgs: args })
-
-		// TODO: queue of things to sync.
-		if (response.status !== 200) throw new Error("Request failed: " + response.status)
-		const { data, reads } = response.body
-
-		cache.insert(reads, data)
+		// const response = await api.listAtom({ atomPath: path, listArgs: args })
+		// // TODO: queue of things to sync.
+		// if (response.status !== 200) throw new Error("Request failed: " + response.status)
+		// const { data, reads } = response.body
+		// cache.insert(reads, data)
 	}
 
 	pubsub.subscribe(codec.encode([...path, "clock"]))
