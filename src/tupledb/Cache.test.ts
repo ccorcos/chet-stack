@@ -184,52 +184,135 @@ describe("Cache", () => {
 		const cache = new Cache()
 
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), { hit: kv(0, 10) })
+
 		const cleanup1 = cache.write({ set: [{ key: "00", value: "xx" }], delete: ["10"] })
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "xx" }, ...kv(1, 9)],
 		})
 
-		// Stays the same.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "xx" }, ...kv(1, 9)],
 		})
 
-		// Adds another reference count.
 		const cleanup2 = cache.write({ set: [{ key: "00", value: "yy" }] })
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
 
-		// Stays the same.
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
 		})
 
-		// Removes reference count on 10, but we still have a reference count on 00.
-		// console.log("REFS", cache.refs.items)
-		cleanup1()
-		// console.log("REFS", cache.refs.items)
-
+		console.log("\n--- Resolve OW1 ---")
+		cache.resolveOptimisticWrite(cleanup1)
+		console.log("After resolve OW1, cache.data:", cache.data.list())
+		console.log("After resolve OW1, cache.list:", cache.list({ gte: "00", lte: "10" }))
+		console.log("After resolve OW1, cache.refs.items:", cache.refs.items)
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
-			hit: [{ key: "00", value: "yy" }, ...kv(1, 9)],
+			hit: [{ key: "00", value: "yy" }, ...kv(1, 10)], // This is the failing assertion
 		})
-		// Overwrites 10 but not 00.
+
+		console.log("\n--- Insert after resolve OW1 ---")
 		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		console.log("After insert, cache.data:", cache.data.list())
+		console.log("After insert, cache.list:", cache.list({ gte: "00", lte: "10" }))
+		console.log("After insert, cache.refs.items:", cache.refs.items)
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
 			hit: [{ key: "00", value: "yy" }, ...kv(1, 10)],
 		})
 
-		// Removes reference count on 00.
-		cleanup2()
-		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), {
-			hit: [{ key: "00", value: "yy" }, ...kv(1, 10)],
-		})
-
-		// Overwrites 10 but not 00.
-		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		console.log("\n--- Resolve OW2 ---")
+		cache.resolveOptimisticWrite(cleanup2)
+		console.log("After resolve OW2, cache.data:", cache.data.list())
+		console.log("After resolve OW2, cache.list:", cache.list({ gte: "00", lte: "10" }))
+		console.log("After resolve OW2, cache.refs.items:", cache.refs.items)
 		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), { hit: kv(0, 10) })
+
+		console.log("\n--- Insert after resolve OW2 ---")
+		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		console.log("After insert, cache.data:", cache.data.list())
+		console.log("After insert, cache.list:", cache.list({ gte: "00", lte: "10" }))
+		console.log("After insert, cache.refs.items:", cache.refs.items)
+		assert.deepEqual(cache.list({ gte: "00", lte: "10" }), { hit: kv(0, 10) })
+	})
+
+	it("applyHistoryUpdate reconciles optimistic writes", () => {
+		const cache = new Cache<string, string>()
+		const cb = func()
+		cache.subscribe({ gte: "00", lte: "10" }, cb)
+
+		// Initial data
+		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		cb.called = 0
+
+		// Optimistic write
+		const optimisticId1 = cache.write({ set: [{ key: "01", value: "optimistic" }] })
+		assert.equal(cache.list({ gte: "01", lte: "01" }).hit![0].value, "optimistic")
+		assert.equal(cb.called, 1)
+		cb.called = 0
+
+		// Simulate server confirming the optimistic write
+		cache.applyHistoryUpdate({ set: [{ key: "01", value: "server_confirmed" }] })
+		assert.equal(cache.list({ gte: "01", lte: "01" }).hit![0].value, "server_confirmed")
+		assert.equal(cache.optimisticWrites.has(optimisticId1), false, "Optimistic write should be resolved")
+		assert.equal(cache.refs.items.find(item => item.key === "01"), undefined, "Ref count for '01' should be removed")
+		assert.equal(cb.called, 1, "Listeners should be notified of server update")
+		cb.called = 0
+
+		// Another optimistic write for an unresolved key
+		const optimisticId2 = cache.write({ set: [{ key: "02", value: "optimistic2" }] })
+		assert.equal(cache.list({ gte: "02", lte: "02" }).hit![0].value, "optimistic2")
+		assert.equal(cb.called, 1)
+		cb.called = 0
+
+		// Server updates a different key, optimisticId2 should remain pending
+		cache.applyHistoryUpdate({ set: [{ key: "03", value: "server_unrelated" }] })
+		assert.equal(cache.list({ gte: "02", lte: "02" }).hit![0].value, "optimistic2")
+		assert.equal(cache.optimisticWrites.has(optimisticId2), true, "Optimistic write 2 should still be pending")
+		assert.equal(cb.called, 1)
+		cb.called = 0
+
+		// Server confirms optimisticId2
+		cache.applyHistoryUpdate({ set: [{ key: "02", value: "server_confirmed2" }] })
+		assert.equal(cache.list({ gte: "02", lte: "02" }).hit![0].value, "server_confirmed2")
+		assert.equal(cache.optimisticWrites.has(optimisticId2), false, "Optimistic write 2 should be resolved")
+		assert.equal(cb.called, 1)
+		cb.called = 0
+	})
+
+	it("resolveOptimisticWrite explicitly removes pending writes", () => {
+		const cache = new Cache<string, string>()
+		const cb = func()
+		cache.subscribe({ gte: "00", lte: "10" }, cb)
+
+		cache.insert({ gte: "00", lte: "10" }, kv(0, 10))
+		cb.called = 0
+
+		const optimisticId = cache.write({ set: [{ key: "05", value: "optimistic_five" }] })
+		assert.equal(cache.list({ gte: "05", lte: "05" }).hit![0].value, "optimistic_five")
+		assert.equal(cache.optimisticWrites.has(optimisticId), true)
+		assert.equal(cache.refs.items.find(item => item.key === "05")?.ref, 1)
+		assert.equal(cb.called, 1)
+		cb.called = 0
+
+		cache.resolveOptimisticWrite(optimisticId)
+		// The optimistic write is cleared from pending. The value reverts to base data.
+		assert.equal(cache.list({ gte: "05", lte: "05" }).hit![0].value, "05") // Reverts to original '05'
+		assert.equal(cache.optimisticWrites.has(optimisticId), false)
+		assert.equal(cache.refs.items.find(item => item.key === "05"), undefined, "Ref count for '05' should be removed")
+		assert.equal(cb.called, 1, "Listeners should be notified of change due to resolution")
+		cb.called = 0
+
+		// Resolving a non-existent ID should warn but not error
+		const consoleWarn = console.warn
+		let warned = false
+		console.warn = () => { warned = true }
+		cache.resolveOptimisticWrite("non_existent_id")
+		assert.ok(warned, "Should warn for non-existent ID")
+		console.warn = consoleWarn // Restore original
 	})
 
 	interface Func {
@@ -281,4 +364,5 @@ describe("Cache", () => {
 		unsub1()
 		unsub2()
 	})
+
 })

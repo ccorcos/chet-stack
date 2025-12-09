@@ -7,6 +7,38 @@ CommandPrompt is a piece of that, but not the whole thing. Need dynamic args. El
 
 ---
 
+
+Your work with SyncClient and Cache seems to be running in circles a bit. I'd like you to clearly articulate the roles of both the Cache and the SyncClient. Be specific about the degree to which they are generic or task-specific. Ideally the Cache is more general purpose and works for any kind of OKV, not just a tuple OKV.
+
+Lets discuss how this API is used from the client. In think it's important that on the client we don't hide the fact that we're working with a cache. The list() return and history() should return hit, miss OR prefix so that the application can handle those situations appropriately.
+
+Be clear about where the reference counting happens too for subscriptions. Is that in the cache or the sync client? And where does the data fetching happen? For now, you can model all of this with React hooks.
+
+I also want to make srue that we're being tolerant of the network. If requests fail, they should automatically retry. And we shouldn't be duplicating requests either.
+
+So please outline this architecture in plans/sync-plan.md. Make sure to use Gemini 3 Pro to think about this.
+
+
+
+
+
+
+
+
+
+
+a client syncable db should maintain the cache api with prefix partial responses.
+
+review the previous git commit.
+cleanup cache test logging.
+
+
+
+
+Add the necessary apis to `src/server/server.ts` as plain express handlers. And then implement a demonstration in `src/client/App.tsx`
+
+
+
 Files...
 - QueryCache
 - syncDb2

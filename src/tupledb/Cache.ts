@@ -39,6 +39,8 @@ export class Cache<K, V> implements OkvCache<K, V> {
 	refs: OrderedList<{ key: K; ref: number }, K>
 
 	pending: Transaction<K, V>
+	nextOptimisticId = 0
+	optimisticWrites: Map<string, { keys: K[]; originalWriteArgs: WriteArgs<K, V> }> = new Map()
 
 	constructor(public compare: (a: K, b: K) => number = cmp) {
 		this.data = new InMemoryOkv<K, V>(compare)
@@ -70,6 +72,35 @@ export class Cache<K, V> implements OkvCache<K, V> {
 
 		// Optimistic writes are still in this.pending sitting on top of this.data.
 		this.emitter.emit([range])
+	}
+
+	// This method applies server-authoritative updates to the base data (this.data).
+	// It also attempts to reconcile any pending optimistic writes that are now superseded.
+	applyHistoryUpdate = (serverWriteArgs: WriteArgs<K, V>) => {
+		// 1. Apply server writes directly to the base data.
+		this.data.write(serverWriteArgs)
+
+		// 2. Clear corresponding optimistic writes from `pending` if they are now superseded.
+		const serverWrittenKeys = [
+			...(serverWriteArgs.set?.map(({ key }) => key) ?? []),
+			...(serverWriteArgs.delete ?? []),
+		]
+
+		for (const [optimisticId, { keys }] of this.optimisticWrites.entries()) {
+			// Check if any of the keys in this optimistic write are covered by the server update.
+			const resolvedKeys = keys.filter((k) =>
+				serverWrittenKeys.some((sk) => this.compare(k, sk) === 0)
+			)
+
+			if (resolvedKeys.length > 0) {
+				this.resolveOptimisticWrite(optimisticId, false)
+			}
+		}
+
+		// 3. Update this.ranges and emit changes for the affected ranges.
+		const rangesToEmit = serverWrittenKeys.map(keyToRange)
+		for (const range of rangesToEmit) this.ranges.insert(range)
+		this.emit(rangesToEmit)
 	}
 
 	listRaw = (args: ListArgs<K>): { key: K; value: V }[] => this.pending.list(args)
@@ -176,7 +207,9 @@ export class Cache<K, V> implements OkvCache<K, V> {
 	}
 
 	write = (args: WriteArgs<K, V>) => {
-		// Optimistic write
+		const optimisticId = (this.nextOptimisticId++).toString()
+
+		// Apply optimistic write to the pending transaction.
 		this.pending.write(args)
 
 		// Reference count pending writes.
@@ -190,6 +223,12 @@ export class Cache<K, V> implements OkvCache<K, V> {
 			})
 		}
 
+		// Store the keys and originalWriteArgs for later resolution.
+		this.optimisticWrites.set(optimisticId, {
+			keys: allKeys,
+			originalWriteArgs: args,
+		})
+
 		// Write cache ranges so we can read our writes.
 		const ranges = allKeys.map(keyToRange)
 		for (const range of ranges) this.ranges.insert(range)
@@ -197,34 +236,51 @@ export class Cache<K, V> implements OkvCache<K, V> {
 		// Emit
 		this.emit(ranges)
 
-		return () => {
-			// Finalize pending write reference count so that new data can overwrite it from the server.
-			const deref: K[] = []
-			for (const key of allKeys) {
-				this.refs.update(key, (existing) => {
-					if (existing === undefined) return console.warn("Ref count is should be non-zero!")
-					if (existing.ref === 1) {
-						deref.push(key)
-						return undefined
-					}
-					return { key, ref: existing.ref - 1 }
-				})
-			}
+		return optimisticId
+	}
 
-			// NOTE: we aren't committing the transaction because there could have been more writes
-			// in the meantime.
-
-			// Commit to the underlying database.
-			const sets = deref.flatMap((key) => this.pending.pending.set.list({ gte: key, lte: key }))
-			const deletes = deref.flatMap((key) =>
-				this.pending.pending.delete.list({ gte: key, lte: key }).map(({ key }) => key)
-			)
-			this.data.write({ set: sets, delete: deletes })
-
-			// Clear pending writes from the transaction.
-			this.pending.pending.set.write({ delete: deref })
-			this.pending.pending.delete.write({ delete: deref })
+	resolveOptimisticWrite = (optimisticId: string, shouldEmit: boolean = true) => {
+		const optimistic = this.optimisticWrites.get(optimisticId)
+		if (!optimistic) {
+			console.warn(`Optimistic write with ID ${optimisticId} not found.`)
+			return
 		}
+
+		// Decrement ref counts.
+		const deref: K[] = []
+		for (const key of optimistic.keys) {
+			this.refs.update(key, (existing) => {
+				if (existing === undefined)
+					return console.warn(
+						`Ref count for key ${JSON.stringify(key)} is already zero.`
+					)
+				if (existing.ref === 1) {
+					deref.push(key)
+					return undefined
+				}
+				return { key, ref: existing.ref - 1 }
+			})
+		}
+
+		// Explicitly remove these keys from the pending transaction.
+		// Note: this.pending is a Transaction, and its 'pending' property has the InMemoryOkv instances.
+		this.pending.pending.set.write({ delete: deref })
+		this.pending.pending.delete.write({ delete: deref })
+
+		this.optimisticWrites.delete(optimisticId)
+
+		if (shouldEmit) {
+			// Emit changes for the affected ranges due to resolution
+			this.emit(optimistic.keys.map(keyToRange))
+		}
+	}
+
+	getPendingOptimisticWrites(): Array<{ optimisticId: string; writes: WriteArgs<K, V> }> {
+		const pendingWrites: Array<{ optimisticId: string; writes: WriteArgs<K, V> }> = []
+		for (const [optimisticId, { originalWriteArgs }] of this.optimisticWrites.entries()) {
+			pendingWrites.push({ optimisticId, writes: originalWriteArgs })
+		}
+		return pendingWrites
 	}
 }
 
@@ -255,5 +311,5 @@ export function cachedRange<K, V>(args: ListArgs<K>, result: { key: K; value: V 
 	}
 
 	// Last item is the end of the range.
-	return compactObj({ gt, gte, lte: result[result.length - 1].key })
-}
+			return compactObj({ gt, gte, lte: result[result.length - 1].key })
+	}
