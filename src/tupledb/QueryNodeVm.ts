@@ -24,8 +24,5 @@ export function queryNodeVm(db: TupleOkv, query: string) {
 		throw new Error("Sandbox error")
 	}
 
-	const data = cache.data.data
-	const ranges = cache.reads
-
-	return { data, ranges, result }
+	return cache.reads
 }
