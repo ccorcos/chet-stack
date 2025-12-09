@@ -23,6 +23,5 @@ export function queryFunction(db: TupleOkv, query: string) {
 		console.error("Sandbox error:", err)
 		throw new Error("Sandbox error")
 	}
-
-	return cache.reads
+	return { result, reads: cache.reads }
 }

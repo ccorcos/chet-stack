@@ -24,7 +24,7 @@ describe("queryFunction", () => {
 
 			db.set(["list"], ["a", "b"])
 
-			const { data, ranges, result } = query(
+			const { reads, result } = query(
 				db,
 				((db: TupleDb) => {
 					const list = db.get(["list"])
@@ -35,16 +35,43 @@ describe("queryFunction", () => {
 
 			assert.equal(result, 3)
 
-			assert.deepEqual(data, [
-				{ key: ["a"], value: 1 },
-				{ key: ["b"], value: 2 },
-				{ key: ["list"], value: ["a", "b"] },
-			])
-
-			assert.deepEqual(ranges, [
-				{ gte: ["list"], lte: ["list"] },
-				{ gte: ["a"], lte: ["a"] },
-				{ gte: ["b"], lte: ["b"] },
+			assert.deepEqual(reads, [
+				{
+					args: {
+						gte: ["list"],
+						lte: ["list"],
+					},
+					results: [
+						{
+							key: ["list"],
+							value: ["a", "b"],
+						},
+					],
+				},
+				{
+					args: {
+						gte: ["a"],
+						lte: ["a"],
+					},
+					results: [
+						{
+							key: ["a"],
+							value: 1,
+						},
+					],
+				},
+				{
+					args: {
+						gte: ["b"],
+						lte: ["b"],
+					},
+					results: [
+						{
+							key: ["b"],
+							value: 2,
+						},
+					],
+				},
 			])
 		})
 	}

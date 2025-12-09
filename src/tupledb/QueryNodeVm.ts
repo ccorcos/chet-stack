@@ -24,5 +24,5 @@ export function queryNodeVm(db: TupleOkv, query: string) {
 		throw new Error("Sandbox error")
 	}
 
-	return cache.reads
+	return { result, reads: cache.reads }
 }
