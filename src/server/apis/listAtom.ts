@@ -1,6 +1,6 @@
 import type { Request, Response } from "express"
 import * as t from "shared/DataType"
-import { QueryCache } from "tupledb/QueryCache"
+import { ReadCache } from "tupledb/ReadCache"
 import { tupleDb } from "tupledb/TupleDb"
 import { ListArgs, Tuple } from "tupledb/types"
 import type { ServerEnvironment } from "../ServerEnvironment"
@@ -17,7 +17,7 @@ export async function handler(
 	req: Request,
 	res: Response
 ) {
-	const cache = new QueryCache(environment.db)
+	const cache = new ReadCache(environment.db)
 
 	const db = tupleDb(cache).subspace(args.atomPath)
 

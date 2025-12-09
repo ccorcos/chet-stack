@@ -1,11 +1,11 @@
 import vm from "node:vm"
-import { QueryCache } from "./QueryCache"
 import { Query } from "./QueryFunction"
+import { ReadCache } from "./ReadCache"
 import { tupleDb } from "./TupleDb"
 import { TupleOkv } from "./types"
 
 export function queryNodeVm(db: TupleOkv, query: string) {
-	const cache = new QueryCache(db)
+	const cache = new ReadCache(db)
 
 	const context = vm.createContext({
 		require: undefined,

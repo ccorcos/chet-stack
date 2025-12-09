@@ -1,61 +1,82 @@
 // Lets assume that publishing is equivalent to writing to the database.
 
+import { isEqual } from "lodash-es"
 import { Cache } from "./Cache"
-import { codec } from "./Codec"
-import { tupleTx } from "./TupleDb"
+import { ReadCache } from "./ReadCache"
+import { tupleDb, tupleTx } from "./TupleDb"
 import { JSONValue, ListArgs, Tuple, TupleDb, WriteArgs } from "./types"
 
 function writeSync(db: TupleDb, args: WriteArgs<Tuple, JSONValue>) {
 	const clock = db.get(["clock"]) ?? 0
 	db.set(["history", clock], args)
 	db.set(["clock"], clock + 1)
-	db.subspace(["value"]).write(args)
+	db.write(args)
+}
+
+type ServerApi = {
+	write(args: WriteArgs<["value", ...Tuple], JSONValue>[]): void
+	list(
+		args: ListArgs<Tuple>
+	): { args: ListArgs<Tuple>; results: { key: Tuple; value: JSONValue }[] }[]
 }
 
 // TODO: idempotency, failure handling, transaction id.
 function syncServer(db: TupleDb, pubsub: Pubsub): ServerApi {
 	return {
-		write(writes: WriteArgs<Tuple, JSONValue>[]) {
+		// Batch writes.
+		write(writes: WriteArgs<["value", ...Tuple], JSONValue>[]) {
+			// TODO: don't let the user write to any subspace other than value.
 			const tx = tupleTx(db)
 			for (const args of writes) writeSync(db, args)
 			tx.commit()
 			pubsub.publish([{ key: ["clock"], value: db.get(["clock"]) }])
 		},
-		sync(args) {
-			const { since } = args
-			const updates: any[] = db.list({ gte: ["history", since] })
-			return { updates }
-		},
+		// List always returns clock with read ranges, etc.
 		list(args: ListArgs<Tuple>) {
-			const tx = tupleTx(db)
-			tx.get(["clock"])
-			tx.subspace(["value"]).list(args)
+			const cache = new ReadCache(db)
+			const tx = tupleDb(cache)
 
-			tx
-			return { results, clock }
+			tx.get(["clock"])
+			tx.list(args)
+
+			return cache.reads
 		},
 	}
 }
 
-export type Pubsub = {
+type Pubsub = {
 	publish(items: { key: Tuple; value: JSONValue }[]): Promise<void>
-}
-
-type ServerApi = {
-	write(args: WriteArgs<Tuple, JSONValue>[]): void
-	list(args: ListArgs<Tuple>): { key: Tuple; value: JSONValue }[]
-	sync(args: { since: number }): {
-		updates: { key: ["history", number]; value: WriteArgs<Tuple, JSONValue> }[]
-	}
+	subscribe(key: Tuple): void
+	unsubscribe(key: Tuple): void
+	onMessage(listener: (key: Tuple, value: JSONValue) => void): () => void
 }
 
 // Full history.
-function syncClient(api: ServerApi, pubsub: Pubsub) {
-	const cache = new Cache<Tuple, JSONValue>(codec.compare)
+function syncClient(api: ServerApi, pubsub: Pubsub, cache: Cache<Tuple, JSONValue>) {
+	pubsub.subscribe(["clock"])
+	pubsub.onMessage((key, value) => {
+		if (isEqual(key, ["clock"])) {
+			// cache.insert(key, value)
+		}
+	})
 
 	return {
+		destroy() {
+			pubsub.unsubscribe(["clock"])
+		},
 		list(args: ListArgs<Tuple>) {
-			return cache.list(args)
+			const result = cache.list(args)
+			if (!result.hit) {
+				// TODO: need to overfetch similar to how Transaction.list does it.
+				Promise.resolve(api.list(args)).then((response) => {
+					// if (response.status !== 200) throw new Error("Request failed: " + response.status)
+					cache.insert(args, response)
+				})
+			}
+			return result
+		},
+		write(args: WriteArgs<["value", ...Tuple], JSONValue>) {
+			api.write(args)
 		},
 	}
 }
